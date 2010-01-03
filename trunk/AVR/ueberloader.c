@@ -58,36 +58,46 @@ int main(void)
 }
 
 extern uint16_t g_usADCvalues[8];
-		uint16_t Vin,Vout,Curr;
-uint8_t boost = 0;
+
+struct 
+{
+	uint32_t Q_max;
+	uint16_t U_Max;
+	uint16_t I_Max;
+	uint8_t  CellCount;
+	uint8_t  Go;
+}
+s_Command = {0,0,0,0};
+
+volatile uint16_t g_I_filt;
+
 
 void Task1(void)
 {
-	ADCStartConvAll(); // start first conversion
+	uint16_t U_in_act,U_out_act,I_out_act;
+	uint8_t boost = 0;
 
+	ADCStartConvAll(); // start first conversion
 
 	while(1)
 	{
 		OS_WaitEvent(1); // wait for ADC
 
-		Vin = g_usADCvalues[0]*27; // [mV]  5V = 27.727V
-		Vout = g_usADCvalues[1]*27;
-		Curr = g_usADCvalues[2]*29; // [mA/10]  5V = 3.04A  (3.61V = 2.2A)
+		U_in_act = g_usADCvalues[0]*27; // [mV]  5V = 27.727V
+		U_out_act = g_usADCvalues[1]*27;
+		I_out_act = g_usADCvalues[2]*29; // [mA/10]  5V = 3.04A  (3.61V = 2.2A)
+		cli();
+		g_I_filt = I_out_act;
+		sei();
 
-
-#define IMAX 20000
-#define UMAX 4200*3
-#define ISET 10000
-#define USET 4100*3
-
-#define MAXPWMA 255
-#define MAXPWMB 128
-
-		if (Vin <8000 || Vin > 25000 || Curr > 30000) 
+		if (U_in_act <8000 || U_in_act > 25000 || I_out_act > 30000) 
 		emstop(1); // just in case...
 
 
-		if(Curr > IMAX || Vout > UMAX)
+		if(
+			I_out_act > (s_Command.I_Max+(s_Command.I_Max/10)) || 
+			U_out_act > (s_Command.U_Max+(s_Command.U_Max/10))
+		  )
 		{
 			PWMA_OFF;
 			PWMB_OFF;
@@ -98,9 +108,6 @@ void Task1(void)
 		else
 		{
 			// BUCK OR BOOST
-
-
-
 			if(boost) 
 			{
 				// step up
@@ -110,12 +117,12 @@ void Task1(void)
 				// FET1: switch on
 				PWMA_ST_ON 
 
-				// FET4: increased PWM increases voltage and current
+				// FET4: increased PWM increases voltage and I_out_act
 				PWMB_ON
 
-				if(Vout < USET &&  Curr < ISET)
+				if(U_out_act < s_Command.U_Max &&  I_out_act < s_Command.I_Max)
 				{
-					if(OCR1B < MAXPWMB)
+					if(OCR1B < 128)
 						OCR1B++;
 				}
 				else
@@ -140,12 +147,12 @@ void Task1(void)
 				// FET4: switch off
 				PWMB_OFF 
 
-				// increased PWM INcreases voltage and current.
+				// increased PWM INcreases voltage and I_out_act.
 				PWMA_ON
 
-				if(Vout < USET &&  Curr < ISET)
+				if(U_out_act < s_Command.U_Max &&  I_out_act < s_Command.I_Max)
 				{
-					if(OCR1A < MAXPWMA)
+					if(OCR1A < 256)
 					{
 						OCR1A++;
 					}
@@ -159,16 +166,11 @@ void Task1(void)
 					if(OCR1A > 0)
 						OCR1A--;
 				}
-
-
 			}
 		}
 
-
-		ADCStartConvAll();
-
+		ADCStartConvAll(); // start next conversion, which again triggers this task,
 	}
-
 }
 
 void Task2(void)
@@ -185,12 +187,12 @@ void Task2(void)
 
 void Task3(void)
 {
-	OS_SetAlarm(2,10);
+	OS_SetAlarm(2,1000);
 	while(1)
 	{
 		OS_WaitAlarm();
-		OS_SetAlarm(2,10);
-		// TODO add your code here
+		OS_SetAlarm(2,1000);
+		// count the charged Q
 
 	}
 }
@@ -210,7 +212,7 @@ void CPU_init(void)
 {
 	// init OS timer and interrupt
 	TCCR0  = 0b00000011; // ck / 64 = 125khz clock
-	OCR0   = 125; // interrupt every 1 ms at 8 MHz
+	OCR0   = 250; // interrupt every 1 ms at 16 MHz
 
 	TIMSK |= 1<<OCIE0; // Output Compare Interrupt ON
 
@@ -253,9 +255,6 @@ void OS_ErrorHook(uint8_t ErrNo)
 			break;	
 		case 4:
 			// OS_WaitAlarm: waiting in idle is not allowed
-			break;	
-		case 6:
-			// OS_SetEvent: idle can not handle events
 			break;	
 		default:
 			break;	
