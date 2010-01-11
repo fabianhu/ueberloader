@@ -2,24 +2,24 @@ EAGLE AutoRouter Statistics:
 
 Job           : C:/Dokumente und Einstellungen/Besitzer/Desktop/Ueberloader_myversioncontrol.com/PCB/LiPoLoader.brd
 
-Start at      : 21:18:10 (10.01.2010)
-End at        : 21:18:25 (10.01.2010)
-Elapsed time  : 00:00:15
+Start at      : 00:14:26 (12.01.2010)
+End at        : 00:16:09 (12.01.2010)
+Elapsed time  : 00:01:38
 
-Signals       :   112   RoutingGrid: 6 mil  Layers: 2
-Connections   :   334   predefined:  278 ( 182 Vias )
+Signals       :   121   RoutingGrid: 6 mil  Layers: 2
+Connections   :   344   predefined:  11 ( 0 Vias )
 
-Router memory :   1598400
+Router memory :   1345808
 
-Passname          :     Route Optimize1 Optimize2 Optimize3
+Passname          :     Route
 
-Time per pass     :  00:00:06  00:00:03  00:00:03  00:00:03
-Number of Ripups  :        12         0         0         0
-max. Level        :         2         0         0         0
-max. Total        :        18         0         0         0
+Time per pass     :  00:01:38
+Number of Ripups  :        79
+max. Level        :         6
+max. Total        :        88
 
-Routed            :        56        56        56        56
-Vias              :        52        43        41        39
-Resolution        :   100.0 %   100.0 %   100.0 %   100.0 %
+Routed            :       328
+Vias              :       306
+Resolution        :    98.5 %
 
-Final             : 100.0% beendet
+Final             : 98.5% beendet
