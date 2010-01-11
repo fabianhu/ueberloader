@@ -63,11 +63,13 @@ struct
 {
 	uint32_t Q_max;
 	uint16_t U_Max;
-	uint16_t I_Max;
+	uint16_t I_Max_Set;
 	uint8_t  CellCount;
 	uint8_t  Go;
 }
 s_Command = {0,0,0,0};
+
+uint16_t I_Max_ABS = 15000;
 
 volatile uint16_t g_I_filt;
 
@@ -77,11 +79,24 @@ void Task1(void)
 	uint16_t U_in_act,U_out_act,I_out_act;
 	uint8_t boost = 0;
 
+	// set working parameters
+	if (PINC & (1<<PC1))
+		s_Command.U_Max = 4150*3;
+		else
+		s_Command.U_Max = 4150*6;
+
+	if (!(PINC & (1<<PC7)))
+		{
+			// no limits ever!
+			s_Command.U_Max = 26000; // set to 26V
+			I_Max_ABS = 29500;
+		}
+
 	ADCStartConvAll(); // start first conversion
 
 	while(1)
 	{
-		OS_WaitEvent(1); // wait for ADC
+		OS_WaitEvent(1); // wait for ADC // this task alternates with ADC
 
 		U_in_act = g_usADCvalues[0]*27; // [mV]  5V = 27.727V
 		U_out_act = g_usADCvalues[1]*27;
@@ -95,10 +110,14 @@ void Task1(void)
 
 
 		if(
-			I_out_act > (s_Command.I_Max+(s_Command.I_Max/10)) || 
-			U_out_act > (s_Command.U_Max+(s_Command.U_Max/10))
+			(
+				I_out_act > (s_Command.I_Max_Set+(s_Command.I_Max_Set/10)) || 
+				U_out_act > (s_Command.U_Max+(s_Command.U_Max/10)) || !(PIND & (1<<PD7))
+			)
+			&& (PINC & (1<<PC7)) // disable by jumper
 		  )
 		{
+			// overshoot prevention			
 			PWMA_OFF;
 			PWMB_OFF;
 			OCR1A =0;
@@ -120,7 +139,7 @@ void Task1(void)
 				// FET4: increased PWM increases voltage and I_out_act
 				PWMB_ON
 
-				if(U_out_act < s_Command.U_Max &&  I_out_act < s_Command.I_Max)
+				if(U_out_act < s_Command.U_Max &&  I_out_act < s_Command.I_Max_Set)
 				{
 					if(OCR1B < 128)
 						OCR1B++;
@@ -150,9 +169,9 @@ void Task1(void)
 				// increased PWM INcreases voltage and I_out_act.
 				PWMA_ON
 
-				if(U_out_act < s_Command.U_Max &&  I_out_act < s_Command.I_Max)
+				if(U_out_act < s_Command.U_Max &&  I_out_act < s_Command.I_Max_Set)
 				{
-					if(OCR1A < 256)
+					if(OCR1A < 0xff)
 					{
 						OCR1A++;
 					}
@@ -175,6 +194,8 @@ void Task1(void)
 
 void Task2(void)
 {
+	uint16_t i;
+	
 	OS_SetAlarm(1,10);
 	while(1)
 	{
@@ -182,6 +203,23 @@ void Task2(void)
 		OS_SetAlarm(1,10);
 		// TODO add your code here
 
+		if(!(PIND & (1<<PD7))) // set to 0
+		{
+			s_Command.I_Max_Set =0;
+			OS_SetAlarm(1,1000);
+		}		
+		else
+		{
+			cli();
+			i = s_Command.I_Max_Set;
+			if(!(PINC & (1<<PD0)) && (i + 1000) <= I_Max_ABS)
+			{
+				i += 1000;
+				s_Command.I_Max_Set = i ; // increase by 100 mA
+				OS_SetAlarm(1,333); // look again in 333ms
+			}
+			sei();
+		}
 	}
 }
 
@@ -230,6 +268,11 @@ void CPU_init(void)
 	PWMB_OFF
 	
 	ADCinit();
+
+
+	// init digital inputs
+	PORTD |= (1<<PD7);
+	PORTC |= (1<<PC0)|(1<<PC1)|(1<<PC7); // pullup on
 
 	//Timer0 Initializations for ATMEGA16
 	//TCCR0 |= 5;  // Enable TMR0, set clock source to CLKIO/1024. Interrupts @ 32.768ms intervals @ 8 MHz. This means tasks can execute at least 130,000 instructions before being preempted.
