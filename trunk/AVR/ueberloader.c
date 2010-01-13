@@ -15,13 +15,28 @@ OS_DeclareQueue(DemoQ,10,4);
 
 // *********  Prototypes
 void CPU_init(void);
-
+/* with P-channel high side
 #define PWMA_ON 	TCCR1A |=  0b10000000; 
 #define PWMA_OFF 	TCCR1A &= ~0b11000000; PORTD &= ~(1<<PD5); //OCR1A = 0;
 #define PWMA_ST_ON 	TCCR1A &= ~0b11000000; PORTD |= (1<<PD5); //OCR1A = 0;
 
 #define PWMB_ON 	TCCR1A |=  0b00110000;
 #define PWMB_OFF 	TCCR1A &= ~0b00110000; PORTD |= (1<<PD4); //OCR1B = 0;
+*/
+
+// with N-channel high side driver
+#define PWMA_ON 	TCCR1A |=  0b10000000; 
+#define PWMA_OFF 	TCCR1A &= ~0b11000000; PORTD &= ~(1<<PD5); //OCR1A = 0;
+#define PWMA_ST_ON 	PWMA_OFF; TCCR1A |=  0b11000000; OCR1A = 9; //PORTD |= (1<<PD5); //OCR1A = 0;
+
+#define PWMB_ON 	TCCR1A |=  0b00100000;
+#define PWMB_OFF 	TCCR1A &= ~0b00110000; PORTD |= (1<<PD4); //OCR1B = 0;
+
+
+
+
+
+
 
 void emstop(uint8_t e)
 {
@@ -77,7 +92,7 @@ volatile uint16_t g_I_filt;
 void Task1(void)
 {
 	uint16_t U_in_act,U_out_act,I_out_act;
-	uint8_t boost = 0;
+	uint8_t boost = 0, boostch = 1;;
 
 	// set working parameters
 	if (PINC & (1<<PC1))
@@ -133,11 +148,14 @@ void Task1(void)
 				// FET1 action is direct.
 				// FET4 action is reverse!!
 
-				// FET1: switch on
-				PWMA_ST_ON 
+				if(boostch)
+				{
+					// FET1: switch on
+					PWMA_ST_ON 
 
-				// FET4: increased PWM increases voltage and I_out_act
-				PWMB_ON
+					// FET4: increased PWM increases voltage and I_out_act
+					PWMB_ON
+				}
 
 				if(U_out_act < s_Command.U_Max &&  I_out_act < s_Command.I_Max_Set)
 				{
@@ -153,6 +171,7 @@ void Task1(void)
 					else
 					{
 						boost = 0;
+						boostch =1;
 					}
 				}
 
@@ -163,11 +182,14 @@ void Task1(void)
 				// FET1 action is direct.
 				// FET4 action is reverse!!
 
-				// FET4: switch off
-				PWMB_OFF 
+				if(boostch)
+				{
+					// FET4: switch off
+					PWMB_OFF 
 
-				// increased PWM INcreases voltage and I_out_act.
-				PWMA_ON
+					// increased PWM INcreases voltage and I_out_act.
+					PWMA_ON
+				}
 
 				if(U_out_act < s_Command.U_Max &&  I_out_act < s_Command.I_Max_Set)
 				{
@@ -178,6 +200,7 @@ void Task1(void)
 					else
 					{
 						boost = 1;
+						boostch =1;
 					}
 				}
 				else
