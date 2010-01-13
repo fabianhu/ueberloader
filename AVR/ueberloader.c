@@ -33,11 +33,6 @@ void CPU_init(void);
 #define PWMB_OFF 	TCCR1A &= ~0b00110000; PORTD |= (1<<PD4); //OCR1B = 0;
 
 
-
-
-
-
-
 void emstop(uint8_t e)
 {
 	cli(); // stop OS
@@ -63,7 +58,7 @@ int main(void)
 	OS_StartExecution() ;
 	while(1)
 	{
-		// THIS IS the idle task which will be preemted by all other tasks.
+		// THIS IS the idle task which will be preempted by all other tasks.
 		// NO OS_Wait.. functions are allowed here!!!
 		
 		// TODO add your code here
@@ -122,7 +117,6 @@ void Task1(void)
 
 		if (U_in_act <8000 || U_in_act > 25000 || I_out_act > 30000) 
 		emstop(1); // just in case...
-
 
 		if(
 			(
