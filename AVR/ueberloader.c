@@ -25,13 +25,26 @@ void CPU_init(void);
 */
 
 // with N-channel high side driver
-#define PWMA_ON 	TCCR1A |=  0b10000000; 
-#define PWMA_OFF 	TCCR1A &= ~0b11000000; PORTD &= ~(1<<PD5); //OCR1A = 0;
-#define PWMA_ST_ON 	PWMA_OFF; TCCR1A |=  0b11000000; OCR1A = 9; //PORTD |= (1<<PD5); //OCR1A = 0;
+#define MINSWITCHOFFPWM 9 // = 1µs
 
-#define PWMB_ON 	TCCR1A |=  0b00100000;
-#define PWMB_OFF 	TCCR1A &= ~0b00110000; PORTD |= (1<<PD4); //OCR1B = 0;
+#define PWMA_PWM_NOR 	PWMA_OFF;TCCR1A |=  0b10000000;
+#define PWMA_PWM_REV	PWMA_OFF;TCCR1A |=  0b11000000;
+#define PWMA_OFF 		TCCR1A &= ~0b11000000; PORTD &= ~(1<<PD5); //OCR1A = 0;
+#define PWMA_DISC_ON 	PWMA_OFF; PWMA_PWM_REV; OCR1A = MINSWITCHOFFPWM; //PORTD |= (1<<PD5); //OCR1A = 0;
 
+#define PWMB_PWM_NOR 	PWMB_OFF;TCCR1A |=  0b00100000;
+#define PWMB_PWM_REV 	PWMB_OFF;TCCR1A |=  0b00110000;
+#define PWMB_OFF 		TCCR1A &= ~0b00110000; PORTD &= ~(1<<PD4); //OCR1B = 0;
+// illegal! #define PWMB_ON 		TCCR1A &= ~0b00110000; PORTD |= (1<<PD4); //OCR1B = 0;
+#define PWMB_DISC_ON	PWMB_OFF; PWMB_PWM_NOR; OCR1B = 0xff-MINSWITCHOFFPWM;
+
+#define ENABLE_A_ON 	PORTD |= (1<<PD3);
+#define ENABLE_A_OFF 	PORTD &= ~(1<<PD3);
+#define ENABLE_B_ON 	PORTD |= (1<<PD2);
+#define ENABLE_B_OFF 	PORTD &= ~(1<<PD2);
+
+#define LED1_ON 		PORTA |= (1<<PA7);
+#define LED1_OFF 		PORTA &= ~(1<<PA7);
 
 void emstop(uint8_t e)
 {
@@ -39,6 +52,8 @@ void emstop(uint8_t e)
 			
 	PWMA_OFF;
 	PWMB_OFF;
+	ENABLE_A_OFF;
+	ENABLE_B_OFF;
 	while(1)
 	{
 		asm("nop");
@@ -87,7 +102,7 @@ volatile uint16_t g_I_filt;
 void Task1(void)
 {
 	uint16_t U_in_act,U_out_act,I_out_act;
-	uint8_t boost = 0, boostch = 1;;
+	uint8_t bOpMode_Boost = 0, bBoostModeChange = 1;;
 
 	// set working parameters
 	if (PINC & (1<<PC1))
@@ -115,8 +130,24 @@ void Task1(void)
 		g_I_filt = I_out_act;
 		sei();
 
-		if (U_in_act <8000 || U_in_act > 25000 || I_out_act > 30000) 
-		emstop(1); // just in case...
+		if (U_in_act <8000 || U_in_act > 25000 || I_out_act > 30000)
+		{
+			LED1_OFF;
+			if( U_in_act > 25000)
+				LED1_ON;
+
+			emstop(1); // just in case...
+		}
+
+		if(s_Command.I_Max_Set > 0)
+		{
+			ENABLE_A_ON;
+			ENABLE_B_ON;
+		}
+		else
+		{
+			ENABLE_A_OFF; ENABLE_B_OFF;
+		}
 
 		if(
 			(
@@ -131,24 +162,31 @@ void Task1(void)
 			PWMB_OFF;
 			OCR1A =0;
 			OCR1B =0;
-			boost = 0;
+			ENABLE_A_OFF; ENABLE_B_OFF;
+			bOpMode_Boost = 0;
 		}
 		else
 		{
 			// BUCK OR BOOST
-			if(boost) 
+			if(bOpMode_Boost) 
 			{
+				LED1_ON;
+
 				// step up
 				// FET1 action is direct.
 				// FET4 action is reverse!!
 
-				if(boostch)
+				if(bBoostModeChange)
 				{
+					OCR1B =0;
+
 					// FET1: switch on
-					PWMA_ST_ON 
+					PWMA_DISC_ON
 
 					// FET4: increased PWM increases voltage and I_out_act
-					PWMB_ON
+					PWMB_PWM_REV
+
+					bBoostModeChange = 0;
 				}
 
 				if(U_out_act < s_Command.U_Max &&  I_out_act < s_Command.I_Max_Set)
@@ -164,37 +202,41 @@ void Task1(void)
 					}
 					else
 					{
-						boost = 0;
-						boostch =1;
+						bOpMode_Boost = 0;
+						bBoostModeChange =1;
 					}
 				}
-
 			}
 			else
 			{
+				LED1_OFF;
 				// step down
 				// FET1 action is direct.
 				// FET4 action is reverse!!
 
-				if(boostch)
+				if(bBoostModeChange)
 				{
+					OCR1A = 0;
+					
 					// FET4: switch off
-					PWMB_OFF 
+					PWMB_DISC_ON;
 
 					// increased PWM INcreases voltage and I_out_act.
-					PWMA_ON
+					PWMA_PWM_NOR
+
+					bBoostModeChange = 0;
 				}
 
 				if(U_out_act < s_Command.U_Max &&  I_out_act < s_Command.I_Max_Set)
 				{
-					if(OCR1A < 0xff)
+					if(OCR1A < (0xff - MINSWITCHOFFPWM))
 					{
 						OCR1A++;
 					}
 					else
 					{
-						boost = 1;
-						boostch =1;
+						bOpMode_Boost = 1;
+						bBoostModeChange =1;
 					}
 				}
 				else
@@ -283,8 +325,13 @@ void CPU_init(void)
 	
 	PWMA_OFF
 	PWMB_OFF
+
+	DDRD |= (1<<PD2)|(1<<PD3); // ENBALES
 	
 	ADCinit();
+
+	DDRA |= (1<<PA7);
+
 
 
 	// init digital inputs
