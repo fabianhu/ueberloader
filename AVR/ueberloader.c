@@ -186,7 +186,6 @@ void Task1(void)
 					else
 					{
 						// step up
-
 						if(OCR1Bi < 128)
 							OCR1Bi++;
 
