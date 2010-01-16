@@ -15,17 +15,9 @@ OS_DeclareQueue(DemoQ,10,4);
 
 // *********  Prototypes
 void CPU_init(void);
-/* with P-channel high side
-#define PWMA_ON 	TCCR1A |=  0b10000000; 
-#define PWMA_OFF 	TCCR1A &= ~0b11000000; PORTD &= ~(1<<PD5); //OCR1A = 0;
-#define PWMA_ST_ON 	TCCR1A &= ~0b11000000; PORTD |= (1<<PD5); //OCR1A = 0;
-
-#define PWMB_ON 	TCCR1A |=  0b00110000;
-#define PWMB_OFF 	TCCR1A &= ~0b00110000; PORTD |= (1<<PD4); //OCR1B = 0;
-*/
 
 // with N-channel high side driver
-#define MINSWITCHOFFPWM 9 // = 1µs
+#define MINSWITCHOFFPWM 15 // = 1,5µs
 
 #define PWMA_PWM_NOR 	PWMA_OFF;TCCR1A |=  0b10000000;
 #define PWMA_PWM_REV	PWMA_OFF;TCCR1A |=  0b11000000;
@@ -102,7 +94,11 @@ volatile uint16_t g_I_filt;
 void Task1(void)
 {
 	uint16_t U_in_act,U_out_act,I_out_act;
-	uint8_t bOpMode_Boost = 0, bBoostModeChange = 1;;
+	uint8_t bOpModeBuck = 1; //, bBoostModeChange = 1;;
+
+	uint16_t bStartup =0;
+
+	uint8_t OCR1Bi,i;
 
 	// set working parameters
 	if (PINC & (1<<PC1))
@@ -118,6 +114,11 @@ void Task1(void)
 		}
 
 	ADCStartConvAll(); // start first conversion
+
+	OCR1Bi = MINSWITCHOFFPWM;
+
+	PWMA_PWM_NOR;
+	PWMB_PWM_NOR;
 
 	while(1)
 	{
@@ -139,114 +140,109 @@ void Task1(void)
 			emstop(1); // just in case...
 		}
 
-		if(s_Command.I_Max_Set > 0)
+		if(s_Command.I_Max_Set <= 0)
+		{
+			ENABLE_A_OFF; ENABLE_B_OFF;
+			LED1_OFF;
+			OCR1A =0;
+			OCR1Bi =MINSWITCHOFFPWM;
+			bStartup =0;
+		}
+		else
 		{
 			ENABLE_A_ON;
 			ENABLE_B_ON;
-		}
-		else
-		{
-			ENABLE_A_OFF; ENABLE_B_OFF;
-		}
 
-		if(
-			(
-				I_out_act > (s_Command.I_Max_Set+(s_Command.I_Max_Set/10)) || 
-				U_out_act > (s_Command.U_Max+(s_Command.U_Max/10)) || !(PIND & (1<<PD7))
-			)
-			&& (PINC & (1<<PC7)) // disable by jumper
-		  )
-		{
-			// overshoot prevention			
-			PWMA_OFF;
-			PWMB_OFF;
-			OCR1A =0;
-			OCR1B =0;
-			ENABLE_A_OFF; ENABLE_B_OFF;
-			bOpMode_Boost = 0;
-		}
-		else
-		{
-			// BUCK OR BOOST
-			if(bOpMode_Boost) 
+
+			/*if(
+				(
+					I_out_act > (s_Command.I_Max_Set+(s_Command.I_Max_Set/10)) ||
+					U_out_act > (s_Command.U_Max+(s_Command.U_Max/10)) || !(PIND & (1<<PD7))
+				)
+				&& (PINC & (1<<PC7)) // disable by jumper
+			  )
 			{
-				LED1_ON;
-
-				// step up
-				// FET1 action is direct.
-				// FET4 action is reverse!!
-
-				if(bBoostModeChange)
-				{
-					OCR1B =0;
-
-					// FET1: switch on
-					PWMA_DISC_ON
-
-					// FET4: increased PWM increases voltage and I_out_act
-					PWMB_PWM_REV
-
-					bBoostModeChange = 0;
-				}
-
-				if(U_out_act < s_Command.U_Max &&  I_out_act < s_Command.I_Max_Set)
-				{
-					if(OCR1B < 128)
-						OCR1B++;
-				}
-				else
-				{
-					if(OCR1B > 0)
-					{
-						OCR1B--;
-					}
-					else
-					{
-						bOpMode_Boost = 0;
-						bBoostModeChange =1;
-					}
-				}
+				// overshoot prevention
+				PWMA_OFF;
+				PWMB_OFF;
+				OCR1A =0;
+				OCR1Bi =MINSWITCHOFFPWM;
+				ENABLE_A_OFF; ENABLE_B_OFF;
+			//	bOpMode_Boost = 0;
 			}
 			else
-			{
-				LED1_OFF;
-				// step down
-				// FET1 action is direct.
-				// FET4 action is reverse!!
+			{*/
 
-				if(bBoostModeChange)
-				{
-					OCR1A = 0;
-					
-					// FET4: switch off
-					PWMB_DISC_ON;
-
-					// increased PWM INcreases voltage and I_out_act.
-					PWMA_PWM_NOR
-
-					bBoostModeChange = 0;
-				}
+			// ?? Sollwert rampen / min-Strom einregeln, dann auf NennStrom.
 
 				if(U_out_act < s_Command.U_Max &&  I_out_act < s_Command.I_Max_Set)
 				{
 					if(OCR1A < (0xff - MINSWITCHOFFPWM))
 					{
+						// step down
 						OCR1A++;
+						bOpModeBuck = 1;
 					}
 					else
 					{
-						bOpMode_Boost = 1;
-						bBoostModeChange =1;
+						// step up
+
+						if(OCR1Bi < 128)
+							OCR1Bi++;
+
+						bOpModeBuck = 0;
 					}
 				}
 				else
 				{
-					if(OCR1A > 0)
-						OCR1A--;
-				}
-			}
-		}
+					if(OCR1Bi > MINSWITCHOFFPWM)
+					{
+						// step up
+						OCR1Bi--;
+						bOpModeBuck = 0;
+					}
+					else
+					{
+						// step down
+						if(OCR1A > 0)
+						 OCR1A--;
+						bOpModeBuck = 1;
+					}
 
+				}
+
+				if(bOpModeBuck)
+				{
+					if(bStartup == 0)
+					{
+						//startup
+						OCR1Bi = 0xff-OCR1A;
+						bStartup=1;
+					}
+					else
+					{
+						//return to normal
+						if (i<10)
+							i++;
+						else
+						{
+							i=0;
+							if(OCR1Bi > MINSWITCHOFFPWM)
+							{
+								// step up
+								OCR1Bi--;
+							}
+						}
+					}
+				}
+
+
+				OCR1B = 0xff - OCR1Bi;
+
+
+			//}
+		}
+		//OS_WaitTicks(10);
 		ADCStartConvAll(); // start next conversion, which again triggers this task,
 	}
 }
