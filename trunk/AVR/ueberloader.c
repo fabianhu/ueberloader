@@ -84,7 +84,7 @@ struct
 	uint8_t  CellCount;
 	uint8_t  Go;
 }
-s_Command = {0,0,0,0};
+s_Command = {0,0,0,0,0};
 
 uint16_t I_Max_ABS = 15000;
 
@@ -186,7 +186,7 @@ void Task1(void)
 					else
 					{
 						// step up
-						if(OCR1Bi < 128)
+						if(OCR1Bi < 200) // ex 128
 							OCR1Bi++;
 
 						bOpModeBuck = 0;
