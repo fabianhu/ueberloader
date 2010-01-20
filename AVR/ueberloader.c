@@ -120,6 +120,9 @@ void Task1(void)
 	PWMA_PWM_NOR;
 	PWMB_PWM_NOR;
 
+	uint16_t Power = 0;
+
+
 	while(1)
 	{
 		OS_WaitEvent(1); // wait for ADC // this task alternates with ADC
@@ -173,7 +176,34 @@ void Task1(void)
 			else
 			{*/
 
-			// ?? Sollwert rampen / min-Strom einregeln, dann auf NennStrom.
+			// links unten und rechts oben eine Diode vorsehen (LTC3780 Referenzdesign sieht das vor)
+
+			/*if (Power > 256) // boost
+			{
+				// right side: switch on low longer for increasing power. (max 50% on)
+				// left side: keep high on with interruptions (at the end of right sides high)
+
+			}
+			else
+			{
+				// right side: keep high with interruptions (at the end of left sides high)
+				// left side: switch on high longer for increasing power. (max 100% on)
+
+			}
+			*/
+
+			/* startup:
+			 * Anhand der gemessenen Spannungen entscheiden: Start mit boost or buck.
+			 * Buck:
+			 * Versuch des Start im "cross-over" mode d.h. links und rechts gleichzeitig (high)kurz an.
+			 * Sollte der Strom richtig fließen, erhöhen des PWM synchron, bis der Strom erreicht ist. ???
+			 *
+			 * start im "pseudo boost mode":
+			 * beide aus, links kurz an - Spule laden - rechts kurz an, Spule entladen und Spannung hochschieben.
+			 *
+
+			 * Wir brauchen eine Strom-Messung in beide Richtungen? - nee doch nicht, wir kennen die Spannungen.
+			*/
 
 				if(U_out_act < s_Command.U_Max &&  I_out_act < s_Command.I_Max_Set)
 				{
@@ -216,7 +246,10 @@ void Task1(void)
 					{
 						//startup
 						OCR1Bi = 0xff-OCR1A;
-						bStartup=1;
+						if (i<100)
+							i++;
+						else
+						{bStartup=1;i=0;}
 					}
 					else
 					{
