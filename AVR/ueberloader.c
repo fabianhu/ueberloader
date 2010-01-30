@@ -89,16 +89,16 @@ s_Command = {0,0,0,0,0};
 uint16_t I_Max_ABS = 15000;
 
 volatile uint16_t g_I_filt;
-
+volatile uint8_t up=0,dn=0; // fixme remove test vars
 
 void Task1(void)
 {
 	uint16_t U_in_act,U_out_act,I_out_act;
 	uint8_t bOpModeBuck = 1; //, bBoostModeChange = 1;;
 
-	uint16_t bStartup =0;
+	uint16_t bStarted =0;
 
-	uint8_t OCR1Bi,i;
+	uint8_t i;
 
 	// set working parameters
 	if (PINC & (1<<PC1))
@@ -115,12 +115,14 @@ void Task1(void)
 
 	ADCStartConvAll(); // start first conversion
 
-	OCR1Bi = MINSWITCHOFFPWM;
+
 
 	PWMA_PWM_NOR;
-	PWMB_PWM_NOR;
+	PWMB_PWM_REV;
+	OCR1A = 0xff;
+	OCR1B = 0xff;
 
-	uint16_t Power = 0;
+	uint16_t Power = 0,Limit=0;
 
 
 	while(1)
@@ -143,15 +145,15 @@ void Task1(void)
 			emstop(1); // just in case...
 		}
 
-		if(s_Command.I_Max_Set <= 0)
+		/*if(s_Command.I_Max_Set <= 0)
 		{
 			ENABLE_A_OFF; ENABLE_B_OFF;
 			LED1_OFF;
 			OCR1A =0;
-			OCR1Bi =MINSWITCHOFFPWM;
-			bStartup =0;
+			OCR1B =0xff;
+			bStarted =0;
 		}
-		else
+		else*/
 		{
 			ENABLE_A_ON;
 			ENABLE_B_ON;
@@ -186,8 +188,8 @@ void Task1(void)
 			}
 			else
 			{
-				// right side: keep high with interruptions (at the end of left sides high)
 				// left side: switch on high longer for increasing power. (max 100% on)
+				// right side: keep high with interruptions (at the end of left sides high)
 
 			}
 			*/
@@ -205,9 +207,10 @@ void Task1(void)
 			 * Wir brauchen eine Strom-Messung in beide Richtungen? - nee doch nicht, wir kennen die Spannungen.
 			*/
 
-				if(U_out_act < s_Command.U_Max &&  I_out_act < s_Command.I_Max_Set)
+				if(up)//U_out_act < s_Command.U_Max &&  I_out_act < s_Command.I_Max_Set)
 				{
-					if(OCR1A < (0xff - MINSWITCHOFFPWM))
+					// increase power
+					if(OCR1A < (0xff-MINSWITCHOFFPWM))
 					{
 						// step down
 						OCR1A++;
@@ -216,40 +219,42 @@ void Task1(void)
 					else
 					{
 						// step up
-						if(OCR1Bi < 200) // ex 128
-							OCR1Bi++;
+						if(OCR1B > 128) // ex 128
+							OCR1B--;
 
 						bOpModeBuck = 0;
 					}
+					up=0;
 				}
-				else
+				else if (dn)
 				{
-					if(OCR1Bi > MINSWITCHOFFPWM)
-					{
-						// step up
-						OCR1Bi--;
-						bOpModeBuck = 0;
-					}
-					else
+					// decrease power
+					if(OCR1B < MINSWITCHOFFPWM )
 					{
 						// step down
 						if(OCR1A > 0)
 						 OCR1A--;
 						bOpModeBuck = 1;
 					}
-
+					else
+					{
+						// step up
+						OCR1B++;
+						bOpModeBuck = 0;
+					}
+					dn=0;
 				}
 
-				if(bOpModeBuck)
+				/*if(bOpModeBuck)
 				{
-					if(bStartup == 0)
+					if(bStarted == 0)
 					{
 						//startup
-						OCR1Bi = 0xff-OCR1A;
+						OCR1B = OCR1A;
 						if (i<100)
 							i++;
 						else
-						{bStartup=1;i=0;}
+						{bStarted=1;i=0;}
 					}
 					else
 					{
@@ -259,17 +264,17 @@ void Task1(void)
 						else
 						{
 							i=0;
-							if(OCR1Bi > MINSWITCHOFFPWM)
+							if(OCR1B > MINSWITCHOFFPWM)
 							{
 								// step up
-								OCR1Bi--;
+								OCR1B--;
 							}
 						}
 					}
-				}
+				}*/
 
 
-				OCR1B = 0xff - OCR1Bi;
+				//OCR1B = 0xff - OCR1Bi;
 
 
 			//}
@@ -292,20 +297,32 @@ void Task2(void)
 
 		if(!(PIND & (1<<PD7))) // set to 0
 		{
+			dn =1;
 			s_Command.I_Max_Set =0;
-			OS_SetAlarm(1,1000);
+			OS_SetAlarm(1,20);
 		}		
 		else
 		{
+
+			if(!(PINC & (1<<PD0)))
+			{
+				up=1;
+				OS_SetAlarm(1,20); // look again in 333ms
+			}
+
+			/*
 			cli();
 			i = s_Command.I_Max_Set;
 			if(!(PINC & (1<<PD0)) && (i + 1000) <= I_Max_ABS)
 			{
+				
 				i += 1000;
 				s_Command.I_Max_Set = i ; // increase by 100 mA
-				OS_SetAlarm(1,333); // look again in 333ms
-			}
 			sei();
+			}*/
+
+
+
 		}
 	}
 }
