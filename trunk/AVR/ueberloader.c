@@ -52,28 +52,6 @@ void emstop(uint8_t e)
 	}
 }
 
-
-// *********  THE main()
-int xmain(void)
-{
-	CPU_init();
-
-    OS_CreateTask(Task1, 0);
-    OS_CreateTask(Task2, 1);
-    OS_CreateTask(Task3, 2);
-
-	OS_StartExecution() ;
-	while(1)
-	{
-		// THIS IS the idle task which will be preempted by all other tasks.
-		// NO OS_Wait.. functions are allowed here!!!
-		
-		// TODO add your code here
-		asm("nop");
-	}
-
-}
-
 extern uint16_t g_usADCvalues[8];
 
 struct 
@@ -125,9 +103,9 @@ void Task1(void)
 //	uint16_t Power = 0,Limit=0;
 //
 //
-//	while(1)
-//	{
-//		OS_WaitEvent(1); // wait for ADC // this task alternates with ADC
+	while(1)
+	{
+		OS_WaitEvent(1); // wait for ADC // this task alternates with ADC
 //
 //		U_in_act = g_usADCvalues[0]*27; // [mV]  5V = 27.727V
 //		U_out_act = g_usADCvalues[1]*27;
@@ -281,18 +259,21 @@ void Task1(void)
 //		}
 //		//OS_WaitTicks(10);
 //		ADCStartConvAll(); // start next conversion, which again triggers this task,
-//	}
+	}
 }
 
 void Task2(void)
 {
-//	uint16_t i;
-//
-//	OS_SetAlarm(1,10);
-//	while(1)
-//	{
-//		OS_WaitAlarm();
-//		OS_SetAlarm(1,10);
+	uint16_t i;
+
+	OS_SetAlarm(1,10);
+	while(1)
+	{
+		OS_WaitAlarm();
+		OS_SetAlarm(1,10);
+
+		ADCinit();
+
 //		// TODO add your code here
 //
 //		if(!(PIND & (1<<PD7))) // set to 0
@@ -324,7 +305,7 @@ void Task2(void)
 //
 //
 //		}
-//	}
+	}
 }
 
 void Task3(void)

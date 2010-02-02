@@ -6,6 +6,7 @@
 */
 
 #include "OS/FabOS.h"
+#include "adc_driver.h"
 
 // *********  Task definitions
 OS_DeclareTask(Task1,200);
@@ -53,6 +54,7 @@ void OS_CustomISRCode(void)
 
 #elif defined (__AVR_ATxmega32A4__)
 	TCC1.CNT=0;
+	//TCC1.INTFLAGS = 0xff;
 #else
 	#error MCU not yet supported, you must configure a timer yourself.
 #endif
@@ -71,13 +73,13 @@ void CPU_init(void)
 	TIMSK |= 1<<OCIE1A; // Output Compare Interrupt ON
 
 #elif defined (__AVR_ATxmega32A4__)
-	// set ck = 32MHz,
+	// xtal = 16 MHz,
 	// PLL (128 MHz) -> peripheral x4
 	// Presc. B (64MHz) -> peripheral x2
 	// Presc. C (32MHz) -> CPU
 	OSC.XOSCCTRL = OSC_FRQRANGE_12TO16_gc | OSC_XOSCSEL_XTAL_16KCLK_gc;
 	OSC.CTRL |= OSC_XOSCEN_bm; // enable XTAL
-	OSC.PLLCTRL = OSC_PLLSRC_XOSC_gc | 4; // configure pll x 4;
+	OSC.PLLCTRL = OSC_PLLSRC_XOSC_gc | 8; // configure pll x 8;
 	while (!(OSC.STATUS & OSC_XOSCRDY_bm))
 	{
 		asm("nop"); // wait for the bit to become set
