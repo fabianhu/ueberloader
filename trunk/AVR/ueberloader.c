@@ -71,6 +71,11 @@ volatile uint8_t up=0,dn=0; // fixme remove test vars
 
 void Task1(void)
 {
+
+	ADCinit();
+
+
+
 //	uint16_t U_in_act,U_out_act,I_out_act;
 //	uint8_t bOpModeBuck = 1; //, bBoostModeChange = 1;;
 //
@@ -264,7 +269,8 @@ void Task1(void)
 
 void Task2(void)
 {
-	uint16_t i;
+//	uint16_t i;
+
 
 	OS_SetAlarm(1,10);
 	while(1)
@@ -272,7 +278,6 @@ void Task2(void)
 		OS_WaitAlarm();
 		OS_SetAlarm(1,10);
 
-		ADCinit();
 
 //		// TODO add your code here
 //

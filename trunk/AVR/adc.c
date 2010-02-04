@@ -23,53 +23,80 @@ void ADCinit(void)
 	ADC_CalibrationValues_Load(&ADCA);
 
 	/* Set up ADC A to have signed conversion mode and 12 bit resolution. */
-	ADC_ConvMode_and_Resolution_Config(&ADCA, ADC_ConvMode_Signed, ADC_RESOLUTION_12BIT_gc);
+	//ADC_ConvMode_and_Resolution_Config(&ADCA, ADC_ConvMode_Signed, ADC_RESOLUTION_12BIT_gc);
+	ADCA.CTRLA = 0b00000000;
+	ADCA.CTRLB = 0b00000000;// | ADC_CONMODE_bm; // unsigned
 
 	/* Set sample rate */
-	ADC_Prescaler_Config(&ADCA, ADC_PRESCALER_DIV64_gc); // resulting in 2MHz ADC clock
+	//ADC_Prescaler_Config(&ADCA, ADC_PRESCALER_DIV64_gc); // resulting in 2MHz ADC clock
+	ADCA.PRESCALER = ADC_PRESCALER_DIV64_gc;
 
 	/* Set reference voltage on ADC A to be VCC/1.6 V.*/
-	ADC_Reference_Config(&ADCA, ADC_REFSEL_VCC_gc);
+	//ADC_Reference_Config(&ADCA, ADC_REFSEL_VCC_gc);
+	ADCA.REFCTRL = ADC_REFSEL_VCC_gc | ADC_TEMPREF_bm | ADC_BANDGAP_bm;
 
 	/* Get offset value for ADC A. */
-	ADC_Ch_InputMode_and_Gain_Config(&ADCA.CH0,
+	/*ADC_Ch_InputMode_and_Gain_Config(&ADCA.CH0,
 									 ADC_CH_INPUTMODE_DIFF_gc,
-									 ADC_DRIVER_CH_GAIN_NONE);
+									 ADC_DRIVER_CH_GAIN_NONE);*/
+	ADCA.CH0.CTRL = ADC_CH_INPUTMODE0_bm; // external
+	ADCA.CH0.MUXCTRL = ADC_CH_MUXPOS_PIN0_gc;
+	ADCA.CH1.CTRL = ADC_CH_INPUTMODE0_bm; // external
+	ADCA.CH1.MUXCTRL = ADC_CH_MUXPOS_PIN1_gc;
+	ADCA.CH2.CTRL = ADC_CH_INPUTMODE0_bm; // external
+	ADCA.CH2.MUXCTRL = ADC_CH_MUXPOS_PIN2_gc;
+	ADCA.CH3.CTRL = ADC_CH_INPUTMODE0_bm; // external
+	ADCA.CH3.MUXCTRL = ADC_CH_MUXPOS_PIN3_gc;
 
+/*
 	ADC_Ch_InputMux_Config(&ADCA.CH0, ADC_CH_MUXPOS_PIN1_gc, ADC_CH_MUXNEG_PIN1_gc);
 	ADC_Ch_InputMux_Config(&ADCA.CH1, ADC_CH_MUXPOS_PIN2_gc, ADC_CH_MUXNEG_PIN1_gc);
 	ADC_Ch_InputMux_Config(&ADCA.CH2, ADC_CH_MUXPOS_PIN3_gc, ADC_CH_MUXNEG_PIN1_gc);
 	ADC_Ch_InputMux_Config(&ADCA.CH3, ADC_CH_MUXPOS_PIN4_gc, ADC_CH_MUXNEG_PIN1_gc);
-
-	ADC_Enable(&ADCA);
-
+*/
+	ADCA.CTRLA |= ADC_ENABLE_bm;
+	//ADCA.CTRLA |= ADC_DMASEL_CH0123_gc;
+	
+	ADCA.CH0.CTRL = ADC_CH_START_bm;
 	/* Wait until common mode voltage is stable. */
 	do{
 		/* If the conversion on the ADCA channel 0 never is
 		 * complete this will be a deadlock. */
 	}while(!ADC_Ch_Conversion_Complete(&ADCA.CH0));
 
-	DMA.CTRL =DMA_ENABLE_bm;
+
+
+	DMA.INTFLAGS = DMA_CH_TRNINTLVL_HI_gc;
 	DMA.CH0.SRCADDR0 = (int)(&ADCA.CH0RES) & 0xff;
 	DMA.CH0.SRCADDR1 = ((int)(&ADCA.CH0RES) & 0xff00)>>8;
 	DMA.CH0.SRCADDR2 = ((int)(&ADCA.CH0RES) & 0xff0000)>>16;
 	DMA.CH0.DESTADDR0 = (int)(&g_usADCvalues[0]) & 0xff;
 	DMA.CH0.DESTADDR1 = ((int)(&g_usADCvalues[0]) & 0xff00)>>8;
 	DMA.CH0.DESTADDR2 = ((int)(&g_usADCvalues[0]) & 0xff0000)>>16;
-	DMA.CH0.CTRLA = 0b10000001;
-	DMA.CH0.CTRLB = 0b00000010; // medium isr for complete
-	DMA.CH0.ADDRCTRL = 0b01011101;
-	DMA.CH0.TRIGSRC = 0x10+0x4; // ADCA / CH4
-	DMA.CH0.TRFCNT = 4; // 4 values
+	DMA.CH0.CTRLA = DMA_CH_BURSTLEN_2BYTE_gc;//0b00000001;
+	DMA.CH0.CTRLB = DMA_CH_TRNINTLVL_MED_gc; // 0b00000010; // medium isr for complete
+	DMA.CH0.ADDRCTRL = DMA_CH_SRCRELOAD_BLOCK_gc | DMA_CH_SRCDIR_INC_gc | DMA_CH_DESTRELOAD_TRANSACTION_gc | DMA_CH_DESTDIR_INC_gc;//0b01011101;
+	DMA.CH0.TRIGSRC = DMA_CH_TRIGSRC_ADCA_CH4_gc;//;0x10+0x4; // ADCA / CH4
+	DMA.CH0.TRFCNT = 8; // 4 ADC-values with 16 bit
 	DMA.CH0.REPCNT = 1;
+	DMA.CH0.CTRLA |= DMA_CH_ENABLE_bm;
 
+	DMA.CTRL |= DMA_ENABLE_bm;
 	ADCA.CTRLA |= 0b00111100; // start conversion for 4 channels
 
 }
 
-ISR(ADCA_CH0_vect)
+ISR(DMA_CH0_vect)
 {
-	g_usADCvalues[0]++;
+	uint8_t i;
+
+	for(i=0;i<3;i++)
+	{
+	g_usADCvalues[i+4]= g_usADCvalues[i];
+	}
+	
+	
+	DMA.CH0.CTRLB |= DMA_CH_TRNIF_bm;// (1<<TRNIF); // clear flag
 
 }
 
