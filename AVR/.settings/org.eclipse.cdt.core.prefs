@@ -1,0 +1,4 @@
+#Tue Jan 19 21:16:28 CET 2010
+eclipse.preferences.version=1
+environment/project/de.innot.avreclipse.configuration.app.debug.1362568725=<?xml version\="1.0" encoding\="UTF-8" standalone\="no"?>\r\n<environment append\="true" appendContributed\="true">\r\n<variable delimiter\=";" name\="AVRTARGETMCU" operation\="replace" value\="atmega32"/>\r\n</environment>\r\n
+environment/project/de.innot.avreclipse.configuration.app.release.1163445871=<?xml version\="1.0" encoding\="UTF-8" standalone\="no"?>\r\n<environment append\="true" appendContributed\="false">\r\n<variable delimiter\=";" name\="AVRTARGETMCU" operation\="replace" value\="atmega32"/>\r\n</environment>\r\n
