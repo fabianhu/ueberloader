@@ -5,19 +5,16 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
 ../adc.c \
-../adc_driver.c \
 ../main.c \
 ../ueberloader.c 
 
 OBJS += \
 ./adc.o \
-./adc_driver.o \
 ./main.o \
 ./ueberloader.o 
 
 C_DEPS += \
 ./adc.d \
-./adc_driver.d \
 ./main.d \
 ./ueberloader.d 
 

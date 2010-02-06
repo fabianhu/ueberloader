@@ -65,29 +65,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 #include "adc_driver.h"
-#include <avr/pgmspace.h>
-
-
-/*! \brief This function get the calibration data from the production calibration.
- *
- *  The calibration data is loaded from flash and stored in the calibration
- *  register. The calibration data reduces the non-linearity error in the adc.
- *
- *  \param  adc          Pointer to ADC module register section.
- */
-void ADC_CalibrationValues_Load(ADC_t * adc)
-{
-	if(&ADCA == adc){
-		 /* Get ADCACAL0 from production signature . */
-		adc->CALL = SP_ReadCalibrationByte( PROD_SIGNATURES_START + ADCACAL0_offset );
-		adc->CALH = SP_ReadCalibrationByte( PROD_SIGNATURES_START + ADCACAL1_offset );
-	}else {
-		/* Get ADCBCAL0 from production signature  */
-		adc->CALL = SP_ReadCalibrationByte( PROD_SIGNATURES_START + ADCBCAL0_offset );
-		adc->CALH = SP_ReadCalibrationByte( PROD_SIGNATURES_START + ADCBCAL1_offset );
-	}
-}
-
 
 /*! \brief This function clears the interrupt flag and returns the unsigned conversion result.
  *
@@ -352,26 +329,6 @@ int8_t ADC_Offset_Get_Signed(ADC_t * adc, ADC_CH_t *ch, uint8_t oversampling)
                
 #ifdef __GNUC__
 
-/*! \brief Function for GCC to read out calibration byte.
- *
- *  \note For IAR support, include the adc_driver_asm.S90 file in your project.
- *
- *  \param index The index to the calibration byte.
- *
- *  \return Calibration byte.
- */
-uint8_t SP_ReadCalibrationByte( uint8_t index )
-{
-	uint8_t result;
 
-	/* Load the NVM Command register to read the calibration row. */
-	NVM_CMD = NVM_CMD_READ_CALIB_ROW_gc;
- 	result = pgm_read_byte(index);
-
-	/* Clean up NVM Command register. */
- 	NVM_CMD = NVM_CMD_NO_OPERATION_gc;
-
-	return result;
-}
 
 #endif
