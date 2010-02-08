@@ -6,11 +6,10 @@
 */
 
 #include "OS/FabOS.h"
-#include "adc_driver.h"
 
 // *********  Task definitions
-OS_DeclareTask(Task1,200);
-OS_DeclareTask(Task2,200);
+OS_DeclareTask(TaskGovernor,200);
+OS_DeclareTask(TaskBalance,200);
 OS_DeclareTask(Task3,200);
 
 OS_DeclareQueue(DemoQ,10,4);
@@ -28,8 +27,8 @@ int main(void)
 	OS_TestSuite(); // call automated tests of OS. may be removed in production code.
 #endif
 
-    OS_CreateTask(Task1, 0);
-    OS_CreateTask(Task2, 1);
+    OS_CreateTask(TaskGovernor, 0);
+    OS_CreateTask(TaskBalance, 1);
     OS_CreateTask(Task3, 2);
 
 	OS_StartExecution() ;
@@ -95,9 +94,12 @@ void CPU_init(void)
 	 
 	CCP = CCP_IOREG_gc; // unlock
 	CLK.CTRL = CLK_SCLKSEL_PLL_gc; // select PLL to run with
+
+	CCP = CCP_IOREG_gc; // unlock
+	OSC.XOSCFAIL = OSC_XOSCFDEN_bm; // enable NMI for oscillator failure.
  
 	// setup Timer for OS
-	TCC1.CTRLA = TC_CLKSEL_DIV1_gc; // select clk/1 for clock source
+	TCC1.CTRLA = TC_CLKSEL_DIV1_gc; // select clk for clock source
 	TCC1.CTRLB = TC0_CCAEN_bm;
 	TCC1.CTRLC = 0;
 	TCC1.CTRLD = 0;
@@ -119,6 +121,11 @@ void CPU_init(void)
 	//TIMSK |= 1 ; // Interrupt on TMR0 Overflow.
 
 	// *** NO global interrupts enabled at this point!!!
+}
+
+ISR(OSC_XOSCF_vect)
+{
+	// fixme emergency stop here!
 }
 
 

@@ -7,8 +7,8 @@ The Üeberloader
 #include "adc.h"
 
 // *********  Task definitions
-OS_DeclareTask(Task1,200);
-OS_DeclareTask(Task2,200);
+OS_DeclareTask(TaskGovernor,200);
+OS_DeclareTask(TaskBalance,200);
 OS_DeclareTask(Task3,200);
 
 //OS_DeclareQueue(DemoQ,10,4);
@@ -69,7 +69,7 @@ uint16_t I_Max_ABS = 15000;
 volatile uint16_t g_I_filt;
 volatile uint8_t up=0,dn=0; // fixme remove test vars
 
-void Task1(void)
+void TaskGovernor(void)
 {
 
 	ADCinit();
@@ -108,9 +108,36 @@ void Task1(void)
 //	uint16_t Power = 0,Limit=0;
 //
 //
+	PORTC.DIRSET = 0b00000011; // set Port C as output
+	PORTD.DIRSET = 0b00000011; // set Port D as output
+
+	TCC0.CTRLA = TC_CLKSEL_DIV1_gc;
+	TCC0.CTRLB = 0b00110000 | TC_WGMODE_SS_gc; // single slope
+	TCC0.CTRLC = 0; // not used: manually activate output compare
+	TCC0.CTRLD = TC_EVACT_RESTART_gc | TC_EVSEL_CH0_gc; // event0 does restart of the timer.
+	TCC0.CTRLE = 0; // not used: last bit: Byte-mode
+	TCC0.PER = 32000; // 1 ms
+	TCC0.CCA = 16000; // gives 50% PWM
+	TCC0.CCB = 15000;
+
+
+	TCD0.CTRLA = TC_CLKSEL_DIV8_gc;
+	TCD0.CTRLB = 0b00110000 | TC_WGMODE_SS_gc; // single slope
+	TCD0.CTRLC = 0; // not used: manually activate output compare
+	TCD0.CTRLD = TC_EVACT_RESTART_gc | TC_EVSEL_CH0_gc; // event0 does restart of the timer.
+	TCD0.CTRLE = 0; // not used: last bit: Byte-mode
+	TCD0.PERBUF = 32000; // 1 ms
+	TCD0.CCABUF = 16000; // gives 50% PWM
+	TCD0.CCBBUF = 15000;
+
+
 	while(1)
 	{
-		OS_WaitEvent(1); // wait for ADC // this task alternates with ADC
+		//OS_WaitEvent(1); // wait for ADC // this task alternates with ADC
+		OS_WaitTicks(1);
+
+
+
 //
 //		U_in_act = g_usADCvalues[0]*27; // [mV]  5V = 27.727V
 //		U_out_act = g_usADCvalues[1]*27;
@@ -267,10 +294,9 @@ void Task1(void)
 	}
 }
 
-void Task2(void)
+void TaskBalance(void)
 {
-//	uint16_t i;
-
+	static uint8_t phase;
 
 	OS_SetAlarm(1,10);
 	while(1)
@@ -278,38 +304,71 @@ void Task2(void)
 		OS_WaitAlarm();
 		OS_SetAlarm(1,10);
 
+		switch (phase)
+		{
+			case 0:
+			case 1:
+			case 2:
+			case 3:
+			case 4:
+			case 5:
+				// push voltage of channel into array
+				break;
+			case 6:
+				// VCC measurement
+				break;
+			case 7:
+				// zero offset
+				break;
+			case 8:
+				// CPU temperature
+				break;
+			case 9:
+				// temperature external1
+				break;
+			case 10:
+				// temperature external2
+				break;
+			default:
+				phase = 0;
+		}
 
-//		// TODO add your code here
-//
-//		if(!(PIND & (1<<PD7))) // set to 0
-//		{
-//			dn =1;
-//			s_Command.I_Max_Set =0;
-//			OS_SetAlarm(1,20);
-//		}
-//		else
-//		{
-//
-//			if(!(PINC & (1<<PD0)))
-//			{
-//				up=1;
-//				OS_SetAlarm(1,20); // look again in 333ms
-//			}
-//
-//			/*
-//			cli();
-//			i = s_Command.I_Max_Set;
-//			if(!(PINC & (1<<PD0)) && (i + 1000) <= I_Max_ABS)
-//			{
-//
-//				i += 1000;
-//				s_Command.I_Max_Set = i ; // increase by 100 mA
-//			sei();
-//			}*/
-//
-//
-//
-//		}
+		// increment phase
+		if(phase < 10)
+			phase++;
+		else
+			phase =0;
+
+		// trigger next conversion
+		switch (phase)
+		{
+			case 0:
+			case 1:
+			case 2:
+			case 3:
+			case 4:
+			case 5:
+				// push voltage of channel into array
+				break;
+			case 6:
+				// VCC measurement
+				break;
+			case 7:
+				// zero offset
+				break;
+			case 8:
+				// CPU temperature
+				break;
+			case 9:
+				// temperature external1
+				break;
+			case 10:
+				// temperature external2
+				break;
+			default:
+				phase = 0;
+		}
+
 	}
 }
 
@@ -324,59 +383,6 @@ void Task3(void)
 
 	}
 }
-
-
-
-// *********  Code to be executed inside Timer ISR used for the OS, defined in FabOS_config.h
-/*void OS_CustomISRCode(void)
-{
-	TCNT0 =0;  // reset the timer on ISR to have correct timing
-}*/
-
-
-
-// *********  Controller initialisation
-void xCPU_init(void)
-{
-//	// init OS timer and interrupt
-//	TCCR0  = 0b00000011; // ck / 64 = 125khz clock
-//	OCR0   = 250; // interrupt every 1 ms at 16 MHz
-//
-//	TIMSK |= 1<<OCIE0; // Output Compare Interrupt ON
-//
-//
-//	// init PWM output
-//
-//	DDRD |= (1<<PD4)|(1<<PD5);
-//
-//	TCCR1A = 0b00000001; //0b10100001; // 8 bit fast PWM
-//	TCCR1B = 0b00001001;
-//	OCR1A  = 0;
-//	OCR1B  = 0;
-//
-//	PWMA_OFF
-//	PWMB_OFF
-//
-//	DDRD |= (1<<PD2)|(1<<PD3); // ENBALES
-//
-//	ADCinit();
-//
-//	DDRA |= (1<<PA7);
-//
-//
-//
-//	// init digital inputs
-//	PORTD |= (1<<PD7);
-//	PORTC |= (1<<PC0)|(1<<PC1)|(1<<PC7); // pullup on
-//
-//	//Timer0 Initializations for ATMEGA16
-//	//TCCR0 |= 5;  // Enable TMR0, set clock source to CLKIO/1024. Interrupts @ 32.768ms intervals @ 8 MHz. This means tasks can execute at least 130,000 instructions before being preempted.
-//	//TIMSK |= 1 ; // Interrupt on TMR0 Overflow.
-//
-//	// *** NO global interrupts enabled at this point!!!
-}
-
-
 
 
 
