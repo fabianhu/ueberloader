@@ -17,8 +17,9 @@ OS_DeclareTask(Task3,200);
 void CPU_init(void);
 
 // with N-channel high side driver
-#define MINSWITCHOFFPWM 15 // = 1,5µs
+#define MINSWITCHOFFPWM 90 // = 1,5µs
 
+/*
 #define PWMA_PWM_NOR 	PWMA_OFF;TCCR1A |=  0b10000000;
 #define PWMA_PWM_REV	PWMA_OFF;TCCR1A |=  0b11000000;
 #define PWMA_OFF 		TCCR1A &= ~0b11000000; PORTD &= ~(1<<PD5); //OCR1A = 0;
@@ -29,14 +30,20 @@ void CPU_init(void);
 #define PWMB_OFF 		TCCR1A &= ~0b00110000; PORTD &= ~(1<<PD4); //OCR1B = 0;
 // illegal! #define PWMB_ON 		TCCR1A &= ~0b00110000; PORTD |= (1<<PD4); //OCR1B = 0;
 #define PWMB_DISC_ON	PWMB_OFF; PWMB_PWM_NOR; OCR1B = 0xff-MINSWITCHOFFPWM;
+*/
+#define ENABLE_A_ON 	TCC0.CCBBUF = 1280;
+#define ENABLE_A_OFF	TCC0.CCBBUF = 0;
 
-#define ENABLE_A_ON 	PORTD |= (1<<PD3);
+#define ENABLE_B_ON 	TCD0.CCBBUF = 1280;
+#define ENABLE_B_OFF	TCD0.CCBBUF = 0;
+/*
 #define ENABLE_A_OFF 	PORTD &= ~(1<<PD3);
 #define ENABLE_B_ON 	PORTD |= (1<<PD2);
 #define ENABLE_B_OFF 	PORTD &= ~(1<<PD2);
 
 #define LED1_ON 		PORTA |= (1<<PA7);
 #define LED1_OFF 		PORTA &= ~(1<<PA7);
+*/
 
 void emstop(uint8_t e)
 {
@@ -44,15 +51,15 @@ void emstop(uint8_t e)
 			
 //	PWMA_OFF;
 //	PWMB_OFF;
-//	ENABLE_A_OFF;
-//	ENABLE_B_OFF;
+	ENABLE_A_OFF;
+	ENABLE_B_OFF;
 	while(1)
 	{
 		asm("nop");
 	}
 }
 
-extern uint16_t g_usADCvalues[8];
+extern int16_t g_sADCvalues[];
 
 struct 
 {
@@ -69,15 +76,34 @@ uint16_t I_Max_ABS = 15000;
 volatile uint16_t g_I_filt;
 volatile uint8_t up=0,dn=0; // fixme remove test vars
 
+ISR(TCC0_CCD_vect) // versuch, ein 1/10 anschaltverhältnis zu machen.
+{
+	static uint8_t c;
+	c++;
+	if (c>=10)
+	{
+		TCC0.CTRLB |= 0b00100000;
+		c=0;
+	}
+	else
+	{
+		TCC0.CTRLB &= ~0b00100000;
+
+	}
+}
+#define PERIOD_DIV 10
+#define PERIOD_H 1280
+#define PERIOD_L PERIOD_H + (PERIOD_H +4)* PERIOD_DIV
+#define PERIOD_MAX 0xffff
+
 void TaskGovernor(void)
 {
+	uint16_t power = PERIOD_H; // 0=0 Vollgas = PERIOD_H *2
+	uint16_t ADCoffset = ADCinit();
 
-	ADCinit();
-
-
-
-//	uint16_t U_in_act,U_out_act,I_out_act;
-//	uint8_t bOpModeBuck = 1; //, bBoostModeChange = 1;;
+	uint32_t temp;
+	uint16_t U_in_act,U_out_act,I_out_act; // mV / mA
+	uint8_t bOpModeBuck = 1; //, bBoostModeChange = 1;;
 //
 //	uint16_t bStarted =0;
 //
@@ -108,187 +134,257 @@ void TaskGovernor(void)
 //	uint16_t Power = 0,Limit=0;
 //
 //
-	PORTC.DIRSET = 0b00000011; // set Port C as output
-	PORTD.DIRSET = 0b00000011; // set Port D as output
+
 
 	TCC0.CTRLA = TC_CLKSEL_DIV1_gc;
 	TCC0.CTRLB = 0b00110000 | TC_WGMODE_SS_gc; // single slope
 	TCC0.CTRLC = 0; // not used: manually activate output compare
 	TCC0.CTRLD = TC_EVACT_RESTART_gc | TC_EVSEL_CH0_gc; // event0 does restart of the timer.
 	TCC0.CTRLE = 0; // not used: last bit: Byte-mode
-	TCC0.PER = 32000; // 1 ms
-	TCC0.CCA = 16000; // gives 50% PWM
-	TCC0.CCB = 15000;
+	TCC0.PERBUF = PERIOD_H; // 100khz
+	TCC0.CCABUF = 0;
+	TCC0.CCBBUF = 0;
 
+	HIRESC.CTRL = HIRES_HREN_TC0_gc;
 
-	TCD0.CTRLA = TC_CLKSEL_DIV8_gc;
+	TCC0.INTCTRLA = 0; // no error/overflow interrupt
+	//TCC0.INTCTRLB = TC_CCDINTLVL_HI_gc;
+
+	TCD0.CTRLA = TC_CLKSEL_DIV1_gc;
 	TCD0.CTRLB = 0b00110000 | TC_WGMODE_SS_gc; // single slope
 	TCD0.CTRLC = 0; // not used: manually activate output compare
 	TCD0.CTRLD = TC_EVACT_RESTART_gc | TC_EVSEL_CH0_gc; // event0 does restart of the timer.
 	TCD0.CTRLE = 0; // not used: last bit: Byte-mode
-	TCD0.PERBUF = 32000; // 1 ms
-	TCD0.CCABUF = 16000; // gives 50% PWM
-	TCD0.CCBBUF = 15000;
+	TCD0.PERBUF = PERIOD_H;// 0+9*4; // 10khz (9 Überläufe, 4 wg. hires)
+	TCD0.CCABUF = PERIOD_H-MINSWITCHOFFPWM;
+	TCD0.CCBBUF = 0;
+
+	HIRESD.CTRL = HIRES_HREN_TC0_gc;
+
+	// sync timers via event 0
+	EVSYS.STROBE = 0b00000001;
+
+	PORTC.DIRSET = 0b00000011; // set Port C as output
+	PORTD.DIRSET = 0b00000011; // set Port D as output
+	PORTD.PIN1CTRL = 0b01000000;
 
 
 	while(1)
 	{
 		//OS_WaitEvent(1); // wait for ADC // this task alternates with ADC
-		OS_WaitTicks(1);
 
+		EVSYS.STROBE = (1<<7);  //fire event 7, which triggers the ADC
 
+		OS_WaitTicks(33); // wait during ADC conversion
 
-//
-//		U_in_act = g_usADCvalues[0]*27; // [mV]  5V = 27.727V
-//		U_out_act = g_usADCvalues[1]*27;
-//		I_out_act = g_usADCvalues[2]*29; // [mA/10]  5V = 3.04A  (3.61V = 2.2A)
+		temp = g_sADCvalues[0]*6220ul; // [mV]  3,3V/1,6=2,06V - Offset = 1,96V -> 160.75 bits/V
+		U_in_act = temp / 1000ul;
+
+		temp = g_sADCvalues[1]*6220ul; // [mV]  3,3V/1,6=2,06V - Offset = 1,96V -> 160.75 bits/V
+		U_out_act = temp;
+
+		I_out_act = g_sADCvalues[2]*7; // [mA/10]  2V = 3A  (fixme)
 //		cli();
 //		g_I_filt = I_out_act;
 //		sei();
 //
-//		if (U_in_act <8000 || U_in_act > 25000 || I_out_act > 30000)
-//		{
-//			LED1_OFF;
-//			if( U_in_act > 25000)
-//				LED1_ON;
-//
-//			emstop(1); // just in case...
-//		}
-//
-//		/*if(s_Command.I_Max_Set <= 0)
-//		{
-//			ENABLE_A_OFF; ENABLE_B_OFF;
-//			LED1_OFF;
-//			OCR1A =0;
-//			OCR1B =0xff;
-//			bStarted =0;
-//		}
-//		else*/
-//		{
-//			ENABLE_A_ON;
-//			ENABLE_B_ON;
-//
-//
-//			/*if(
-//				(
-//					I_out_act > (s_Command.I_Max_Set+(s_Command.I_Max_Set/10)) ||
-//					U_out_act > (s_Command.U_Max+(s_Command.U_Max/10)) || !(PIND & (1<<PD7))
-//				)
-//				&& (PINC & (1<<PC7)) // disable by jumper
-//			  )
-//			{
-//				// overshoot prevention
-//				PWMA_OFF;
-//				PWMB_OFF;
-//				OCR1A =0;
-//				OCR1Bi =MINSWITCHOFFPWM;
-//				ENABLE_A_OFF; ENABLE_B_OFF;
-//			//	bOpMode_Boost = 0;
-//			}
-//			else
-//			{*/
-//
-//			// links unten und rechts oben eine Diode vorsehen (LTC3780 Referenzdesign sieht das vor)
-//
-//			/*if (Power > 256) // boost
-//			{
-//				// right side: switch on low longer for increasing power. (max 50% on)
-//				// left side: keep high on with interruptions (at the end of right sides high)
-//
-//			}
-//			else
-//			{
-//				// left side: switch on high longer for increasing power. (max 100% on)
-//				// right side: keep high with interruptions (at the end of left sides high)
-//
-//			}
-//			*/
-//
-//			/* startup:
-//			 * Anhand der gemessenen Spannungen entscheiden: Start mit boost or buck.
-//			 * Buck:
-//			 * Versuch des Start im "cross-over" mode d.h. links und rechts gleichzeitig (high)kurz an.
-//			 * Sollte der Strom richtig fließen, erhöhen des PWM synchron, bis der Strom erreicht ist. ???
-//			 *
-//			 * start im "pseudo boost mode":
-//			 * beide aus, links kurz an - Spule laden - rechts kurz an, Spule entladen und Spannung hochschieben.
-//			 *
-//
-//			 * Wir brauchen eine Strom-Messung in beide Richtungen? - nee doch nicht, wir kennen die Spannungen.
-//			*/
-//
-//				if(up)//U_out_act < s_Command.U_Max &&  I_out_act < s_Command.I_Max_Set)
-//				{
-//					// increase power
-//					if(OCR1A < (0xff-MINSWITCHOFFPWM))
-//					{
-//						// step down
-//						OCR1A++;
-//						bOpModeBuck = 1;
-//					}
-//					else
-//					{
-//						// step up
-//						if(OCR1B > 128) // ex 128
-//							OCR1B--;
-//
-//						bOpModeBuck = 0;
-//					}
-//					up=0;
-//				}
-//				else if (dn)
-//				{
-//					// decrease power
-//					if(OCR1B < MINSWITCHOFFPWM )
-//					{
-//						// step down
-//						if(OCR1A > 0)
-//						 OCR1A--;
-//						bOpModeBuck = 1;
-//					}
-//					else
-//					{
-//						// step up
-//						OCR1B++;
-//						bOpModeBuck = 0;
-//					}
-//					dn=0;
-//				}
-//
-//				/*if(bOpModeBuck)
-//				{
-//					if(bStarted == 0)
-//					{
-//						//startup
-//						OCR1B = OCR1A;
-//						if (i<100)
-//							i++;
-//						else
-//						{bStarted=1;i=0;}
-//					}
-//					else
-//					{
-//						//return to normal
-//						if (i<10)
-//							i++;
-//						else
-//						{
-//							i=0;
-//							if(OCR1B > MINSWITCHOFFPWM)
-//							{
-//								// step up
-//								OCR1B--;
-//							}
-//						}
-//					}
-//				}*/
-//
-//
-//				//OCR1B = 0xff - OCR1Bi;
-//
-//
-//			//}
-//		}
+		if (U_in_act <8000 || U_in_act > 25000 || I_out_act > 30000)
+		{
+			emstop(1); // just in case...
+		}
+
+		/*if(s_Command.I_Max_Set <= 0)
+		{
+			ENABLE_A_OFF; ENABLE_B_OFF;
+			LED1_OFF;
+			OCR1A =0;
+			OCR1B =0xff;
+			bStarted =0;
+		}
+		else*/
+		{
+			//ENABLE_A_ON;
+			//ENABLE_B_ON;
+
+
+			/*if(
+				(
+					I_out_act > (s_Command.I_Max_Set+(s_Command.I_Max_Set/10)) ||
+					U_out_act > (s_Command.U_Max+(s_Command.U_Max/10)) || !(PIND & (1<<PD7))
+				)
+				&& (PINC & (1<<PC7)) // disable by jumper
+			  )
+			{
+				// overshoot prevention
+				PWMA_OFF;
+				PWMB_OFF;
+				OCR1A =0;
+				OCR1Bi =MINSWITCHOFFPWM;
+				ENABLE_A_OFF; ENABLE_B_OFF;
+			//	bOpMode_Boost = 0;
+			}
+			else
+			{*/
+
+			// links unten und rechts oben eine Diode vorsehen (LTC3780 Referenzdesign sieht das vor)
+
+			/*if (Power > 256) // boost
+			{
+				// right side: switch on low longer for increasing power. (max 50% on)
+				// left side: keep high on with interruptions (at the end of right sides high)
+
+			}
+			else
+			{
+				// left side: switch on high longer for increasing power. (max 100% on)
+				// right side: keep high with interruptions (at the end of left sides high)
+
+			}
+			*/
+
+			/* startup:
+			 * Anhand der gemessenen Spannungen entscheiden: Start mit boost or buck.
+			 * Buck:
+			 * Versuch des Start im "cross-over" mode d.h. links und rechts gleichzeitig (high)kurz an.
+			 * Sollte der Strom richtig fließen, erhöhen des PWM synchron, bis der Strom erreicht ist. ???
+			 *
+			 * start im "pseudo boost mode":
+			 * beide aus, links kurz an - Spule laden - rechts kurz an, Spule entladen und Spannung hochschieben.
+			 *
+
+			 * Wir brauchen eine Strom-Messung in beide Richtungen? - nee doch nicht, wir kennen die Spannungen.
+			*/
+
+
+
+			/*if(U_out_act < s_Command.U_Max &&  I_out_act < s_Command.I_Max_Set)
+			{
+				if (power < PERIOD_H*17/10)
+				power++;
+			}
+			else
+			{
+				if(power>0)
+				power--;
+			}*/
+static uint8_t dir =0;
+
+			if (dir==0)
+			{
+				if (power < PERIOD_H + 2*MINSWITCHOFFPWM)//PERIOD_H*17/10)
+					power++;
+				else
+					dir =1;
+			}
+			else
+			{
+				if (power >= PERIOD_H - 2*MINSWITCHOFFPWM)//PERIOD_H*17/10)
+					power--;
+				else
+					dir =0;
+
+			}
+
+
+			if ( power <= PERIOD_H - MINSWITCHOFFPWM )
+			{
+				//buck
+				// links IN
+				TCC0.CCABUF = power;
+
+				// rechts IN
+				TCD0.CCABUF = PERIOD_L - MINSWITCHOFFPWM; // + speed runtersetzen fixme
+
+				// links ENABLE immer an:
+				TCC0.CCBBUF = PERIOD_MAX;
+
+				// rechts ENABLE falls start immer aus:
+				TCD0.CCBBUF = PERIOD_MAX;//(invertiert!)
+
+				TCC0.PERBUF = PERIOD_H;
+				TCD0.PERBUF = PERIOD_L;
+			}
+			else if(power <= PERIOD_H)
+			{
+				uint16_t u;
+				u = PERIOD_H - power;
+				u = u*PERIOD_DIV / MINSWITCHOFFPWM; // result = 1..10
+				TCC0.PERBUF = PERIOD_H + (PERIOD_H +4)* (PERIOD_DIV-u);
+				TCC0.CCABUF = TCC0.PERBUF - MINSWITCHOFFPWM;
+				EVSYS.STROBE = (1<<0); // sync timers
+			}
+			else if(power <= PERIOD_H + MINSWITCHOFFPWM)
+			{
+				uint16_t u;
+				u = power - PERIOD_H;
+				u = u*PERIOD_DIV / MINSWITCHOFFPWM; // result = 1..10
+				TCD0.PERBUF = PERIOD_H + (PERIOD_H +4)* (PERIOD_DIV-u);
+				TCD0.CCABUF = TCD0.PERBUF - MINSWITCHOFFPWM;
+				EVSYS.STROBE = (1<<0); // sync timers
+
+			}
+			else
+			{
+				//boost
+				// links IN
+				TCC0.CCABUF = TCC0.PERBUF - MINSWITCHOFFPWM; // + speed runtersetzen fixme
+
+				// links ENABLE immer an:
+				TCC0.CCBBUF = PERIOD_MAX;
+
+				if(1)
+				{
+					// rechts IN
+					TCD0.CCABUF = PERIOD_H*2 - power ;
+
+					//rechts ENABLE
+					TCD0.CCBBUF = 0; //(invertiert!)
+				}
+				else
+				{
+					// rechts IN
+					TCD0.CCABUF = PERIOD_H*2 - power;//PERIOD_H*2 - power - 2* MINSWITCHOFFPWM ;
+
+					// rechts ENABLE falls start:
+					TCD0.CCBBUF = PERIOD_H*2 - power;// - 2* MINSWITCHOFFPWM ;//(invertiert!)
+
+				}
+
+				TCC0.PERBUF = PERIOD_L;
+				TCD0.PERBUF = PERIOD_H;
+			}
+
+			/*// sync timers
+			if (TCC0.PERBUF > TCD0.PERBUF)
+			{
+				// TCC is the resetter
+				TCC0.CCDBUF = TCC0.PER-4;
+				EVSYS.CH0MUX = 0b11000111; // select compare match TCC - D to create reset of both timers.
+
+			}
+			else
+			{	// TCD is the resetter
+				TCD0.CCDBUF = TCD0.PER-4;
+				EVSYS.CH0MUX = 0b11010111; // select compare match TCD - D to create reset of both timers.
+			}*/
+
+			/*
+			 * Start im step down: enable links an, enable rechts aus.
+			 *
+			 * Wenn power > Per.... dann enable rechts pulsen mit PERIOD_H*2 - power - 2* MINSWITCHOFFPWM
+			 *
+			 *
+			 *
+			 *power größer als PERIOD_H - MINSWITCHOFFPWM: erniedrigen der Frequenz bis ende bei PERIOD_H.
+			 *dann rechte seite periodendauer schneller machen bis PERIOD_H + MINSWITCHOFFPWM
+			 *
+			 *
+			 * */
+
+
+
+
+		}
 //		//OS_WaitTicks(10);
 //		ADCStartConvAll(); // start next conversion, which again triggers this task,
 	}

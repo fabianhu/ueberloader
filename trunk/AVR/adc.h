@@ -13,7 +13,7 @@
 #endif
 //@}
 
-void ADCinit(void);
+uint16_t ADCinit(void); //(returns offset?)
 
 void ADCStartConvCh(uint8_t c);
 

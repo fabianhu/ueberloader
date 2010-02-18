@@ -5,7 +5,7 @@
 #include "adc.h"
 #include "OS/FabOS.h"
 
-volatile uint16_t g_usADCvalues[8];
+volatile int16_t g_sADCvalues[3];
 
 #include <avr/pgmspace.h>
 
@@ -55,7 +55,7 @@ void ADC_CalibrationValues_Load(ADC_t * adc)
 uint16_t gusTimer =0;
 
 
-void ADCinit(void)
+uint16_t ADCinit(void)
 {
 	// ADC concept new:
 	/* CH0..2 : event triggered conversion of input and output voltage and Current - resulting in DMA0 ISR.
@@ -77,7 +77,8 @@ void ADCinit(void)
 
 	ADCA.EVCTRL = ADC_SWEEP_012_gc | ADC_EVSEL_7_gc | ADC_EVACT_SWEEP_gc; // Event 7 releases sweep over ch 0-2
 
-	/* Get offset value for ADC A. */
+
+
 	ADCA.CH0.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc; // external
 	ADCA.CH0.MUXCTRL = ADC_CH_MUXPOS_PIN0_gc;
 	ADCA.CH0.INTCTRL = 0; // no ISR
@@ -93,7 +94,7 @@ void ADCinit(void)
 
 
 	ADCA.CTRLA |= ADC_ENABLE_bm;
-	ADCA.CTRLA |= ADC_DMASEL_CH0123_gc;
+	ADCA.CTRLA |= ADC_DMASEL_CH0123_gc; // fixme check, if necessary
 	
 	ADCA.CH0.CTRL = ADC_CH_START_bm;
 	/* Wait until common mode voltage is stable. */
@@ -103,15 +104,15 @@ void ADCinit(void)
 	}while(!(ADCA.CH0.INTFLAGS & 1));
 	ADCA.INTFLAGS = 0b00001111;
 
-
+ // setup DMA to transfer 3 successive conversions of ch 0-2 to the g_sADCvalues array.
 
 	//DMA.INTFLAGS = DMA_CH_TRNINTLVL_HI_gc;
 	DMA.CH0.SRCADDR0 = (int)(&ADCA.CH0RES) & 0xff;
 	DMA.CH0.SRCADDR1 = ((int)(&ADCA.CH0RES) & 0xff00)>>8;
 	DMA.CH0.SRCADDR2 = ((int)(&ADCA.CH0RES) & 0xff0000)>>16;
-	DMA.CH0.DESTADDR0 = (int)(&g_usADCvalues[0]) & 0xff;
-	DMA.CH0.DESTADDR1 = ((int)(&g_usADCvalues[0]) & 0xff00)>>8;
-	DMA.CH0.DESTADDR2 = ((int)(&g_usADCvalues[0]) & 0xff0000)>>16;
+	DMA.CH0.DESTADDR0 = (int)(&g_sADCvalues[0]) & 0xff;
+	DMA.CH0.DESTADDR1 = ((int)(&g_sADCvalues[0]) & 0xff00)>>8;
+	DMA.CH0.DESTADDR2 = ((int)(&g_sADCvalues[0]) & 0xff0000)>>16;
 	DMA.CH0.CTRLA = DMA_CH_BURSTLEN_8BYTE_gc | DMA_CH_SINGLE_bm;//0b00000001;
 	DMA.CH0.CTRLB = DMA_CH_TRNINTLVL_HI_gc; // Hi isr for complete
 	DMA.CH0.ADDRCTRL = DMA_CH_SRCRELOAD_BLOCK_gc | DMA_CH_SRCDIR_INC_gc | DMA_CH_DESTRELOAD_TRANSACTION_gc | DMA_CH_DESTDIR_INC_gc;//0b01011101;
@@ -129,19 +130,15 @@ void ADCinit(void)
 	gusTimer = TCC1.CNT;
 	EVSYS.STROBE = (1<<7);
 
+	// fixme Get offset value for ADC A.
+	return 200;
 }
 
 ISR(DMA_CH0_vect)
 {
-	uint8_t i;
 
-	for(i=0;i<2;i++)
-	{
-	g_usADCvalues[i+4]= g_usADCvalues[i];
-	}
 	
-volatile uint16_t d = TCC1.CNT - gusTimer;
-
+//volatile uint16_t d = TCC1.CNT - gusTimer;
 // it takes 986 clk from activation to here.
 	
 	DMA.CH0.CTRLB |= DMA_CH_TRNIF_bm;// clear interrupt flag
@@ -163,7 +160,7 @@ void ADCStartConvAll(void)
 /* M32ISR(SIG_ADC)
 {
 	 // copy ADC
-	g_usADCvalues[ADMUX] = ADC;
+	g_sADCvalues[ADMUX] = ADC;
 	
 
 	// start new conversion
