@@ -34,7 +34,7 @@ int main(void)
 	OS_StartExecution() ;
 	while(1)
 	{
-		// THIS IS the idle task which will be preemted by all other tasks.
+		// THIS IS the idle task which will be preempted by all other tasks.
 		// NO OS_Wait.. functions are allowed here!!!
 		
 		// TODO add your code here
