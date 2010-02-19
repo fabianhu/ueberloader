@@ -15,10 +15,12 @@ OS_DeclareTask(Task3,200);
 
 // *********  Prototypes
 void CPU_init(void);
+void SetEnableBuck(void);
+void SetEnableBoost(void);
 
 // with N-channel high side driver
 #define MINSWITCHOFFPWM 90 // = 1,5µs
-
+uint8_t startup = 1;
 /*
 #define PWMA_PWM_NOR 	PWMA_OFF;TCCR1A |=  0b10000000;
 #define PWMA_PWM_REV	PWMA_OFF;TCCR1A |=  0b11000000;
@@ -269,6 +271,7 @@ void TaskGovernor(void)
 			}*/
 static uint8_t dir =0;
 
+
 			if (dir==0)
 			{
 				if (power < PERIOD_H + 2*MINSWITCHOFFPWM)//PERIOD_H*17/10)
@@ -295,14 +298,10 @@ static uint8_t dir =0;
 				// rechts IN
 				TCD0.CCABUF = PERIOD_L - MINSWITCHOFFPWM; // + speed runtersetzen fixme
 
-				// links ENABLE immer an:
-				TCC0.CCBBUF = PERIOD_MAX;
-
-				// rechts ENABLE falls start immer aus:
-				TCD0.CCBBUF = PERIOD_MAX;//(invertiert!)
-
 				TCC0.PERBUF = PERIOD_H;
 				TCD0.PERBUF = PERIOD_L;
+
+				SetEnableBuck();
 			}
 			else if(power <= PERIOD_H)
 			{
@@ -311,7 +310,11 @@ static uint8_t dir =0;
 				u = u*PERIOD_DIV / MINSWITCHOFFPWM; // result = 1..10
 				TCC0.PERBUF = PERIOD_H + (PERIOD_H +4)* (PERIOD_DIV-u);
 				TCC0.CCABUF = TCC0.PERBUF - MINSWITCHOFFPWM;
-				EVSYS.STROBE = (1<<0); // sync timers
+
+				TCD0.PERBUF = PERIOD_L;
+
+				SetEnableBuck();
+				//EVSYS.STROBE = (1<<0); // sync timers
 			}
 			else if(power <= PERIOD_H + MINSWITCHOFFPWM)
 			{
@@ -320,8 +323,11 @@ static uint8_t dir =0;
 				u = u*PERIOD_DIV / MINSWITCHOFFPWM; // result = 1..10
 				TCD0.PERBUF = PERIOD_H + (PERIOD_H +4)* (PERIOD_DIV-u);
 				TCD0.CCABUF = TCD0.PERBUF - MINSWITCHOFFPWM;
-				EVSYS.STROBE = (1<<0); // sync timers
 
+				TCC0.PERBUF = PERIOD_L;
+
+				SetEnableBoost();
+				//EVSYS.STROBE = (1<<0); // sync timers
 			}
 			else
 			{
@@ -329,42 +335,31 @@ static uint8_t dir =0;
 				// links IN
 				TCC0.CCABUF = TCC0.PERBUF - MINSWITCHOFFPWM; // + speed runtersetzen fixme
 
+				// rechts IN
+				TCD0.CCABUF = PERIOD_H*2 - power;//PERIOD_H*2 - power - 2* MINSWITCHOFFPWM ;
+
 				// links ENABLE immer an:
 				TCC0.CCBBUF = PERIOD_MAX;
 
-				if(1)
-				{
-					// rechts IN
-					TCD0.CCABUF = PERIOD_H*2 - power ;
 
-					//rechts ENABLE
-					TCD0.CCBBUF = 0; //(invertiert!)
-				}
-				else
-				{
-					// rechts IN
-					TCD0.CCABUF = PERIOD_H*2 - power;//PERIOD_H*2 - power - 2* MINSWITCHOFFPWM ;
-
-					// rechts ENABLE falls start:
-					TCD0.CCBBUF = PERIOD_H*2 - power;// - 2* MINSWITCHOFFPWM ;//(invertiert!)
-
-				}
 
 				TCC0.PERBUF = PERIOD_L;
 				TCD0.PERBUF = PERIOD_H;
+
+				SetEnableBoost();
 			}
 
-			/*// sync timers
-			if (TCC0.PERBUF > TCD0.PERBUF)
+			// sync timers
+			/*if (TCC0.PERBUF > TCD0.PERBUF)
 			{
 				// TCC is the resetter
-				TCC0.CCDBUF = TCC0.PER-4;
+				TCC0.CCDBUF = TCC0.PER;
 				EVSYS.CH0MUX = 0b11000111; // select compare match TCC - D to create reset of both timers.
 
 			}
 			else
 			{	// TCD is the resetter
-				TCD0.CCDBUF = TCD0.PER-4;
+				TCD0.CCDBUF = TCD0.PER;
 				EVSYS.CH0MUX = 0b11010111; // select compare match TCD - D to create reset of both timers.
 			}*/
 
@@ -387,6 +382,40 @@ static uint8_t dir =0;
 		}
 //		//OS_WaitTicks(10);
 //		ADCStartConvAll(); // start next conversion, which again triggers this task,
+	}
+}
+
+
+void SetEnableBuck(void)
+{
+	// links ENABLE immer an:
+	TCC0.CCBBUF = PERIOD_MAX;
+
+	if(startup)
+	{
+		// rechts ENABLE falls start immer aus:
+		TCD0.CCBBUF = PERIOD_MAX;//(invertiert!)
+	}
+	else
+	{
+		TCD0.CCBBUF = 0;
+	}
+}
+
+void SetEnableBoost(void)
+{
+	// links ENABLE immer an:
+	TCC0.CCBBUF = PERIOD_MAX;
+
+	if(startup)
+	{
+		// rechts ENABLE läuft mit:
+		TCD0.CCBBUF = TCD0.CCABUF;//PERIOD_H*2 - power;//(invertiert!)
+	}
+	else
+	{
+		//rechts ENABLE
+		TCD0.CCBBUF = 0; //(invertiert!)
 	}
 }
 
