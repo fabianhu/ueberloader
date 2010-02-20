@@ -20,7 +20,7 @@ void SetEnableBoost(void);
 
 // with N-channel high side driver
 #define MINSWITCHOFFPWM 90 // = 1,5µs
-uint8_t startup = 1;
+
 /*
 #define PWMA_PWM_NOR 	PWMA_OFF;TCCR1A |=  0b10000000;
 #define PWMA_PWM_REV	PWMA_OFF;TCCR1A |=  0b11000000;
@@ -61,7 +61,7 @@ void emstop(uint8_t e)
 	}
 }
 
-extern int16_t g_sADCvalues[];
+extern int16_t g_sADCvalues[3];
 
 struct 
 {
@@ -93,49 +93,40 @@ ISR(TCC0_CCD_vect) // versuch, ein 1/10 anschaltverhältnis zu machen.
 
 	}
 }
-#define PERIOD_DIV 10
-#define PERIOD_H 1280
+#define PERIOD_DIV 10ul
+#define PERIOD_H 1280ul
 #define PERIOD_L PERIOD_H + (PERIOD_H +4)* PERIOD_DIV
 #define PERIOD_MAX 0xffff
 
+#define STARTMAX 1000ul;
+uint16_t startstep =STARTMAX;
+
+
 void TaskGovernor(void)
 {
-	uint16_t power = PERIOD_H; // 0=0 Vollgas = PERIOD_H *2
-	uint16_t ADCoffset = ADCinit();
+	uint16_t usPower = PERIOD_H; // 0=0 Vollgas = PERIOD_H *2
+	uint16_t usADCoffset = ADCinit();
 
-	uint32_t temp;
-	uint16_t U_in_act,U_out_act,I_out_act; // mV / mA
-	uint8_t bOpModeBuck = 1; //, bBoostModeChange = 1;;
+	uint32_t unTemp;
+	uint16_t usU_in_act,usU_out_act,usI_out_act; // mV / mA
 //
 //	uint16_t bStarted =0;
-//
-//	uint8_t i;
-//
-//	// set working parameters
-//	if (PINC & (1<<PC1))
-//		s_Command.U_Max = 4150*3;
-//		else
-//		s_Command.U_Max = 4150*6;
-//
-//	if (!(PINC & (1<<PC7)))
-//		{
-//			// no limits ever!
-//			s_Command.U_Max = 26000; // set to 26V
-//			I_Max_ABS = 29500;
-//		}
-//
-//	ADCStartConvAll(); // start first conversion
-//
-//
-//
-//	PWMA_PWM_NOR;
-//	PWMB_PWM_REV;
-//	OCR1A = 0xff;
-//	OCR1B = 0xff;
-//
-//	uint16_t Power = 0,Limit=0;
-//
-//
+
+
+
+
+	// set working parameters
+	if (PINC & (1<<PC1))
+		s_Command.U_Max = 4150*3;
+		else
+		s_Command.U_Max = 4150*6;
+
+	if (!(PINC & (1<<PC7)))
+		{
+			// no limits ever!
+			s_Command.U_Max = 26000; // set to 26V
+			I_Max_ABS = 29500;
+		}
 
 
 	TCC0.CTRLA = TC_CLKSEL_DIV1_gc;
@@ -171,26 +162,31 @@ void TaskGovernor(void)
 	PORTD.PIN1CTRL = 0b01000000;
 
 
+	OS_WaitTicks(1); // wait during ADC conversion
+
 	while(1)
 	{
 		//OS_WaitEvent(1); // wait for ADC // this task alternates with ADC
 
 		EVSYS.STROBE = (1<<7);  //fire event 7, which triggers the ADC
 
-		OS_WaitTicks(33); // wait during ADC conversion
+		OS_WaitTicks(1); // wait during ADC conversion
 
-		temp = g_sADCvalues[0]*6220ul; // [mV]  3,3V/1,6=2,06V - Offset = 1,96V -> 160.75 bits/V
-		U_in_act = temp / 1000ul;
+		unTemp = ((uint32_t)g_sADCvalues[0]*6683ul - (uint32_t)usADCoffset)/1000ul; // [mV]  3,3V/1,6=2,06V - Offset = 1,96V -> 160.75 bits/V
+		usU_in_act = unTemp ;
 
-		temp = g_sADCvalues[1]*6220ul; // [mV]  3,3V/1,6=2,06V - Offset = 1,96V -> 160.75 bits/V
-		U_out_act = temp;
 
-		I_out_act = g_sADCvalues[2]*7; // [mA/10]  2V = 3A  (fixme)
+		// 27k / 2k2 is 1.95V at 26V (27,375V @ 4095 bits) = 6,6833 mv/bit
+
+		unTemp = ((uint32_t)g_sADCvalues[1]- (uint32_t)usADCoffset)*6683ul/1000ul; // [mV]  3,3V/1,6=2,06V - Offset = 1,96V -> 160.75 bits/V
+		usU_out_act = unTemp;
+
+		usI_out_act = g_sADCvalues[2]*7; // [mA/10]  2V = 3A  (fixme)
 //		cli();
 //		g_I_filt = I_out_act;
 //		sei();
 //
-		if (U_in_act <8000 || U_in_act > 25000 || I_out_act > 30000)
+		if (usU_in_act <8000 || usU_in_act > 25000 || usI_out_act > 30000)
 		{
 			emstop(1); // just in case...
 		}
@@ -228,35 +224,6 @@ void TaskGovernor(void)
 			else
 			{*/
 
-			// links unten und rechts oben eine Diode vorsehen (LTC3780 Referenzdesign sieht das vor)
-
-			/*if (Power > 256) // boost
-			{
-				// right side: switch on low longer for increasing power. (max 50% on)
-				// left side: keep high on with interruptions (at the end of right sides high)
-
-			}
-			else
-			{
-				// left side: switch on high longer for increasing power. (max 100% on)
-				// right side: keep high with interruptions (at the end of left sides high)
-
-			}
-			*/
-
-			/* startup:
-			 * Anhand der gemessenen Spannungen entscheiden: Start mit boost or buck.
-			 * Buck:
-			 * Versuch des Start im "cross-over" mode d.h. links und rechts gleichzeitig (high)kurz an.
-			 * Sollte der Strom richtig fließen, erhöhen des PWM synchron, bis der Strom erreicht ist. ???
-			 *
-			 * start im "pseudo boost mode":
-			 * beide aus, links kurz an - Spule laden - rechts kurz an, Spule entladen und Spannung hochschieben.
-			 *
-
-			 * Wir brauchen eine Strom-Messung in beide Richtungen? - nee doch nicht, wir kennen die Spannungen.
-			*/
-
 
 
 			/*if(U_out_act < s_Command.U_Max &&  I_out_act < s_Command.I_Max_Set)
@@ -274,26 +241,32 @@ static uint8_t dir =0;
 
 			if (dir==0)
 			{
-				if (power < PERIOD_H + 2*MINSWITCHOFFPWM)//PERIOD_H*17/10)
-					power++;
+				if (usPower < PERIOD_H + 2*MINSWITCHOFFPWM)//PERIOD_H*17/10)
+					usPower++;
 				else
 					dir =1;
 			}
 			else
 			{
-				if (power >= PERIOD_H - 2*MINSWITCHOFFPWM)//PERIOD_H*17/10)
-					power--;
+				if (usPower >= PERIOD_H - 2*MINSWITCHOFFPWM)//PERIOD_H*17/10)
+					usPower--;
 				else
 					dir =0;
 
 			}
 
+			/*static uint8_t cn=0;
+			if (++cn == 10)
+			{
+				if (startstep >0)
+					startstep -= 1;
+			}*/
 
-			if ( power <= PERIOD_H - MINSWITCHOFFPWM )
+			if ( usPower <= PERIOD_H - MINSWITCHOFFPWM )
 			{
 				//buck
 				// links IN
-				TCC0.CCABUF = power;
+				TCC0.CCABUF = usPower;
 
 				// rechts IN
 				TCD0.CCABUF = PERIOD_L - MINSWITCHOFFPWM; // + speed runtersetzen fixme
@@ -303,10 +276,10 @@ static uint8_t dir =0;
 
 				SetEnableBuck();
 			}
-			else if(power <= PERIOD_H)
+			else if(usPower <= PERIOD_H)
 			{
 				uint16_t u;
-				u = PERIOD_H - power;
+				u = PERIOD_H - usPower;
 				u = u*PERIOD_DIV / MINSWITCHOFFPWM; // result = 1..10
 				TCC0.PERBUF = PERIOD_H + (PERIOD_H +4)* (PERIOD_DIV-u);
 				TCC0.CCABUF = TCC0.PERBUF - MINSWITCHOFFPWM;
@@ -316,10 +289,10 @@ static uint8_t dir =0;
 				SetEnableBuck();
 				//EVSYS.STROBE = (1<<0); // sync timers
 			}
-			else if(power <= PERIOD_H + MINSWITCHOFFPWM)
+			else if(usPower <= PERIOD_H + MINSWITCHOFFPWM)
 			{
 				uint16_t u;
-				u = power - PERIOD_H;
+				u = usPower - PERIOD_H;
 				u = u*PERIOD_DIV / MINSWITCHOFFPWM; // result = 1..10
 				TCD0.PERBUF = PERIOD_H + (PERIOD_H +4)* (PERIOD_DIV-u);
 				TCD0.CCABUF = TCD0.PERBUF - MINSWITCHOFFPWM;
@@ -336,7 +309,7 @@ static uint8_t dir =0;
 				TCC0.CCABUF = TCC0.PERBUF - MINSWITCHOFFPWM; // + speed runtersetzen fixme
 
 				// rechts IN
-				TCD0.CCABUF = PERIOD_H*2 - power;//PERIOD_H*2 - power - 2* MINSWITCHOFFPWM ;
+				TCD0.CCABUF = PERIOD_H*2 - usPower;//PERIOD_H*2 - power - 2* MINSWITCHOFFPWM ;
 
 				// links ENABLE immer an:
 				TCC0.CCBBUF = PERIOD_MAX;
@@ -386,15 +359,19 @@ static uint8_t dir =0;
 }
 
 
+
 void SetEnableBuck(void)
 {
+	uint32_t u;
 	// links ENABLE immer an:
 	TCC0.CCBBUF = PERIOD_MAX;
 
-	if(startup)
+	if(startstep)
 	{
+		u= ((uint32_t)TCD0.PERBUF+4ul) * (uint32_t)startstep / STARTMAX; // fixme stimmt nicht
+
 		// rechts ENABLE falls start immer aus:
-		TCD0.CCBBUF = PERIOD_MAX;//(invertiert!)
+		TCD0.CCBBUF = u;//(invertiert!)
 	}
 	else
 	{
@@ -402,15 +379,29 @@ void SetEnableBuck(void)
 	}
 }
 
+uint16_t min(uint16_t a, uint16_t b)
+{
+	return (a<b?a:b);
+}
+
+
+
 void SetEnableBoost(void)
 {
+	uint32_t u;
+
 	// links ENABLE immer an:
 	TCC0.CCBBUF = PERIOD_MAX;
 
-	if(startup)
+	if(startstep)
 	{
+		u= (uint32_t)TCD0.CCABUF * (uint32_t)startstep / STARTMAX;
+
 		// rechts ENABLE läuft mit:
-		TCD0.CCBBUF = TCD0.CCABUF;//PERIOD_H*2 - power;//(invertiert!)
+		TCD0.CCBBUF = u;//PERIOD_H*2 - power;//(invertiert!)
+
+
+		// min of: TCD0.PERBUF + 4 - u and TCD0.CCABUF
 	}
 	else
 	{
