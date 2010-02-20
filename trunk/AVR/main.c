@@ -17,6 +17,7 @@ OS_DeclareQueue(DemoQ,10,4);
 // *********  Prototypes
 void CPU_init(void);
 
+extern void emstop(uint8_t e);
 
 // *********  THE main()
 int main(void)
@@ -125,7 +126,7 @@ void CPU_init(void)
 
 ISR(OSC_XOSCF_vect)
 {
-	// fixme emergency stop here!
+	emstop(99);// fixme emergency stop here!
 }
 
 
