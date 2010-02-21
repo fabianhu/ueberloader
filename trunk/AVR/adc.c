@@ -132,7 +132,7 @@ uint16_t ADCinit(void)
 	EVSYS.STROBE = (1<<7);
 
 	// fixme Get offset value for ADC A.
-	return 200;
+	return 140;
 }
 
 ISR(DMA_CH0_vect)
@@ -144,6 +144,8 @@ ISR(DMA_CH0_vect)
 	
 	DMA.CH0.CTRLB |= DMA_CH_TRNIF_bm;// clear interrupt flag
 	DMA.CH0.CTRLA |= DMA_CH_ENABLE_bm;// re-enable DMA
+
+	//OS_SetEvent(0,1);
 }
 
 void ADCStartConvCh(uint8_t c)
