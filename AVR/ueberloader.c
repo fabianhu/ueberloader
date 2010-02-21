@@ -33,11 +33,11 @@ void SetEnableBoost(void);
 // illegal! #define PWMB_ON 		TCCR1A &= ~0b00110000; PORTD |= (1<<PD4); //OCR1B = 0;
 #define PWMB_DISC_ON	PWMB_OFF; PWMB_PWM_NOR; OCR1B = 0xff-MINSWITCHOFFPWM;
 */
-#define ENABLE_A_ON 	TCC0.CCBBUF = 1280;
+//#define ENABLE_A_ON 	TCC0.CCBBUF = 1280;
 #define ENABLE_A_OFF	TCC0.CCBBUF = 0;
 
-#define ENABLE_B_ON 	TCD0.CCBBUF = 1280;
-#define ENABLE_B_OFF	TCD0.CCBBUF = 0;
+//#define ENABLE_B_ON 	TCD0.CCBBUF = 1280;
+#define ENABLE_B_OFF	TCD0.CCBBUF = TCD0.PERBUF +4; // inverted
 /*
 #define ENABLE_A_OFF 	PORTD &= ~(1<<PD3);
 #define ENABLE_B_ON 	PORTD |= (1<<PD2);
@@ -112,21 +112,22 @@ void TaskGovernor(void)
 //
 //	uint16_t bStarted =0;
 
-
-
+	PORTD.PIN5CTRL = PORT_OPC_PULLUP_gc;
+	PORTD.PIN6CTRL = PORT_OPC_PULLUP_gc;
+	PORTD.PIN7CTRL = PORT_OPC_PULLUP_gc;
 
 	// set working parameters
-	if (PINC & (1<<PC1))
-		s_Command.U_Max = 4150*3;
-		else
+	//if (PORTD.IN & PIN7_bm)
+		//s_Command.U_Max = 4150*3;
+		//else
 		s_Command.U_Max = 4150*6;
 
-	if (!(PINC & (1<<PC7)))
+	/*if (!(PINC & (1<<PC7)))
 		{
 			// no limits ever!
 			s_Command.U_Max = 26000; // set to 26V
 			I_Max_ABS = 29500;
-		}
+		}*/
 
 
 	TCC0.CTRLA = TC_CLKSEL_DIV1_gc;
@@ -162,23 +163,22 @@ void TaskGovernor(void)
 	PORTD.PIN1CTRL = 0b01000000;
 
 
-	OS_WaitTicks(1); // wait during ADC conversion
+	OS_WaitTicks(1); // wait during first ADC conversion
 
 	while(1)
 	{
-		//OS_WaitEvent(1); // wait for ADC // this task alternates with ADC
 
 		EVSYS.STROBE = (1<<7);  //fire event 7, which triggers the ADC
 
+		//OS_WaitEvent(1); // wait for ADC // this task alternates with ADC
 		OS_WaitTicks(1); // wait during ADC conversion
 
-		unTemp = ((uint32_t)g_sADCvalues[0]*6683ul - (uint32_t)usADCoffset)/1000ul; // [mV]  3,3V/1,6=2,06V - Offset = 1,96V -> 160.75 bits/V
+		unTemp = ((uint32_t)g_sADCvalues[0] /*- (uint32_t)usADCoffset*/)*6683ul/1000ul; // [mV]  3,3V/1,6=2,06V - Offset = 1,96V -> 160.75 bits/V
 		usU_in_act = unTemp ;
-
 
 		// 27k / 2k2 is 1.95V at 26V (27,375V @ 4095 bits) = 6,6833 mv/bit
 
-		unTemp = ((uint32_t)g_sADCvalues[1]- (uint32_t)usADCoffset)*6683ul/1000ul; // [mV]  3,3V/1,6=2,06V - Offset = 1,96V -> 160.75 bits/V
+		unTemp = ((uint32_t)g_sADCvalues[1] /*- (uint32_t)usADCoffset*/)*6683ul/1000ul; // [mV]  3,3V/1,6=2,06V - Offset = 1,96V -> 160.75 bits/V
 		usU_out_act = unTemp;
 
 		usI_out_act = g_sADCvalues[2]*7; // [mA/10]  2V = 3A  (fixme)
@@ -186,59 +186,49 @@ void TaskGovernor(void)
 //		g_I_filt = I_out_act;
 //		sei();
 //
-		if (usU_in_act <8000 || usU_in_act > 25000 || usI_out_act > 30000)
+		if (usU_in_act <8000 || usU_in_act > 20000 || usI_out_act > 30000)
 		{
 			emstop(1); // just in case...
 		}
 
-		/*if(s_Command.I_Max_Set <= 0)
+		if(s_Command.I_Max_Set <= 0)
 		{
-			ENABLE_A_OFF; ENABLE_B_OFF;
-			LED1_OFF;
-			OCR1A =0;
-			OCR1B =0xff;
-			bStarted =0;
+			usPower = 0;
+			ENABLE_A_OFF;ENABLE_B_OFF;
 		}
-		else*/
+		else
 		{
 			//ENABLE_A_ON;
 			//ENABLE_B_ON;
 
 
-			/*if(
-				(
-					I_out_act > (s_Command.I_Max_Set+(s_Command.I_Max_Set/10)) ||
-					U_out_act > (s_Command.U_Max+(s_Command.U_Max/10)) || !(PIND & (1<<PD7))
-				)
-				&& (PINC & (1<<PC7)) // disable by jumper
-			  )
+//			if(
+//					usI_out_act > (s_Command.I_Max_Set+(s_Command.I_Max_Set/10)) ||
+//					usU_out_act > (s_Command.U_Max+(s_Command.U_Max/10))
+//				)
+//			{
+//				// overshoot prevention
+//				usPower = 0;
+//			}
+//			else
+//			{
+
+
+
+			if(usU_out_act < s_Command.U_Max && usI_out_act < s_Command.I_Max_Set)
 			{
-				// overshoot prevention
-				PWMA_OFF;
-				PWMB_OFF;
-				OCR1A =0;
-				OCR1Bi =MINSWITCHOFFPWM;
-				ENABLE_A_OFF; ENABLE_B_OFF;
-			//	bOpMode_Boost = 0;
-			}
-			else
-			{*/
-
-
-
-			/*if(U_out_act < s_Command.U_Max &&  I_out_act < s_Command.I_Max_Set)
-			{
-				if (power < PERIOD_H*17/10)
-				power++;
+				if (usPower < PERIOD_H*17/10)
+					usPower++;
 			}
 			else
 			{
-				if(power>0)
-				power--;
-			}*/
-static uint8_t dir =0;
+				if(usPower>0)
+					usPower--;
+			}
 
 
+/* debug test code
+			static uint8_t dir =0;
 			if (dir==0)
 			{
 				if (usPower < PERIOD_H + 2*MINSWITCHOFFPWM)//PERIOD_H*17/10)
@@ -253,14 +243,22 @@ static uint8_t dir =0;
 				else
 					dir =0;
 
-			}
+			} */
 
-			/*static uint8_t cn=0;
-			if (++cn == 10)
+			static uint8_t cn=0;
+			if(usPower < 10 || s_Command.I_Max_Set < 2000)
 			{
-				if (startstep >0)
-					startstep -= 1;
-			}*/
+				startstep = STARTMAX;
+			}
+			else
+			{
+				if (++cn == 30)
+				{
+					cn=0;
+					if (startstep >0)
+						startstep--; // muss null werden.
+				}
+			}
 
 			if ( usPower <= PERIOD_H - MINSWITCHOFFPWM )
 			{
@@ -349,7 +347,7 @@ static uint8_t dir =0;
 			 *
 			 * */
 
-
+			//} xxed if above
 
 
 		}
@@ -378,13 +376,6 @@ void SetEnableBuck(void)
 		TCD0.CCBBUF = 0;
 	}
 }
-
-uint16_t min(uint16_t a, uint16_t b)
-{
-	return (a<b?a:b);
-}
-
-
 
 void SetEnableBoost(void)
 {
@@ -429,75 +420,78 @@ void TaskBalance(void)
 			case 4:
 			case 5:
 				// push voltage of channel into array
+				phase++;
 				break;
 			case 6:
 				// VCC measurement
+				phase++;
 				break;
 			case 7:
 				// zero offset
+				phase++;
 				break;
 			case 8:
 				// CPU temperature
+				phase++;
 				break;
 			case 9:
 				// temperature external1
+				phase++;
 				break;
 			case 10:
 				// temperature external2
+				phase =0;
 				break;
 			default:
 				phase = 0;
 		}
 
-		// increment phase
-		if(phase < 10)
-			phase++;
-		else
-			phase =0;
+		// trigger next conversion inside last case
 
-		// trigger next conversion
-		switch (phase)
-		{
-			case 0:
-			case 1:
-			case 2:
-			case 3:
-			case 4:
-			case 5:
-				// push voltage of channel into array
-				break;
-			case 6:
-				// VCC measurement
-				break;
-			case 7:
-				// zero offset
-				break;
-			case 8:
-				// CPU temperature
-				break;
-			case 9:
-				// temperature external1
-				break;
-			case 10:
-				// temperature external2
-				break;
-			default:
-				phase = 0;
-		}
 
 	}
 }
 
 void Task3(void)
 {
-	OS_SetAlarm(2,1000);
+	/*OS_SetAlarm(2,1000);
 	while(1)
 	{
 		OS_WaitAlarm();
 		OS_SetAlarm(2,1000);
 		// count the charged Q
 
-	}
+	}*/
+	uint16_t i;
+
+	OS_SetAlarm(2,10);
+		while(1)
+		{
+			OS_WaitAlarm();
+			OS_SetAlarm(2,10);
+			// TODO add your code here
+
+			if(!(PORTD.IN & PIN5_bm)) // set to 0
+			{
+				s_Command.I_Max_Set =0;
+				OS_SetAlarm(2,1000);
+			}
+			else
+			{
+				cli();
+				i = s_Command.I_Max_Set;
+				if(!(PORTD.IN & PIN6_bm) && (i + 1000) <= I_Max_ABS)
+				{
+					i += 1000;
+					s_Command.I_Max_Set = i ; // increase by 100 mA
+					OS_SetAlarm(2,333); // look again in 333ms
+				}
+				sei();
+
+				// fixme setpoint kann nicht höher, wenn power-mode (rechtes enable) nicht ein ist.
+			}
+		}
+
 }
 
 
