@@ -19,7 +19,7 @@ void SetEnableBuck(void);
 void SetEnableBoost(void);
 
 // with N-channel high side driver
-#define MINSWITCHOFFPWM 90 // = 1,5µs
+#define MINSWITCHOFFPWM 120
 
 /*
 #define PWMA_PWM_NOR 	PWMA_OFF;TCCR1A |=  0b10000000;
@@ -186,7 +186,11 @@ void TaskGovernor(void)
 //		g_I_filt = I_out_act;
 //		sei();
 //
-		if (usU_in_act <8000 || usU_in_act > 20000 || usI_out_act > 30000)
+		if (usU_in_act <8000 ||
+			usU_in_act > 20000 || 
+			usI_out_act > 30000 ||
+			usU_out_act > 25000
+		)
 		{
 			emstop(1); // just in case...
 		}
@@ -195,6 +199,7 @@ void TaskGovernor(void)
 		{
 			usPower = 0;
 			ENABLE_A_OFF;ENABLE_B_OFF;
+			startstep = STARTMAX;
 		}
 		else
 		{
@@ -213,7 +218,7 @@ void TaskGovernor(void)
 //			else
 //			{
 
-
+			int16_t diff = usI_out_act - s_Command.I_Max_Set;
 
 			if(usU_out_act < s_Command.U_Max && usI_out_act < s_Command.I_Max_Set)
 			{
@@ -246,18 +251,23 @@ void TaskGovernor(void)
 			} */
 
 			static uint8_t cn=0;
-			if(usPower < 10 || s_Command.I_Max_Set < 2000)
+
+			int16_t diffa = (diff>0)?diff:-diff;
+
+
+			if(diffa < s_Command.I_Max_Set/20 && s_Command.I_Max_Set > 3000)
 			{
-				startstep = STARTMAX;
-			}
-			else
-			{
-				if (++cn == 30)
+				if (++cn == 3)
 				{
 					cn=0;
 					if (startstep >0)
 						startstep--; // muss null werden.
 				}
+				//startstep =0;
+			}
+			else
+			{
+				//startstep = STARTMAX;
 			}
 
 			if ( usPower <= PERIOD_H - MINSWITCHOFFPWM )
@@ -366,7 +376,7 @@ void SetEnableBuck(void)
 
 	if(startstep)
 	{
-		u= ((uint32_t)TCD0.PERBUF+4ul) * (uint32_t)startstep / STARTMAX; // fixme stimmt nicht
+		u= ((uint32_t)TCD0.PERBUF+4ul) * (uint32_t)startstep / STARTMAX;
 
 		// rechts ENABLE falls start immer aus:
 		TCD0.CCBBUF = u;//(invertiert!)
@@ -386,7 +396,7 @@ void SetEnableBoost(void)
 
 	if(startstep)
 	{
-		u= (uint32_t)TCD0.CCABUF * (uint32_t)startstep / STARTMAX;
+		u= (uint32_t)TCD0.CCABUF * (uint32_t)startstep / STARTMAX;// fixme stimmt nicht
 
 		// rechts ENABLE läuft mit:
 		TCD0.CCBBUF = u;//PERIOD_H*2 - power;//(invertiert!)
