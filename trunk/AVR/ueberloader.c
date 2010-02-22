@@ -19,7 +19,6 @@ void SetEnableBuck(void);
 void SetEnableBoost(void);
 
 // with N-channel high side driver
-#define MINSWITCHOFFPWM 120
 
 /*
 #define PWMA_PWM_NOR 	PWMA_OFF;TCCR1A |=  0b10000000;
@@ -55,10 +54,17 @@ void emstop(uint8_t e)
 //	PWMB_OFF;
 	ENABLE_A_OFF;
 	ENABLE_B_OFF;
-	while(1)
+	PORTB.DIRSET = 0b1000;
+	PORTB.OUTSET = 0b1000;
+
+	/*while(1)
 	{
 		asm("nop");
-	}
+	}*/
+
+	CCP = CCP_IOREG_gc; // unlock
+	RST.CTRL = 1; // SW reset
+
 }
 
 extern int16_t g_sADCvalues[3];
@@ -73,12 +79,12 @@ struct
 }
 s_Command = {0,0,0,0,0};
 
-uint16_t I_Max_ABS = 15000;
+uint16_t I_Max_ABS = 25000;
 
 volatile uint16_t g_I_filt;
 volatile uint8_t up=0,dn=0; // fixme remove test vars
 
-ISR(TCC0_CCD_vect) // versuch, ein 1/10 anschaltverhältnis zu machen.
+/*ISR(TCC0_CCD_vect) // versuch, ein 1/10 anschaltverhältnis zu machen.
 {
 	static uint8_t c;
 	c++;
@@ -92,19 +98,20 @@ ISR(TCC0_CCD_vect) // versuch, ein 1/10 anschaltverhältnis zu machen.
 		TCC0.CTRLB &= ~0b00100000;
 
 	}
-}
+}*/
 #define PERIOD_DIV 10ul
-#define PERIOD_H 1280ul
+#define PERIOD_H 2560ul // 1280 = 100kHz
 #define PERIOD_L PERIOD_H + (PERIOD_H +4)* PERIOD_DIV
 #define PERIOD_MAX 0xffff
+#define MINSWITCHOFFPWM 300
 
 #define STARTMAX 1000ul;
-uint16_t startstep =STARTMAX;
+uint16_t usStartstep =STARTMAX;
 
 
 void TaskGovernor(void)
 {
-	uint16_t usPower = PERIOD_H; // 0=0 Vollgas = PERIOD_H *2
+	uint16_t usPower = 0; // 0=0 ; Vollgas = PERIOD_H *2
 	uint16_t usADCoffset = ADCinit();
 
 	uint32_t unTemp;
@@ -158,9 +165,11 @@ void TaskGovernor(void)
 	// sync timers via event 0
 	EVSYS.STROBE = 0b00000001;
 
+	OS_WaitTicks(1); // wait during timer sync
+
+	PORTD.PIN1CTRL = 0b01000000;
 	PORTC.DIRSET = 0b00000011; // set Port C as output
 	PORTD.DIRSET = 0b00000011; // set Port D as output
-	PORTD.PIN1CTRL = 0b01000000;
 
 
 	OS_WaitTicks(1); // wait during first ADC conversion
@@ -171,7 +180,7 @@ void TaskGovernor(void)
 		EVSYS.STROBE = (1<<7);  //fire event 7, which triggers the ADC
 
 		//OS_WaitEvent(1); // wait for ADC // this task alternates with ADC
-		OS_WaitTicks(1); // wait during ADC conversion
+		OS_WaitTicks(33); // wait during ADC conversion
 
 		unTemp = ((uint32_t)g_sADCvalues[0] /*- (uint32_t)usADCoffset*/)*6683ul/1000ul; // [mV]  3,3V/1,6=2,06V - Offset = 1,96V -> 160.75 bits/V
 		usU_in_act = unTemp ;
@@ -185,28 +194,29 @@ void TaskGovernor(void)
 //		cli();
 //		g_I_filt = I_out_act;
 //		sei();
-//
-		if (usU_in_act <8000 ||
-			usU_in_act > 20000 || 
-			usI_out_act > 30000 ||
-			usU_out_act > 25000
-		)
-		{
-			emstop(1); // just in case...
-		}
+
+ // just in case...
+		if (usU_in_act < 8000)
+			emstop(1);
+		if (usU_in_act > 20000)
+			emstop(2);
+		if (usI_out_act > 26000)
+			emstop(3);
+		if (usU_out_act > 25000)
+			emstop(4);
+
 
 		if(s_Command.I_Max_Set <= 0)
 		{
 			usPower = 0;
 			ENABLE_A_OFF;ENABLE_B_OFF;
-			startstep = STARTMAX;
+			usStartstep = STARTMAX;
 		}
 		else
 		{
 			//ENABLE_A_ON;
 			//ENABLE_B_ON;
-
-
+			
 //			if(
 //					usI_out_act > (s_Command.I_Max_Set+(s_Command.I_Max_Set/10)) ||
 //					usU_out_act > (s_Command.U_Max+(s_Command.U_Max/10))
@@ -220,7 +230,7 @@ void TaskGovernor(void)
 
 			int16_t diff = usI_out_act - s_Command.I_Max_Set;
 
-			if(usU_out_act < s_Command.U_Max && usI_out_act < s_Command.I_Max_Set)
+		/*	if(usU_out_act < s_Command.U_Max && usI_out_act < s_Command.I_Max_Set)
 			{
 				if (usPower < PERIOD_H*17/10)
 					usPower++;
@@ -229,10 +239,10 @@ void TaskGovernor(void)
 			{
 				if(usPower>0)
 					usPower--;
-			}
+			}*/
 
 
-/* debug test code
+// debug test code
 			static uint8_t dir =0;
 			if (dir==0)
 			{
@@ -248,7 +258,7 @@ void TaskGovernor(void)
 				else
 					dir =0;
 
-			} */
+			}
 
 			static uint8_t cn=0;
 
@@ -260,14 +270,14 @@ void TaskGovernor(void)
 				if (++cn == 3)
 				{
 					cn=0;
-					if (startstep >0)
-						startstep--; // muss null werden.
+					if (usStartstep >0)
+						usStartstep--; // muss null werden.
 				}
-				//startstep =0;
+				//usStartstep =0;
 			}
 			else
 			{
-				//startstep = STARTMAX;
+				//usStartstep = STARTMAX;
 			}
 
 			if ( usPower <= PERIOD_H - MINSWITCHOFFPWM )
@@ -277,7 +287,7 @@ void TaskGovernor(void)
 				TCC0.CCABUF = usPower;
 
 				// rechts IN
-				TCD0.CCABUF = PERIOD_L - MINSWITCHOFFPWM; // + speed runtersetzen fixme
+				TCD0.CCABUF = PERIOD_L - MINSWITCHOFFPWM;
 
 				TCC0.PERBUF = PERIOD_H;
 				TCD0.PERBUF = PERIOD_L;
@@ -374,9 +384,9 @@ void SetEnableBuck(void)
 	// links ENABLE immer an:
 	TCC0.CCBBUF = PERIOD_MAX;
 
-	if(startstep)
+	if(usStartstep)
 	{
-		u= ((uint32_t)TCD0.PERBUF+4ul) * (uint32_t)startstep / STARTMAX;
+		u= ((uint32_t)TCD0.PERBUF+4ul) * (uint32_t)usStartstep / STARTMAX;
 
 		// rechts ENABLE falls start immer aus:
 		TCD0.CCBBUF = u;//(invertiert!)
@@ -394,9 +404,9 @@ void SetEnableBoost(void)
 	// links ENABLE immer an:
 	TCC0.CCBBUF = PERIOD_MAX;
 
-	if(startstep)
+	if(usStartstep)
 	{
-		u= (uint32_t)TCD0.CCABUF * (uint32_t)startstep / STARTMAX;// fixme stimmt nicht
+		u= (uint32_t)TCD0.CCABUF * (uint32_t)usStartstep / STARTMAX;// fixme stimmt nicht
 
 		// rechts ENABLE läuft mit:
 		TCD0.CCBBUF = u;//PERIOD_H*2 - power;//(invertiert!)
