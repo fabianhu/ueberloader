@@ -101,7 +101,8 @@ volatile uint8_t up=0,dn=0; // fixme remove test vars
 }*/
 #define PERIOD_DIV 10ul
 #define PERIOD_H 2560ul // 1280 = 100kHz
-#define PERIOD_L PERIOD_H + (PERIOD_H +4)* PERIOD_DIV
+//define PERIOD_L PERIOD_H + (PERIOD_H +4)* PERIOD_DIV // common divider...
+#define PERIOD_L PERIOD_H + (PERIOD_H )* PERIOD_DIV // odd divider...
 #define PERIOD_MAX 0xffff
 #define MINSWITCHOFFPWM 300
 
@@ -180,7 +181,7 @@ void TaskGovernor(void)
 		EVSYS.STROBE = (1<<7);  //fire event 7, which triggers the ADC
 
 		//OS_WaitEvent(1); // wait for ADC // this task alternates with ADC
-		OS_WaitTicks(33); // wait during ADC conversion
+		OS_WaitTicks(1); // wait during ADC conversion
 
 		unTemp = ((uint32_t)g_sADCvalues[0] /*- (uint32_t)usADCoffset*/)*6683ul/1000ul; // [mV]  3,3V/1,6=2,06V - Offset = 1,96V -> 160.75 bits/V
 		usU_in_act = unTemp ;
@@ -202,7 +203,7 @@ void TaskGovernor(void)
 			emstop(2);
 		if (usI_out_act > 26000)
 			emstop(3);
-		if (usU_out_act > 25000)
+		if (usU_out_act > 30000)
 			emstop(4);
 
 
@@ -230,7 +231,7 @@ void TaskGovernor(void)
 
 			int16_t diff = usI_out_act - s_Command.I_Max_Set;
 
-		/*	if(usU_out_act < s_Command.U_Max && usI_out_act < s_Command.I_Max_Set)
+			if(usU_out_act < s_Command.U_Max && usI_out_act < s_Command.I_Max_Set)
 			{
 				if (usPower < PERIOD_H*17/10)
 					usPower++;
@@ -239,10 +240,10 @@ void TaskGovernor(void)
 			{
 				if(usPower>0)
 					usPower--;
-			}*/
+			}
 
 
-// debug test code
+/*// debug test code
 			static uint8_t dir =0;
 			if (dir==0)
 			{
@@ -259,7 +260,7 @@ void TaskGovernor(void)
 					dir =0;
 
 			}
-
+*/
 			static uint8_t cn=0;
 
 			int16_t diffa = (diff>0)?diff:-diff;
@@ -285,37 +286,40 @@ void TaskGovernor(void)
 				//buck
 				// links IN
 				TCC0.CCABUF = usPower;
+				TCC0.PERBUF = PERIOD_H;
 
 				// rechts IN
 				TCD0.CCABUF = PERIOD_L - MINSWITCHOFFPWM;
-
-				TCC0.PERBUF = PERIOD_H;
 				TCD0.PERBUF = PERIOD_L;
 
 				SetEnableBuck();
 			}
 			else if(usPower <= PERIOD_H)
 			{
-				uint16_t u;
-				u = PERIOD_H - usPower;
-				u = u*PERIOD_DIV / MINSWITCHOFFPWM; // result = 1..10
-				TCC0.PERBUF = PERIOD_H + (PERIOD_H +4)* (PERIOD_DIV-u);
+				uint32_t u;
+				u = MINSWITCHOFFPWM - (PERIOD_H - (uint32_t)usPower);
+				u = u*100*PERIOD_DIV  / MINSWITCHOFFPWM; // result = 1..10 (*100)
+				u = PERIOD_H * u /100;
+				TCC0.PERBUF = PERIOD_H + u;
 				TCC0.CCABUF = TCC0.PERBUF - MINSWITCHOFFPWM;
 
 				TCD0.PERBUF = PERIOD_L;
+				TCD0.CCABUF = PERIOD_L - MINSWITCHOFFPWM;
 
 				SetEnableBuck();
 				//EVSYS.STROBE = (1<<0); // sync timers
 			}
 			else if(usPower <= PERIOD_H + MINSWITCHOFFPWM)
 			{
-				uint16_t u;
-				u = usPower - PERIOD_H;
-				u = u*PERIOD_DIV / MINSWITCHOFFPWM; // result = 1..10
-				TCD0.PERBUF = PERIOD_H + (PERIOD_H +4)* (PERIOD_DIV-u);
+				uint32_t u;
+				u = MINSWITCHOFFPWM - (usPower - PERIOD_H);
+				u = u*100*PERIOD_DIV / MINSWITCHOFFPWM; // result = 1..10 (*100)
+				u = PERIOD_H * u / 100;
+				TCD0.PERBUF = PERIOD_H + u;
 				TCD0.CCABUF = TCD0.PERBUF - MINSWITCHOFFPWM;
 
 				TCC0.PERBUF = PERIOD_L;
+				TCC0.CCABUF = TCC0.PERBUF - MINSWITCHOFFPWM;
 
 				SetEnableBoost();
 				//EVSYS.STROBE = (1<<0); // sync timers
