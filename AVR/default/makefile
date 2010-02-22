@@ -37,7 +37,7 @@ HEX_EEPROM_FLAGS += --change-section-lma .eeprom=0 --no-change-warnings
 
 
 ## Objects that must be built in order to link
-OBJECTS = ueberloader.o FabOS.o adc.o main.o 
+OBJECTS = ueberloader.o FabOS.o adc.o main.o pwm.o 
 
 ## Objects explicitly added by the user
 LINKONLYOBJECTS = 
@@ -56,6 +56,9 @@ adc.o: ../adc.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
 main.o: ../main.c
+	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+
+pwm.o: ../pwm.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
 ##Link
