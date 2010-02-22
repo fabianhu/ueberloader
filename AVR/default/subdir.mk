@@ -6,16 +6,19 @@
 C_SRCS += \
 ../adc.c \
 ../main.c \
+../pwm.c \
 ../ueberloader.c 
 
 OBJS += \
 ./adc.o \
 ./main.o \
+./pwm.o \
 ./ueberloader.o 
 
 C_DEPS += \
 ./adc.d \
 ./main.d \
+./pwm.d \
 ./ueberloader.d 
 
 
