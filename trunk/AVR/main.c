@@ -127,7 +127,7 @@ void CPU_init(void)
 ISR(OSC_XOSCF_vect)
 {
 	// oscillator failure
-	emstop(99);// fixme emergency stop here!
+	emstop(99);// emergency stop here!
 }
 
 

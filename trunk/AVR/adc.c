@@ -94,7 +94,7 @@ uint16_t ADCinit(void)
 
 
 	ADCA.CTRLA |= ADC_ENABLE_bm;
-	//ADCA.CTRLA |= ADC_DMASEL_CH0123_gc; // fixme check, if necessary
+	//ADCA.CTRLA |= ADC_DMASEL_CH0123_gc; // check, if necessary: it is not.
 	
 	ADCA.CH0.CTRL = ADC_CH_START_bm;
 	/* Wait until common mode voltage is stable. */
