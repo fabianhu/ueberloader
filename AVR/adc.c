@@ -148,10 +148,38 @@ ISR(DMA_CH0_vect)
 	//OS_SetEvent(0,1);
 }
 
+/*
+ * Start conversion on ADC Channel 3, which is not cyclically triggered.
+ *
+ * Parameter c = Pin Number.
+ *
+ * */
 void ADCStartConvCh(uint8_t c)
 {
 	/* M32 ADMUX = 0b111 & c;
 	ADCSRA |= (1<<ADSC);*/
+
+	ADCA.CH3.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc; // external
+	ADCA.CH3.MUXCTRL = (c << 3 ) & 0b01111000;
+
+	ADCA.CH3.CTRL = ADC_CH_START_bm;
+}
+
+/*
+ * Start internal conversion
+ *
+ * 0 = int temperature
+ * 1 = Bandgap voltage
+ * 2 = Scaled VCC (/10)
+ * 3 = DAC
+ *
+ * */
+void ADCStartConvInt(uint8_t c)
+{
+	ADCA.CH3.CTRL = ADC_CH_INPUTMODE_INTERNAL_gc; // external
+	ADCA.CH3.MUXCTRL = (c << 3 ) & 0b01111000;
+
+	ADCA.CH3.CTRL = ADC_CH_START_bm;
 }
 
 void ADCStartConvAll(void)

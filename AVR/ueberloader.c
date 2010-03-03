@@ -2,8 +2,11 @@
 
 The Üeberloader
 
+with N-channel high side driver
+
 */
 #include "OS/FabOS.h"
+#include "ueberloader.h"
 #include "adc.h"
 #include "pwm.h"
 
@@ -14,31 +17,13 @@ OS_DeclareTask(Task3,200);
 
 //OS_DeclareQueue(DemoQ,10,4);
 
+ADC_Values_t MyADCValues;
+
 // *********  Prototypes
-void CPU_init(void);
+extern void emstop(uint8_t e);
 
-// with N-channel high side driver
 
-void emstop(uint8_t e)
-{
-	cli(); // stop OS
-			
-//	PWMA_OFF;
-//	PWMB_OFF;
-	ENABLE_A_OFF;
-	ENABLE_B_OFF;
-	PORTB.DIRSET = 0b1000;
-	PORTB.OUTSET = 0b1000;
 
-	/*while(1)
-	{
-		asm("nop");
-	}*/
-
-	CCP = CCP_IOREG_gc; // unlock
-	RST.CTRL = 1; // SW reset
-
-}
 
 extern int16_t g_sADCvalues[3];
 
@@ -55,22 +40,6 @@ s_Command = {0,0,0,0,0};
 uint16_t I_Max_ABS = 25000;
 
 volatile uint16_t g_I_filt;
-
-/*ISR(TCC0_CCD_vect) // versuch, ein 1/10 anschaltverhältnis zu machen.
-{
-	static uint8_t c;
-	c++;
-	if (c>=10)
-	{
-		TCC0.CTRLB |= 0b00100000;
-		c=0;
-	}
-	else
-	{
-		TCC0.CTRLB &= ~0b00100000;
-
-	}
-}*/
 
 uint16_t usStartstep =STARTMAX;
 
@@ -102,7 +71,7 @@ void TaskGovernor(void)
 			I_Max_ABS = 29500;
 		}*/
 
-	initPWM();
+	vPWM_Init();
 
 	OS_WaitTicks(1); // wait during timer sync
 
@@ -218,7 +187,7 @@ void TaskGovernor(void)
 				//usStartstep = STARTMAX;
 			}
 
-			setPWM(usPower,usStartstep);
+			vPWM_Set(usPower,usStartstep);
 
 
 		}

@@ -17,7 +17,7 @@ OS_DeclareQueue(DemoQ,10,4);
 // *********  Prototypes
 void CPU_init(void);
 
-extern void emstop(uint8_t e);
+void emstop(uint8_t e);
 
 // *********  THE main()
 int main(void)
@@ -158,3 +158,30 @@ void OS_ErrorHook(uint8_t ErrNo)
 }
 #endif
 
+void emstop(uint8_t e)
+{
+	cli(); // stop OS
+
+	// Disable timer and Pins Port C
+	TCC0.CTRLA = 0;
+	TCC0.CTRLB = 0;
+	PORTC.OUTCLR = 0b00000011;
+
+	// Disable timer and Pins Port D
+	TCD0.CTRLA = 0;
+	TCD0.CTRLB = 0;
+	PORTD.OUTCLR = 0b00000011;
+
+	// Light up LED
+	PORTB.DIRSET = 0b1000;
+	PORTB.OUTSET = 0b1000;
+
+	/*while(1)
+	{
+		asm("nop");
+	}*/
+
+	CCP = CCP_IOREG_gc; // unlock
+	RST.CTRL = 1; // SW reset
+
+}

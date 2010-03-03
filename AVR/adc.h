@@ -16,5 +16,6 @@
 uint16_t ADCinit(void); //(returns offset?)
 
 void ADCStartConvCh(uint8_t c);
+void ADCStartConvInt(uint8_t c);
 
 void ADCStartConvAll(void);

@@ -5,7 +5,7 @@
 
 #include "pwm.h"
 
-void initPWM(void)
+void vPWM_Init(void)
 {
 	TCC0.CTRLA = TC_CLKSEL_DIV1_gc;
 	TCC0.CTRLB = 0b00110000 | TC_WGMODE_SS_gc; // single slope
@@ -37,7 +37,7 @@ void initPWM(void)
 }
 
 
-void setPWM(uint16_t usPower, uint16_t usStartstep)
+void vPWM_Set(uint16_t usPower, uint16_t usStartstep)
 {
 	if ( usPower <= PERIOD_H - MINSWITCHOFFPWM )
 	{
