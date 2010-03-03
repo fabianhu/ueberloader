@@ -1,89 +1,73 @@
-###############################################################################
-# Makefile for the project ueberloader
-###############################################################################
+################################################################################
+# Automatically-generated file. Do not edit!
+################################################################################
 
-## General Flags
-PROJECT = ueberloader
-MCU = atxmega32a4
-TARGET = ueberloader.elf
-CC = avr-gcc
+-include ../makefile.init
 
-CPP = avr-g++
+RM := rm -rf
 
-## Options common to compile, link and assembly rules
-COMMON = -mmcu=$(MCU)
+# All of the sources participating in the build are defined here
+-include sources.mk
+-include subdir.mk
+-include OS/subdir.mk
+-include objects.mk
 
-## Compile options common for all C compilation units.
-CFLAGS = $(COMMON)
-CFLAGS += -Wall -gdwarf-2 -std=gnu99     -DF_CPU=32000000UL -O0 -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
-CFLAGS += -MD -MP -MT $(*F).o -MF dep/$(@F).d 
+ifneq ($(MAKECMDGOALS),clean)
+ifneq ($(strip $(C_DEPS)),)
+-include $(C_DEPS)
+endif
+ifneq ($(strip $(ASM_DEPS)),)
+-include $(ASM_DEPS)
+endif
+ifneq ($(strip $(S_DEPS)),)
+-include $(S_DEPS)
+endif
+ifneq ($(strip $(S_UPPER_DEPS)),)
+-include $(S_UPPER_DEPS)
+endif
+endif
 
-## Assembly specific flags
-ASMFLAGS = $(COMMON)
-ASMFLAGS += $(CFLAGS)
-ASMFLAGS += -x assembler-with-cpp -Wa,-gdwarf2
+-include ../makefile.defs
 
-## Linker flags
-LDFLAGS = $(COMMON)
-LDFLAGS +=  -Wl,-Map=ueberloader.map
+# Add inputs and outputs from these tool invocations to the build variables 
+LSS += \
+Ueberloader.lss \
 
-
-## Intel Hex file production flags
-HEX_FLASH_FLAGS = -R .eeprom -R .fuse -R .lock -R .signature
-
-HEX_EEPROM_FLAGS = -j .eeprom
-HEX_EEPROM_FLAGS += --set-section-flags=.eeprom="alloc,load"
-HEX_EEPROM_FLAGS += --change-section-lma .eeprom=0 --no-change-warnings
+SIZEDUMMY += \
+sizedummy \
 
 
-## Objects that must be built in order to link
-OBJECTS = ueberloader.o FabOS.o adc.o main.o pwm.o 
+# All Target
+all: Ueberloader.elf secondary-outputs
 
-## Objects explicitly added by the user
-LINKONLYOBJECTS = 
+# Tool invocations
+Ueberloader.elf: $(OBJS) $(USER_OBJS)
+	@echo 'Building target: $@'
+	@echo 'Invoking: AVR C Linker'
+	avr-gcc -Wl,-Map,Ueberloader.map -mmcu=atxmega32a4 -o"Ueberloader.elf" $(OBJS) $(USER_OBJS) $(LIBS)
+	@echo 'Finished building target: $@'
+	@echo ' '
 
-## Build
-all: $(TARGET) ueberloader.hex ueberloader.eep ueberloader.lss size
+Ueberloader.lss: Ueberloader.elf
+	@echo 'Invoking: AVR Create Extended Listing'
+	-avr-objdump -h -S Ueberloader.elf  >"Ueberloader.lss"
+	@echo 'Finished building: $@'
+	@echo ' '
 
-## Compile
-ueberloader.o: ../ueberloader.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+sizedummy: Ueberloader.elf
+	@echo 'Invoking: Print Size'
+	-avr-size --format=avr --mcu=atxmega32a4 Ueberloader.elf
+	@echo 'Finished building: $@'
+	@echo ' '
 
-FabOS.o: ../OS/FabOS.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
-
-adc.o: ../adc.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
-
-main.o: ../main.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
-
-pwm.o: ../pwm.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
-
-##Link
-$(TARGET): $(OBJECTS)
-	 $(CC) $(LDFLAGS) $(OBJECTS) $(LINKONLYOBJECTS) $(LIBDIRS) $(LIBS) -o $(TARGET)
-
-%.hex: $(TARGET)
-	avr-objcopy -O ihex $(HEX_FLASH_FLAGS)  $< $@
-
-%.eep: $(TARGET)
-	-avr-objcopy $(HEX_EEPROM_FLAGS) -O ihex $< $@ || exit 0
-
-%.lss: $(TARGET)
-	avr-objdump -h -S $< > $@
-
-size: ${TARGET}
-	@echo
-	@avr-size -C --mcu=${MCU} ${TARGET}
-
-## Clean target
-.PHONY: clean
+# Other Targets
 clean:
-	-rm -rf $(OBJECTS) ueberloader.elf dep/* ueberloader.hex ueberloader.eep ueberloader.lss ueberloader.map
+	-$(RM) $(OBJS)$(C_DEPS)$(ASM_DEPS)$(ELFS)$(LSS)$(S_DEPS)$(SIZEDUMMY)$(S_UPPER_DEPS) Ueberloader.elf
+	-@echo ' '
 
+secondary-outputs: $(LSS) $(SIZEDUMMY)
 
-## Other dependencies
--include $(shell mkdir dep 2>/dev/null) $(wildcard dep/*)
+.PHONY: all clean dependents
+.SECONDARY:
 
+-include ../makefile.targets
