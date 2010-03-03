@@ -6,8 +6,8 @@
 #include <avr/io.h>
 
 // Prototypes
-void initPWM(void);
-void setPWM(uint16_t usPower, uint16_t usStartstep);
+void vPWM_Init(void);
+void vPWM_Set(uint16_t usPower, uint16_t usStartstep);
 void SetEnableBuck(uint16_t usStartstep); // 1000-0 scaled; 0= fully started
 void SetEnableBoost(uint16_t usStartstep); // 1000-0 scaled; 0= fully started
 
