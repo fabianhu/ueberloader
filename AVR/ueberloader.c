@@ -201,7 +201,9 @@ void TaskGovernor(void)
 
 void TaskBalance(void)
 {
-	static uint8_t phase;
+	static uint8_t ucPhase;
+
+	ADCStartConvCh(0);
 
 	OS_SetAlarm(1,10);
 	while(1)
@@ -209,39 +211,51 @@ void TaskBalance(void)
 		OS_WaitAlarm();
 		OS_SetAlarm(1,10);
 
-		switch (phase)
+		switch (ucPhase)
 		{
 			case 0:
 			case 1:
 			case 2:
 			case 3:
 			case 4:
+				// push voltage of channel into array
+				MyADCValues.CellVolt[ucPhase] = ADCA.CH3.RES; // fixme scaling!
+				ucPhase++;
+				ADCStartConvCh(ucPhase);
+				break;
 			case 5:
 				// push voltage of channel into array
-				phase++;
+				MyADCValues.CellVolt[5] = ADCA.CH3.RES; // fixme scaling!
+				ucPhase++;
+				ADCStartConvCh(10); // temp 1
 				break;
 			case 6:
-				// VCC measurement
-				phase++;
+				// temperature external1
+				MyADCValues.TempInt[0] = ADCA.CH3.RES; // fixme scaling!
+				ucPhase++;
+				ADCStartConvCh(11); // temp 2
 				break;
 			case 7:
-				// zero offset
-				phase++;
+				// temperature external2
+				MyADCValues.TempInt[1] = ADCA.CH3.RES; // fixme scaling!
+				ucPhase++;
+				ADCStartConvInt(0);
 				break;
 			case 8:
 				// CPU temperature
-				phase++;
+				MyADCValues.TempCPU = ADCA.CH3.RES; // fixme scaling!
+				ucPhase++;
+				ADCStartConvInt(2);
 				break;
 			case 9:
-				// temperature external1
-				phase++;
-				break;
-			case 10:
-				// temperature external2
-				phase =0;
+				// VCC measurement
+				MyADCValues.VCC = ADCA.CH3.RES; // fixme scaling!
+				ucPhase = 0;
+				ADCStartConvCh(0);
 				break;
 			default:
-				phase = 0;
+				emstop(98);
+				break;
 		}
 
 		// trigger next conversion inside last case
