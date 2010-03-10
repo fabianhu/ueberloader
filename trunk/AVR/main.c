@@ -6,18 +6,25 @@
 */
 
 #include "OS/FabOS.h"
+#include "ueberloader.h"
 
 // *********  Task definitions
 OS_DeclareTask(TaskGovernor,200);
 OS_DeclareTask(TaskBalance,200);
 OS_DeclareTask(Task3,200);
+OS_DeclareTask(Task4,200);
 
-OS_DeclareQueue(DemoQ,10,4);
+//OS_DeclareQueue(DemoQ,10,4);
 
 // *********  Prototypes
 void CPU_init(void);
 
 void emstop(uint8_t e);
+
+
+// Global variables
+
+Calibration_t myCalibration;
 
 // *********  THE main()
 int main(void)
@@ -31,6 +38,7 @@ int main(void)
     OS_CreateTask(TaskGovernor, 0);
     OS_CreateTask(TaskBalance, 1);
     OS_CreateTask(Task3, 2);
+	OS_CreateTask(Task4, 3);
 
 	OS_StartExecution() ;
 	while(1)

@@ -59,7 +59,7 @@ uint16_t ADCinit(void)
 {
 	// ADC concept new:
 	/* CH0..2 : event triggered conversion of input and output voltage and Current - resulting in DMA0 ISR.
-	 * CH3 : VCC / zero offset / temperature internal / temperature external and Balancer channels -- cyclic
+	 * CH3 : VCC_mVolt / zero offset / temperature internal / temperature external and Balancer channels -- cyclic
 	 * */
 
 	/* Move stored calibration values to ADC A. */
@@ -72,8 +72,8 @@ uint16_t ADCinit(void)
 	/* Set sample rate */
 	ADCA.PRESCALER = ADC_PRESCALER_DIV16_gc;// resulting in 2MHz ADC clock
 
-	/* Set reference voltage on ADC A to be VCC/1.6 V.*/
-	ADCA.REFCTRL = ADC_REFSEL_VCC_gc | ADC_TEMPREF_bm | ADC_BANDGAP_bm; // VCC/1.6 reference
+	/* Set reference voltage on ADC A to be VCC_mVolt/1.6 V.*/
+	ADCA.REFCTRL = ADC_REFSEL_VCC_gc | ADC_TEMPREF_bm | ADC_BANDGAP_bm; // VCC_mVolt/1.6 reference
 
 	ADCA.EVCTRL = ADC_SWEEP_012_gc | ADC_EVSEL_7_gc | ADC_EVACT_SWEEP_gc; // Event 7 releases sweep over ch 0-2
 
@@ -170,7 +170,7 @@ void ADCStartConvCh(uint8_t c)
  *
  * 0 = int temperature
  * 1 = Bandgap voltage
- * 2 = Scaled VCC (/10)
+ * 2 = Scaled VCC_mVolt (/10)
  * 3 = DAC
  *
  * */
