@@ -6,7 +6,7 @@
 
 // *********  USER Configurable Block BEGIN
 
-#define OS_NUMTASKS 3 // Number of (OS_Create)Tasks ; never >8 (idle task is not counted here!)
+#define OS_NUMTASKS 4 // Number of (OS_Create)Tasks ; never >8 (idle task is not counted here!)
 #define OS_NUMMUTEX 3 // Number of Mutexes
 
 #if defined (__AVR_ATmega32__)

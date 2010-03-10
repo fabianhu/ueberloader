@@ -14,6 +14,7 @@ with N-channel high side driver
 OS_DeclareTask(TaskGovernor,200);
 OS_DeclareTask(TaskBalance,200);
 OS_DeclareTask(Task3,200);
+OS_DeclareTask(Task4,200);
 
 //OS_DeclareQueue(DemoQ,10,4);
 
@@ -26,6 +27,7 @@ extern void emstop(uint8_t e);
 
 
 extern int16_t g_sADCvalues[3];
+extern Calibration_t myCalibration;
 
 struct 
 {
@@ -47,7 +49,7 @@ uint16_t usStartstep =STARTMAX;
 void TaskGovernor(void)
 {
 	uint16_t usPower = 0; // 0=0 ; Vollgas = PERIOD_H *2
-	uint16_t usADCoffset = ADCinit();
+	myCalibration.usADCOffset = ADCinit();
 
 	uint32_t unTemp;
 	uint16_t usU_in_act,usU_out_act,usI_out_act; // mV / mA
@@ -203,6 +205,8 @@ void TaskBalance(void)
 {
 	static uint8_t ucPhase;
 
+	uint16_t usResult;
+
 	ADCStartConvCh(0);
 
 	OS_SetAlarm(1,10);
@@ -210,6 +214,8 @@ void TaskBalance(void)
 	{
 		OS_WaitAlarm();
 		OS_SetAlarm(1,10);
+
+		usResult = ADCA.CH3.RES;
 
 		switch (ucPhase)
 		{
@@ -219,37 +225,50 @@ void TaskBalance(void)
 			case 3:
 			case 4:
 				// push voltage of channel into array
-				MyADCValues.CellVolt[ucPhase] = ADCA.CH3.RES; // fixme scaling!
+				OS_ENTERCRITICAL;
+				MyADCValues.Cell_mVolt[ucPhase] = usResult; // fixme scaling!
+				OS_LEAVECRITICAL;
 				ucPhase++;
 				ADCStartConvCh(ucPhase);
 				break;
 			case 5:
 				// push voltage of channel into array
-				MyADCValues.CellVolt[5] = ADCA.CH3.RES; // fixme scaling!
+
+				OS_ENTERCRITICAL;
+				MyADCValues.Cell_mVolt[5] = usResult; // fixme scaling!
+				OS_LEAVECRITICAL;
 				ucPhase++;
 				ADCStartConvCh(10); // temp 1
 				break;
 			case 6:
 				// temperature external1
-				MyADCValues.TempInt[0] = ADCA.CH3.RES; // fixme scaling!
+				OS_ENTERCRITICAL;
+				MyADCValues.TempInt[0] = usResult ; // fixme scaling!
+				OS_LEAVECRITICAL;
 				ucPhase++;
 				ADCStartConvCh(11); // temp 2
 				break;
 			case 7:
 				// temperature external2
-				MyADCValues.TempInt[1] = ADCA.CH3.RES; // fixme scaling!
+				OS_ENTERCRITICAL;
+				MyADCValues.TempInt[1] = usResult ; // fixme scaling!
+				OS_LEAVECRITICAL;
 				ucPhase++;
 				ADCStartConvInt(0);
 				break;
 			case 8:
 				// CPU temperature
-				MyADCValues.TempCPU = ADCA.CH3.RES; // fixme scaling!
+				OS_ENTERCRITICAL;
+				MyADCValues.TempCPU = usResult ; // fixme scaling!
+				OS_LEAVECRITICAL;
 				ucPhase++;
 				ADCStartConvInt(2);
 				break;
 			case 9:
-				// VCC measurement
-				MyADCValues.VCC = ADCA.CH3.RES; // fixme scaling!
+				// VCC_mVolt measurement
+				OS_ENTERCRITICAL;
+				MyADCValues.VCC_mVolt = usResult ; // fixme scaling!
+				OS_LEAVECRITICAL;
 				ucPhase = 0;
 				ADCStartConvCh(0);
 				break;
@@ -257,6 +276,8 @@ void TaskBalance(void)
 				emstop(98);
 				break;
 		}
+
+
 
 		// trigger next conversion inside last case
 
@@ -305,5 +326,91 @@ void Task3(void)
 
 }
 
+volatile uint16_t pads[4];
+
+void Task4(void)
+{
+	uint8_t i;
+	uint8_t cnt;
+
+
+	OS_SetAlarm(3,10);
+	while(1)
+	{
+		OS_WaitAlarm();
+		OS_SetAlarm(3,2);
+
+	
+
+		cnt = 0;
+		for(i=0;i<3;i++)
+		{
+			PORTE.PIN1CTRL = PORT_OPC_PULLUP_gc;
+			while (!(PORTE.IN & (1<<0)))
+			{
+				cnt++;
+			}
+			PORTE.PIN1CTRL = PORT_OPC_PULLDOWN_gc;
+			while (PORTE.IN & (1<<0))
+			{
+				cnt++;
+			}
+		}
+		PORTE.PIN1CTRL = PORT_OPC_TOTEM_gc;
+		pads[0]=cnt;
+
+		cnt = 0;
+		for(i=0;i<3;i++)
+		{
+			PORTE.PIN0CTRL = PORT_OPC_PULLUP_gc;
+			while (!(PORTE.IN & (1<<1)))
+			{
+				cnt++;
+			}
+			PORTE.PIN0CTRL = PORT_OPC_PULLDOWN_gc;
+			while (PORTE.IN & (1<<1))
+			{
+				cnt++;
+			}
+		}
+		PORTE.PIN0CTRL = PORT_OPC_TOTEM_gc;
+		pads[1]=cnt;	
+		
+	/*	cnt = 0;
+		for(i=0;i<3;i++)
+		{
+			PORTE.PIN2CTRL = PORT_OPC_PULLUP_gc;
+			while (!(PORTE.IN & (1<<2)))
+			{
+				cnt++;
+			}
+			PORTE.PIN2CTRL = PORT_OPC_PULLDOWN_gc;
+			while (PORTE.IN & (1<<2))
+			{
+				cnt++;
+			}
+		}
+		pads[2]=cnt;
+
+		cnt = 0;
+		for(i=0;i<3;i++)
+		{
+			PORTE.PIN3CTRL = PORT_OPC_PULLUP_gc;
+			while (!(PORTE.IN & (1<<3)))
+			{
+				cnt++;
+			}
+			PORTE.PIN3CTRL = PORT_OPC_PULLDOWN_gc;
+			while (PORTE.IN & (1<<3))
+			{
+				cnt++;
+			}
+		}
+		pads[3]=cnt;*/
+
+		asm("nop");
+
+	}
+}
 
 
