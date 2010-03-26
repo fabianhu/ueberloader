@@ -1,3 +1,10 @@
+/*
+	This is the Üeberloader ADC
+
+	(c) 2010 Fabian Huslik
+
+*/
+
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>

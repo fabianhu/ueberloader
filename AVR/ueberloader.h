@@ -15,3 +15,27 @@ typedef struct Calibration_tag
 {
 	uint16_t usADCOffset;
 }Calibration_t;
+
+typedef struct AccuCell_tag
+{
+	uint8_t  bUsed:1;
+	uint8_t  :7;
+	uint16_t usVoltage_mV;
+	uint32_t unCharge_mAs;
+	uint32_t unCharge_mWs;
+/*
+ * Ri = delta U / (delta) I
+ *
+ * */
+}AccuCell_t;
+
+typedef struct Accu_tag
+{
+	uint8_t ucNumberOfCells;
+	AccuCell_t Cells[6];
+	uint16_t usVoltage_mV;
+	uint32_t unCharge_mAs;
+	uint32_t unCharge_mWs;
+
+
+}Accu_t;

@@ -1,7 +1,7 @@
 /*
-	FabOS example implementation
+	This is the Üeberloader Main
 
-	(c) 2009 Fabian Huslik
+	(c) 2010 Fabian Huslik
 
 */
 
@@ -31,10 +31,6 @@ int main(void)
 {
 	CPU_init();
 
-#if OS_DO_TESTSUITE == 1
-	OS_TestSuite(); // call automated tests of OS. may be removed in production code.
-#endif
-
     OS_CreateTask(TaskGovernor, 0);
     OS_CreateTask(TaskBalance, 1);
     OS_CreateTask(Task3, 2);
@@ -56,16 +52,9 @@ int main(void)
 // *********  Code to be executed inside Timer ISR used for the OS, defined in FabOS_config.h
 void OS_CustomISRCode(void)
 {
-	// TODO add your Timer ISR here
-#if defined (__AVR_ATmega32__)
-	TCNT1 =0;  // reset the timer on ISR to have correct timing
-
-#elif defined (__AVR_ATxmega32A4__)
 	TCC1.CNT=0;
 	//TCC1.INTFLAGS = 0xff;
-#else
-	#error MCU not yet supported, you must configure a timer yourself.
-#endif
+
 }
 
 
@@ -73,14 +62,7 @@ void OS_CustomISRCode(void)
 void CPU_init(void)
 {
 	// init OS timer and interrupt
-#if defined (__AVR_ATmega32__)
 
-	TCCR1A = 0b00000000;
-	TCCR1B = 0b00000011; //250kHZ timer ck
-	OCR1A  = 250; //interrupt every 1ms
-	TIMSK |= 1<<OCIE1A; // Output Compare Interrupt ON
-
-#elif defined (__AVR_ATxmega32A4__)
 	// xtal = 16 MHz,
 	// PLL (128 MHz) -> peripheral x4
 	// Presc. B (64MHz) -> peripheral x2
@@ -120,15 +102,6 @@ void CPU_init(void)
 	//Enable Interrupts in INT CTRL
 	PMIC.CTRL = PMIC_HILVLEN_bm|PMIC_MEDLVLEN_bm|PMIC_LOLVLEN_bm;
 
-#else
-	#error MCU not yet supported, you must configure a timer yourself.
-#endif
-
-
-	//Timer0 Initializations for ATMEGA16
-	//TCCR0 |= 5;  // Enable TMR0, set clock source to CLKIO/1024. Interrupts @ 32.768ms intervals @ 8 MHz. This means tasks can execute at least 130,000 instructions before being preempted.
-	//TIMSK |= 1 ; // Interrupt on TMR0 Overflow.
-
 	// *** NO global interrupts enabled at this point!!!
 }
 
@@ -160,9 +133,6 @@ void OS_ErrorHook(uint8_t ErrNo)
 	}
 	
 	dummy = ErrNo; // dummy code
-	#if OS_DO_TESTSUITE == 1
-	asm("break"); // for automated tests of OS. may be removed in production code.
-	#endif
 }
 #endif
 
