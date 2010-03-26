@@ -1,9 +1,8 @@
 /*
+	This is the Üeberloader
+	with N-channel high side driver
 
-The Üeberloader
-
-with N-channel high side driver
-
+	(c) 2010 Fabian Huslik
 */
 #include "OS/FabOS.h"
 #include "ueberloader.h"
@@ -48,7 +47,6 @@ uint16_t usStartstep =STARTMAX;
 
 void TaskGovernor(void)
 {
-	uint16_t usPower = 0; // 0=0 ; Vollgas = PERIOD_H *2
 	myCalibration.usADCOffset = ADCinit();
 
 	uint32_t unTemp;
@@ -116,83 +114,10 @@ void TaskGovernor(void)
 			emstop(4);
 
 
-		if(s_Command.I_Max_Set <= 0)
-		{
-			usPower = 0;
-			ENABLE_A_OFF;ENABLE_B_OFF;
-			usStartstep = STARTMAX;
-		}
-		else
-		{
-			//ENABLE_A_ON;
-			//ENABLE_B_ON;
-			
-//			if(
-//					usI_out_act > (s_Command.I_Max_Set+(s_Command.I_Max_Set/10)) ||
-//					usU_out_act > (s_Command.U_Max+(s_Command.U_Max/10))
-//				)
-//			{
-//				// overshoot prevention
-//				usPower = 0;
-//			}
-//			else
-//			{
-
-			int16_t diff = usI_out_act - s_Command.I_Max_Set;
-
-			if(usU_out_act < s_Command.U_Max && usI_out_act < s_Command.I_Max_Set)
-			{
-				if (usPower < PERIOD_H*17/10)
-					usPower++;
-			}
-			else
-			{
-				if(usPower>0)
-					usPower--;
-			}
+		vGovernor(3000,12400,usI_out_act,usU_out_act);
 
 
-/*// debug test code
-			static uint8_t dir =0;
-			if (dir==0)
-			{
-				if (usPower < PERIOD_H + 2*MINSWITCHOFFPWM)//PERIOD_H*17/10)
-					usPower++;
-				else
-					dir =1;
-			}
-			else
-			{
-				if (usPower >= PERIOD_H - 2*MINSWITCHOFFPWM)//PERIOD_H*17/10)
-					usPower--;
-				else
-					dir =0;
 
-			}
-*/
-			static uint8_t cn=0;
-
-			int16_t usDiffAbs = (diff>0)?diff:-diff;
-
-			if(usDiffAbs < s_Command.I_Max_Set/20 && s_Command.I_Max_Set > 3000)
-			{
-				if (++cn == 3)
-				{
-					cn=0;
-					if (usStartstep >0)
-						usStartstep--; // muss null werden.
-				}
-				//usStartstep =0;
-			}
-			else
-			{
-				//usStartstep = STARTMAX;
-			}
-
-			vPWM_Set(usPower,usStartstep);
-
-
-		}
 //		//OS_WaitTicks(10);
 //		ADCStartConvAll(); // start next conversion, which again triggers this task,
 	}
@@ -203,7 +128,7 @@ void TaskGovernor(void)
 
 void TaskBalance(void)
 {
-	static uint8_t ucPhase;
+	static uint8_t ucPhase; // ADC conversion phase, equal to ADC channel, within 0..5
 
 	uint16_t usResult;
 
@@ -277,9 +202,7 @@ void TaskBalance(void)
 				break;
 		}
 
-
-
-		// trigger next conversion inside last case
+		// trigger next conversion inside previous case
 
 
 	}
@@ -326,12 +249,10 @@ void Task3(void)
 
 }
 
-volatile uint16_t pads[4];
+
 
 void Task4(void)
 {
-	uint8_t i;
-	uint8_t cnt;
 
 
 	OS_SetAlarm(3,10);
@@ -342,73 +263,7 @@ void Task4(void)
 
 	
 
-		cnt = 0;
-		for(i=0;i<3;i++)
-		{
-			PORTE.PIN1CTRL = PORT_OPC_PULLUP_gc;
-			while (!(PORTE.IN & (1<<0)))
-			{
-				cnt++;
-			}
-			PORTE.PIN1CTRL = PORT_OPC_PULLDOWN_gc;
-			while (PORTE.IN & (1<<0))
-			{
-				cnt++;
-			}
-		}
-		PORTE.PIN1CTRL = PORT_OPC_TOTEM_gc;
-		pads[0]=cnt;
 
-		cnt = 0;
-		for(i=0;i<3;i++)
-		{
-			PORTE.PIN0CTRL = PORT_OPC_PULLUP_gc;
-			while (!(PORTE.IN & (1<<1)))
-			{
-				cnt++;
-			}
-			PORTE.PIN0CTRL = PORT_OPC_PULLDOWN_gc;
-			while (PORTE.IN & (1<<1))
-			{
-				cnt++;
-			}
-		}
-		PORTE.PIN0CTRL = PORT_OPC_TOTEM_gc;
-		pads[1]=cnt;	
-		
-	/*	cnt = 0;
-		for(i=0;i<3;i++)
-		{
-			PORTE.PIN2CTRL = PORT_OPC_PULLUP_gc;
-			while (!(PORTE.IN & (1<<2)))
-			{
-				cnt++;
-			}
-			PORTE.PIN2CTRL = PORT_OPC_PULLDOWN_gc;
-			while (PORTE.IN & (1<<2))
-			{
-				cnt++;
-			}
-		}
-		pads[2]=cnt;
-
-		cnt = 0;
-		for(i=0;i<3;i++)
-		{
-			PORTE.PIN3CTRL = PORT_OPC_PULLUP_gc;
-			while (!(PORTE.IN & (1<<3)))
-			{
-				cnt++;
-			}
-			PORTE.PIN3CTRL = PORT_OPC_PULLDOWN_gc;
-			while (PORTE.IN & (1<<3))
-			{
-				cnt++;
-			}
-		}
-		pads[3]=cnt;*/
-
-		asm("nop");
 
 	}
 }

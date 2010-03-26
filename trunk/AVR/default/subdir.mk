@@ -8,6 +8,7 @@ C_SRCS += \
 ../main.c \
 ../menu.c \
 ../pwm.c \
+../touchpad.c \
 ../ueberloader.c 
 
 OBJS += \
@@ -15,6 +16,7 @@ OBJS += \
 ./main.o \
 ./menu.o \
 ./pwm.o \
+./touchpad.o \
 ./ueberloader.o 
 
 C_DEPS += \
@@ -22,6 +24,7 @@ C_DEPS += \
 ./main.d \
 ./menu.d \
 ./pwm.d \
+./touchpad.d \
 ./ueberloader.d 
 
 

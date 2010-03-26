@@ -144,6 +144,90 @@ void SetEnableBoost(uint16_t usStartstep) // 1000-0 scaled; 0= fully started
 }
 
 
+void vGovernor(uint16_t _I_Set_mA, uint16_t _U_Set_mV, uint16_t _I_Act_mA, uint16_t _U_Act_mV)
+{
+	static uint16_t usPower, usStartstep;
+
+
+	if(_I_Set_mA <= 0)
+	{
+		usPower = 0;
+		ENABLE_A_OFF;ENABLE_B_OFF;
+		usStartstep = STARTMAX;
+	}
+	else
+	{
+		//ENABLE_A_ON;
+		//ENABLE_B_ON;
+
+//			if(
+//					usI_out_act > (s_Command.I_Max_Set+(s_Command.I_Max_Set/10)) ||
+//					usU_out_act > (s_Command.U_Max+(s_Command.U_Max/10))
+//				)
+//			{
+//				// overshoot prevention
+//				usPower = 0;
+//			}
+//			else
+//			{
+
+		int16_t diff = _I_Act_mA - _I_Set_mA;
+
+		if(_U_Act_mV < _U_Set_mV && _I_Act_mA < _I_Set_mA)
+		{
+			if (usPower < PERIOD_H*17/10)
+				usPower++;
+		}
+		else
+		{
+			if(usPower>0)
+				usPower--;
+		}
+
+
+/*// debug test code
+		static uint8_t dir =0;
+		if (dir==0)
+		{
+			if (usPower < PERIOD_H + 2*MINSWITCHOFFPWM)//PERIOD_H*17/10)
+				usPower++;
+			else
+				dir =1;
+		}
+		else
+		{
+			if (usPower >= PERIOD_H - 2*MINSWITCHOFFPWM)//PERIOD_H*17/10)
+				usPower--;
+			else
+				dir =0;
+
+		}
+*/
+		static uint8_t cn=0;
+
+		int16_t usDiffAbs = (diff>0)?diff:-diff;
+
+		if(usDiffAbs < _I_Set_mA/20 && _I_Set_mA > 3000)
+		{
+			if (++cn == 3)
+			{
+				cn=0;
+				if (usStartstep >0)
+					usStartstep--; // muss null werden.
+			}
+			//usStartstep =0;
+		}
+		else
+		{
+			//usStartstep = STARTMAX;
+		}
+
+		vPWM_Set(usPower,usStartstep);
+	}
+}
+
+
+
 /// BELOW CODE FRAGMENTS
 
 // sync timers
