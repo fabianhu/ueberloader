@@ -63,6 +63,10 @@ void CPU_init(void)
 {
 	// init OS timer and interrupt
 
+
+	CCP = CCP_IOREG_gc; // unlock
+	OSC.XOSCFAIL = OSC_XOSCFDEN_bm; // enable NMI for oscillator failure.
+
 	// xtal = 16 MHz,
 	// PLL (128 MHz) -> peripheral x4
 	// Presc. B (64MHz) -> peripheral x2
@@ -85,9 +89,6 @@ void CPU_init(void)
 	 
 	CCP = CCP_IOREG_gc; // unlock
 	CLK.CTRL = CLK_SCLKSEL_PLL_gc; // select PLL to run with
-
-	CCP = CCP_IOREG_gc; // unlock
-	OSC.XOSCFAIL = OSC_XOSCFDEN_bm; // enable NMI for oscillator failure.
  
 	// setup Timer for OS
 	TCC1.CTRLA = TC_CLKSEL_DIV1_gc; // select clk for clock source

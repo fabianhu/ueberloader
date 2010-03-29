@@ -90,15 +90,27 @@ void TaskGovernor(void)
 		//OS_WaitEvent(1); // wait for ADC // this task alternates with ADC
 		OS_WaitTicks(1); // wait during ADC conversion
 
-		unTemp = ((uint32_t)g_sADCvalues[0] /*- (uint32_t)usADCoffset*/)*6683ul/1000ul; // [mV]  3,3V/1,6=2,06V - Offset = 1,96V -> 160.75 bits/V
+		unTemp = ((uint32_t)g_sADCvalues[0] - (uint32_t)myCalibration.usADCOffset)*6683ul/1000ul; // [mV]  3,3V/1,6=2,06V - Offset = 1,96V -> 160.75 bits/V
 		usU_in_act = unTemp ;
 
 		// 27k / 2k2 is 1.95V at 26V (27,375V @ 4095 bits) = 6,6833 mv/bit
 
-		unTemp = ((uint32_t)g_sADCvalues[1] /*- (uint32_t)usADCoffset*/)*6683ul/1000ul; // [mV]  3,3V/1,6=2,06V - Offset = 1,96V -> 160.75 bits/V
+		unTemp = ((uint32_t)g_sADCvalues[1] - (uint32_t)myCalibration.usADCOffset)*6683ul/1000ul; // [mV]  3,3V/1,6=2,06V - Offset = 1,96V -> 160.75 bits/V
 		usU_out_act = unTemp;
 
-		usI_out_act = g_sADCvalues[2]*7; // [mA/10]  2V = 3A  (fixme)
+
+		if((ADCA.CH2.MUXCTRL & (0xf<<3)) == ADC_CH_MUXPOS_PIN7_gc) // is high currnet config...
+		{
+			// high current
+			// fixme
+
+		}
+		else
+		{
+			// low current
+			usI_out_act = (g_sADCvalues[2]- (uint32_t)myCalibration.usADCOffset)*7/10; // [mA]  2V = 3A  (fixme)
+		}
+
 //		cli();
 //		g_I_filt = I_out_act;
 //		sei();
@@ -106,15 +118,15 @@ void TaskGovernor(void)
  // just in case...
 		if (usU_in_act < 8000)
 			emstop(1);
-		if (usU_in_act > 20000)
+		if (usU_in_act > 22000)
 			emstop(2);
 		if (usI_out_act > 26000)
 			emstop(3);
-		if (usU_out_act > 30000)
+		if (usU_out_act > 25000)
 			emstop(4);
 
 
-		vGovernor(3000,12400,usI_out_act,usU_out_act);
+		vGovernor(1000,16000,usI_out_act,usU_out_act);
 
 
 
