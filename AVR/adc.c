@@ -86,24 +86,27 @@ uint16_t ADCinit(void)
 
 
 
-	ADCA.CH0.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc; // external
-	ADCA.CH0.MUXCTRL = ADC_CH_MUXPOS_PIN0_gc;
+	ADCA.CH0.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc;
+	ADCA.CH0.MUXCTRL = 0x09<<3;// ADC_CH_MUXPOS_PIN8_gc; Supply
 	ADCA.CH0.INTCTRL = 0; // no ISR
-	ADCA.CH1.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc; // external
-	ADCA.CH1.MUXCTRL = ADC_CH_MUXPOS_PIN1_gc;
+
+	ADCA.CH1.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc;
+	ADCA.CH1.MUXCTRL = 0x08<<3;// ADC_CH_MUXPOS_PIN1_gc; Battery
 	ADCA.CH1.INTCTRL = 0; // no ISR
-	ADCA.CH2.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc; // external
-	ADCA.CH2.MUXCTRL = ADC_CH_MUXPOS_PIN2_gc;
+
+	ADCA.CH2.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc;
+	ADCA.CH2.MUXCTRL = ADC_CH_MUXPOS_PIN6_gc; // actual current
 	ADCA.CH2.INTCTRL = 0; // no ISR
-	ADCA.CH3.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc; // external
-	ADCA.CH3.MUXCTRL = ADC_CH_MUXPOS_PIN3_gc;
+
+	ADCA.CH3.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc;
+	ADCA.CH3.MUXCTRL = ADC_CH_MUXPOS_PIN0_gc;
 	ADCA.CH3.INTCTRL = 0; // no ISR
 
 
 	ADCA.CTRLA |= ADC_ENABLE_bm;
 	//ADCA.CTRLA |= ADC_DMASEL_CH0123_gc; // check, if necessary: it is not.
 	
-	ADCA.CH0.CTRL = ADC_CH_START_bm;
+	ADCA.CH0.CTRL |= ADC_CH_START_bm;
 	/* Wait until common mode voltage is stable. */
 	do{
 		/* If the conversion on the ADCA channel 0 never is
@@ -124,22 +127,34 @@ uint16_t ADCinit(void)
 	DMA.CH0.CTRLB = DMA_CH_TRNINTLVL_HI_gc; // Hi isr for complete
 	DMA.CH0.ADDRCTRL = DMA_CH_SRCRELOAD_BLOCK_gc | DMA_CH_SRCDIR_INC_gc | DMA_CH_DESTRELOAD_TRANSACTION_gc | DMA_CH_DESTDIR_INC_gc;//0b01011101;
 	DMA.CH0.TRIGSRC = DMA_CH_TRIGSRC_ADCA_CH2_gc; // Channel 2 triggers DMA. (attention: channel 4 does not exist!!!)
-	DMA.CH0.TRFCNT = 6; // 4 ADC-values with 16 bit
+	DMA.CH0.TRFCNT = 6; // 3 ADC-values with 16 bit
 	DMA.CH0.REPCNT = 1;
 	DMA.CH0.CTRLA |= DMA_CH_ENABLE_bm;
 
 	DMA.CTRL |= DMA_ENABLE_bm;
 	//ADCA.CTRLA |= 0b00111100; // start conversion for 4 channels
 
+	// configure curr_sense_switch
+	PORTD.DIRSET = 1<<2;
+	vActivateLoCurrentMeas();
 
 	// Event 7 triggers ADC sweep
-
-	gusTimer = TCC1.CNT;
-
-	EVSYS.STROBE = (1<<7);
+	EVSYS.STROBE = (1<<7); // dummy conversion
 
 	// fixme Get offset value for ADC A.
 	return 140;
+}
+
+void vActivateHiCurrentMeas(void)
+{
+	ADCA.CH2.MUXCTRL = ADC_CH_MUXPOS_PIN7_gc; // actual current
+	PORTD.OUTCLR = (1<<2);
+}
+
+void vActivateLoCurrentMeas(void)
+{
+	ADCA.CH2.MUXCTRL = ADC_CH_MUXPOS_PIN6_gc; // actual current
+	PORTD.OUTSET = (1<<2);
 }
 
 ISR(DMA_CH0_vect)

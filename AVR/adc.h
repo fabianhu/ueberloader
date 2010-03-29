@@ -15,6 +15,9 @@
 
 uint16_t ADCinit(void); //(returns offset?)
 
+void vActivateHiCurrentMeas(void);
+void vActivateLoCurrentMeas(void);
+
 void ADCStartConvCh(uint8_t c);
 void ADCStartConvInt(uint8_t c);
 
