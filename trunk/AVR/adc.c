@@ -184,7 +184,7 @@ void ADCStartConvCh(uint8_t c)
 	ADCA.CH3.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc; // external
 	ADCA.CH3.MUXCTRL = (c << 3 ) & 0b01111000;
 
-	ADCA.CH3.CTRL = ADC_CH_START_bm;
+	ADCA.CH3.CTRL |= ADC_CH_START_bm;
 }
 
 /*
@@ -201,7 +201,7 @@ void ADCStartConvInt(uint8_t c)
 	ADCA.CH3.CTRL = ADC_CH_INPUTMODE_INTERNAL_gc; // external
 	ADCA.CH3.MUXCTRL = (c << 3 ) & 0b01111000;
 
-	ADCA.CH3.CTRL = ADC_CH_START_bm;
+	ADCA.CH3.CTRL |= ADC_CH_START_bm;
 }
 
 void ADCStartConvAll(void)

@@ -50,7 +50,8 @@ void TaskGovernor(void)
 	myCalibration.usADCOffset = ADCinit();
 
 	uint32_t unTemp;
-	uint16_t usU_in_act,usU_out_act,usI_out_act; // mV / mA
+	uint16_t usU_in_act,usU_out_act;
+	int16_t sI_out_act; // mV / mA
 //
 //	uint16_t bStarted =0;
 
@@ -79,8 +80,14 @@ void TaskGovernor(void)
 	PORTC.DIRSET = 0b00000011; // set Port C as output
 	PORTD.DIRSET = 0b00000011; // set Port D as output
 
+	vActivateHiCurrentMeas();
 
+	EVSYS.STROBE = (1<<7);  //fire event 7, which triggers the ADC
 	OS_WaitTicks(1); // wait during first ADC conversion
+
+	int16_t sZeroHiMeas = g_sADCvalues[2];
+
+	//vActivateLoCurrentMeas();
 
 	while(1)
 	{
@@ -98,18 +105,22 @@ void TaskGovernor(void)
 		unTemp = ((uint32_t)g_sADCvalues[1] - (uint32_t)myCalibration.usADCOffset)*6683ul/1000ul; // [mV]  3,3V/1,6=2,06V - Offset = 1,96V -> 160.75 bits/V
 		usU_out_act = unTemp;
 
-
-		if((ADCA.CH2.MUXCTRL & (0xf<<3)) == ADC_CH_MUXPOS_PIN7_gc) // is high currnet config...
+		if((ADCA.CH2.MUXCTRL & (0xf<<3)) == ADC_CH_MUXPOS_PIN7_gc) // is high current config...
 		{
 			// high current
 			// fixme
-
+			sI_out_act = (g_sADCvalues[2]-sZeroHiMeas) * 5; // [mA]  2V = 3A  (fixme)
 		}
 		else
 		{
 			// low current
-			usI_out_act = (g_sADCvalues[2]- (uint32_t)myCalibration.usADCOffset)*7/10; // [mA]  2V = 3A  (fixme)
+			sI_out_act = (g_sADCvalues[2]- (uint32_t)myCalibration.usADCOffset)*7/10; // [mA]  2V = 3A  (fixme)
 		}
+
+		if(sI_out_act > 2500)
+			vActivateHiCurrentMeas();
+		else if (sI_out_act < 2000)
+			//vActivateLoCurrentMeas();
 
 //		cli();
 //		g_I_filt = I_out_act;
@@ -120,13 +131,24 @@ void TaskGovernor(void)
 			emstop(1);
 		if (usU_in_act > 22000)
 			emstop(2);
-		if (usI_out_act > 26000)
+		if (sI_out_act > 10000)
 			emstop(3);
 		if (usU_out_act > 25000)
 			emstop(4);
 
+		uint16_t Temp;
+		OS_ENTERCRITICAL;
+		Temp = MyADCValues.TempInt[1];
+		OS_LEAVECRITICAL;
 
-		vGovernor(1000,16000,usI_out_act,usU_out_act);
+		if (Temp < 200)
+			Temp = 0;
+
+		Temp = Temp*4;
+		
+
+
+		vGovernor(Temp,18000,sI_out_act,usU_out_act);
 
 
 

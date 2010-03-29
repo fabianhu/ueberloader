@@ -155,10 +155,10 @@ void emstop(uint8_t e)
 	PORTB.DIRSET = 0b1000;
 	PORTB.OUTSET = 0b1000;
 
-	/*while(1)
+	while(1)
 	{
 		asm("nop");
-	}*/
+	}
 
 	CCP = CCP_IOREG_gc; // unlock
 	RST.CTRL = 1; // SW reset
