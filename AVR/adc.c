@@ -11,10 +11,14 @@
 
 #include "adc.h"
 #include "OS/FabOS.h"
+#include <avr/pgmspace.h>
+
+extern Calibration_t myCalibration;
 
 volatile int16_t g_sADCvalues[3];
 
-#include <avr/pgmspace.h>
+
+extern void emstop(uint8_t e);
 
 /*! \brief Function for GCC to read out calibration byte.
  *
@@ -64,6 +68,8 @@ uint16_t gusTimer =0;
 
 uint16_t ADCinit(void)
 {
+	uint16_t temp;
+
 	// ADC concept new:
 	/* CH0..2 : event triggered conversion of input and output voltage and Current - resulting in DMA0 ISR.
 	 * CH3 : VCC_mVolt / zero offset / temperature internal / temperature external and Balancer channels -- cyclic
@@ -72,26 +78,29 @@ uint16_t ADCinit(void)
 	/* Move stored calibration values to ADC A. */
 	ADC_CalibrationValues_Load(&ADCA);
 
+	myCalibration.usCPUTemp85C = SP_ReadCalibrationByte( PROD_SIGNATURES_START + 0x2f )<<8;
+	myCalibration.usCPUTemp85C |= SP_ReadCalibrationByte( PROD_SIGNATURES_START + 0x2e );
+
 	/* Set up ADC A to have unsigned conversion mode and 12 bit resolution. */
 	ADCA.CTRLA = 0b00000000;
 	ADCA.CTRLB = 0; // all unsigned !
 
 	/* Set sample rate */
-	ADCA.PRESCALER = ADC_PRESCALER_DIV16_gc;// resulting in 2MHz ADC clock
+	ADCA.PRESCALER = ADC_PRESCALER_DIV64_gc;// resulting in 0,5 MHz ADC clock
 
 	/* Set reference voltage on ADC A to be VCC_mVolt/1.6 V.*/
 	ADCA.REFCTRL = ADC_REFSEL_VCC_gc | ADC_TEMPREF_bm | ADC_BANDGAP_bm; // VCC_mVolt/1.6 reference
 
-	ADCA.EVCTRL = ADC_SWEEP_012_gc | ADC_EVSEL_7_gc | ADC_EVACT_SWEEP_gc; // Event 7 releases sweep over ch 0-2
+	ADCA.EVCTRL = ADC_SWEEP_012_gc | ADC_EVSEL_7_gc | ADC_EVACT_SWEEP_gc; // Event 7 triggers sweep over ch 0-2
 
 
 
 	ADCA.CH0.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc;
-	ADCA.CH0.MUXCTRL = 0x09<<3;// ADC_CH_MUXPOS_PIN8_gc; Supply
+	ADCA.CH0.MUXCTRL = 0x09<<3;// ADC_CH_MUXPOS_PIN9_gc; Supply
 	ADCA.CH0.INTCTRL = 0; // no ISR
 
 	ADCA.CH1.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc;
-	ADCA.CH1.MUXCTRL = 0x08<<3;// ADC_CH_MUXPOS_PIN1_gc; Battery
+	ADCA.CH1.MUXCTRL = 0x08<<3;// ADC_CH_MUXPOS_PIN8_gc; Battery
 	ADCA.CH1.INTCTRL = 0; // no ISR
 
 	ADCA.CH2.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc;
@@ -112,7 +121,7 @@ uint16_t ADCinit(void)
 		/* If the conversion on the ADCA channel 0 never is
 		 * complete this will be a deadlock. */
 	}while(!(ADCA.CH0.INTFLAGS & 1));
-	ADCA.INTFLAGS = 0b00001111;
+	ADCA.INTFLAGS = 0b00001111; // clear interrupt flags
 
  // setup DMA to transfer 3 successive conversions of ch 0-2 to the g_sADCvalues array.
 
@@ -123,7 +132,7 @@ uint16_t ADCinit(void)
 	DMA.CH0.DESTADDR0 = (int)(&g_sADCvalues[0]) & 0xff;
 	DMA.CH0.DESTADDR1 = ((int)(&g_sADCvalues[0]) & 0xff00)>>8;
 	DMA.CH0.DESTADDR2 = ((int)(&g_sADCvalues[0]) & 0xff0000)>>16;
-	DMA.CH0.CTRLA = DMA_CH_BURSTLEN_8BYTE_gc | DMA_CH_SINGLE_bm;//0b00000001;
+	DMA.CH0.CTRLA = DMA_CH_BURSTLEN_2BYTE_gc | DMA_CH_SINGLE_bm;//0b00000001;
 	DMA.CH0.CTRLB = DMA_CH_TRNINTLVL_HI_gc; // Hi isr for complete
 	DMA.CH0.ADDRCTRL = DMA_CH_SRCRELOAD_BLOCK_gc | DMA_CH_SRCDIR_INC_gc | DMA_CH_DESTRELOAD_TRANSACTION_gc | DMA_CH_DESTDIR_INC_gc;//0b01011101;
 	DMA.CH0.TRIGSRC = DMA_CH_TRIGSRC_ADCA_CH2_gc; // Channel 2 triggers DMA. (attention: channel 4 does not exist!!!)
@@ -142,7 +151,24 @@ uint16_t ADCinit(void)
 	EVSYS.STROBE = (1<<7); // dummy conversion
 
 	// fixme Get offset value for ADC A.
-	return 140;
+	OS_WaitTicks(1);
+
+	EVSYS.STROBE = (1<<7); // first real conversion
+
+	OS_WaitTicks(5);
+
+	// config from above:
+	// CH2 = ADC6 = I_ACT_LOW (zero now)
+	// CH1 = ADC8 = U_BATT_MEAS (zero, if no battery connected)
+
+	// fixme repeat !
+
+	temp = g_sADCvalues[2];
+	if(temp > 100 && temp < 200 )
+		return temp;
+	else
+		emstop(111);
+	return 100;
 }
 
 void vActivateHiCurrentMeas(void)

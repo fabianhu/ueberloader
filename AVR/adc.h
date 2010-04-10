@@ -13,7 +13,15 @@
 #endif
 //@}
 
-uint16_t ADCinit(void); //(returns offset?)
+typedef struct Calibration_tag
+{
+	uint16_t usADCOffset;
+	uint16_t usCPUTemp85C;
+}Calibration_t;
+
+
+
+uint16_t ADCinit(void); //(returns offset)
 
 void vActivateHiCurrentMeas(void);
 void vActivateLoCurrentMeas(void);
