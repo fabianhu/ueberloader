@@ -120,13 +120,15 @@ void TaskGovernor(void)
 		if(sI_out_act > 2500)
 			vActivateHiCurrentMeas();
 		else if (sI_out_act < 2000)
-			//vActivateLoCurrentMeas();
+			vActivateLoCurrentMeas();
 
 //		cli();
 //		g_I_filt = I_out_act;
 //		sei();
 
  // just in case...
+
+ /* fixme reactivate
 		if (usU_in_act < 8000)
 			emstop(1);
 		if (usU_in_act > 22000)
@@ -135,6 +137,7 @@ void TaskGovernor(void)
 			emstop(3);
 		if (usU_out_act > 25000)
 			emstop(4);
+*/
 
 		uint16_t Temp;
 		OS_ENTERCRITICAL;
@@ -165,6 +168,8 @@ void TaskBalance(void)
 	static uint8_t ucPhase; // ADC conversion phase, equal to ADC channel, within 0..5
 
 	uint16_t usResult;
+	uint32_t unTemp;
+	int32_t nTemp;
 
 	ADCStartConvCh(0);
 
@@ -174,7 +179,7 @@ void TaskBalance(void)
 		OS_WaitAlarm();
 		OS_SetAlarm(1,10);
 
-		usResult = ADCA.CH3.RES;
+		usResult = ADCA.CH3.RES - myCalibration.usADCOffset;
 
 		switch (ucPhase)
 		{
@@ -218,15 +223,27 @@ void TaskBalance(void)
 			case 8:
 				// CPU temperature
 				OS_ENTERCRITICAL;
-				MyADCValues.TempCPU = usResult ; // fixme scaling!
+				usResult = usResult *10 /33; // what would be measured, if it was done at 1V ref (/ 3.3).
+				nTemp = ( usResult * (273ul+85ul) / myCalibration.usCPUTemp85C) ; // fixme falsch!
+				MyADCValues.TempCPU = nTemp ; // fixme scaling!
+				OS_LEAVECRITICAL;
+				ucPhase++;
+				ADCStartConvInt(1);
+				break;
+			case 9:
+				// CPU BANDGAP
+				OS_ENTERCRITICAL;
+				MyADCValues.Bandgap = usResult ; // bit value for 1,00V !
 				OS_LEAVECRITICAL;
 				ucPhase++;
 				ADCStartConvInt(2);
 				break;
-			case 9:
+			case 10:
 				// VCC_mVolt measurement
 				OS_ENTERCRITICAL;
-				MyADCValues.VCC_mVolt = usResult ; // fixme scaling!
+				unTemp = usResult*10000ul;
+				unTemp = unTemp / MyADCValues.Bandgap;
+				MyADCValues.VCC_mVolt = unTemp;
 				OS_LEAVECRITICAL;
 				ucPhase = 0;
 				ADCStartConvCh(0);

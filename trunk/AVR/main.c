@@ -7,6 +7,7 @@
 
 #include "OS/FabOS.h"
 #include "ueberloader.h"
+#include "adc.h"
 
 // *********  Task definitions
 OS_DeclareTask(TaskGovernor,200);
