@@ -17,6 +17,7 @@ typedef struct Calibration_tag
 {
 	uint16_t usADCOffset;
 	uint16_t usCPUTemp85C;
+	uint16_t usADCRef_mV;
 }Calibration_t;
 
 

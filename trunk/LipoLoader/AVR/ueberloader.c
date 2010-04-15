@@ -181,7 +181,7 @@ void TaskBalance(void)
 
 		usResult = ADCA.CH3.RES - myCalibration.usADCOffset;
 
-		switch (ucPhase)
+		switch (ucPhase) // fixme remove the cases
 		{
 			case 0:
 			case 1:
@@ -222,9 +222,9 @@ void TaskBalance(void)
 				break;
 			case 8:
 				// CPU temperature
-				OS_ENTERCRITICAL;
 				usResult = usResult *10 /33; // what would be measured, if it was done at 1V ref (/ 3.3).
 				nTemp = ( usResult * (273ul+85ul) / myCalibration.usCPUTemp85C) ; // fixme falsch!
+				OS_ENTERCRITICAL;
 				MyADCValues.TempCPU = nTemp ; // fixme scaling!
 				OS_LEAVECRITICAL;
 				ucPhase++;
@@ -233,16 +233,23 @@ void TaskBalance(void)
 			case 9:
 				// CPU BANDGAP
 				OS_ENTERCRITICAL;
-				MyADCValues.Bandgap = usResult ; // bit value for 1,00V !
+				MyADCValues.Bandgap = usResult; // bit value for 1.00V ! at ref = Usupp/1.6
 				OS_LEAVECRITICAL;
+
+				nTemp = (4096ul*1000ul)/MyADCValues.Bandgap; // by knowing, that the voltage is 1V, we calculate the ADCRef voltage.
+				OS_ENTERCRITICAL;
+
+				myCalibration.usADCRef_mV = nTemp;
+				OS_LEAVECRITICAL;
+
 				ucPhase++;
 				ADCStartConvInt(2);
 				break;
 			case 10:
 				// VCC_mVolt measurement
+				unTemp = usResult * myCalibration.usADCRef_mV*10ul;
+				unTemp = unTemp / 4096ul ;
 				OS_ENTERCRITICAL;
-				unTemp = usResult*10000ul;
-				unTemp = unTemp / MyADCValues.Bandgap;
 				MyADCValues.VCC_mVolt = unTemp;
 				OS_LEAVECRITICAL;
 				ucPhase = 0;
