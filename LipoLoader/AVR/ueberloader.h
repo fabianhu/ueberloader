@@ -18,6 +18,8 @@ typedef struct AccuCell_tag
 	uint16_t usVoltage_mV;
 	uint32_t unCharge_mAs;
 	uint32_t unCharge_mWs;
+	uint32_t unDisCharge_mAs;
+	uint32_t unDisCharge_mWs;
 /*
  * Ri = delta U / (delta) I
  *
