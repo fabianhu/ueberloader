@@ -68,7 +68,7 @@ uint16_t gusTimer =0;
 
 uint16_t ADCinit(void)
 {
-	uint16_t temp;
+	int16_t temp;
 
 	// ADC concept new:
 	/* CH0..2 : event triggered conversion of input and output voltage and Current - resulting in DMA0 ISR.
@@ -81,12 +81,12 @@ uint16_t ADCinit(void)
 	myCalibration.usCPUTemp85C = SP_ReadCalibrationByte( PROD_SIGNATURES_START + 0x2f )<<8;
 	myCalibration.usCPUTemp85C |= SP_ReadCalibrationByte( PROD_SIGNATURES_START + 0x2e );
 
-	/* Set up ADC A to have unsigned conversion mode and 12 bit resolution. */
+	/* Set up ADC A to have signed conversion mode and 12(11) bit resolution. */
 	ADCA.CTRLA = 0b00000000;
-	ADCA.CTRLB = 0; // all unsigned !
+	ADCA.CTRLB = 0b00010000; // signed !
 
 	/* Set sample rate */
-	ADCA.PRESCALER = ADC_PRESCALER_DIV64_gc;// resulting in 0,5 MHz ADC clock
+	ADCA.PRESCALER = ADC_PRESCALER_DIV512_gc;// resulting in 64 kHz !!! ADC clock (slowed down for accuracy)
 
 	/* Set reference voltage on ADC A to be VCC_mVolt/1.6 V.*/
 	ADCA.REFCTRL = ADC_REFSEL_VCC_gc | ADC_TEMPREF_bm | ADC_BANDGAP_bm; // VCC_mVolt/1.6 reference
@@ -95,20 +95,20 @@ uint16_t ADCinit(void)
 
 
 
-	ADCA.CH0.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc;
-	ADCA.CH0.MUXCTRL = 0x09<<3;// ADC_CH_MUXPOS_PIN9_gc; Supply
+	ADCA.CH0.CTRL = ADC_CH_INPUTMODE_DIFF_gc;
+	ADCA.CH0.MUXCTRL = 0x09<<3 | ADC_CH_MUXNEG0_bm;// ADC_CH_MUXPOS_PIN9_gc; Supply
 	ADCA.CH0.INTCTRL = 0; // no ISR
 
-	ADCA.CH1.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc;
-	ADCA.CH1.MUXCTRL = 0x08<<3;// ADC_CH_MUXPOS_PIN8_gc; Battery
+	ADCA.CH1.CTRL = ADC_CH_INPUTMODE_DIFF_gc;
+	ADCA.CH1.MUXCTRL = 0x08<<3 | ADC_CH_MUXNEG0_bm;// ADC_CH_MUXPOS_PIN8_gc; Battery
 	ADCA.CH1.INTCTRL = 0; // no ISR
 
-	ADCA.CH2.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc;
-	ADCA.CH2.MUXCTRL = ADC_CH_MUXPOS_PIN6_gc; // actual current
+	ADCA.CH2.CTRL = ADC_CH_INPUTMODE_DIFF_gc;
+	ADCA.CH2.MUXCTRL = ADC_CH_MUXPOS_PIN6_gc | ADC_CH_MUXNEG0_bm; // actual current
 	ADCA.CH2.INTCTRL = 0; // no ISR
 
-	ADCA.CH3.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc;
-	ADCA.CH3.MUXCTRL = ADC_CH_MUXPOS_PIN0_gc;
+	ADCA.CH3.CTRL = ADC_CH_INPUTMODE_DIFF_gc;
+	ADCA.CH3.MUXCTRL = ADC_CH_MUXPOS_PIN0_gc | ADC_CH_MUXNEG0_bm;
 	ADCA.CH3.INTCTRL = 0; // no ISR
 
 
@@ -153,7 +153,7 @@ uint16_t ADCinit(void)
 	// fixme Get offset value for ADC A.
 	OS_WaitTicks(1);
 
-	EVSYS.STROBE = (1<<7); // first real conversion
+	ADCStartConvCh3Pin(0); // measure offset of GND with GND
 
 	OS_WaitTicks(5);
 
@@ -163,23 +163,23 @@ uint16_t ADCinit(void)
 
 	// fixme repeat !
 
-	temp = g_sADCvalues[2];
-	if(temp > 100 && temp < 200 )
+	temp = ADCA.CH3.RES;
+	if(temp < 10 && temp > -10 )
 		return temp;
 	else
 		emstop(111);
-	return 100;
+	return 0; // dummy, because never reached
 }
 
 void vActivateHiCurrentMeas(void)
 {
-	ADCA.CH2.MUXCTRL = ADC_CH_MUXPOS_PIN7_gc; // actual current
+	ADCA.CH2.MUXCTRL = ADC_CH_MUXPOS_PIN7_gc | ADC_CH_MUXNEG0_bm; // actual current
 	PORTD.OUTCLR = (1<<2);
 }
 
 void vActivateLoCurrentMeas(void)
 {
-	ADCA.CH2.MUXCTRL = ADC_CH_MUXPOS_PIN6_gc; // actual current
+	ADCA.CH2.MUXCTRL = ADC_CH_MUXPOS_PIN6_gc | ADC_CH_MUXNEG0_bm; // actual current
 	PORTD.OUTSET = (1<<2);
 }
 
@@ -202,12 +202,12 @@ ISR(DMA_CH0_vect)
  * Parameter c = Pin Number.
  *
  * */
-void ADCStartConvCh(uint8_t c)
+void ADCStartConvCh3Pin(uint8_t c)
 {
 	/* M32 ADMUX = 0b111 & c;
 	ADCSRA |= (1<<ADSC);*/
 
-	ADCA.CH3.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc; // external
+	ADCA.CH3.CTRL = ADC_CH_INPUTMODE_DIFF_gc; // external
 	ADCA.CH3.MUXCTRL = (c << 3 ) & 0b01111000;
 
 	ADCA.CH3.CTRL |= ADC_CH_START_bm;

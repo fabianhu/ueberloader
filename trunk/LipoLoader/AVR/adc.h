@@ -15,9 +15,9 @@
 
 typedef struct Calibration_tag
 {
-	uint16_t usADCOffset;
+	int16_t sADCOffset;
 	uint16_t usCPUTemp85C;
-	uint16_t usADCRef_mV;
+	int16_t sADCRef_mV;
 }Calibration_t;
 
 
@@ -27,7 +27,7 @@ uint16_t ADCinit(void); //(returns offset)
 void vActivateHiCurrentMeas(void);
 void vActivateLoCurrentMeas(void);
 
-void ADCStartConvCh(uint8_t c);
+void ADCStartConvCh3Pin(uint8_t c);
 void ADCStartConvInt(uint8_t c);
 
 void ADCStartConvAll(void);

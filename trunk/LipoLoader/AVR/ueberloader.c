@@ -47,7 +47,7 @@ uint16_t usStartstep =STARTMAX;
 
 void TaskGovernor(void)
 {
-	myCalibration.usADCOffset = ADCinit();
+	myCalibration.sADCOffset = ADCinit();
 
 	uint32_t unTemp;
 	uint16_t usU_in_act,usU_out_act;
@@ -97,12 +97,12 @@ void TaskGovernor(void)
 		//OS_WaitEvent(1); // wait for ADC // this task alternates with ADC
 		OS_WaitTicks(1); // wait during ADC conversion
 
-		unTemp = ((uint32_t)g_sADCvalues[0] - (uint32_t)myCalibration.usADCOffset)*6683ul/1000ul; // [mV]  3,3V/1,6=2,06V - Offset = 1,96V -> 160.75 bits/V
+		unTemp = ((uint32_t)g_sADCvalues[0] - (uint32_t)myCalibration.sADCOffset)*6683ul/1000ul; // [mV]  3,3V/1,6=2,06V - Offset = 1,96V -> 160.75 bits/V
 		usU_in_act = unTemp ;
 
 		// 27k / 2k2 is 1.95V at 26V (27,375V @ 4095 bits) = 6,6833 mv/bit
 
-		unTemp = ((uint32_t)g_sADCvalues[1] - (uint32_t)myCalibration.usADCOffset)*6683ul/1000ul; // [mV]  3,3V/1,6=2,06V - Offset = 1,96V -> 160.75 bits/V
+		unTemp = ((uint32_t)g_sADCvalues[1] - (uint32_t)myCalibration.sADCOffset)*6683ul/1000ul; // [mV]  3,3V/1,6=2,06V - Offset = 1,96V -> 160.75 bits/V
 		usU_out_act = unTemp;
 
 		if((ADCA.CH2.MUXCTRL & (0xf<<3)) == ADC_CH_MUXPOS_PIN7_gc) // is high current config...
@@ -114,7 +114,7 @@ void TaskGovernor(void)
 		else
 		{
 			// low current
-			sI_out_act = (g_sADCvalues[2]- (uint32_t)myCalibration.usADCOffset)*7/10; // [mA]  2V = 3A  (fixme)
+			sI_out_act = (g_sADCvalues[2]- (uint32_t)myCalibration.sADCOffset)*7/10; // [mA]  2V = 3A  (fixme)
 		}
 
 		if(sI_out_act > 2500)
@@ -167,11 +167,10 @@ void TaskBalance(void)
 {
 	static uint8_t ucPhase; // ADC conversion phase, equal to ADC channel, within 0..5
 
-	uint16_t usResult;
-	uint32_t unTemp;
+	int16_t sResult;
 	int32_t nTemp;
 
-	ADCStartConvCh(0);
+	ADCStartConvCh3Pin(0);
 
 	OS_SetAlarm(1,10);
 	while(1)
@@ -179,51 +178,58 @@ void TaskBalance(void)
 		OS_WaitAlarm();
 		OS_SetAlarm(1,10);
 
-		usResult = ADCA.CH3.RES - myCalibration.usADCOffset;
+		sResult = ADCA.CH3.RES ;//- myCalibration.sADCOffset;
 
 		switch (ucPhase) // fixme remove the cases
 		{
 			case 0:
+				ucPhase++;
+				ADCStartConvCh3Pin(ucPhase);
+				break;
 			case 1:
 			case 2:
 			case 3:
 			case 4:
 				// push voltage of channel into array
+				nTemp = (int32_t)sResult * (int32_t)myCalibration.sADCRef_mV / 957ul;
+				
 				OS_ENTERCRITICAL;
-				MyADCValues.Cell_mVolt[ucPhase] = usResult; // fixme scaling!
+				MyADCValues.Cell_mVolt[ucPhase] = nTemp; // fixme scaling!
 				OS_LEAVECRITICAL;
 				ucPhase++;
-				ADCStartConvCh(ucPhase);
+				ADCStartConvCh3Pin(ucPhase);
 				break;
 			case 5:
 				// push voltage of channel into array
+				nTemp = (int32_t)sResult * (int32_t)myCalibration.sADCRef_mV / 957ul;
 
 				OS_ENTERCRITICAL;
-				MyADCValues.Cell_mVolt[5] = usResult; // fixme scaling!
+				MyADCValues.Cell_mVolt[5] = nTemp; // fixme scaling!
 				OS_LEAVECRITICAL;
 				ucPhase++;
-				ADCStartConvCh(10); // temp 1
+				ADCStartConvCh3Pin(10); // Cell 0
 				break;
 			case 6:
-				// temperature external1
+				// push voltage of channel into array
+				nTemp = (int32_t)sResult * (int32_t)myCalibration.sADCRef_mV / 957ul;
+				
 				OS_ENTERCRITICAL;
-				MyADCValues.TempInt[0] = usResult ; // fixme scaling!
+				MyADCValues.Cell_mVolt[0] = nTemp; // fixme scaling!
 				OS_LEAVECRITICAL;
 				ucPhase++;
-				ADCStartConvCh(11); // temp 2
-				break;
+				ADCStartConvCh3Pin(11);
 			case 7:
 				// temperature external2
 				OS_ENTERCRITICAL;
-				MyADCValues.TempInt[1] = usResult ; // fixme scaling!
+				MyADCValues.TempInt[1] = sResult ; // fixme scaling!
 				OS_LEAVECRITICAL;
 				ucPhase++;
 				ADCStartConvInt(0);
 				break;
 			case 8:
 				// CPU temperature
-				usResult = usResult *10 /33; // what would be measured, if it was done at 1V ref (/ 3.3).
-				nTemp = ( usResult * (273ul+85ul) / myCalibration.usCPUTemp85C) ; // fixme falsch!
+				sResult = sResult *10 /33; // what would be measured, if it was done at 1V ref (/ 3.3).
+				nTemp = ( sResult * (273ul+85ul) / myCalibration.usCPUTemp85C) ; // fixme falsch!
 				OS_ENTERCRITICAL;
 				MyADCValues.TempCPU = nTemp ; // fixme scaling!
 				OS_LEAVECRITICAL;
@@ -233,13 +239,13 @@ void TaskBalance(void)
 			case 9:
 				// CPU BANDGAP
 				OS_ENTERCRITICAL;
-				MyADCValues.Bandgap = usResult; // bit value for 1.00V ! at ref = Usupp/1.6
+				MyADCValues.Bandgap = sResult; // bit value for 1.10V ! at ref = Usupp/1.6
 				OS_LEAVECRITICAL;
 
-				nTemp = (4096ul*1000ul)/MyADCValues.Bandgap; // by knowing, that the voltage is 1V, we calculate the ADCRef voltage.
+				nTemp = (2048ul*1088ul)/MyADCValues.Bandgap; // by knowing, that the voltage is 1.088V, we calculate the ADCRef voltage. // fixme !!!! Temperature test!!
 				OS_ENTERCRITICAL;
 
-				myCalibration.usADCRef_mV = nTemp;
+				myCalibration.sADCRef_mV = nTemp;
 				OS_LEAVECRITICAL;
 
 				ucPhase++;
@@ -247,13 +253,13 @@ void TaskBalance(void)
 				break;
 			case 10:
 				// VCC_mVolt measurement
-				unTemp = usResult * myCalibration.usADCRef_mV*10ul;
-				unTemp = unTemp / 4096ul ;
+				nTemp = sResult * 10ul;
+				nTemp = nTemp * myCalibration.sADCRef_mV / 2048ul ;
 				OS_ENTERCRITICAL;
-				MyADCValues.VCC_mVolt = unTemp;
+				MyADCValues.VCC_mVolt = nTemp;
 				OS_LEAVECRITICAL;
 				ucPhase = 0;
-				ADCStartConvCh(0);
+				ADCStartConvCh3Pin(0);
 				break;
 			default:
 				emstop(98);
