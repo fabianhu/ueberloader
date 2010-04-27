@@ -24,10 +24,10 @@ typedef struct Calibration_tag
 
 uint16_t ADCinit(void); //(returns offset)
 
-void vActivateHiCurrentMeas(void);
-void vActivateLoCurrentMeas(void);
+void ADC_ActivateHiCurrentMeas(void);
+void ADC_ActivateLoCurrentMeas(void);
 
-void ADCStartConvCh3Pin(uint8_t c);
-void ADCStartConvInt(uint8_t c);
+void ADC_StartConvCh3Pin(uint8_t c);
+void ADC_StartConvInt(uint8_t c);
+uint16_t ADC_ScaleCell_mV(uint16_t in);
 
-void ADCStartConvAll(void);

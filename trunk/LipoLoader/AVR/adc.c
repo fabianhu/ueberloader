@@ -145,23 +145,17 @@ uint16_t ADCinit(void)
 
 	// configure curr_sense_switch
 	PORTD.DIRSET = 1<<2;
-	vActivateLoCurrentMeas();
+	ADC_ActivateLoCurrentMeas();
 
 	// Event 7 triggers ADC sweep
 	EVSYS.STROBE = (1<<7); // dummy conversion
 
-	// fixme Get offset value for ADC A.
+	// Get offset value for ADC A.
 	OS_WaitTicks(1);
 
-	ADCStartConvCh3Pin(0); // measure offset of GND with GND
+	ADC_StartConvCh3Pin(0); // measure offset of GND with GND
 
 	OS_WaitTicks(5);
-
-	// config from above:
-	// CH2 = ADC6 = I_ACT_LOW (zero now)
-	// CH1 = ADC8 = U_BATT_MEAS (zero, if no battery connected)
-
-	// fixme repeat !
 
 	temp = ADCA.CH3.RES;
 	if(temp < 10 && temp > -10 )
@@ -171,13 +165,13 @@ uint16_t ADCinit(void)
 	return 0; // dummy, because never reached
 }
 
-void vActivateHiCurrentMeas(void)
+void ADC_ActivateHiCurrentMeas(void)
 {
 	ADCA.CH2.MUXCTRL = ADC_CH_MUXPOS_PIN7_gc | ADC_CH_MUXNEG0_bm; // actual current
 	PORTD.OUTCLR = (1<<2);
 }
 
-void vActivateLoCurrentMeas(void)
+void ADC_ActivateLoCurrentMeas(void)
 {
 	ADCA.CH2.MUXCTRL = ADC_CH_MUXPOS_PIN6_gc | ADC_CH_MUXNEG0_bm; // actual current
 	PORTD.OUTSET = (1<<2);
@@ -202,7 +196,7 @@ ISR(DMA_CH0_vect)
  * Parameter c = Pin Number.
  *
  * */
-void ADCStartConvCh3Pin(uint8_t c)
+void ADC_StartConvCh3Pin(uint8_t c)
 {
 	/* M32 ADMUX = 0b111 & c;
 	ADCSRA |= (1<<ADSC);*/
@@ -222,7 +216,7 @@ void ADCStartConvCh3Pin(uint8_t c)
  * 3 = DAC
  *
  * */
-void ADCStartConvInt(uint8_t c)
+void ADC_StartConvInt(uint8_t c)
 {
 	ADCA.CH3.CTRL = ADC_CH_INPUTMODE_INTERNAL_gc; // external
 	ADCA.CH3.MUXCTRL = (c << 3 ) & 0b01111000;
@@ -230,24 +224,7 @@ void ADCStartConvInt(uint8_t c)
 	ADCA.CH3.CTRL |= ADC_CH_START_bm;
 }
 
-void ADCStartConvAll(void)
+uint16_t ADC_ScaleCell_mV(uint16_t in)
 {
-	/* M32 ADMUX = 0b111 & 0;
-	ADCSRA |= (1<<ADSC);*/
+	return (int32_t)in * (int32_t)myCalibration.sADCRef_mV / 957ul; // 957 = (2048 / factor of amplification)
 }
-
-/* M32ISR(SIG_ADC)
-{
-	 // copy ADC
-	g_sADCvalues[ADMUX] = ADC;
-	
-
-	// start new conversion
-	if( ADMUX < 7)
-	{
-		ADMUX++;
-		ADCSRA |= (1<<ADSC);
-	}
-	else
-	OS_SetEvent(0,1);
-}*/
