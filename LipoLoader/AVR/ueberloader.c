@@ -80,14 +80,14 @@ void TaskGovernor(void)
 	PORTC.DIRSET = 0b00000011; // set Port C as output
 	PORTD.DIRSET = 0b00000011; // set Port D as output
 
-	vActivateHiCurrentMeas();
+	ADC_ActivateHiCurrentMeas();
 
 	EVSYS.STROBE = (1<<7);  //fire event 7, which triggers the ADC
 	OS_WaitTicks(1); // wait during first ADC conversion
 
 	int16_t sZeroHiMeas = g_sADCvalues[2];
 
-	//vActivateLoCurrentMeas();
+	//ADC_ActivateLoCurrentMeas();
 
 	while(1)
 	{
@@ -118,9 +118,9 @@ void TaskGovernor(void)
 		}
 
 		if(sI_out_act > 2500)
-			vActivateHiCurrentMeas();
+			ADC_ActivateHiCurrentMeas();
 		else if (sI_out_act < 2000)
-			vActivateLoCurrentMeas();
+			ADC_ActivateLoCurrentMeas();
 
 //		cli();
 //		g_I_filt = I_out_act;
@@ -161,112 +161,73 @@ void TaskGovernor(void)
 }
 
 
-
+#define ADCWAITTIME 1
 
 void TaskBalance(void)
 {
-	static uint8_t ucPhase; // ADC conversion phase, equal to ADC channel, within 0..5
+	int16_t sTemp;
+	uint8_t i;
 
-	int16_t sResult;
-	int32_t nTemp;
-
-	ADCStartConvCh3Pin(0);
+	ADC_StartConvCh3Pin(0);
 
 	OS_SetAlarm(1,10);
 	while(1)
 	{
-		OS_WaitAlarm();
-		OS_SetAlarm(1,10);
+		OS_WaitTicks(ADCWAITTIME);
 
-		sResult = ADCA.CH3.RES ;//- myCalibration.sADCOffset;
 
-		switch (ucPhase) // fixme remove the cases
+		for(i=1;i<6;i++)
 		{
-			case 0:
-				ucPhase++;
-				ADCStartConvCh3Pin(ucPhase);
-				break;
-			case 1:
-			case 2:
-			case 3:
-			case 4:
-				// push voltage of channel into array
-				nTemp = (int32_t)sResult * (int32_t)myCalibration.sADCRef_mV / 957ul;
-				
-				OS_ENTERCRITICAL;
-				MyADCValues.Cell_mVolt[ucPhase] = nTemp; // fixme scaling!
-				OS_LEAVECRITICAL;
-				ucPhase++;
-				ADCStartConvCh3Pin(ucPhase);
-				break;
-			case 5:
-				// push voltage of channel into array
-				nTemp = (int32_t)sResult * (int32_t)myCalibration.sADCRef_mV / 957ul;
+			ADC_StartConvCh3Pin(i);
+			OS_WaitTicks(ADCWAITTIME);
+			// push voltage of channel into array
+			sTemp = ADC_ScaleCell_mV(ADCA.CH3.RES);
 
-				OS_ENTERCRITICAL;
-				MyADCValues.Cell_mVolt[5] = nTemp; // fixme scaling!
-				OS_LEAVECRITICAL;
-				ucPhase++;
-				ADCStartConvCh3Pin(10); // Cell 0
-				break;
-			case 6:
-				// push voltage of channel into array
-				nTemp = (int32_t)sResult * (int32_t)myCalibration.sADCRef_mV / 957ul;
-				
-				OS_ENTERCRITICAL;
-				MyADCValues.Cell_mVolt[0] = nTemp; // fixme scaling!
-				OS_LEAVECRITICAL;
-				ucPhase++;
-				ADCStartConvCh3Pin(11);
-			case 7:
-				// temperature external2
-				OS_ENTERCRITICAL;
-				MyADCValues.TempInt[1] = sResult ; // fixme scaling!
-				OS_LEAVECRITICAL;
-				ucPhase++;
-				ADCStartConvInt(0);
-				break;
-			case 8:
-				// CPU temperature
-				sResult = sResult *10 /33; // what would be measured, if it was done at 1V ref (/ 3.3).
-				nTemp = ( sResult * (273ul+85ul) / myCalibration.usCPUTemp85C) ; // fixme falsch!
-				OS_ENTERCRITICAL;
-				MyADCValues.TempCPU = nTemp ; // fixme scaling!
-				OS_LEAVECRITICAL;
-				ucPhase++;
-				ADCStartConvInt(1);
-				break;
-			case 9:
-				// CPU BANDGAP
-				OS_ENTERCRITICAL;
-				MyADCValues.Bandgap = sResult; // bit value for 1.10V ! at ref = Usupp/1.6
-				OS_LEAVECRITICAL;
-
-				nTemp = (2048ul*1088ul)/MyADCValues.Bandgap; // by knowing, that the voltage is 1.088V, we calculate the ADCRef voltage. // fixme !!!! Temperature test!!
-				OS_ENTERCRITICAL;
-
-				myCalibration.sADCRef_mV = nTemp;
-				OS_LEAVECRITICAL;
-
-				ucPhase++;
-				ADCStartConvInt(2);
-				break;
-			case 10:
-				// VCC_mVolt measurement
-				nTemp = sResult * 10ul;
-				nTemp = nTemp * myCalibration.sADCRef_mV / 2048ul ;
-				OS_ENTERCRITICAL;
-				MyADCValues.VCC_mVolt = nTemp;
-				OS_LEAVECRITICAL;
-				ucPhase = 0;
-				ADCStartConvCh3Pin(0);
-				break;
-			default:
-				emstop(98);
-				break;
+			OS_ENTERCRITICAL;
+			MyADCValues.Cell_mVolt[i] = sTemp;
+			OS_LEAVECRITICAL;
 		}
+		ADC_StartConvCh3Pin(10);
+		OS_WaitTicks(ADCWAITTIME);
+		sTemp = ADC_ScaleCell_mV(ADCA.CH3.RES);
+		OS_ENTERCRITICAL;
+		MyADCValues.Cell_mVolt[0] = sTemp;
+		OS_LEAVECRITICAL;
 
-		// trigger next conversion inside previous case
+		ADC_StartConvCh3Pin(11); // temperature external2
+		OS_WaitTicks(ADCWAITTIME);
+		sTemp = ADCA.CH3.RES;
+		OS_ENTERCRITICAL;
+		MyADCValues.TempInt[1] = sTemp ; // fixme scaling!
+		OS_LEAVECRITICAL;
+
+		ADC_StartConvInt(0); // CPU temperature
+		OS_WaitTicks(ADCWAITTIME);
+		sTemp = ADCA.CH3.RES*10 /33; // what would be measured, if it was done at 1V ref (/ 3.3).
+		sTemp = ( sTemp * (273ul+85ul) / myCalibration.usCPUTemp85C) ; // fixme falsch!
+		OS_ENTERCRITICAL;
+		MyADCValues.TempCPU = sTemp ; // fixme scaling!
+		OS_LEAVECRITICAL;
+
+		ADC_StartConvInt(1); // Bandgap reference
+		OS_WaitTicks(ADCWAITTIME);
+		OS_ENTERCRITICAL;
+		MyADCValues.Bandgap = ADCA.CH3.RES; // bit value for 1.10V ! at ref = Usupp/1.6
+		OS_LEAVECRITICAL;
+		sTemp = (2048ul*1088ul)/MyADCValues.Bandgap; // by knowing, that the voltage is 1.088V, we calculate the ADCRef voltage. // fixme !!!! Temperature test!!
+		OS_ENTERCRITICAL;
+		myCalibration.sADCRef_mV = sTemp;
+		OS_LEAVECRITICAL;
+
+
+		ADC_StartConvInt(2); // VCC_mVolt measurement
+		OS_WaitTicks(ADCWAITTIME);
+		sTemp = ADCA.CH3.RES * 10ul;
+		sTemp = sTemp * myCalibration.sADCRef_mV / 2048ul ;
+		OS_ENTERCRITICAL;
+		MyADCValues.VCC_mVolt = sTemp;
+		OS_LEAVECRITICAL;
+
 
 
 	}
