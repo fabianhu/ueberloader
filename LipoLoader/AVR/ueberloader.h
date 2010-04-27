@@ -4,11 +4,11 @@
 
 typedef struct ADC_Values_tag
 {
-	uint16_t		Cell_mVolt[6];
-	uint16_t		TempInt[2];
-	uint16_t		VCC_mVolt;
-	uint16_t 		Bandgap;
-	uint16_t		TempCPU;
+	int16_t		Cell_mVolt[6];
+	int16_t		TempInt[2];
+	int16_t		VCC_mVolt;
+	int16_t 	Bandgap;
+	int16_t		TempCPU;
 }ADC_Values_t;
 
 typedef struct AccuCell_tag
