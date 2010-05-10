@@ -12,8 +12,8 @@
 // *********  Task definitions
 OS_DeclareTask(TaskGovernor,200);
 OS_DeclareTask(TaskBalance,200);
-OS_DeclareTask(Task3,200);
-OS_DeclareTask(Task4,200);
+OS_DeclareTask(TaskComm,200);
+OS_DeclareTask(TaskMonitor,200);
 
 //OS_DeclareQueue(DemoQ,10,4);
 
@@ -34,8 +34,8 @@ int main(void)
 
     OS_CreateTask(TaskGovernor, 0);
     OS_CreateTask(TaskBalance, 1);
-    OS_CreateTask(Task3, 2);
-	OS_CreateTask(Task4, 3);
+    OS_CreateTask(TaskComm, 2);
+	OS_CreateTask(TaskMonitor, 3);
 
 	OS_StartExecution() ;
 	while(1)
@@ -105,6 +105,7 @@ void CPU_init(void)
 	PMIC.CTRL = PMIC_HILVLEN_bm|PMIC_MEDLVLEN_bm|PMIC_LOLVLEN_bm;
 
 	// *** NO global interrupts enabled at this point!!!
+
 }
 
 ISR(OSC_XOSCF_vect)
@@ -145,7 +146,7 @@ void emstop(uint8_t e)
 	// Disable timer and Pins Port C
 	TCC0.CTRLA = 0;
 	TCC0.CTRLB = 0;
-	PORTC.OUTCLR = 0b00000011;
+	PORTC.OUTCLR = 0b11111111;
 
 	// Disable timer and Pins Port D
 	TCD0.CTRLA = 0;

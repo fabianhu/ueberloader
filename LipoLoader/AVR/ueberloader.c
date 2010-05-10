@@ -9,41 +9,24 @@
 #include "adc.h"
 #include "pwm.h"
 
-// *********  Task definitions
-OS_DeclareTask(TaskGovernor,200);
-OS_DeclareTask(TaskBalance,200);
-OS_DeclareTask(Task3,200);
-OS_DeclareTask(Task4,200);
-
 //OS_DeclareQueue(DemoQ,10,4);
 
 ADC_Values_t MyADCValues;
+Battery_t myBattery;
 
 // *********  Prototypes
 extern void emstop(uint8_t e);
 
-
-
-
-extern int16_t g_sADCvalues[3];
+extern int16_t g_sADCvalues[3]; // fast ADC values
 extern Calibration_t myCalibration;
 
-struct 
-{
-	uint32_t Q_max;
-	uint16_t U_Max;
-	uint16_t I_Max_Set;
-	uint8_t  CellCount;
-	uint8_t  Go;
-}
-s_Command = {0,0,0,0,0};
+Command_t myCommand = {0,0,0,0,0};
 
 uint16_t I_Max_ABS = 25000;
 
 volatile uint16_t g_I_filt;
 
 uint16_t usStartstep =STARTMAX;
-
 
 void TaskGovernor(void)
 {
@@ -52,25 +35,6 @@ void TaskGovernor(void)
 	uint32_t unTemp;
 	uint16_t usU_in_act,usU_out_act;
 	int16_t sI_out_act; // mV / mA
-//
-//	uint16_t bStarted =0;
-
-	PORTD.PIN5CTRL = PORT_OPC_PULLUP_gc;
-	PORTD.PIN6CTRL = PORT_OPC_PULLUP_gc;
-	PORTD.PIN7CTRL = PORT_OPC_PULLUP_gc;
-
-	// set working parameters
-	//if (PORTD.IN & PIN7_bm)
-		//s_Command.U_Max = 4150*3;
-		//else
-		s_Command.U_Max = 4150*6;
-
-	/*if (!(PINC & (1<<PC7)))
-		{
-			// no limits ever!
-			s_Command.U_Max = 26000; // set to 26V
-			I_Max_ABS = 29500;
-		}*/
 
 	vPWM_Init();
 
@@ -139,19 +103,13 @@ void TaskGovernor(void)
 			emstop(4);
 */
 
-		uint16_t Temp;
-		OS_ENTERCRITICAL;
-		Temp = MyADCValues.TempInt[1];
-		OS_LEAVECRITICAL;
 
-		if (Temp < 200)
-			Temp = 0;
-
-		Temp = Temp*4;
-		
-
-
-		vGovernor(Temp,18000,sI_out_act,usU_out_act);
+		vGovernor(
+				myCommand.I_Max_Set_mA,
+				myCommand.U_Setpoint_mV*myBattery.ucNumberOfCells,
+				sI_out_act,
+				usU_out_act
+				);
 
 
 
@@ -163,10 +121,24 @@ void TaskGovernor(void)
 
 #define ADCWAITTIME 1
 
+void filter(uint16_t* o, uint16_t* n)
+{
+	uint16_t temp;
+	temp = *o * 9 + *n;
+	*o = temp / 10;
+}
+
+
 void TaskBalance(void)
 {
 	int16_t sTemp;
+	uint16_t usTemp;
 	uint8_t i;
+
+	// direction for balancer pins
+	PORTC.DIRSET = 0b11111100;
+
+	OS_WaitTicks(100); // wait for ADC init
 
 	ADC_StartConvCh3Pin(0);
 
@@ -181,17 +153,16 @@ void TaskBalance(void)
 			ADC_StartConvCh3Pin(i);
 			OS_WaitTicks(ADCWAITTIME);
 			// push voltage of channel into array
-			sTemp = ADC_ScaleCell_mV(ADCA.CH3.RES);
-
+			usTemp = ADC_ScaleCell_mV(ADCA.CH3.RES);
 			OS_ENTERCRITICAL;
-			MyADCValues.Cell_mVolt[i] = sTemp;
+			filter(&myBattery.Cells[i].usVoltage_mV, &usTemp);
 			OS_LEAVECRITICAL;
 		}
 		ADC_StartConvCh3Pin(10);
 		OS_WaitTicks(ADCWAITTIME);
-		sTemp = ADC_ScaleCell_mV(ADCA.CH3.RES);
+		usTemp = ADC_ScaleCell_mV(ADCA.CH3.RES);
 		OS_ENTERCRITICAL;
-		MyADCValues.Cell_mVolt[0] = sTemp;
+		filter(&myBattery.Cells[0].usVoltage_mV, &usTemp);
 		OS_LEAVECRITICAL;
 
 		ADC_StartConvCh3Pin(11); // temperature external2
@@ -204,7 +175,7 @@ void TaskBalance(void)
 		ADC_StartConvInt(0); // CPU temperature
 		OS_WaitTicks(ADCWAITTIME);
 		sTemp = ADCA.CH3.RES*10 /33; // what would be measured, if it was done at 1V ref (/ 3.3).
-		sTemp = ( sTemp * (273ul+85ul) / myCalibration.usCPUTemp85C) ; // fixme falsch!
+		sTemp = ( sTemp * (273ul+85ul) / myCalibration.usCPUTemp85C) ;
 		OS_ENTERCRITICAL;
 		MyADCValues.TempCPU = sTemp ; // fixme scaling!
 		OS_LEAVECRITICAL;
@@ -228,67 +199,78 @@ void TaskBalance(void)
 		MyADCValues.VCC_mVolt = sTemp;
 		OS_LEAVECRITICAL;
 
+		// mean Cell Voltage
+		uint16_t mean = 0, bBalance=0;
+		for(i=0;i<myBattery.ucNumberOfCells;i++)
+		{
+			mean += myBattery.Cells[i].usVoltage_mV;
+			if(myBattery.Cells[i].usVoltage_mV > myCommand.MinBalance_mV)
+				bBalance = 1;
+		}
+		mean /= myBattery.ucNumberOfCells;
+		mean +=3;
 
+		// balancing allowed
+		if(bBalance == 1)
+		{
+
+			// Balancer logic
+			for(i=0;i<myBattery.ucNumberOfCells;i++)
+			{
+				if(myBattery.Cells[i].usVoltage_mV > mean)
+				{
+					// switch on Balancer for this cell
+					PORTC.OUTSET = (1<<(2+i));
+				}
+				else
+				{
+					// switch off Balancer for this cell
+					PORTC.OUTCLR = (1<<(2+i));
+				}
+
+			}
+		}
+		else
+		{
+			// balancer off
+			PORTC.OUTCLR = (0b111111<<2);
+		}
+
+		OS_WaitTicks(10);
 
 	}
 }
 
-void Task3(void)
+void TaskComm(void)
 {
-	/*OS_SetAlarm(2,1000);
-	while(1)
-	{
-		OS_WaitAlarm();
-		OS_SetAlarm(2,1000);
-		// count the charged Q
-
-	}*/
-	uint16_t i;
+	OS_WaitTicks(100); // wait for ADC init
 
 	OS_SetAlarm(2,10);
 		while(1)
 		{
-			OS_WaitAlarm();
-			OS_SetAlarm(2,10);
+			myCommand.U_Setpoint_mV = 4150;
+			myCommand.I_Max_Set_mA = 1000;
+			myCommand.MinBalance_mV = 3000;
 
-			if(!(PORTD.IN & PIN5_bm)) // set to 0
-			{
-				s_Command.I_Max_Set =0;
-				OS_SetAlarm(2,1000);
-			}
-			else
-			{
-				cli();
-				i = s_Command.I_Max_Set;
-				if(!(PORTD.IN & PIN6_bm) && (i + 1000) <= I_Max_ABS)
-				{
-					i += 1000;
-					s_Command.I_Max_Set = i ; // increase by 100 mA
-					OS_SetAlarm(2,333); // look again in 333ms
-				}
-				sei();
+			myBattery.ucNumberOfCells = 3;
 
-				// fixme setpoint kann nicht höher, wenn power-mode (rechtes enable) nicht ein ist.
-			}
+			OS_WaitTicks(100);
 		}
 
 }
 
 
 
-void Task4(void)
+void TaskMonitor(void)
 {
+	OS_WaitTicks(100); // wait for ADC init
 
-
-	OS_SetAlarm(3,10);
+	OS_SetAlarm(3,1000);
 	while(1)
 	{
 		OS_WaitAlarm();
-		OS_SetAlarm(3,2);
-
-	
-
-
+		OS_SetAlarm(3,1000);
+		// count the charged Q
 
 	}
 }

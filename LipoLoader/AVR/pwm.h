@@ -25,3 +25,5 @@ void vGovernor(uint16_t _I_Set_mA, uint16_t _U_Set_mV, uint16_t _I_Act_mA, uint1
 #define MINSWITCHOFFPWM 300
 
 #define STARTMAX 1000ul;
+
+#define STARTUPLEVEL_mA 100 // minimum current for syncronous op.
