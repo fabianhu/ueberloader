@@ -147,7 +147,7 @@ void SetEnableBoost(uint16_t usStartstep) // 1000-0 scaled; 0= fully started
 void vGovernor(uint16_t _I_Set_mA, uint16_t _U_Set_mV, uint16_t _I_Act_mA, uint16_t _U_Act_mV)
 {
 	static uint16_t usPower, usStartstep;
-
+	static uint8_t cn=0;
 
 	if(_I_Set_mA <= 0)
 	{
@@ -162,7 +162,7 @@ void vGovernor(uint16_t _I_Set_mA, uint16_t _U_Set_mV, uint16_t _I_Act_mA, uint1
 
 //			if(
 //					usI_out_act > (s_Command.I_Max_Set+(s_Command.I_Max_Set/10)) ||
-//					usU_out_act > (s_Command.U_Max+(s_Command.U_Max/10))
+//					usU_out_act > (s_Command.U_Setpoint+(s_Command.U_Setpoint/10))
 //				)
 //			{
 //				// overshoot prevention
@@ -170,6 +170,12 @@ void vGovernor(uint16_t _I_Set_mA, uint16_t _U_Set_mV, uint16_t _I_Act_mA, uint1
 //			}
 //			else
 //			{
+
+		if(_I_Set_mA > STARTUPLEVEL_mA)
+		{
+			if(usStartstep > 0)
+				_I_Set_mA = STARTUPLEVEL_mA;
+		}
 
 		int16_t diff = _I_Act_mA - _I_Set_mA;
 
@@ -185,29 +191,10 @@ void vGovernor(uint16_t _I_Set_mA, uint16_t _U_Set_mV, uint16_t _I_Act_mA, uint1
 		}
 
 
-/*// debug test code
-		static uint8_t dir =0;
-		if (dir==0)
-		{
-			if (usPower < PERIOD_H + 2*MINSWITCHOFFPWM)//PERIOD_H*17/10)
-				usPower++;
-			else
-				dir =1;
-		}
-		else
-		{
-			if (usPower >= PERIOD_H - 2*MINSWITCHOFFPWM)//PERIOD_H*17/10)
-				usPower--;
-			else
-				dir =0;
-
-		}
-*/
-		static uint8_t cn=0;
 
 		int16_t usDiffAbs = (diff>0)?diff:-diff;
 
-		if(usDiffAbs < _I_Set_mA/20 && _I_Set_mA > 3000)
+		if(usDiffAbs < _I_Set_mA/20 && _I_Set_mA > 300)
 		{
 			if (++cn == 3)
 			{
