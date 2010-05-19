@@ -8,6 +8,7 @@
 #include "OS/FabOS.h"
 #include "ueberloader.h"
 #include "adc.h"
+#include "usart.h"
 
 // *********  Task definitions
 OS_DeclareTask(TaskGovernor,200);
@@ -104,7 +105,12 @@ void CPU_init(void)
 	//Enable Interrupts in INT CTRL
 	PMIC.CTRL = PMIC_HILVLEN_bm|PMIC_MEDLVLEN_bm|PMIC_LOLVLEN_bm;
 
+	USARTinit();
+
+
 	// *** NO global interrupts enabled at this point!!!
+
+
 
 }
 

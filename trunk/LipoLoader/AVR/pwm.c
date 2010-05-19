@@ -144,7 +144,12 @@ void SetEnableBoost(uint16_t usStartstep) // 1000-0 scaled; 0= fully started
 }
 
 
-void vGovernor(uint16_t _I_Set_mA, uint16_t _U_Set_mV, uint16_t _I_Act_mA, uint16_t _U_Act_mV)
+void vGovernor(
+		uint16_t _I_Set_mA,
+		uint16_t _U_Set_mV,
+		uint16_t _I_Act_mA,
+		uint16_t _U_Act_mV,
+		uint16_t _U_Supp_mV)
 {
 	static uint16_t usPower, usStartstep;
 	static uint8_t cn=0;
@@ -154,11 +159,10 @@ void vGovernor(uint16_t _I_Set_mA, uint16_t _U_Set_mV, uint16_t _I_Act_mA, uint1
 		usPower = 0;
 		ENABLE_A_OFF;ENABLE_B_OFF;
 		usStartstep = STARTMAX;
+		vPWM_Set(usPower,usStartstep);
 	}
 	else
 	{
-		//ENABLE_A_ON;
-		//ENABLE_B_ON;
 
 //			if(
 //					usI_out_act > (s_Command.I_Max_Set+(s_Command.I_Max_Set/10)) ||
@@ -178,8 +182,10 @@ void vGovernor(uint16_t _I_Set_mA, uint16_t _U_Set_mV, uint16_t _I_Act_mA, uint1
 		}
 
 		int16_t diff = _I_Act_mA - _I_Set_mA;
+		//int16_t sConverterPower = (_I_Act_mA/1000) * ((_U_Act_mV - _U_Supp_mV)/1000);
 
-		if(_U_Act_mV < _U_Set_mV && _I_Act_mA < _I_Set_mA)
+
+		if(_U_Act_mV < _U_Set_mV && _I_Act_mA < _I_Set_mA /*&& sConverterPower < MAXCONVERTERPOWER_W*/)
 		{
 			if (usPower < PERIOD_H*17/10)
 				usPower++;
@@ -191,10 +197,9 @@ void vGovernor(uint16_t _I_Set_mA, uint16_t _U_Set_mV, uint16_t _I_Act_mA, uint1
 		}
 
 
-
 		int16_t usDiffAbs = (diff>0)?diff:-diff;
 
-		if(usDiffAbs < _I_Set_mA/20 && _I_Set_mA > 300)
+		if(usDiffAbs < _I_Set_mA/20 && _I_Set_mA > STARTUPLEVEL_mA/2)
 		{
 			if (++cn == 3)
 			{
@@ -212,6 +217,7 @@ void vGovernor(uint16_t _I_Set_mA, uint16_t _U_Set_mV, uint16_t _I_Act_mA, uint1
 		vPWM_Set(usPower,usStartstep);
 	}
 }
+
 
 
 

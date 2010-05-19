@@ -96,19 +96,19 @@ uint16_t ADCinit(void)
 
 
 	ADCA.CH0.CTRL = ADC_CH_INPUTMODE_DIFF_gc;
-	ADCA.CH0.MUXCTRL = 0x09<<3 | ADC_CH_MUXNEG0_bm;// ADC_CH_MUXPOS_PIN9_gc; Supply
+	ADCA.CH0.MUXCTRL = 0x09<<3 ;// ADC_CH_MUXPOS_PIN9_gc; Supply
 	ADCA.CH0.INTCTRL = 0; // no ISR
 
 	ADCA.CH1.CTRL = ADC_CH_INPUTMODE_DIFF_gc;
-	ADCA.CH1.MUXCTRL = 0x08<<3 | ADC_CH_MUXNEG0_bm;// ADC_CH_MUXPOS_PIN8_gc; Battery
+	ADCA.CH1.MUXCTRL = 0x08<<3 ;// ADC_CH_MUXPOS_PIN8_gc; Battery
 	ADCA.CH1.INTCTRL = 0; // no ISR
 
 	ADCA.CH2.CTRL = ADC_CH_INPUTMODE_DIFF_gc;
-	ADCA.CH2.MUXCTRL = ADC_CH_MUXPOS_PIN6_gc | ADC_CH_MUXNEG0_bm; // actual current
+	ADCA.CH2.MUXCTRL = ADC_CH_MUXPOS_PIN6_gc ; // actual current
 	ADCA.CH2.INTCTRL = 0; // no ISR
 
 	ADCA.CH3.CTRL = ADC_CH_INPUTMODE_DIFF_gc;
-	ADCA.CH3.MUXCTRL = ADC_CH_MUXPOS_PIN0_gc | ADC_CH_MUXNEG0_bm;
+	ADCA.CH3.MUXCTRL = ADC_CH_MUXPOS_PIN0_gc ;
 	ADCA.CH3.INTCTRL = 0; // no ISR
 
 
@@ -167,13 +167,13 @@ uint16_t ADCinit(void)
 
 void ADC_ActivateHiCurrentMeas(void)
 {
-	ADCA.CH2.MUXCTRL = ADC_CH_MUXPOS_PIN7_gc | ADC_CH_MUXNEG0_bm; // actual current
+	ADCA.CH2.MUXCTRL = ADC_CH_MUXPOS_PIN7_gc ; // actual current
 	PORTD.OUTCLR = (1<<2);
 }
 
 void ADC_ActivateLoCurrentMeas(void)
 {
-	ADCA.CH2.MUXCTRL = ADC_CH_MUXPOS_PIN6_gc | ADC_CH_MUXNEG0_bm; // actual current
+	ADCA.CH2.MUXCTRL = ADC_CH_MUXPOS_PIN6_gc ; // actual current
 	PORTD.OUTSET = (1<<2);
 }
 
@@ -228,3 +228,9 @@ uint16_t ADC_ScaleCell_mV(uint16_t in)
 {
 	return (int32_t)in * (int32_t)myCalibration.sADCRef_mV / 957ul; // 957 = (2048 / factor of amplification)
 }
+
+uint16_t ADC_ScaleVolt_mV(uint16_t in)
+{
+	return (int32_t)in * (int32_t)myCalibration.sADCRef_mV / 2048ul * 13ul; // 158 = (2048 / factor of amplification (13))
+}
+

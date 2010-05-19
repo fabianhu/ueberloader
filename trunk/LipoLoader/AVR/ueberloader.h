@@ -2,6 +2,21 @@
 
 #include <avr/io.h>
 
+typedef enum //BatteryStatus
+{
+	eBattUnknown, // = idle
+	eBattCharging,
+	eBattFull,
+	eBattError,
+	//eBattEmpty,
+}BatteryStatus_t;
+
+typedef enum
+{
+	eModeAuto,
+	eModeManual
+}ChargerMode_t;
+
 typedef struct ADC_Values_tag
 {
 	int16_t		TempInt[2];
@@ -25,28 +40,25 @@ typedef struct BatteryCell_tag
 
 typedef struct Battery_tag
 {
-	uint8_t ucNumberOfCells;
-	BatteryCell_t Cells[6];
+	uint8_t ucNumberOfCells; // ONLY changed by Balancer task!
+	BatteryCell_t Cells[6]; // ONLY changed by Balancer task!
 	uint16_t usVoltage_mV;
+	//uint16_t usAmperes_mA;
 	uint32_t unCharge_mAs;
 	uint32_t unCharge_mWs;
 	uint32_t unTimeCharging_s;
+	BatteryStatus_t eState;
 }Battery_t;
 
 
 typedef struct Command_tag
 {
-	uint32_t Q_max_mAh; // max mAh
+	//uint32_t Q_max_mAh; // max mAh
 	uint16_t U_Setpoint_mV; // volt per cell
 	uint16_t I_Max_Set_mA;  // max current
 	uint16_t MinBalance_mV;
-	uint8_t  Go;
+	uint8_t  UserCellCount;
+	ChargerMode_t  Mode;
 }Command_t;
 
-enum BatteryStatus
-{
-	eBattUnknown,
-	eBattEmpty,
-	eBattfull,
-	eBattError
-};
+#define abs(X) (((X)<0)?-(X):(X))

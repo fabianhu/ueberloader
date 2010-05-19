@@ -11,7 +11,13 @@ void vPWM_Set(uint16_t usPower, uint16_t usStartstep);
 void SetEnableBuck(uint16_t usStartstep); // 1000-0 scaled; 0= fully started
 void SetEnableBoost(uint16_t usStartstep); // 1000-0 scaled; 0= fully started
 
-void vGovernor(uint16_t _I_Set_mA, uint16_t _U_Set_mV, uint16_t _I_Act_mA, uint16_t _U_Act_mV);
+void vGovernor(
+		uint16_t _I_Set_mA,
+		uint16_t _U_Set_mV,
+		uint16_t _I_Act_mA,
+		uint16_t _U_Act_mV,
+		uint16_t _U_Supp_mV
+		);
 
 // Defines
 #define ENABLE_A_OFF	TCC0.CCBBUF = 0;
@@ -26,4 +32,6 @@ void vGovernor(uint16_t _I_Set_mA, uint16_t _U_Set_mV, uint16_t _I_Act_mA, uint1
 
 #define STARTMAX 1000ul;
 
-#define STARTUPLEVEL_mA 100 // minimum current for syncronous op.
+#define STARTUPLEVEL_mA 300 // minimum current for syncronous op.
+
+#define MAXCONVERTERPOWER_W 13 // maximum converter power
