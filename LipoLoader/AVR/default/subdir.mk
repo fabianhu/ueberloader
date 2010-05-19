@@ -9,7 +9,8 @@ C_SRCS += \
 ../menu.c \
 ../pwm.c \
 ../touchpad.c \
-../ueberloader.c 
+../ueberloader.c \
+../usart.c 
 
 OBJS += \
 ./adc.o \
@@ -17,7 +18,8 @@ OBJS += \
 ./menu.o \
 ./pwm.o \
 ./touchpad.o \
-./ueberloader.o 
+./ueberloader.o \
+./usart.o 
 
 C_DEPS += \
 ./adc.d \
@@ -25,14 +27,15 @@ C_DEPS += \
 ./menu.d \
 ./pwm.d \
 ./touchpad.d \
-./ueberloader.d 
+./ueberloader.d \
+./usart.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
 %.o: ../%.c
 	@echo 'Building file: $<'
 	@echo 'Invoking: AVR Compiler'
-	avr-gcc -Wall -g2 -gstabs -O0 -fpack-struct -fshort-enums -funsigned-char -funsigned-bitfields -mmcu=atxmega32a4 -DF_CPU=3200000UL -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -c -o"$@" "$<"
+	avr-gcc -Wall -g2 -gstabs -O0 -fpack-struct -fshort-enums -funsigned-char -funsigned-bitfields -mmcu=atxmega32a4 -DF_CPU=32000000UL -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -c -o"$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
