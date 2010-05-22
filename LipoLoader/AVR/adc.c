@@ -13,9 +13,9 @@
 #include "OS/FabOS.h"
 #include <avr/pgmspace.h>
 
-extern Calibration_t myCalibration;
+extern Calibration_t g_tCalibration;
 
-volatile int16_t g_sADCvalues[3];
+volatile int16_t g_asADCvalues[3];
 
 
 extern void emstop(uint8_t e);
@@ -78,8 +78,8 @@ uint16_t ADCinit(void)
 	/* Move stored calibration values to ADC A. */
 	ADC_CalibrationValues_Load(&ADCA);
 
-	myCalibration.usCPUTemp85C = SP_ReadCalibrationByte( PROD_SIGNATURES_START + 0x2f )<<8;
-	myCalibration.usCPUTemp85C |= SP_ReadCalibrationByte( PROD_SIGNATURES_START + 0x2e );
+	g_tCalibration.usCPUTemp85C = SP_ReadCalibrationByte( PROD_SIGNATURES_START + 0x2f )<<8;
+	g_tCalibration.usCPUTemp85C |= SP_ReadCalibrationByte( PROD_SIGNATURES_START + 0x2e );
 
 	/* Set up ADC A to have signed conversion mode and 12(11) bit resolution. */
 	ADCA.CTRLA = 0b00000000;
@@ -123,15 +123,15 @@ uint16_t ADCinit(void)
 	}while(!(ADCA.CH0.INTFLAGS & 1));
 	ADCA.INTFLAGS = 0b00001111; // clear interrupt flags
 
- // setup DMA to transfer 3 successive conversions of ch 0-2 to the g_sADCvalues array.
+ // setup DMA to transfer 3 successive conversions of ch 0-2 to the g_asADCvalues array.
 
 	//DMA.INTFLAGS = DMA_CH_TRNINTLVL_HI_gc;
 	DMA.CH0.SRCADDR0 = (int)(&ADCA.CH0RES) & 0xff;
 	DMA.CH0.SRCADDR1 = ((int)(&ADCA.CH0RES) & 0xff00)>>8;
 	DMA.CH0.SRCADDR2 = ((int)(&ADCA.CH0RES) & 0xff0000)>>16;
-	DMA.CH0.DESTADDR0 = (int)(&g_sADCvalues[0]) & 0xff;
-	DMA.CH0.DESTADDR1 = ((int)(&g_sADCvalues[0]) & 0xff00)>>8;
-	DMA.CH0.DESTADDR2 = ((int)(&g_sADCvalues[0]) & 0xff0000)>>16;
+	DMA.CH0.DESTADDR0 = (int)(&g_asADCvalues[0]) & 0xff;
+	DMA.CH0.DESTADDR1 = ((int)(&g_asADCvalues[0]) & 0xff00)>>8;
+	DMA.CH0.DESTADDR2 = ((int)(&g_asADCvalues[0]) & 0xff0000)>>16;
 	DMA.CH0.CTRLA = DMA_CH_BURSTLEN_2BYTE_gc | DMA_CH_SINGLE_bm;//0b00000001;
 	DMA.CH0.CTRLB = DMA_CH_TRNINTLVL_HI_gc; // Hi isr for complete
 	DMA.CH0.ADDRCTRL = DMA_CH_SRCRELOAD_BLOCK_gc | DMA_CH_SRCDIR_INC_gc | DMA_CH_DESTRELOAD_TRANSACTION_gc | DMA_CH_DESTDIR_INC_gc;//0b01011101;
@@ -226,11 +226,11 @@ void ADC_StartConvInt(uint8_t c)
 
 uint16_t ADC_ScaleCell_mV(uint16_t in)
 {
-	return (int32_t)in * (int32_t)myCalibration.sADCRef_mV / 957ul; // 957 = (2048 / factor of amplification)
+	return (int32_t)in * (int32_t)g_tCalibration.sADCRef_mV / 957ul; // 957 = (2048 / factor of amplification)
 }
 
 uint16_t ADC_ScaleVolt_mV(uint16_t in)
 {
-	return (int32_t)in * (int32_t)myCalibration.sADCRef_mV / 2048ul * 13ul; // 158 = (2048 / factor of amplification (13))
+	return (int32_t)in * (int32_t)g_tCalibration.sADCRef_mV / 2048ul * 13ul; // 158 = (2048 / factor of amplification (13))
 }
 
