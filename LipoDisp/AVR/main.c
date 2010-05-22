@@ -1,13 +1,12 @@
 /*
-	This is the Üeberloader Main
+	This is the Üeberloader Display Main
 
 	(c) 2010 Fabian Huslik
 
 */
 
 #include "OS/FabOS.h"
-#include "ueberloader.h"
-#include "adc.h"
+
 #include "usart.h"
 
 // *********  Task definitions
@@ -26,7 +25,6 @@ void emstop(uint8_t e);
 
 // Global variables
 
-Calibration_t g_tCalibration;
 
 // *********  THE main()
 int main(void)
