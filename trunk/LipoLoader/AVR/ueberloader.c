@@ -14,17 +14,18 @@
 
 // ******** Globals
 
-Command_t myCommand = {0,0,0,0,0};
-ADC_Values_t myADCValues;
-Battery_t myBattery;
+Command_t g_tCommand = {0,0,0,0,0};
+ADC_Values_t g_tADCValues;
+Battery_Balancer_t g_tBattery_Balancer;
+Battery_Governor_t g_tBattery_Governor;
 //uint16_t usStartstep =STARTMAX;
 //uint16_t I_Max_ABS = 25000;
 //volatile uint16_t g_I_filt;
-extern int16_t g_sADCvalues[3]; // fast ADC values
-extern Calibration_t myCalibration;
+extern int16_t g_asADCvalues[3]; // fast ADC values
+extern Calibration_t g_tCalibration;
 
 // *********  Prototypes
-uint8_t GetCellcount(void);
+uint8_t GetCellcount(BatteryCell_t cells[], uint16_t* pusBattVoltage);
 void StateMachineBattery(void);
 extern void emstop(uint8_t e);
 
@@ -32,18 +33,24 @@ extern void emstop(uint8_t e);
 #define LED_ON  PORTD.OUTSET = (1<<3);
 #define LED_OFF PORTD.OUTCLR = (1<<3);
 
-void filter(uint16_t* o, uint16_t* n)
+void usFilter(uint16_t* o, uint16_t* n)
 {
 	uint32_t temp;
 	temp = *o * 9ul + *n;
 	*o = temp / 10;
 }
 
+void sFilter(int16_t* o, int16_t* n)
+{
+	int32_t temp;
+	temp = *o * 9ul + *n;
+	*o = temp / 10;
+}
 
 // ********* Stuff
 void TaskGovernor(void)
 {
-	myCalibration.sADCOffset = ADCinit();
+	g_tCalibration.sADCOffset = ADCinit();
 
 	uint16_t usU_in_act,usU_out_act;
 	int16_t sI_out_act; // mV / mA
@@ -61,7 +68,7 @@ void TaskGovernor(void)
 	EVSYS.STROBE = (1<<7);  //fire event 7, which triggers the ADC
 	OS_WaitTicks(1); // wait during first ADC conversion
 
-	int16_t sZeroHiMeas = g_sADCvalues[2];
+	int16_t sZeroHiMeas = g_asADCvalues[2];
 
 	//ADC_ActivateLoCurrentMeas();
 
@@ -74,24 +81,23 @@ void TaskGovernor(void)
 
 		OS_WaitTicks(1); // wait during ADC conversion
 
-		usU_in_act = ADC_ScaleVolt_mV(g_sADCvalues[0]) ;
-		usU_out_act = ADC_ScaleVolt_mV(g_sADCvalues[1]) ;;
+		usU_in_act = ADC_ScaleVolt_mV(g_asADCvalues[0]) ;
+		usU_out_act = ADC_ScaleVolt_mV(g_asADCvalues[1]) ;;
 
 		OS_ENTERCRITICAL;
-		filter(&myBattery.usVoltage_mV, &usU_out_act);
-		//myBattery.usVoltage_mV = usU_out_act;
+		usFilter(&g_tBattery_Governor.usVoltage_mV, &usU_out_act);
+		//g_tBattery_Balancer.usVoltage_mV = usU_out_act;
 		OS_LEAVECRITICAL;
 
 		if((ADCA.CH2.MUXCTRL & (0xf<<3)) == ADC_CH_MUXPOS_PIN7_gc) // is high current config...
 		{
 			// high current
-			// fixme
-			sI_out_act = (g_sADCvalues[2]-sZeroHiMeas) * 10; // [mA] 1V = 10A  (fixme)
+			sI_out_act = (g_asADCvalues[2]-sZeroHiMeas) * 10; // [mA] 1V = 10A  (fixme)
 		}
 		else
 		{
 			// low current
-			sI_out_act = (g_sADCvalues[2]- (uint32_t)myCalibration.sADCOffset)*3/2; // [mA]  2V = 3A  (fixme)
+			sI_out_act = (g_asADCvalues[2]- (uint32_t)g_tCalibration.sADCOffset)*3/2; // [mA]  2V = 3A  (fixme)
 		}
 
 		if(sI_out_act > 2500)
@@ -99,9 +105,10 @@ void TaskGovernor(void)
 		else if (sI_out_act < 2000)
 			ADC_ActivateLoCurrentMeas();
 
-//		cli();
-//		g_I_filt = I_out_act;
-//		sei();
+		OS_ENTERCRITICAL;
+		sFilter(&g_tBattery_Governor.sCurrent_mA, &sI_out_act);
+		OS_LEAVECRITICAL;
+
 
  // just in case...
 
@@ -117,11 +124,11 @@ void TaskGovernor(void)
 
 
 		OS_ENTERCRITICAL;
-		uint16_t myISetpoint = myCommand.I_Max_Set_mA;
-		uint16_t myUSetpoint = myCommand.U_Setpoint_mV*myBattery.ucNumberOfCells;
+		uint16_t myISetpoint = g_tCommand.usCurrentSetpoint;
+		uint16_t myUSetpoint = g_tCommand.usVoltageSetpoint_mV*g_tBattery_Balancer.ucNumberOfCells;
 		OS_LEAVECRITICAL;
 
-		if(myBattery.eState == eBattCharging)
+		if(g_tBattery_Balancer.eState == eBattCharging)
 		{
 			vGovernor(
 					myISetpoint,
@@ -173,70 +180,70 @@ void TaskBalance(void)
 			// push voltage of channel into array
 			usTemp = ADC_ScaleCell_mV(ADCA.CH3.RES);
 			OS_ENTERCRITICAL;
-			filter(&myBattery.Cells[i].usVoltage_mV, &usTemp);
+			usFilter(&g_tBattery_Balancer.Cells[i].usVoltage_mV, &usTemp);
 			OS_LEAVECRITICAL;
 		}
 		ADC_StartConvCh3Pin(10);
 		OS_WaitTicks(ADCWAITTIME);
 		usTemp = ADC_ScaleCell_mV(ADCA.CH3.RES);
 		OS_ENTERCRITICAL;
-		filter(&myBattery.Cells[0].usVoltage_mV, &usTemp);
+		usFilter(&g_tBattery_Balancer.Cells[0].usVoltage_mV, &usTemp);
 		OS_LEAVECRITICAL;
 
 		ADC_StartConvCh3Pin(11); // temperature external2
 		OS_WaitTicks(ADCWAITTIME);
 		sTemp = ADCA.CH3.RES;
 		OS_ENTERCRITICAL;
-		myADCValues.TempInt[1] = sTemp ; // fixme scaling!
+		g_tADCValues.TempInt[1] = sTemp ; // fixme scaling!
 		OS_LEAVECRITICAL;
 
 		ADC_StartConvInt(0); // CPU temperature
 		OS_WaitTicks(ADCWAITTIME);
 		sTemp = ADCA.CH3.RES*10 /33; // what would be measured, if it was done at 1V ref (/ 3.3).
-		sTemp = ( sTemp * (273ul+85ul) / myCalibration.usCPUTemp85C) ;
+		sTemp = ( sTemp * (273ul+85ul) / g_tCalibration.usCPUTemp85C) ;
 		OS_ENTERCRITICAL;
-		myADCValues.TempCPU = sTemp ; // fixme scaling!
+		g_tADCValues.TempCPU = sTemp ; // fixme scaling!
 		OS_LEAVECRITICAL;
 
 		ADC_StartConvInt(1); // Bandgap reference
 		OS_WaitTicks(ADCWAITTIME);
 		OS_ENTERCRITICAL;
-		myADCValues.Bandgap = ADCA.CH3.RES; // bit value for 1.10V ! at ref = Usupp/1.6
+		g_tADCValues.Bandgap = ADCA.CH3.RES; // bit value for 1.10V ! at ref = Usupp/1.6
 		OS_LEAVECRITICAL;
-		sTemp = (2048ul*1088ul)/myADCValues.Bandgap; // by knowing, that the voltage is 1.088V, we calculate the ADCRef voltage. // fixme !!!! Temperature test!!
+		sTemp = (2048ul*1088ul)/g_tADCValues.Bandgap; // by knowing, that the voltage is 1.088V, we calculate the ADCRef voltage. // fixme !!!! Temperature test!!
 		OS_ENTERCRITICAL;
-		myCalibration.sADCRef_mV = sTemp;
+		g_tCalibration.sADCRef_mV = sTemp;
 		OS_LEAVECRITICAL;
 
 
 		ADC_StartConvInt(2); // VCC_mVolt measurement
 		OS_WaitTicks(ADCWAITTIME);
 		sTemp = ADCA.CH3.RES * 10ul;
-		sTemp = sTemp * myCalibration.sADCRef_mV / 2048ul ;
+		sTemp = sTemp * g_tCalibration.sADCRef_mV / 2048ul ;
 		OS_ENTERCRITICAL;
-		myADCValues.VCC_mVolt = sTemp;
+		g_tADCValues.VCC_mVolt = sTemp;
 		OS_LEAVECRITICAL;
 
 		// mean Cell Voltage
 		uint16_t mean = 0, bBalance=0;
-		for(i=0;i<myBattery.ucNumberOfCells;i++)
+		for(i=0;i<g_tBattery_Balancer.ucNumberOfCells;i++)
 		{
-			mean += myBattery.Cells[i].usVoltage_mV;
-			if(myBattery.Cells[i].usVoltage_mV > myCommand.MinBalance_mV)
+			mean += g_tBattery_Balancer.Cells[i].usVoltage_mV;
+			if(g_tBattery_Balancer.Cells[i].usVoltage_mV > g_tCommand.usMinBalanceVolt_mV) // direct access to g_tCommand OK, because never changed during charging.
 				bBalance = 1;
 		}
 	
 
 		// balancing allowed
-		if(bBalance == 1 && myBattery.eState == eBattCharging)
+		if(bBalance == 1 && g_tBattery_Balancer.eState == eBattCharging)
 		{
-			mean /= myBattery.ucNumberOfCells;
+			mean /= g_tBattery_Balancer.ucNumberOfCells;
 			mean +=3;
 
 			// Balancer logic
-			for(i=0;i<myBattery.ucNumberOfCells;i++)
+			for(i=0;i<g_tBattery_Balancer.ucNumberOfCells;i++)
 			{
-				if(myBattery.Cells[i].usVoltage_mV > mean)
+				if(g_tBattery_Balancer.Cells[i].usVoltage_mV > mean)
 				{
 					// switch on Balancer for this cell
 					PORTC.OUTSET = (1<<(2+i));
@@ -266,17 +273,20 @@ void TaskComm(void)
 {
 	OS_WaitTicks(1000); // wait for ADC init
 
+			
+
 	OS_SetAlarm(2,10);
 		while(1)
 		{
 			OS_ENTERCRITICAL;
-			myCommand.I_Max_Set_mA = 500;
-			myCommand.MinBalance_mV = 3000;
-			myCommand.U_Setpoint_mV = 4150;
-			myCommand.Mode = eModeAuto;
+			g_tCommand.usCurrentSetpoint = 500;
+			g_tCommand.usMinBalanceVolt_mV = 3000;
+			g_tCommand.usVoltageSetpoint_mV = 4150;
+			g_tCommand.eChargerMode = eModeAuto;
 			OS_LEAVECRITICAL;
 
-			USART_TX_Test();
+
+			//USART_TX_Testxx(); // fixme remove
 
 			OS_WaitTicks(1000);
 		}
@@ -302,32 +312,40 @@ void TaskMonitor(void)
 void StateMachineBattery(void) // ONLY run in TaskBalance!
 {
 	uint8_t NumberOfCells = 0;
-	switch (myBattery.eState)
+
+	OS_ENTERCRITICAL; // get all larger values atomic.
+	uint16_t myBattVoltage = g_tBattery_Governor.usVoltage_mV;
+	int16_t myBattCurrent = g_tBattery_Governor.sCurrent_mA;
+
+	uint16_t myCommandCurrent = g_tCommand.usCurrentSetpoint;
+	OS_LEAVECRITICAL;
+
+	switch (g_tBattery_Balancer.eState)
 	{
 		case eBattUnknown:
 			// nicht vollständig angesteckt
-			switch(myCommand.Mode)
+			switch(g_tCommand.eChargerMode)
 			{
 				case eModeAuto:
 					// charge if ok.
-					NumberOfCells = GetCellcount();
+					NumberOfCells = GetCellcount(g_tBattery_Balancer.Cells,&myBattVoltage);
 					if(NumberOfCells > 0)
 					{
-						myBattery.ucNumberOfCells = NumberOfCells;
-						myBattery.eState = eBattCharging;
+						g_tBattery_Balancer.ucNumberOfCells = NumberOfCells;
+						g_tBattery_Balancer.eState = eBattCharging;
 					}
 					break;
 				case eModeManual:
 					// Manual mode
-					if(	GetCellcount()== myCommand.UserCellCount &&
-							myCommand.UserCellCount >0)
+					if(	GetCellcount(g_tBattery_Balancer.Cells,&myBattVoltage)== g_tCommand.ucUserCellCount &&
+							g_tCommand.ucUserCellCount >0)
 					{
-						myBattery.ucNumberOfCells = myCommand.UserCellCount;
-						myBattery.eState = eBattCharging;
+						g_tBattery_Balancer.ucNumberOfCells = g_tCommand.ucUserCellCount;
+						g_tBattery_Balancer.eState = eBattCharging;
 					}
 					else
 					{
-						myBattery.eState = eBattError; // set Error for Display
+						g_tBattery_Balancer.eState = eBattError; // set Error for Display
 					}
 					break;
 				default:
@@ -336,9 +354,10 @@ void StateMachineBattery(void) // ONLY run in TaskBalance!
 			break;
 		case eBattCharging:
 				// Charging!
-				/*if(myBattery.usVoltage_mV >= myCommand.U_Setpoint_mV*myBattery.ucNumberOfCells)
-					myBattery.eState = eBattFull;*/
-				/*if(GetCellcount()!=myBattery.ucNumberOfCells)
+				if(myBattVoltage >= g_tCommand.usVoltageSetpoint_mV*g_tBattery_Balancer.ucNumberOfCells &&
+						myBattCurrent < myCommandCurrent / 10) // fixme 10 ?
+					g_tBattery_Balancer.eState = eBattFull;
+				/*if(GetCellcount()!=g_tBattery_Balancer.ucNumberOfCells)
 				{
 					emstop(44); // Wackelkontakt am Balancer
 				}*/
@@ -369,7 +388,7 @@ void StateMachineBattery(void) // ONLY run in TaskBalance!
 #define MINCELLVOLTAGE_mV 2000 // minimum cell voltage
 
 // Calculate cell count ; Return cell count. 0 = error
-uint8_t GetCellcount(void) // ONLY run in TaskBalance!
+uint8_t GetCellcount(BatteryCell_t cells[], uint16_t* pusBattVoltage)
 {
 	uint8_t i,unCellCount=0;
 	uint16_t usUges_mV;
@@ -379,14 +398,14 @@ uint8_t GetCellcount(void) // ONLY run in TaskBalance!
 
 	for (i= 0;i<6;i++) // 0..5 iterate over possible cell count
 	{
-		if(myBattery.Cells[i].usVoltage_mV > MINCELLVOLTAGE_mV)
+		if(cells[i].usVoltage_mV > MINCELLVOLTAGE_mV)
 		{
-			usUges_mV += myBattery.Cells[i].usVoltage_mV; // sum up cell voltage
+			usUges_mV += cells[i].usVoltage_mV; // sum up cell voltage
 			unCellCount ++;
 		}
 	}
 
-	diff = usUges_mV - myBattery.usVoltage_mV;
+	diff = usUges_mV - *pusBattVoltage;
 	if(abs(diff)< CELLDIFF_mV*unCellCount)
 	{
 		// correct!

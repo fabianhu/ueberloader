@@ -26,7 +26,7 @@ void emstop(uint8_t e);
 
 // Global variables
 
-Calibration_t myCalibration;
+Calibration_t g_tCalibration;
 
 // *********  THE main()
 int main(void)

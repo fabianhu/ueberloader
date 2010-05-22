@@ -38,27 +38,31 @@ typedef struct BatteryCell_tag
  * */
 }BatteryCell_t;
 
-typedef struct Battery_tag
+typedef struct Battery_Balancer_tag
 {
 	uint8_t ucNumberOfCells; // ONLY changed by Balancer task!
 	BatteryCell_t Cells[6]; // ONLY changed by Balancer task!
-	uint16_t usVoltage_mV;
-	//uint16_t usAmperes_mA;
 	uint32_t unCharge_mAs;
 	uint32_t unCharge_mWs;
 	uint32_t unTimeCharging_s;
 	BatteryStatus_t eState;
-}Battery_t;
+}Battery_Balancer_t;
 
+typedef struct Battery_Governor_tag
+{
+	uint16_t usVoltage_mV;
+	int16_t  sCurrent_mA;
+
+}Battery_Governor_t;
 
 typedef struct Command_tag
 {
 	//uint32_t Q_max_mAh; // max mAh
-	uint16_t U_Setpoint_mV; // volt per cell
-	uint16_t I_Max_Set_mA;  // max current
-	uint16_t MinBalance_mV;
-	uint8_t  UserCellCount;
-	ChargerMode_t  Mode;
+	uint16_t usVoltageSetpoint_mV; // volt per cell
+	uint16_t usCurrentSetpoint;  // max current
+	uint16_t usMinBalanceVolt_mV;
+	uint8_t  ucUserCellCount;
+	ChargerMode_t  eChargerMode;
 }Command_t;
 
 #define abs(X) (((X)<0)?-(X):(X))

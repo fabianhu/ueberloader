@@ -125,7 +125,7 @@ void OS_TaskCreateInt( void (*t)(), uint8_t TaskID, uint8_t *stack, uint8_t stac
 	// "colorize" the stacks
 	for (z=0;z<stackSize;z++)
 	{
-		stack[z] = OS_UNUSEDMASK;
+		stack[z] = OS_UNUSEDMASK+TaskID;
 	}
 
 	MyOS.StackStart[TaskID]=stack;
@@ -166,7 +166,7 @@ void OS_StartExecution()
 	// "colorize" the stacks
 	while (stack > MyOS.StackStart[OS_NUMTASKS])
 	{
-		*--stack = OS_UNUSEDMASK;
+		*--stack = OS_UNUSEDMASK+OS_NUMTASKS;
 	}
 #endif
 
@@ -372,7 +372,7 @@ uint16_t OS_GetUnusedStack (uint8_t TaskID)
 
    do
    {
-      if (*p++ != OS_UNUSEDMASK)
+      if (*p++ != OS_UNUSEDMASK+TaskID)
          break;
 
       unused++;

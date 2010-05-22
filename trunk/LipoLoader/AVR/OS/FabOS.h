@@ -117,8 +117,8 @@ void OS_Int_ProcessAlarms(void);
 
 // *********  CPU related assembler stuff
 
-#define OS_ENTERCRITICAL cli()
-#define OS_LEAVECRITICAL sei()
+#define OS_ENTERCRITICAL cli();
+#define OS_LEAVECRITICAL sei();
 
 
 // Save all CPU registers on the AVR chip.
