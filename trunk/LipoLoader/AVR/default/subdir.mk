@@ -8,6 +8,7 @@ C_SRCS += \
 ../main.c \
 ../menu.c \
 ../pwm.c \
+../serial_slave.c \
 ../touchpad.c \
 ../ueberloader.c \
 ../usart.c 
@@ -17,6 +18,7 @@ OBJS += \
 ./main.o \
 ./menu.o \
 ./pwm.o \
+./serial_slave.o \
 ./touchpad.o \
 ./ueberloader.o \
 ./usart.o 
@@ -26,6 +28,7 @@ C_DEPS += \
 ./main.d \
 ./menu.d \
 ./pwm.d \
+./serial_slave.d \
 ./touchpad.d \
 ./ueberloader.d \
 ./usart.d 

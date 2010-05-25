@@ -269,30 +269,6 @@ void TaskBalance(void)
 	}// while(1)
 }
 
-void TaskComm(void)
-{
-	OS_WaitTicks(1000); // wait for ADC init
-
-			
-
-	OS_SetAlarm(2,10);
-		while(1)
-		{
-			OS_ENTERCRITICAL;
-			g_tCommand.usCurrentSetpoint = 500;
-			g_tCommand.usMinBalanceVolt_mV = 3000;
-			g_tCommand.usVoltageSetpoint_mV = 4150;
-			g_tCommand.eChargerMode = eModeAuto;
-			OS_LEAVECRITICAL;
-
-
-			//USART_TX_Testxx(); // fixme remove
-
-			OS_WaitTicks(1000);
-		}
-
-}
-
 
 
 void TaskMonitor(void)
