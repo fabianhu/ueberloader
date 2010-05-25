@@ -22,7 +22,7 @@ void USARTinit(void)
 	USARTE0.BAUDCTRLA = BSEL & 0xFF; // BSEL 7:0
 	USARTE0.BAUDCTRLB = BSCALE << 4 | (BSEL & 0xF00)>>8; // BSCALE, BSEL 11:8
 	//	4. Set mode of operation.
-	USARTE0.CTRLA = 0; // no interrupts
+	USARTE0.CTRLA = USART_RXCINTLVL0_bm; // RX isr low prio
 	USARTE0.CTRLC = 0b011; // asyncronous, no parity, one stop bit, 8 bits
 	//	5. Enable the Transmitter or the Receiver depending on the usage.
 	USARTE0.CTRLB =  USART_RXEN_bm |USART_TXEN_bm; //
@@ -35,15 +35,15 @@ void USARTinit(void)
 	DMA.CH1.ADDRCTRL = DMA_CH_SRCRELOAD_TRANSACTION_gc | DMA_CH_SRCDIR_INC_gc | DMA_CH_DESTRELOAD_NONE_gc | DMA_CH_DESTDIR_FIXED_gc;
 	DMA.CH1.TRIGSRC = DMA_CH_TRIGSRC_USARTE0_DRE_gc; // Channel 2 triggers DMA. (attention: channel 4 does not exist!!!)
 	//DMA.CH1.REPCNT = 1;
-
-	DMA.CH2.SRCADDR0 = (int)(&USARTE0.DATA) & 0xff;
-	DMA.CH2.SRCADDR1 = ((int)(&USARTE0.DATA) & 0xff00)>>8;
-	DMA.CH2.SRCADDR2 = ((int)(&USARTE0.DATA) & 0xff0000)>>16;
-	DMA.CH2.CTRLA = DMA_CH_BURSTLEN_1BYTE_gc | DMA_CH_SINGLE_bm;//0b00000001;
-	DMA.CH2.CTRLB = DMA_CH_TRNINTLVL_HI_gc; // Hi isr for complete
-	DMA.CH2.ADDRCTRL = DMA_CH_SRCRELOAD_NONE_gc | DMA_CH_SRCDIR_FIXED_gc | DMA_CH_DESTRELOAD_TRANSACTION_gc | DMA_CH_DESTDIR_INC_gc;
-	DMA.CH2.TRIGSRC = DMA_CH_TRIGSRC_USARTE0_RXC_gc;
-	DMA.CH2.REPCNT = 1;
+//
+//	DMA.CH2.SRCADDR0 = (int)(&USARTE0.DATA) & 0xff;
+//	DMA.CH2.SRCADDR1 = ((int)(&USARTE0.DATA) & 0xff00)>>8;
+//	DMA.CH2.SRCADDR2 = ((int)(&USARTE0.DATA) & 0xff0000)>>16;
+//	DMA.CH2.CTRLA = DMA_CH_BURSTLEN_1BYTE_gc | DMA_CH_SINGLE_bm;//0b00000001;
+//	DMA.CH2.CTRLB = DMA_CH_TRNINTLVL_HI_gc; // Hi isr for complete
+//	DMA.CH2.ADDRCTRL = DMA_CH_SRCRELOAD_NONE_gc | DMA_CH_SRCDIR_FIXED_gc | DMA_CH_DESTRELOAD_TRANSACTION_gc | DMA_CH_DESTDIR_INC_gc;
+//	DMA.CH2.TRIGSRC = DMA_CH_TRIGSRC_USARTE0_RXC_gc;
+//	DMA.CH2.REPCNT = 1;
 
 	// enable TX pin
 	PORTE.DIRSET = (1<<3); // PE3
@@ -70,11 +70,10 @@ void USART_TX_Testxx(void)
 		USART_RX_Array[i] = 0xee;
 	}
 	RecvBlockDMA(&DMA.CH2, USART_RX_Array,100);
-	SendBlockDMA(&DMA.CH1, USART_TX_Array,55);
-
+	USARTSendBlockDMA(&DMA.CH1, USART_TX_Array,55);
 }
 
-uint8_t SendBlockDMA(DMA_CH_t* DMAch, uint8_t* pArray, uint8_t Len) // return 1 on busy
+uint8_t USARTSendBlockDMA(DMA_CH_t* DMAch, uint8_t* pArray, uint8_t Len) // return 1 on busy
 {
 	if(DMAch->CTRLB & DMA_CH_CHBUSY_bm || DMAch->CTRLB & DMA_CH_CHPEND_bm)
 	{
@@ -92,11 +91,6 @@ uint8_t SendBlockDMA(DMA_CH_t* DMAch, uint8_t* pArray, uint8_t Len) // return 1 
 	}
 }
 
-ISR(USARTE0_RXC_vect)
-{
-	uint8_t i;
-	i = USARTE0.DATA;
-}
 
 void RecvBlockDMA(DMA_CH_t* DMAch, uint8_t* pArray, uint8_t Len) // Len = max rx length
 {
@@ -111,5 +105,4 @@ uint16_t GetRecvdBytes(DMA_CH_t* DMAch)
 {
 	return DMAch->TRFCNT;
 }
-
 
