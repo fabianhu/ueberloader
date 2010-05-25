@@ -8,6 +8,7 @@
 #include "OS/FabOS.h"
 
 #include "usart.h"
+#include "serial.h"
 
 // *********  Task definitions
 OS_DeclareTask(TaskGovernor,200);
@@ -42,12 +43,44 @@ int main(void)
 		// THIS IS the idle task which will be preempted by all other tasks.
 		// NO OS_Wait.. functions are allowed here!!!
 		
-		// TODO add your code here
 		asm("nop"); //at least one instruction is required!!!
 	}
 
 }
 
+void TaskGovernor(void)
+{
+	while(1)
+	{
+		OS_WaitTicks(100);
+	}
+
+}
+
+void TaskBalance(void)
+{
+	while(1)
+	{
+		OS_WaitTicks(1000);
+
+		UCIFrame_t myU;
+
+		myU.ID = 55;
+		myU.UCI = UCI_GET_ACT_VOLT;
+
+
+		USARTSendBlockDMA(&DMA.CH1,(uint8_t*)&myU ,55);
+	}
+}
+
+
+void TaskMonitor()
+{
+	while(1)
+	{
+		OS_WaitTicks(100);
+	}
+}
 
 // *********  Code to be executed inside Timer ISR used for the OS, defined in FabOS_config.h
 void OS_CustomISRCode(void)
