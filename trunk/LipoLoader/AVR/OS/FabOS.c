@@ -54,7 +54,8 @@ void OS_Int_ProcessAlarms(void)
 	{ 
 		if( MyOS.AlarmTicks[taskID] > 0 ) // this task has to wait
 		{
-			if( --MyOS.AlarmTicks[taskID] == 0 ) // if now task is ready, it will be activated.
+			MyOS.AlarmTicks[taskID]--;
+			if( MyOS.AlarmTicks[taskID] == 0 ) // if now task is ready, it will be activated.
 			{
 				MyOS.TaskReadyBits |= 1<<(taskID) ; // now it is finished with waiting
 			}
@@ -214,9 +215,9 @@ void OS_SetEvent(uint8_t TaskID, uint8_t EventMask) // Set one or more events
 		// wake up this task directly
 		MyOS.TaskReadyBits |= 1<<TaskID ;   // Make the task ready to run again.
 
-		MyOS.EventWaiting[TaskID] = 0; // no more waiting!
+		//MyOS.EventWaiting[TaskID] = 0; // no more waiting!
 		// clear the events:
-		MyOS.EventMask[TaskID] &= ~EventMask; // the actual events minus the ones, which have been waited for 
+		//MyOS.EventMask[TaskID] &= ~EventMask; // the actual events minus the ones, which have been waited for 
 
 		OS_Reschedule() ; // re-schedule; will wake up the sleeper directly, if higher prio.
 	}
@@ -399,7 +400,7 @@ uint8_t OS_WaitEventTimeout(uint8_t EventMask, uint16_t numTicks ) //returns eve
 	uint8_t ret;
 	OS_SetAlarm(MyOS.CurrTask,numTicks); // set timeout
 	ret = OS_WaitEvent(EventMask);
-	if(ret | EventMask)
+	if(ret & EventMask)
 	{
 		// event occured
 		OS_SetAlarm(MyOS.CurrTask,0); // disable timeout

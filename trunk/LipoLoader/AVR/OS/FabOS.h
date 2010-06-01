@@ -93,7 +93,7 @@ void 	OS_TestSuite(void); // execute test of FabOS (use only, if changed some in
 // Wait for a certain number of OS-ticks (1 = wait to the next timer interrupt)
 
 #if OS_USECOMBINED == 1
-uint8_t OS_WaitEventTimeout(uint8_t EventMask, uint16_t numTicks ); //returns 0 on event, 1 on timeout.
+uint8_t OS_WaitEventTimeout(uint8_t EventMask, uint16_t numTicks ); //returns event on event, 0 on timeout.
 #endif
 
 #define OS_WaitTicks(X) do{\

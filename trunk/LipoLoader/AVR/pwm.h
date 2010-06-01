@@ -35,3 +35,8 @@ void vGovernor(
 #define STARTUPLEVEL_mA 300 // minimum current for syncronous op.
 
 #define MAXCONVERTERPOWER_W 13 // maximum converter power
+
+
+#define min(x,y) ((x<y)?x:y)
+#define max(x,y) ((x>y)?x:y)
+#define limit(v,u,l) ((v<l)?l:(v>u)?u:v)

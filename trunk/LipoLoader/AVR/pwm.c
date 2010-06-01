@@ -143,6 +143,7 @@ void SetEnableBoost(uint16_t usStartstep) // 1000-0 scaled; 0= fully started
 	}
 }
 
+uint16_t gTest;
 
 void vGovernor(
 		uint16_t _I_Set_mA,
@@ -215,8 +216,33 @@ void vGovernor(
 		}
 
 		vPWM_Set(usPower,usStartstep);
+		gTest = usPower;
 	}
 }
+
+uint16_t PID(int16_t in, int16_t set, uint16_t kP, uint16_t kI, uint16_t kD)
+{
+	static uint16_t in1;
+
+	int16_t diff = in-set;
+	int16_t der = in-in1;
+	in1= in;
+
+	uint16_t P,D;
+	static uint16_t I;
+
+	P = kP * diff;
+	I = I + kI*diff;
+	D = der*kD;
+
+
+	// limit integrator
+	// reset integrator
+
+
+	return limit(P+I+D,0,100);
+}
+
 
 
 
