@@ -50,10 +50,11 @@ Masters Commands:
 #define MYSERIALID 55
 
 UCIFrame_t g_tUCIFrame;
+uint16_t gTest;
 
 void HandleSerial(UCIFrame_t *_RXFrame)
 {
-	uint8_t len,i; // byte! length of values
+	uint8_t i; // byte! length of values
 
 	g_tUCIFrame.ID = MYSERIALID;
 	g_tUCIFrame.UCI = _RXFrame->UCI;
@@ -76,7 +77,6 @@ void HandleSerial(UCIFrame_t *_RXFrame)
 			break;
 		case UCI_GET_STATE:
 			g_tBattery.eState = g_tUCIFrame.V.values8[0];
-			len = 1;
 			break;
 		case UCI_GET_SET_CURRENT:
 
@@ -90,21 +90,21 @@ void HandleSerial(UCIFrame_t *_RXFrame)
 		case UCI_GET_ACT_VOLT:
 			g_tBattery.usVoltage_mV = g_tUCIFrame.V.values16[0];
 			//g_tADCValues.VCC_mVolt = g_tUCIFrame.V.values16[1]; // fixme
-			len = 4;
+
 			break;
 		case UCI_GET_ACT_CURRENT:
 			g_tBattery.sCurrent_mA = g_tUCIFrame.V.values16[0];
-			len = 2;
+			gTest = g_tUCIFrame.V.values16[0];
 			break;
 		case UCI_GET_ACT_CELL_VOLTS:
 			for(i=0;i<6;i++)
 			{
 				g_tBattery.Cells[i].usVoltage_mV = g_tUCIFrame.V.values16[0];
 			}
-			len = 12;
+
 			break;
 		default:
-			len = 0;
+			break;
 		}
 
 	}
@@ -119,16 +119,16 @@ uint8_t    g_ucRXLength;
 ISR(USARTE0_RXC_vect)
 {
 	uint8_t* p = (uint8_t*)&g_tUCIRXFrame;
-	if(g_ucRXLength < sizeof(UCIFrame_t))
+	if(g_ucRXLength < sizeof(UCIFrame_t)) // avoid over-write of the frame (too long)
 	{
 		p[g_ucRXLength] = USARTE0.DATA;
 		g_ucRXLength++;
 	}
 
-	if(g_ucRXLength == 3)
-	{	// update rest of bytes to wait
-		g_tUCIRXFrame.len = g_tUCIRXFrame.len;
-	}
+//	if(g_ucRXLength == 3)
+//	{	// update rest of bytes to wait
+//		g_tUCIRXFrame.len = g_tUCIRXFrame.len;
+//	}
 
 	if(g_tUCIRXFrame.len == g_ucRXLength)
 	{
@@ -136,7 +136,7 @@ ISR(USARTE0_RXC_vect)
 	}
 }
 
-void TaskComm(void)
+void TaskCommRX(void)
 {
 	g_tUCIRXFrame.len = 0xff;
 
@@ -161,4 +161,6 @@ void TaskComm(void)
 		g_tUCIRXFrame.len = 0xff;
 	}
 }
+
+
 

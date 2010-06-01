@@ -402,7 +402,7 @@ uint8_t OS_WaitEventTimeout(uint8_t EventMask, uint16_t numTicks ) //returns eve
 	if(ret | EventMask)
 	{
 		// event occured
-		OS_SetAlarm(1,0); // disable timeout
+		OS_SetAlarm(MyOS.CurrTask,0); // disable timeout
 		return ret;
 	}
 	else
