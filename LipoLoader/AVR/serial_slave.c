@@ -49,14 +49,19 @@ Masters Commands:
 
 #define MYSERIALID 55
 
-UCIFrame_t g_tUCIFrame;
+
+
+UCIFrame_t g_tUCIRXFrame;
+uint8_t    g_ucRXLength;
+UCIFrame_t g_tUCITXFrame;
+extern uint16_t gTest;
 
 void HandleSerial(UCIFrame_t *_RXFrame)
 {
 	uint8_t len,i; // byte! length of values
 
-	g_tUCIFrame.ID = MYSERIALID;
-	g_tUCIFrame.UCI = _RXFrame->UCI;
+	g_tUCITXFrame.ID = MYSERIALID;
+	g_tUCITXFrame.UCI = _RXFrame->UCI;
 
 	if(_RXFrame->ID == MYSERIALID)
 	{
@@ -75,7 +80,7 @@ void HandleSerial(UCIFrame_t *_RXFrame)
 
 			break;
 		case UCI_GET_STATE:
-			g_tUCIFrame.V.values8[0] = g_tBattery_Balancer.eState;
+			g_tUCITXFrame.V.values8[0] = g_tBattery_Balancer.eState;
 			len = 1;
 			break;
 		case UCI_GET_SET_CURRENT:
@@ -88,18 +93,19 @@ void HandleSerial(UCIFrame_t *_RXFrame)
 
 			break;
 		case UCI_GET_ACT_VOLT:
-			g_tUCIFrame.V.values16[0] = g_tBattery_Governor.usVoltage_mV;
-			g_tUCIFrame.V.values16[1] = g_tADCValues.VCC_mVolt;
+			g_tUCITXFrame.V.values16[0] = g_tBattery_Governor.usVoltage_mV;
+			g_tUCITXFrame.V.values16[1] = g_tADCValues.VCC_mVolt;
 			len = 4;
 			break;
 		case UCI_GET_ACT_CURRENT:
-			g_tUCIFrame.V.values16[0] = g_tBattery_Governor.sCurrent_mA;
-			len = 2;
+			g_tUCITXFrame.V.values16[0] = g_tBattery_Governor.sCurrent_mA;
+			g_tUCITXFrame.V.values16[1] = gTest;
+			len = 4;
 			break;
 		case UCI_GET_ACT_CELL_VOLTS:
 			for(i=0;i<6;i++)
 			{
-				g_tUCIFrame.V.values16[0] = g_tBattery_Balancer.Cells[i].usVoltage_mV;
+				g_tUCITXFrame.V.values16[0] = g_tBattery_Balancer.Cells[i].usVoltage_mV;
 			}
 			len = 12;
 			break;
@@ -108,29 +114,25 @@ void HandleSerial(UCIFrame_t *_RXFrame)
 		}
 
 		if(len > 0)
-			USARTSendBlockDMA(&DMA.CH1,(uint8_t*)&g_tUCIFrame,len+2);
+			USARTSendBlockDMA(&DMA.CH1,(uint8_t*)&g_tUCITXFrame,len+2);
 	}
 
 }
 
 
-
-UCIFrame_t g_tUCIRXFrame;
-uint8_t    g_ucRXLength;
-
 ISR(USARTE0_RXC_vect)
 {
 	uint8_t* p = (uint8_t*)&g_tUCIRXFrame;
-	if(g_ucRXLength < sizeof(UCIFrame_t))
+	if(g_ucRXLength < sizeof(UCIFrame_t)) // avoid over-write of the frame (too long)
 	{
 		p[g_ucRXLength] = USARTE0.DATA;
 		g_ucRXLength++;
 	}
 
-	if(g_ucRXLength == 3)
-	{	// update rest of bytes to wait
-		g_tUCIRXFrame.len = g_tUCIRXFrame.len;
-	}
+//	if(g_ucRXLength == 3)
+//	{	// update rest of bytes to wait
+//		g_tUCIRXFrame.len = g_tUCIRXFrame.len;
+//	}
 
 	if(g_tUCIRXFrame.len == g_ucRXLength)
 	{
@@ -147,7 +149,7 @@ void TaskComm(void)
 
 	while(1)
 	{
-		ret = OS_WaitEventTimeout(1,100);
+		ret = OS_WaitEventTimeout(1,50);
 		if(ret == 1)
 		{
 			//real event
@@ -160,7 +162,7 @@ void TaskComm(void)
 
 		// re-init for new frame
 		g_ucRXLength = 0;
-		g_tUCIRXFrame.len = 0xff;
+		g_tUCIRXFrame.len = 0x0;
 
 
 //			OS_ENTERCRITICAL;
