@@ -51,28 +51,13 @@ void USARTinit(void)
 	DMA.CTRL |= DMA_ENABLE_bm;
 }
 
-ISR(DMA_CH2_vect)
-{
-	uint16_t i;
+//ISR(DMA_CH2_vect)
+//{
+//	uint16_t i;
+//
+//	i= GetRecvdBytes(&DMA.CH2);
+//}
 
-	i= GetRecvdBytes(&DMA.CH2);
-}
-
-uint8_t USART_TX_Array[100];
-uint8_t USART_RX_Array[100];
-
-void USART_TX_Testxx(void)
-{
-	uint8_t i;
-	for(i=0;i<100;i++)
-	{
-		USART_TX_Array[i] = i+1;
-		USART_RX_Array[i] = 0xee;
-	}
-	RecvBlockDMA(&DMA.CH2, USART_RX_Array,100);
-	USARTSendBlockDMA(&DMA.CH1, USART_TX_Array,55);
-
-}
 
 uint8_t USARTSendBlockDMA(DMA_CH_t* DMAch, uint8_t* pArray, uint8_t Len) // return 1 on busy
 {
@@ -92,19 +77,19 @@ uint8_t USARTSendBlockDMA(DMA_CH_t* DMAch, uint8_t* pArray, uint8_t Len) // retu
 	}
 }
 
-
-void RecvBlockDMA(DMA_CH_t* DMAch, uint8_t* pArray, uint8_t Len) // Len = max rx length
-{
-	DMAch->DESTADDR0 = (int)(pArray) & 0xff;
-	DMAch->DESTADDR1 = ((int)(pArray) & 0xff00)>>8;
-	DMAch->DESTADDR2 = ((int)(pArray) & 0xff0000)>>16;
-	DMAch->TRFCNT = Len; // the whole array
-	DMAch->CTRLA |= DMA_CH_ENABLE_bm;
-}
-
-uint16_t GetRecvdBytes(DMA_CH_t* DMAch)
-{
-	return DMAch->TRFCNT;
-}
+//
+//void RecvBlockDMA(DMA_CH_t* DMAch, uint8_t* pArray, uint8_t Len) // Len = max rx length
+//{
+//	DMAch->DESTADDR0 = (int)(pArray) & 0xff;
+//	DMAch->DESTADDR1 = ((int)(pArray) & 0xff00)>>8;
+//	DMAch->DESTADDR2 = ((int)(pArray) & 0xff0000)>>16;
+//	DMAch->TRFCNT = Len; // the whole array
+//	DMAch->CTRLA |= DMA_CH_ENABLE_bm;
+//}
+//
+//uint16_t GetRecvdBytes(DMA_CH_t* DMAch)
+//{
+//	return DMAch->TRFCNT;
+//}
 
 

@@ -12,8 +12,8 @@
 
 // *********  Task definitions
 OS_DeclareTask(TaskGovernor,200);
-OS_DeclareTask(TaskBalance,200);
-OS_DeclareTask(TaskComm,200);
+OS_DeclareTask(TaskCommand,200);
+OS_DeclareTask(TaskCommRX,200);
 OS_DeclareTask(TaskMonitor,200);
 
 //OS_DeclareQueue(DemoQ,10,4);
@@ -33,8 +33,8 @@ int main(void)
 	CPU_init();
 
     OS_CreateTask(TaskGovernor, 0);
-    OS_CreateTask(TaskBalance, 1);
-    OS_CreateTask(TaskComm, 2);
+    OS_CreateTask(TaskCommand, 1);
+    OS_CreateTask(TaskCommRX, 2);
 	OS_CreateTask(TaskMonitor, 3);
 
 	OS_StartExecution() ;
@@ -52,12 +52,12 @@ void TaskGovernor(void)
 {
 	while(1)
 	{
-		OS_WaitTicks(100);
+		OS_WaitTicks(101);
 	}
 
 }
 
-void TaskBalance(void)
+void TaskCommand(void)
 {
 	while(1)
 	{
@@ -67,9 +67,37 @@ void TaskBalance(void)
 
 		myU.ID = 55;
 		myU.UCI = UCI_GET_ACT_VOLT;
+		myU.len = 3;
+		USARTSendBlockDMA(&DMA.CH1,(uint8_t*)&myU ,myU.len);
 
+		OS_WaitTicks(100);
 
-		USARTSendBlockDMA(&DMA.CH1,(uint8_t*)&myU ,55);
+		myU.ID = 55;
+		myU.UCI = UCI_GET_ACT_CURRENT;
+		myU.len = 3;
+		USARTSendBlockDMA(&DMA.CH1,(uint8_t*)&myU ,myU.len);
+
+		OS_WaitTicks(100);
+
+		myU.ID = 55;
+		myU.UCI = UCI_GET_ACT_CELL_VOLTS;
+		myU.len = 3;
+		USARTSendBlockDMA(&DMA.CH1,(uint8_t*)&myU ,myU.len);
+
+		OS_WaitTicks(100);
+
+		myU.ID = 55;
+		myU.UCI = UCI_GET_STATE;
+		myU.len = 3;
+		USARTSendBlockDMA(&DMA.CH1,(uint8_t*)&myU ,myU.len);
+
+		OS_WaitTicks(100);
+
+		myU.ID = 55;
+		myU.UCI = UCI_GET_ACT_CURRENT;
+		myU.len = 3;
+		USARTSendBlockDMA(&DMA.CH1,(uint8_t*)&myU ,myU.len);
+
 	}
 }
 
@@ -78,7 +106,7 @@ void TaskMonitor()
 {
 	while(1)
 	{
-		OS_WaitTicks(100);
+		OS_WaitTicks(102);
 	}
 }
 
