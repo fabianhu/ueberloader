@@ -76,7 +76,7 @@ void HandleSerial(UCIFrame_t *_RXFrame)
 
 			break;
 		case UCI_GET_STATE:
-			g_tBattery.eState = g_tUCIFrame.V.values8[0];
+			g_tBattery.eState = _RXFrame->V.values8[0];
 			break;
 		case UCI_GET_SET_CURRENT:
 
@@ -88,18 +88,18 @@ void HandleSerial(UCIFrame_t *_RXFrame)
 
 			break;
 		case UCI_GET_ACT_VOLT:
-			g_tBattery.usVoltage_mV = g_tUCIFrame.V.values16[0];
-			//g_tADCValues.VCC_mVolt = g_tUCIFrame.V.values16[1]; // fixme
+			g_tBattery.usVoltage_mV = _RXFrame->V.values16[0];
+			//g_tADCValues.VCC_mVolt = _RXFrame->V.values16[1]; // fixme
 
 			break;
 		case UCI_GET_ACT_CURRENT:
-			g_tBattery.sCurrent_mA = g_tUCIFrame.V.values16[0];
-			gTest = g_tUCIFrame.V.values16[0];
+			g_tBattery.sCurrent_mA = _RXFrame->V.values16[0];
+			gTest = _RXFrame->V.values16[0]; // power
 			break;
 		case UCI_GET_ACT_CELL_VOLTS:
 			for(i=0;i<6;i++)
 			{
-				g_tBattery.Cells[i].usVoltage_mV = g_tUCIFrame.V.values16[0];
+				g_tBattery.Cells[i].usVoltage_mV = _RXFrame->V.values16[i];
 			}
 
 			break;
@@ -111,8 +111,6 @@ void HandleSerial(UCIFrame_t *_RXFrame)
 
 }
 
-
-
 UCIFrame_t g_tUCIRXFrame;
 uint8_t    g_ucRXLength;
 
@@ -123,6 +121,8 @@ ISR(USARTE0_RXC_vect)
 	{
 		p[g_ucRXLength] = USARTE0.DATA;
 		g_ucRXLength++;
+
+		OS_SetAlarm(2,5); // reset Alarm, if stuff arrives
 	}
 
 //	if(g_ucRXLength == 3)
@@ -145,7 +145,7 @@ void TaskCommRX(void)
 
 	while(1)
 	{
-		ret = OS_WaitEventTimeout(1,50);
+		ret = OS_WaitEventTimeout(1,5);
 		if(ret == 1)
 		{
 			//real event
