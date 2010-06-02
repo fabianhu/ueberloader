@@ -130,6 +130,8 @@ ISR(USARTE0_RXC_vect)
 	{
 		p[g_ucRXLength] = USARTE0.DATA;
 		g_ucRXLength++;
+
+		OS_SetAlarm(2,5); // reset Alarm, if stuff arrives
 	}
 
 //	if(g_ucRXLength == 3)
@@ -152,7 +154,7 @@ void TaskComm(void)
 
 	while(1)
 	{
-		ret = OS_WaitEventTimeout(1,50);
+		ret = OS_WaitEventTimeout(1,5);
 		if(ret == 1)
 		{
 			//real event
