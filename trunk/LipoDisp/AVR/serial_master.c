@@ -145,7 +145,7 @@ void TaskCommRX(void)
 
 	while(1)
 	{
-		ret = OS_WaitEventTimeout(1,100);
+		ret = OS_WaitEventTimeout(1,50);
 		if(ret == 1)
 		{
 			//real event
