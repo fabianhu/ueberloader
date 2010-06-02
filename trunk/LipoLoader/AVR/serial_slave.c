@@ -105,7 +105,7 @@ void HandleSerial(UCIFrame_t *_RXFrame)
 		case UCI_GET_ACT_CELL_VOLTS:
 			for(i=0;i<6;i++)
 			{
-				g_tUCITXFrame.V.values16[0] = g_tBattery_Balancer.Cells[i].usVoltage_mV;
+				g_tUCITXFrame.V.values16[i] = g_tBattery_Balancer.Cells[i].usVoltage_mV;
 			}
 			len = 12;
 			break;
@@ -114,7 +114,10 @@ void HandleSerial(UCIFrame_t *_RXFrame)
 		}
 
 		if(len > 0)
-			USARTSendBlockDMA(&DMA.CH1,(uint8_t*)&g_tUCITXFrame,len+2);
+			{
+			g_tUCITXFrame.len = len+3;
+			USARTSendBlockDMA(&DMA.CH1,(uint8_t*)&g_tUCITXFrame, g_tUCITXFrame.len); // add header length
+			}
 	}
 
 }
