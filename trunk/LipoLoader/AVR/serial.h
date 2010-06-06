@@ -39,7 +39,7 @@ typedef struct UCIFrame_tag
 #define UCIHEADERLEN 4
 
 void UCISendBlockCrc( UCIFrame_t* pU);
-
+uint8_t UCIGetCRC( UCIFrame_t* pU);
 
 
 

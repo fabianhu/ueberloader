@@ -67,35 +67,35 @@ void TaskCommand(void)
 
 		myU.ID = 55;
 		myU.UCI = UCI_GET_ACT_VOLT;
-		myU.len = 3;
+		myU.len = UCIHEADERLEN;
 		UCISendBlockCrc(&myU);
 
 		OS_WaitTicks(100);
 
 		myU.ID = 55;
 		myU.UCI = UCI_GET_ACT_CURRENT;
-		myU.len = 3;
+		myU.len = UCIHEADERLEN;
 		UCISendBlockCrc(&myU);
 
 		OS_WaitTicks(100);
 
 		myU.ID = 55;
 		myU.UCI = UCI_GET_ACT_CELL_VOLTS;
-		myU.len = 3;
+		myU.len = UCIHEADERLEN;
 		UCISendBlockCrc(&myU);
 
 		OS_WaitTicks(100);
 
 		myU.ID = 55;
 		myU.UCI = UCI_GET_STATE;
-		myU.len = 3;
+		myU.len = UCIHEADERLEN;
 		UCISendBlockCrc(&myU);
 
 		OS_WaitTicks(100);
 
 		myU.ID = 55;
 		myU.UCI = UCI_GET_ACT_CURRENT;
-		myU.len = 3;
+		myU.len = UCIHEADERLEN;
 		UCISendBlockCrc(&myU);
 
 	}
