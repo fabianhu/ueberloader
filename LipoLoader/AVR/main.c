@@ -13,7 +13,7 @@
 // *********  Task definitions
 OS_DeclareTask(TaskGovernor,200);
 OS_DeclareTask(TaskBalance,200);
-OS_DeclareTask(TaskComm,200);
+OS_DeclareTask(TaskCommRX,200);
 OS_DeclareTask(TaskMonitor,200);
 
 //OS_DeclareQueue(DemoQ,10,4);
@@ -33,10 +33,10 @@ int main(void)
 {
 	CPU_init();
 
-    OS_CreateTask(TaskGovernor, 0);
-    OS_CreateTask(TaskBalance, 1);
-    OS_CreateTask(TaskComm, 2);
-	OS_CreateTask(TaskMonitor, 3);
+    OS_CreateTask(TaskGovernor, OSTaskGovernor);
+    OS_CreateTask(TaskBalance, OSTaskBalance);
+    OS_CreateTask(TaskCommRX, OSTaskCommRX);
+	OS_CreateTask(TaskMonitor, OSTaskMonitor);
 
 	OS_StartExecution() ;
 	while(1)

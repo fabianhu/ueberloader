@@ -16,8 +16,8 @@
 
 Command_t g_tCommand = {0,0,0,0,0};
 ADC_Values_t g_tADCValues;
-Battery_Balancer_t g_tBattery_Balancer;
-Battery_Governor_t g_tBattery_Governor;
+Battery_Info_t g_tBattery_Info;
+
 //uint16_t usStartstep =STARTMAX;
 //uint16_t I_Max_ABS = 25000;
 //volatile uint16_t g_I_filt;
@@ -36,15 +36,25 @@ extern void emstop(uint8_t e);
 void usFilter(uint16_t* o, uint16_t* n)
 {
 	uint32_t temp;
-	temp = *o * 9ul + *n;
-	*o = temp / 10;
+	if(*o == 0)
+		*o = *n;
+	else
+	{
+		temp = *o * 9ul + *n;
+		*o = temp / 10;
+	}
 }
 
 void sFilter(int16_t* o, int16_t* n)
 {
 	int32_t temp;
-	temp = *o * 9ul + *n;
-	*o = temp / 10;
+	if(*o == 0)
+		*o = *n;
+	else
+	{
+		temp = *o * 9ul + *n;
+		*o = temp / 10;
+	}
 }
 
 // ********* Stuff
@@ -84,10 +94,9 @@ void TaskGovernor(void)
 		usU_in_act = ADC_ScaleVolt_mV(g_asADCvalues[0]) ;
 		usU_out_act = ADC_ScaleVolt_mV(g_asADCvalues[1]) ;;
 
-		OS_ENTERCRITICAL;
-		usFilter(&g_tBattery_Governor.usVoltage_mV, &usU_out_act);
-		//g_tBattery_Balancer.usVoltage_mV = usU_out_act;
-		OS_LEAVECRITICAL;
+		OS_MutexGet(OSMTXBattInfo);
+		usFilter(&g_tBattery_Info.usVoltage_mV, &usU_out_act);
+		OS_MutexRelease(OSMTXBattInfo);
 
 		if((ADCA.CH2.MUXCTRL & (0xf<<3)) == ADC_CH_MUXPOS_PIN7_gc) // is high current config...
 		{
@@ -105,9 +114,9 @@ void TaskGovernor(void)
 		else if (sI_out_act < 2000)
 			ADC_ActivateLoCurrentMeas();
 
-		OS_ENTERCRITICAL;
-		sFilter(&g_tBattery_Governor.sCurrent_mA, &sI_out_act);
-		OS_LEAVECRITICAL;
+		OS_MutexGet(OSMTXBattInfo);
+		sFilter(&g_tBattery_Info.sCurrent_mA, &sI_out_act);
+		OS_MutexRelease(OSMTXBattInfo);
 
 
  // just in case...
@@ -125,10 +134,10 @@ void TaskGovernor(void)
 
 		OS_ENTERCRITICAL;
 		uint16_t myISetpoint = g_tCommand.usCurrentSetpoint;
-		uint16_t myUSetpoint = g_tCommand.usVoltageSetpoint_mV*g_tBattery_Balancer.ucNumberOfCells;
+		uint16_t myUSetpoint = g_tCommand.usVoltageSetpoint_mV*g_tBattery_Info.ucNumberOfCells;
 		OS_LEAVECRITICAL;
 
-		if(g_tBattery_Balancer.eState == eBattCharging)
+		if(g_tBattery_Info.eState == eBattCharging)
 		{
 			vGovernor(
 					myISetpoint,
@@ -158,6 +167,8 @@ void TaskBalance(void)
 {
 	int16_t sTemp;
 	uint16_t usTemp;
+	uint16_t usBalanceCells[6]; // quasi static
+	uint8_t ucBalanceBits;
 	uint8_t i;
 
 	// direction for balancer pins
@@ -167,7 +178,6 @@ void TaskBalance(void)
 
 	ADC_StartConvCh3Pin(0);
 
-	//OS_SetAlarm(1,10);
 	while(1)
 	{
 		OS_WaitTicks(ADCWAITTIME);
@@ -179,16 +189,12 @@ void TaskBalance(void)
 			OS_WaitTicks(ADCWAITTIME);
 			// push voltage of channel into array
 			usTemp = ADC_ScaleCell_mV(ADCA.CH3.RES);
-			OS_ENTERCRITICAL;
-			usFilter(&g_tBattery_Balancer.Cells[i].usVoltage_mV, &usTemp);
-			OS_LEAVECRITICAL;
+			usFilter(&usBalanceCells[i], &usTemp);
 		}
 		ADC_StartConvCh3Pin(10);
 		OS_WaitTicks(ADCWAITTIME);
 		usTemp = ADC_ScaleCell_mV(ADCA.CH3.RES);
-		OS_ENTERCRITICAL;
-		usFilter(&g_tBattery_Balancer.Cells[0].usVoltage_mV, &usTemp);
-		OS_LEAVECRITICAL;
+		usFilter(&usBalanceCells[0], &usTemp);
 
 		ADC_StartConvCh3Pin(11); // temperature external2
 		OS_WaitTicks(ADCWAITTIME);
@@ -226,32 +232,39 @@ void TaskBalance(void)
 
 		// mean Cell Voltage
 		uint16_t mean = 0, bBalance=0;
-		for(i=0;i<g_tBattery_Balancer.ucNumberOfCells;i++)
+
+		OS_MutexGet(OSMTXCommand);
+		uint16_t usBalanceRelease_mV = g_tCommand.usMinBalanceVolt_mV;
+		OS_MutexRelease(OSMTXCommand);
+
+		// Calculate release
+		for(i=0;i<g_tBattery_Info.ucNumberOfCells;i++)
 		{
-			mean += g_tBattery_Balancer.Cells[i].usVoltage_mV;
-			if(g_tBattery_Balancer.Cells[i].usVoltage_mV > g_tCommand.usMinBalanceVolt_mV) // direct access to g_tCommand OK, because never changed during charging.
+			mean += usBalanceCells[i];
+			if(usBalanceCells[i] > usBalanceRelease_mV)
 				bBalance = 1;
 		}
-	
 
 		// balancing allowed
-		if(bBalance == 1 && g_tBattery_Balancer.eState == eBattCharging)
+		if(bBalance == 1 && g_tBattery_Info.eState == eBattCharging)
 		{
-			mean /= g_tBattery_Balancer.ucNumberOfCells;
-			mean +=3;
+			mean /= g_tBattery_Info.ucNumberOfCells;
+			mean +=3; // add some difference to prevent swinging
 
 			// Balancer logic
-			for(i=0;i<g_tBattery_Balancer.ucNumberOfCells;i++)
+			for(i=0;i<g_tBattery_Info.ucNumberOfCells;i++)
 			{
-				if(g_tBattery_Balancer.Cells[i].usVoltage_mV > mean)
+				if(usBalanceCells[i] > mean)
 				{
 					// switch on Balancer for this cell
 					PORTC.OUTSET = (1<<(2+i));
+					ucBalanceBits |= (1<<i);
 				}
 				else
 				{
 					// switch off Balancer for this cell
 					PORTC.OUTCLR = (1<<(2+i));
+					ucBalanceBits &= ~(1<<i);
 				}
 
 			}
@@ -260,7 +273,20 @@ void TaskBalance(void)
 		{
 			// balancer off
 			PORTC.OUTCLR = (0b111111<<2);
+			ucBalanceBits = 0;
 		}
+
+		OS_MutexGet(OSMTXBattInfo);
+		// Copy voltage stuff
+		for(i=0;i<6;i++)
+		{
+			g_tBattery_Info.Cells[i].usVoltage_mV = usBalanceCells[i];
+			if(ucBalanceBits & (1<<i))
+			{
+				g_tBattery_Info.Cells[i].unDisChTicks++;
+			}
+		}
+		OS_MutexRelease(OSMTXBattInfo);
 
 		StateMachineBattery();
 
@@ -275,11 +301,11 @@ void TaskMonitor(void)
 {
 	OS_WaitTicks(100); // wait for ADC init
 
-	OS_SetAlarm(3,1000);
+	OS_SetAlarm(OSTaskMonitor,1000);
 	while(1)
 	{
 		OS_WaitAlarm();
-		OS_SetAlarm(3,1000);
+		OS_SetAlarm(OSTaskMonitor,1000);
 		// count the charged Q
 
 	}
@@ -289,14 +315,16 @@ void StateMachineBattery(void) // ONLY run in TaskBalance!
 {
 	uint8_t NumberOfCells = 0;
 
-	OS_ENTERCRITICAL; // get all larger values atomic.
-	uint16_t myBattVoltage = g_tBattery_Governor.usVoltage_mV;
-	int16_t myBattCurrent = g_tBattery_Governor.sCurrent_mA;
+	OS_MutexGet(OSMTXBattInfo);
+	uint16_t myBattVoltage = g_tBattery_Info.usVoltage_mV;
+	int16_t myBattCurrent = g_tBattery_Info.sCurrent_mA;
+	OS_MutexRelease(OSMTXBattInfo);
 
-	uint16_t myCommandCurrent = g_tCommand.usCurrentSetpoint;
-	OS_LEAVECRITICAL;
+	OS_MutexGet(OSMTXCommand);
+	uint16_t usCommandCurrent = g_tCommand.usCurrentSetpoint;
+	OS_MutexRelease(OSMTXCommand);
 
-	switch (g_tBattery_Balancer.eState)
+	switch (g_tBattery_Info.eState)
 	{
 		case eBattUnknown:
 			// nicht vollständig angesteckt
@@ -304,24 +332,24 @@ void StateMachineBattery(void) // ONLY run in TaskBalance!
 			{
 				case eModeAuto:
 					// charge if ok.
-					NumberOfCells = GetCellcount(g_tBattery_Balancer.Cells,&myBattVoltage);
+					NumberOfCells = GetCellcount(g_tBattery_Info.Cells,&myBattVoltage);
 					if(NumberOfCells > 0)
 					{
-						g_tBattery_Balancer.ucNumberOfCells = NumberOfCells;
-						g_tBattery_Balancer.eState = eBattCharging;
+						g_tBattery_Info.ucNumberOfCells = NumberOfCells;
+						g_tBattery_Info.eState = eBattCharging;
 					}
 					break;
 				case eModeManual:
 					// Manual mode
-					if(	GetCellcount(g_tBattery_Balancer.Cells,&myBattVoltage)== g_tCommand.ucUserCellCount &&
+					if(	GetCellcount(g_tBattery_Info.Cells,&myBattVoltage)== g_tCommand.ucUserCellCount &&
 							g_tCommand.ucUserCellCount >0)
 					{
-						g_tBattery_Balancer.ucNumberOfCells = g_tCommand.ucUserCellCount;
-						g_tBattery_Balancer.eState = eBattCharging;
+						g_tBattery_Info.ucNumberOfCells = g_tCommand.ucUserCellCount;
+						g_tBattery_Info.eState = eBattCharging;
 					}
 					else
 					{
-						g_tBattery_Balancer.eState = eBattError; // set Error for Display
+						g_tBattery_Info.eState = eBattError; // set Error for Display
 					}
 					break;
 				default:
@@ -330,14 +358,14 @@ void StateMachineBattery(void) // ONLY run in TaskBalance!
 			break;
 		case eBattCharging:
 				// Charging!
-				if(myBattVoltage >= g_tCommand.usVoltageSetpoint_mV*g_tBattery_Balancer.ucNumberOfCells &&
-						myBattCurrent < myCommandCurrent / 10) // fixme 10 ?
-					g_tBattery_Balancer.eState = eBattFull;
-				/*if(GetCellcount()!=g_tBattery_Balancer.ucNumberOfCells)
+				if(myBattVoltage >= g_tCommand.usVoltageSetpoint_mV*g_tBattery_Info.ucNumberOfCells &&
+						myBattCurrent < usCommandCurrent / 10) // fixme 10 ?
+					g_tBattery_Info.eState = eBattFull;
+				if(GetCellcount(g_tBattery_Info.Cells,&myBattVoltage)!=g_tBattery_Info.ucNumberOfCells)
 				{
-					emstop(44); // Wackelkontakt am Balancer
-				}*/
-
+					g_tBattery_Info.ucNumberOfCells = 0;
+					g_tBattery_Info.eState = eBattError;
+				}
 			break;
 
 //		case eBattEmpty:
