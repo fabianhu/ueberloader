@@ -123,7 +123,7 @@ void HandleSerial(UCIFrame_t *_RXFrame)
 		if(len > 0)
 			{
 			g_tUCITXFrame.len = len+UCIHEADERLEN;
-			USARTSendBlockDMA(&DMA.CH1,(uint8_t*)&g_tUCITXFrame, g_tUCITXFrame.len); // add header length
+			UCISendBlockCrc(&g_tUCITXFrame);
 			}
 	}
 
@@ -162,10 +162,10 @@ void TaskCommRX(void)
 	while(1)
 	{
 		ret = OS_WaitEventTimeout(OSEVTDataRecvd,5);
-		if(ret == 1)
+		if(ret == OSEVTDataRecvd)
 		{
 			//real event
-			if(CRC8x((uint8_t*)&g_tUCIRXFrame,g_tUCIRXFrame.len) == g_tUCIRXFrame.crc)
+			if(UCIGetCRC(&g_tUCIRXFrame) == g_tUCIRXFrame.crc)
 			{
 				HandleSerial(&g_tUCIRXFrame);
 			}
@@ -192,3 +192,19 @@ void TaskCommRX(void)
 
 }
 
+
+void UCISendBlockCrc( UCIFrame_t* pU)
+{
+	pU->crc = 0;
+	pU->crc = CRC8x((uint8_t*)pU ,pU->len);
+	USARTSendBlockDMA(&DMA.CH1,(uint8_t*)pU ,pU->len);
+}
+
+uint8_t UCIGetCRC( UCIFrame_t* pU)
+{
+	uint8_t tempCRC = pU->crc;
+	pU->crc = 0;
+	uint8_t res = CRC8x((uint8_t*)pU,pU->len);
+	pU->crc = tempCRC;
+	return res;
+}
