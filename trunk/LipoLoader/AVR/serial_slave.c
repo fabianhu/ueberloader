@@ -9,8 +9,7 @@
 #include "ueberloader.h"
 #include "usart.h"
 
-extern Battery_Balancer_t g_tBattery_Balancer;
-extern Battery_Governor_t g_tBattery_Governor;
+extern Battery_Info_t g_tBattery_Info;
 extern ADC_Values_t g_tADCValues;
 extern Command_t g_tCommand;
 
@@ -80,7 +79,9 @@ void HandleSerial(UCIFrame_t *_RXFrame)
 
 			break;
 		case UCI_GET_STATE:
-			g_tUCITXFrame.V.values8[0] = g_tBattery_Balancer.eState;
+			OS_MutexGet(OSMTXBattInfo);
+			g_tUCITXFrame.V.values8[0] = g_tBattery_Info.eState;
+			OS_MutexRelease(OSMTXBattInfo);
 			len = 1;
 			break;
 		case UCI_GET_SET_CURRENT:
@@ -93,20 +94,26 @@ void HandleSerial(UCIFrame_t *_RXFrame)
 
 			break;
 		case UCI_GET_ACT_VOLT:
-			g_tUCITXFrame.V.values16[0] = g_tBattery_Governor.usVoltage_mV;
+			OS_MutexGet(OSMTXBattInfo);
+			g_tUCITXFrame.V.values16[0] = g_tBattery_Info.usVoltage_mV;
+			OS_MutexRelease(OSMTXBattInfo);
 			g_tUCITXFrame.V.values16[1] = g_tADCValues.VCC_mVolt;
 			len = 4;
 			break;
 		case UCI_GET_ACT_CURRENT:
-			g_tUCITXFrame.V.values16[0] = g_tBattery_Governor.sCurrent_mA;
+			OS_MutexGet(OSMTXBattInfo);
+			g_tUCITXFrame.V.values16[0] = g_tBattery_Info.sCurrent_mA;
+			OS_MutexRelease(OSMTXBattInfo);
 			g_tUCITXFrame.V.values16[1] = gTest;
 			len = 4;
 			break;
 		case UCI_GET_ACT_CELL_VOLTS:
+			OS_MutexGet(OSMTXBattInfo);
 			for(i=0;i<6;i++)
 			{
-				g_tUCITXFrame.V.values16[i] = g_tBattery_Balancer.Cells[i].usVoltage_mV;
+				g_tUCITXFrame.V.values16[i] = g_tBattery_Info.Cells[i].usVoltage_mV;
 			}
+			OS_MutexRelease(OSMTXBattInfo);
 			len = 12;
 			break;
 		default:
@@ -115,7 +122,7 @@ void HandleSerial(UCIFrame_t *_RXFrame)
 
 		if(len > 0)
 			{
-			g_tUCITXFrame.len = len+3;
+			g_tUCITXFrame.len = len+UCIHEADERLEN;
 			USARTSendBlockDMA(&DMA.CH1,(uint8_t*)&g_tUCITXFrame, g_tUCITXFrame.len); // add header length
 			}
 	}
@@ -131,7 +138,7 @@ ISR(USARTE0_RXC_vect)
 		p[g_ucRXLength] = USARTE0.DATA;
 		g_ucRXLength++;
 
-		OS_SetAlarm(2,5); // reset Alarm, if stuff arrives
+		OS_SetAlarm(OSTaskCommRX,5); // reset Alarm, if stuff arrives
 	}
 
 //	if(g_ucRXLength == 3)
@@ -141,11 +148,11 @@ ISR(USARTE0_RXC_vect)
 
 	if(g_tUCIRXFrame.len == g_ucRXLength)
 	{
-		OS_SetEvent(2,1);
+		OS_SetEvent(OSTaskCommRX,OSEVTDataRecvd);
 	}
 }
 
-void TaskComm(void)
+void TaskCommRX(void)
 {
 	g_tUCIRXFrame.len = 0xff;
 
@@ -154,11 +161,14 @@ void TaskComm(void)
 
 	while(1)
 	{
-		ret = OS_WaitEventTimeout(1,5);
+		ret = OS_WaitEventTimeout(OSEVTDataRecvd,5);
 		if(ret == 1)
 		{
 			//real event
-			HandleSerial(&g_tUCIRXFrame);
+			if(CRC8x((uint8_t*)&g_tUCIRXFrame,g_tUCIRXFrame.len) == g_tUCIRXFrame.crc)
+			{
+				HandleSerial(&g_tUCIRXFrame);
+			}
 		}
 		else
 		{

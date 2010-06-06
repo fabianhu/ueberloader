@@ -31,6 +31,7 @@ typedef struct UCIFrame_tag
 {
 	uint8_t ID;
 	uint8_t UCI;
+	uint8_t crc;
 	uint8_t len;
 	union
 	{
@@ -39,6 +40,7 @@ typedef struct UCIFrame_tag
 	} V;
 }UCIFrame_t;
 
+#define UCEHEADERLEN 4
 
 
 
