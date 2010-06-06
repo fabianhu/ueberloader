@@ -21,7 +21,16 @@
 #define OS_USEMEMCHECKS 1 	// Enable "OS_get_unused_Stack()" and "OS_GetQueueSpace()"
 #define OS_UNUSEDMASK 0xEE  // unused Stack RAM will be filled with this byte, if OS_USEMEMCHECKS == 1.
 
+// Task definitions
 
+#define OSTaskGovernor 0
+#define OSTaskCommand  1
+#define OSTaskCommRX   2
+#define OSTaskMonitor  3
+
+// Event Names
+
+#define OSEVTDataRecvd 1
 
 // *********  USER Configurable Block END 
 
