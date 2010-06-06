@@ -122,7 +122,7 @@ ISR(USARTE0_RXC_vect)
 		p[g_ucRXLength] = USARTE0.DATA;
 		g_ucRXLength++;
 
-		OS_SetAlarm(2,5); // reset Alarm, if stuff arrives
+		OS_SetAlarm(OSTaskCommRX,5); // reset Alarm, if stuff arrives
 	}
 
 //	if(g_ucRXLength == 3)
@@ -132,7 +132,7 @@ ISR(USARTE0_RXC_vect)
 
 	if(g_tUCIRXFrame.len == g_ucRXLength)
 	{
-		OS_SetEvent(2,1);
+		OS_SetEvent(OSTaskCommRX,OSEVTDataRecvd);
 	}
 }
 
@@ -145,11 +145,14 @@ void TaskCommRX(void)
 
 	while(1)
 	{
-		ret = OS_WaitEventTimeout(1,5);
+		ret = OS_WaitEventTimeout(OSEVTDataRecvd,5);
 		if(ret == 1)
 		{
 			//real event
-			HandleSerial(&g_tUCIRXFrame);
+			if(CRC8x((uint8_t*)&g_tUCIRXFrame,g_tUCIRXFrame.len) == g_tUCIRXFrame.crc)
+			{
+				HandleSerial(&g_tUCIRXFrame);
+			}
 		}
 		else
 		{
