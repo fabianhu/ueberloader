@@ -23,10 +23,6 @@
 #define UCI_GET_ACT_CELL_VOLTS	11
 
 
-
-
-
-
 typedef struct UCIFrame_tag
 {
 	uint8_t ID;
@@ -40,12 +36,9 @@ typedef struct UCIFrame_tag
 	} V;
 }UCIFrame_t;
 
-#define UCEHEADERLEN 4
+#define UCIHEADERLEN 4
 
-
-
-
-
+void UCISendBlockCrc( UCIFrame_t* pU);
 
 
 

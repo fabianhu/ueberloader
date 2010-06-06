@@ -165,5 +165,10 @@ void TaskCommRX(void)
 	}
 }
 
+void UCISendBlockCrc( UCIFrame_t* pU)
+{
+	pU->crc = CRC8x((uint8_t*)pU ,pU->len);
+	USARTSendBlockDMA(&DMA.CH1,(uint8_t*)pU ,pU->len);
+}
 
 

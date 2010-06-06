@@ -68,35 +68,35 @@ void TaskCommand(void)
 		myU.ID = 55;
 		myU.UCI = UCI_GET_ACT_VOLT;
 		myU.len = 3;
-		USARTSendBlockDMA(&DMA.CH1,(uint8_t*)&myU ,myU.len);
+		UCISendBlockCrc(&myU);
 
 		OS_WaitTicks(100);
 
 		myU.ID = 55;
 		myU.UCI = UCI_GET_ACT_CURRENT;
 		myU.len = 3;
-		USARTSendBlockDMA(&DMA.CH1,(uint8_t*)&myU ,myU.len);
+		UCISendBlockCrc(&myU);
 
 		OS_WaitTicks(100);
 
 		myU.ID = 55;
 		myU.UCI = UCI_GET_ACT_CELL_VOLTS;
 		myU.len = 3;
-		USARTSendBlockDMA(&DMA.CH1,(uint8_t*)&myU ,myU.len);
+		UCISendBlockCrc(&myU);
 
 		OS_WaitTicks(100);
 
 		myU.ID = 55;
 		myU.UCI = UCI_GET_STATE;
 		myU.len = 3;
-		USARTSendBlockDMA(&DMA.CH1,(uint8_t*)&myU ,myU.len);
+		UCISendBlockCrc(&myU);
 
 		OS_WaitTicks(100);
 
 		myU.ID = 55;
 		myU.UCI = UCI_GET_ACT_CURRENT;
 		myU.len = 3;
-		USARTSendBlockDMA(&DMA.CH1,(uint8_t*)&myU ,myU.len);
+		UCISendBlockCrc(&myU);
 
 	}
 }
