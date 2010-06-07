@@ -68,7 +68,7 @@ void TaskGovernor(void)
 
 	vPWM_Init();
 
-	OS_WaitTicks(1); // wait during timer sync
+	OS_WaitTicks(OSALMWaitGov,1); // wait during timer sync
 
 	PORTD.PIN1CTRL = 0b01000000; // invert Waveform at PORTD Pin1
 	PORTC.DIRSET = 0b00000011; // set Port C as output
@@ -77,20 +77,20 @@ void TaskGovernor(void)
 	ADC_ActivateHiCurrentMeas();
 
 	EVSYS.STROBE = (1<<7);  //fire event 7, which triggers the ADC
-	OS_WaitTicks(1); // wait during first ADC conversion
+	OS_WaitTicks(OSALMWaitGov,1); // wait during first ADC conversion
 
 	int16_t sZeroHiMeas = g_asADCvalues[2];
 
 	//ADC_ActivateLoCurrentMeas();
 
-	OS_WaitTicks(200); // wait for first ADC loop...
+	OS_WaitTicks(OSALMWaitGov,200); // wait for first ADC loop...
 
 	while(1)
 	{
 
 		EVSYS.STROBE = (1<<7);  //fire event 7, which triggers the ADC
 
-		OS_WaitTicks(1); // wait during ADC conversion
+		OS_WaitTicks(OSALMWaitGov,1); // wait during ADC conversion
 
 		usU_in_act = ADC_ScaleVolt_mV(g_asADCvalues[0]) ;
 		usU_out_act = ADC_ScaleVolt_mV(g_asADCvalues[1]) ;;
@@ -175,37 +175,37 @@ void TaskBalance(void)
 	// direction for balancer pins
 	PORTC.DIRSET = 0b11111100;
 
-	OS_WaitTicks(100); // wait for ADC init
+	OS_WaitTicks(OSALMBalRepeat,100); // wait for ADC init
 
 	ADC_StartConvCh3Pin(0);
 
 	while(1)
 	{
-		OS_WaitTicks(ADCWAITTIME);
+		OS_WaitTicks(OSALMBalWait,ADCWAITTIME);
 
 
 		for(i=1;i<6;i++)
 		{
 			ADC_StartConvCh3Pin(i);
-			OS_WaitTicks(ADCWAITTIME);
+			OS_WaitTicks(OSALMBalWait,ADCWAITTIME);
 			// push voltage of channel into array
 			usTemp = ADC_ScaleCell_mV(ADCA.CH3.RES);
 			usFilter(&usBalanceCells[i], &usTemp);
 		}
 		ADC_StartConvCh3Pin(10);
-		OS_WaitTicks(ADCWAITTIME);
+		OS_WaitTicks(OSALMBalWait,ADCWAITTIME);
 		usTemp = ADC_ScaleCell_mV(ADCA.CH3.RES);
 		usFilter(&usBalanceCells[0], &usTemp);
 
 		ADC_StartConvCh3Pin(11); // temperature external2
-		OS_WaitTicks(ADCWAITTIME);
+		OS_WaitTicks(OSALMBalWait,ADCWAITTIME);
 		sTemp = ADCA.CH3.RES;
 		OS_ENTERCRITICAL;
 		g_tADCValues.TempInt = sTemp ; // fixme scaling!
 		OS_LEAVECRITICAL;
 
 		ADC_StartConvInt(0); // CPU temperature
-		OS_WaitTicks(ADCWAITTIME);
+		OS_WaitTicks(OSALMBalWait,ADCWAITTIME);
 		sTemp = ADCA.CH3.RES*10 /33; // what would be measured, if it was done at 1V ref (/ 3.3).
 		sTemp = ( sTemp * (273ul+85ul) / g_tCalibration.usCPUTemp85C) ;
 		OS_ENTERCRITICAL;
@@ -213,7 +213,7 @@ void TaskBalance(void)
 		OS_LEAVECRITICAL;
 
 		ADC_StartConvInt(1); // Bandgap reference
-		OS_WaitTicks(ADCWAITTIME);
+		OS_WaitTicks(OSALMBalWait,ADCWAITTIME);
 		OS_ENTERCRITICAL;
 		g_tADCValues.Bandgap = ADCA.CH3.RES; // bit value for 1.10V ! at ref = Usupp/1.6
 		OS_LEAVECRITICAL;
@@ -224,7 +224,7 @@ void TaskBalance(void)
 
 
 		ADC_StartConvInt(2); // VCC_mVolt measurement
-		OS_WaitTicks(ADCWAITTIME);
+		OS_WaitTicks(OSALMBalWait,ADCWAITTIME);
 		sTemp = ADCA.CH3.RES * 10ul;
 		sTemp = sTemp * g_tCalibration.sADCRef_mV / 2048ul ;
 		OS_ENTERCRITICAL;
@@ -291,7 +291,7 @@ void TaskBalance(void)
 
 		StateMachineBattery();
 
-		OS_WaitTicks(10);
+
 
 	}// while(1)
 }
@@ -300,13 +300,13 @@ void TaskBalance(void)
 
 void TaskMonitor(void)
 {
-	OS_WaitTicks(100); // wait for ADC init
+	OS_WaitTicks(OSALMonitorRepeat,100); // wait for ADC init
 
-	OS_SetAlarm(OSTaskMonitor,1000);
+	OS_SetAlarm(OSALMonitorRepeat,1000);
 	while(1)
 	{
-		OS_WaitAlarm();
-		OS_SetAlarm(OSTaskMonitor,1000);
+		OS_WaitAlarm(OSALMonitorRepeat);
+		OS_SetAlarm(OSALMonitorRepeat,1000);
 		// count the charged Q
 
 	}
@@ -361,7 +361,9 @@ void StateMachineBattery(void) // ONLY run in TaskBalance!
 				// Charging!
 				if(myBattVoltage >= g_tCommand.usVoltageSetpoint_mV*g_tBattery_Info.ucNumberOfCells &&
 						myBattCurrent < usCommandCurrent / 10) // fixme 10 ?
+				{
 					g_tBattery_Info.eState = eBattFull;
+				}
 				if(GetCellcount(g_tBattery_Info.Cells,&myBattVoltage)!=g_tBattery_Info.ucNumberOfCells)
 				{
 					g_tBattery_Info.ucNumberOfCells = 0;

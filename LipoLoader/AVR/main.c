@@ -38,6 +38,12 @@ int main(void)
     OS_CreateTask(TaskCommRX, OSTaskCommRX);
 	OS_CreateTask(TaskMonitor, OSTaskMonitor);
 
+	OS_CreateAlarm(OSALMBalRepeat, OSTaskBalance);
+	OS_CreateAlarm(OSALMBalWait, OSTaskBalance);
+	OS_CreateAlarm(OSALMCommTimeout, OSTaskCommRX);
+	OS_CreateAlarm(OSALMWaitGov, OSTaskGovernor);
+	OS_CreateAlarm(OSALMonitorRepeat, OSTaskMonitor);
+
 	OS_StartExecution() ;
 	while(1)
 	{
@@ -131,12 +137,21 @@ void OS_ErrorHook(uint8_t ErrNo)
 		case 2:
 			// OS_WaitEvent: waiting in idle is not allowed
 			break;	
-		case 3:
-			// OS_SetAlarm: Multiple alarm per task
-			break;	
 		case 4:
 			// OS_WaitAlarm: waiting in idle is not allowed
-			break;	
+			break;
+		case 5:
+			// OS_MutexGet: invalid Mutex number
+			break;
+		case 6:
+			// OS_MutexRelease: invalid Mutex number
+			break;
+		case 7:
+			// OS_Alarm misconfiguration
+			break;
+		case 8:
+			// OS_WaitAlarm: Alarm was not active
+			break;
 		default:
 			break;	
 	}

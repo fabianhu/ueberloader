@@ -58,7 +58,7 @@ extern uint16_t gTest;
 
 void HandleSerial(UCIFrame_t *_RXFrame)
 {
-	uint8_t len; // byte! length of values
+	uint8_t len=0; // byte! length of values
 
 	g_tUCITXFrame.ID = MYSERIALID;
 	g_tUCITXFrame.UCI = _RXFrame->UCI; // Prepare answer
@@ -70,6 +70,7 @@ void HandleSerial(UCIFrame_t *_RXFrame)
 		case UCI_GET_CMDs:
 			OS_MutexGet(OSMTXCommand);
 			memcpy(g_tUCITXFrame.values, (uint8_t*)&g_tCommand, sizeof(g_tCommand));
+			len = sizeof(g_tCommand);
 			OS_MutexRelease(OSMTXCommand);
 			break;
 		case UCI_GET_INTs:
@@ -79,11 +80,13 @@ void HandleSerial(UCIFrame_t *_RXFrame)
 			OS_MutexGet(OSMTXBattInfo);
 			memcpy(g_tUCITXFrame.values, (uint8_t*)&g_tBattery_Info, sizeof(g_tBattery_Info));
 			OS_MutexRelease(OSMTXBattInfo);
+			len = sizeof(g_tBattery_Info);
 			break;
 		case UCI_SET_CMDs:
 			OS_MutexGet(OSMTXCommand);
 			memcpy((uint8_t*)&g_tCommand, g_tUCIRXFrame.values, sizeof(g_tCommand));
 			OS_MutexRelease(OSMTXCommand);
+			len = 0; // no answer expected.
 			break;
 		default:
 			len = 0;
@@ -107,7 +110,7 @@ ISR(USARTE0_RXC_vect)
 		p[g_ucRXLength] = USARTE0.DATA;
 		g_ucRXLength++;
 
-		OS_SetAlarm(OSTaskCommRX,5); // reset Alarm, if stuff arrives
+		OS_SetAlarm(OSALMCommTimeout,5); // reset Alarm, if stuff arrives
 	}
 
 //	if(g_ucRXLength == 3)
@@ -125,12 +128,12 @@ void TaskCommRX(void)
 {
 	g_tUCIRXFrame.len = 0xff;
 
-	OS_WaitTicks(1000); // wait for ADC init
+	OS_WaitTicks(OSALMCommTimeout,1000); // wait for ADC init
 	uint8_t ret;
 
 	while(1)
 	{
-		ret = OS_WaitEventTimeout(OSEVTDataRecvd,5);
+		ret = OS_WaitEventTimeout(OSEVTDataRecvd,5,OSALMCommTimeout);
 		if(ret == OSEVTDataRecvd)
 		{
 			//real event
