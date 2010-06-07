@@ -6,14 +6,11 @@
  */
 #include "OS/FabOS.h"
 #include "serial.h"
-#include "master.h"
 #include "usart.h"
+#include "string.h"
 
-Battery_t g_tBattery;
-//extern Battery_Governor_t g_tBattery_Governor;
-//extern ADC_Values_t g_tADCValues;
-//extern Command_t g_tCommand;
-
+Battery_Info_t g_tBattery_Info;
+Command_t g_tCommand;
 /*
 
 Serial Protocol:
@@ -47,61 +44,29 @@ Masters Commands:
 
  */
 
-#define MYSERIALID 55
-
-UCIFrame_t g_tUCIFrame;
-uint16_t gTest;
+#define SLAVEDERIALID 55
 
 void HandleSerial(UCIFrame_t *_RXFrame)
 {
-	uint8_t i; // byte! length of values
-
-	g_tUCIFrame.ID = MYSERIALID;
-	g_tUCIFrame.UCI = _RXFrame->UCI;
-
-	if(_RXFrame->ID == MYSERIALID)
+	if(_RXFrame->ID == SLAVEDERIALID)
 	{
 		switch(_RXFrame->UCI)
 		{
-		case UCI_SET_STATE:
+		case UCI_GET_CMDs:
+			OS_MutexGet(OSMTXCommand);
+			memcpy((uint8_t*)&g_tCommand, _RXFrame->values, sizeof(g_tCommand));
+			OS_MutexRelease(OSMTXCommand);
+			break;
+		case UCI_GET_INTs:
 
 			break;
-		case UCI_SET_CURRENT_mA:
-
+		case UCI_GET_OPVs:
+			OS_MutexGet(OSMTXBattInfo);
+			memcpy((uint8_t*)&g_tBattery_Info, _RXFrame->values, sizeof(g_tBattery_Info));
+			OS_MutexRelease(OSMTXBattInfo);
 			break;
-		case UCI_SET_CELL_VOLT:
-
-			break;
-		case UCI_SET_CELLCNT:
-
-			break;
-		case UCI_GET_STATE:
-			g_tBattery.eState = _RXFrame->V.values8[0];
-			break;
-		case UCI_GET_SET_CURRENT:
-
-			break;
-		case UCI_GET_SET_CELL_VOLT:
-
-			break;
-		case UCI_GET_SET_CELLCNT:
-
-			break;
-		case UCI_GET_ACT_VOLT:
-			g_tBattery.usVoltage_mV = _RXFrame->V.values16[0];
-			//g_tADCValues.VCC_mVolt = _RXFrame->V.values16[1]; // fixme
-
-			break;
-		case UCI_GET_ACT_CURRENT:
-			g_tBattery.sCurrent_mA = _RXFrame->V.values16[0];
-			gTest = _RXFrame->V.values16[0]; // power
-			break;
-		case UCI_GET_ACT_CELL_VOLTS:
-			for(i=0;i<6;i++)
-			{
-				g_tBattery.Cells[i].usVoltage_mV = _RXFrame->V.values16[i];
-			}
-
+		case UCI_SET_CMDs:
+			// not likely to be answered by the slave ;-) yet // fixme
 			break;
 		default:
 			break;
@@ -151,6 +116,7 @@ void TaskCommRX(void)
 			//real event
 			if(UCIGetCRC(&g_tUCIRXFrame) == g_tUCIRXFrame.crc)
 			{
+				// CRC is OK:
 				HandleSerial(&g_tUCIRXFrame);
 			}
 		}

@@ -32,6 +32,12 @@
 
 #define OSEVTDataRecvd 1
 
+// Mutex Names
+
+#define OSMTXBattInfo 0
+#define OSMTXCommand  1
+#define OSMTXIntern   2 // fixme use
+
 // *********  USER Configurable Block END 
 
 #define OS_DO_TESTSUITE 0	// compile and execute the automated software tests. set to 0 for production use of OS.
