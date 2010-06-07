@@ -469,7 +469,7 @@ void OS_GetTicks(uint32_t* pTime)
 
 
 #if OS_USECOMBINED
-uint8_t OS_WaitEventTimeout(uint8_t EventMask, uint16_t numTicks , uint8_t AlarmID) //returns event on event, 0 on timeout.
+uint8_t OS_WaitEventTimeout(uint8_t EventMask, uint8_t AlarmID, uint16_t numTicks ) //returns event on event, 0 on timeout.
 {
 	uint8_t ret;
 	OS_SetAlarm(AlarmID,numTicks); // set timeout

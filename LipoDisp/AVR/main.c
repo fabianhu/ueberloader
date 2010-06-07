@@ -52,7 +52,7 @@ void TaskGovernor(void)
 {
 	while(1)
 	{
-		OS_WaitTicks(101);
+		OS_WaitTicks(OSALMWaitGov,101);
 	}
 
 }
@@ -61,7 +61,7 @@ void TaskCommand(void)
 {
 	while(1)
 	{
-		OS_WaitTicks(1000);
+		OS_WaitTicks(OSALMBalRepeat,1000);
 
 		UCIFrame_t myU;
 
@@ -70,15 +70,12 @@ void TaskCommand(void)
 		myU.len = UCIHEADERLEN;
 		UCISendBlockCrc(&myU);
 
-		OS_WaitTicks(100);
+		OS_WaitTicks(OSALMBalWait,100);
 
 		myU.ID = 55;
 		myU.UCI = UCI_GET_CMDs;
 		myU.len = UCIHEADERLEN;
 		UCISendBlockCrc(&myU);
-
-		OS_WaitTicks(100);
-
 
 	}
 }
@@ -88,7 +85,7 @@ void TaskMonitor()
 {
 	while(1)
 	{
-		OS_WaitTicks(102);
+		OS_WaitTicks(OSALMonitorRepeat,102);
 	}
 }
 
@@ -172,9 +169,6 @@ void OS_ErrorHook(uint8_t ErrNo)
 		case 2:
 			// OS_WaitEvent: waiting in idle is not allowed
 			break;	
-		case 3:
-			// OS_SetAlarm: Multiple alarm per task
-			break;	
 		case 4:
 			// OS_WaitAlarm: waiting in idle is not allowed
 			break;
@@ -183,6 +177,12 @@ void OS_ErrorHook(uint8_t ErrNo)
 			break;
 		case 6:
 			// OS_MutexRelease: invalid Mutex number
+			break;
+		case 7:
+			// OS_Alarm misconfiguration
+			break;
+		case 8:
+			// OS_WaitAlarm: Alarm was not active
 			break;
 		default:
 			break;	
