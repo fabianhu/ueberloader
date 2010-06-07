@@ -8,6 +8,7 @@
 #include "serial.h"
 #include "ueberloader.h"
 #include "usart.h"
+#include <string.h>
 
 extern Battery_Info_t g_tBattery_Info;
 extern ADC_Values_t g_tADCValues;
@@ -57,64 +58,32 @@ extern uint16_t gTest;
 
 void HandleSerial(UCIFrame_t *_RXFrame)
 {
-	uint8_t len,i; // byte! length of values
+	uint8_t len; // byte! length of values
 
 	g_tUCITXFrame.ID = MYSERIALID;
-	g_tUCITXFrame.UCI = _RXFrame->UCI;
+	g_tUCITXFrame.UCI = _RXFrame->UCI; // Prepare answer
 
 	if(_RXFrame->ID == MYSERIALID)
 	{
 		switch(_RXFrame->UCI)
 		{
-		case UCI_SET_STATE:
+		case UCI_GET_CMDs:
+			OS_MutexGet(OSMTXCommand);
+			memcpy(g_tUCITXFrame.values, (uint8_t*)&g_tCommand, sizeof(g_tCommand));
+			OS_MutexRelease(OSMTXCommand);
+			break;
+		case UCI_GET_INTs:
 
 			break;
-		case UCI_SET_CURRENT_mA:
-
-			break;
-		case UCI_SET_CELL_VOLT:
-
-			break;
-		case UCI_SET_CELLCNT:
-
-			break;
-		case UCI_GET_STATE:
+		case UCI_GET_OPVs:
 			OS_MutexGet(OSMTXBattInfo);
-			g_tUCITXFrame.V.values8[0] = g_tBattery_Info.eState;
+			memcpy(g_tUCITXFrame.values, (uint8_t*)&g_tBattery_Info, sizeof(g_tBattery_Info));
 			OS_MutexRelease(OSMTXBattInfo);
-			len = 1;
 			break;
-		case UCI_GET_SET_CURRENT:
-
-			break;
-		case UCI_GET_SET_CELL_VOLT:
-
-			break;
-		case UCI_GET_SET_CELLCNT:
-
-			break;
-		case UCI_GET_ACT_VOLT:
-			OS_MutexGet(OSMTXBattInfo);
-			g_tUCITXFrame.V.values16[0] = g_tBattery_Info.usVoltage_mV;
-			OS_MutexRelease(OSMTXBattInfo);
-			g_tUCITXFrame.V.values16[1] = g_tADCValues.VCC_mVolt;
-			len = 4;
-			break;
-		case UCI_GET_ACT_CURRENT:
-			OS_MutexGet(OSMTXBattInfo);
-			g_tUCITXFrame.V.values16[0] = g_tBattery_Info.sCurrent_mA;
-			OS_MutexRelease(OSMTXBattInfo);
-			g_tUCITXFrame.V.values16[1] = gTest;
-			len = 4;
-			break;
-		case UCI_GET_ACT_CELL_VOLTS:
-			OS_MutexGet(OSMTXBattInfo);
-			for(i=0;i<6;i++)
-			{
-				g_tUCITXFrame.V.values16[i] = g_tBattery_Info.Cells[i].usVoltage_mV;
-			}
-			OS_MutexRelease(OSMTXBattInfo);
-			len = 12;
+		case UCI_SET_CMDs:
+			OS_MutexGet(OSMTXCommand);
+			memcpy((uint8_t*)&g_tCommand, g_tUCIRXFrame.values, sizeof(g_tCommand));
+			OS_MutexRelease(OSMTXCommand);
 			break;
 		default:
 			len = 0;
@@ -167,6 +136,7 @@ void TaskCommRX(void)
 			//real event
 			if(UCIGetCRC(&g_tUCIRXFrame) == g_tUCIRXFrame.crc)
 			{
+				// CRC is OK:
 				HandleSerial(&g_tUCIRXFrame);
 			}
 		}

@@ -2,6 +2,15 @@
 	FabOS for ATMEL AVR
 	
 	(c) 2008-2010 Fabian Huslik
+
+	This software is free for use in private, educational or evaluation applications.
+	For commercial use a license is necessary.
+
+	contact FabOS@huslik-elektronik.de for support and license.
+
+	In this file there should be no need to change anything.
+	If you have to change something, please let the author know via FabOS@huslik-elektronik.de.
+
 */
 
 #include <avr/io.h>
@@ -87,6 +96,7 @@ uint8_t OS_QueueOut(OS_Queue_t* pQueue, uint8_t *pData); // Get a byte out of th
 
 #if OS_USEMEMCHECKS == 1
 uint16_t OS_GetUnusedStack (uint8_t TaskID); // give the free stack space for any task as result.
+uint8_t OS_GetQueueSpace(OS_Queue_t* pQueue); // give the free space in a queue
 #endif
 
 #if OS_USECLOCK == 1
