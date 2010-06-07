@@ -9,6 +9,7 @@
 #include "adc.h"
 #include "pwm.h"
 #include "usart.h"
+#include "serial.h"
 
 //OS_DeclareQueue(DemoQ,10,4);
 
@@ -95,7 +96,7 @@ void TaskGovernor(void)
 		usU_out_act = ADC_ScaleVolt_mV(g_asADCvalues[1]) ;;
 
 		OS_MutexGet(OSMTXBattInfo);
-		usFilter(&g_tBattery_Info.usVoltage_mV, &usU_out_act);
+		usFilter(&g_tBattery_Info.usActVoltage_mV, &usU_out_act);
 		OS_MutexRelease(OSMTXBattInfo);
 
 		if((ADCA.CH2.MUXCTRL & (0xf<<3)) == ADC_CH_MUXPOS_PIN7_gc) // is high current config...
@@ -115,7 +116,7 @@ void TaskGovernor(void)
 			ADC_ActivateLoCurrentMeas();
 
 		OS_MutexGet(OSMTXBattInfo);
-		sFilter(&g_tBattery_Info.sCurrent_mA, &sI_out_act);
+		sFilter(&g_tBattery_Info.sActCurrent_mA, &sI_out_act);
 		OS_MutexRelease(OSMTXBattInfo);
 
 
@@ -200,7 +201,7 @@ void TaskBalance(void)
 		OS_WaitTicks(ADCWAITTIME);
 		sTemp = ADCA.CH3.RES;
 		OS_ENTERCRITICAL;
-		g_tADCValues.TempInt[1] = sTemp ; // fixme scaling!
+		g_tADCValues.TempInt = sTemp ; // fixme scaling!
 		OS_LEAVECRITICAL;
 
 		ADC_StartConvInt(0); // CPU temperature
@@ -316,8 +317,8 @@ void StateMachineBattery(void) // ONLY run in TaskBalance!
 	uint8_t NumberOfCells = 0;
 
 	OS_MutexGet(OSMTXBattInfo);
-	uint16_t myBattVoltage = g_tBattery_Info.usVoltage_mV;
-	int16_t myBattCurrent = g_tBattery_Info.sCurrent_mA;
+	uint16_t myBattVoltage = g_tBattery_Info.usActVoltage_mV;
+	int16_t myBattCurrent = g_tBattery_Info.sActCurrent_mA;
 	OS_MutexRelease(OSMTXBattInfo);
 
 	OS_MutexGet(OSMTXCommand);

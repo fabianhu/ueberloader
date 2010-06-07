@@ -8,6 +8,9 @@
 
 	contact FabOS@huslik-elektronik.de for support and license.
 
+	In this file there should be no need to change anything.
+	If you have to change something, please let the author know via FabOS@huslik-elektronik.de.
+
 */
 
 #include "FabOS.h"
@@ -212,6 +215,13 @@ void OS_StartExecution()
 // Try to get a mutex; execution will block as long the mutex is occupied. If it is free, it is occupied afterwards.
 void OS_MutexGet(int8_t mutexID)
 {
+#if OS_USEEXTCHECKS == 1
+	if(mutexID >= OS_NUMMUTEX)
+	{
+		OS_ErrorHook(5);// OS_MutexGet: invalid Mutex number
+		return 0;
+	}
+#endif
 	OS_ENTERCRITICAL;
 	OS_TRACE(17);
 	while( MyOS.MutexOwnedByTask[mutexID] != 0xff) // as long as anyone is the owner..
@@ -232,9 +242,16 @@ void OS_MutexGet(int8_t mutexID)
 // release the occupied mutex
 void OS_MutexRelease(int8_t mutexID)
 {
+#if OS_USEEXTCHECKS == 1
+	if(mutexID >= OS_NUMMUTEX)
+	{
+		OS_ErrorHook(6);// OS_MutexRelease: invalid Mutex number
+		return 0;
+	}
+#endif
 	OS_ENTERCRITICAL;
-	MyOS.MutexOwnedByTask[mutexID] = 0xff; // tell others, that no one is the owner.
 	OS_TRACE(21);
+	MyOS.MutexOwnedByTask[mutexID] = 0xff; // tell others, that no one is the owner.
 	OS_Reschedule() ; // re-schedule; will wake up waiting task, if higher prio.
 }
 
@@ -408,7 +425,7 @@ uint8_t OS_GetQueueSpace(OS_Queue_t* pQueue)
 	if (pQueue->read < pQueue->write)
 		return pQueue->size - pQueue->write + pQueue->read;
 	else if(pQueue->read > pQueue->write)
-		return  pQueue->read - pQueue->write;
+		return  (pQueue->read - pQueue->write)-1;
 	return pQueue->size-1;
 }
 #endif
