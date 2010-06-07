@@ -133,7 +133,7 @@ void TaskCommRX(void)
 
 	while(1)
 	{
-		ret = OS_WaitEventTimeout(OSEVTDataRecvd,5,OSALMCommTimeout);
+		ret = OS_WaitEventTimeout(OSEVTDataRecvd,OSALMCommTimeout,5);
 		if(ret == OSEVTDataRecvd)
 		{
 			//real event
