@@ -219,7 +219,7 @@ void OS_MutexGet(int8_t mutexID)
 	if(mutexID >= OS_NUMMUTEX)
 	{
 		OS_ErrorHook(5);// OS_MutexGet: invalid Mutex number
-		return 0;
+		return;
 	}
 #endif
 	OS_ENTERCRITICAL;
@@ -246,7 +246,7 @@ void OS_MutexRelease(int8_t mutexID)
 	if(mutexID >= OS_NUMMUTEX)
 	{
 		OS_ErrorHook(6);// OS_MutexRelease: invalid Mutex number
-		return 0;
+		return;
 	}
 #endif
 	OS_ENTERCRITICAL;
