@@ -151,11 +151,11 @@ uint16_t ADCinit(void)
 	EVSYS.STROBE = (1<<7); // dummy conversion
 
 	// Get offset value for ADC A.
-	OS_WaitTicks(1);
+	OS_WaitTicks(OSALMWaitGov,1);
 
 	ADC_StartConvCh3Pin(0); // measure offset of GND with GND
 
-	OS_WaitTicks(5);
+	OS_WaitTicks(OSALMWaitGov,5);
 
 	temp = ADCA.CH3.RES;
 	if(temp < 10 && temp > -10 )
