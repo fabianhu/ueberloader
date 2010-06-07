@@ -66,37 +66,19 @@ void TaskCommand(void)
 		UCIFrame_t myU;
 
 		myU.ID = 55;
-		myU.UCI = UCI_GET_ACT_VOLT;
+		myU.UCI = UCI_GET_OPVs;
 		myU.len = UCIHEADERLEN;
 		UCISendBlockCrc(&myU);
 
 		OS_WaitTicks(100);
 
 		myU.ID = 55;
-		myU.UCI = UCI_GET_ACT_CURRENT;
+		myU.UCI = UCI_GET_CMDs;
 		myU.len = UCIHEADERLEN;
 		UCISendBlockCrc(&myU);
 
 		OS_WaitTicks(100);
 
-		myU.ID = 55;
-		myU.UCI = UCI_GET_ACT_CELL_VOLTS;
-		myU.len = UCIHEADERLEN;
-		UCISendBlockCrc(&myU);
-
-		OS_WaitTicks(100);
-
-		myU.ID = 55;
-		myU.UCI = UCI_GET_STATE;
-		myU.len = UCIHEADERLEN;
-		UCISendBlockCrc(&myU);
-
-		OS_WaitTicks(100);
-
-		myU.ID = 55;
-		myU.UCI = UCI_GET_ACT_CURRENT;
-		myU.len = UCIHEADERLEN;
-		UCISendBlockCrc(&myU);
 
 	}
 }
@@ -195,7 +177,13 @@ void OS_ErrorHook(uint8_t ErrNo)
 			break;	
 		case 4:
 			// OS_WaitAlarm: waiting in idle is not allowed
-			break;	
+			break;
+		case 5:
+			// OS_MutexGet: invalid Mutex number
+			break;
+		case 6:
+			// OS_MutexRelease: invalid Mutex number
+			break;
 		default:
 			break;	
 	}
