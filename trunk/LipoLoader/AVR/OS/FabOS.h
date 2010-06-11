@@ -37,8 +37,7 @@ typedef struct FabOS_tag
 	uint8_t 	CurrTask; 				// here the NUMBER of the actual active task is set.
 	uint8_t 	TaskReadyBits ; 		// here te task activation BITS are set. Task 0 (LSB) has the highest priority.
 	uint16_t 	Stacks[OS_NUMTASKS+1];		// actual SP position addresses for the tasks AND the IDLE-task, which uses the ordinary stack! Index = Task ID
-	//uint16_t 	AlarmTicks[OS_NUMTASKS];  	// Holds the number of system clock ticks to wait before the task becomes ready to run. Index = Task ID
-	OS_Alarm_t	Alarms[OS_NUMALARMS];
+	OS_Alarm_t	Alarms[OS_NUMALARMS];  // Holds the number of system clock ticks to wait before the task becomes ready to run.
 
 #if OS_USEMEMCHECKS == 1
 	uint8_t*     StackStart[OS_NUMTASKS+1];
@@ -89,8 +88,6 @@ void 	OS_MutexGet(int8_t mutexID); // number of mutexes limited to NUMMUTEX !!!
 				// Try to get a mutex; execution will block as long the mutex is occupied. If it is free, it is occupied afterwards.
 
 void 	OS_MutexRelease(int8_t mutexID); // release the occupied mutex
-
-;
 
 void 	OS_SetAlarm(uint8_t AlarmID, uint16_t numTicks ); // set Alarm for the future and continue // set alarm to 0 disable it.
 
@@ -278,6 +275,7 @@ asm volatile( \
 #if (OS_DO_TESTSUITE == 1) && (\
 		(	OS_NUMTASKS 	!=3	) ||\
 		(	OS_NUMMUTEX 	!=3	) ||\
+		(	OS_USEEXTCHECKS !=1 ) ||\
 		(	OS_USECLOCK 	!=1	) ||\
 		(	OS_USEMEMCHECKS !=1	) ||\
 		(	OS_USECOMBINED 	!=1	) \
