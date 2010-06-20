@@ -83,6 +83,9 @@ void TaskCommand(void)
 
 void TaskMonitor()
 {
+	// Light up LED
+	PORTB.DIRSET = 0b0100;
+	PORTB.OUTSET = 0b0100;
 	while(1)
 	{
 		OS_WaitTicks(OSALMonitorRepeat,102);
@@ -206,9 +209,9 @@ void emstop(uint8_t e)
 	TCD0.CTRLB = 0;
 	PORTD.OUTCLR = 0b00000011;
 
-	// Light up LED
-	PORTB.DIRSET = 0b1000;
-	PORTB.OUTSET = 0b1000;
+	// Switch off LED
+	PORTB.DIRSET = 0b0000;
+	PORTB.OUTSET = 0b0000;
 
 	while(1)
 	{
