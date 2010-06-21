@@ -69,8 +69,9 @@ void init_menu(void)
 	volatile unsigned char start_index=0, act_index=0, item_nr=0;
 	volatile unsigned char index=0;
 	//set io pins
-	DDRA = 0x00;
-	PORTA = 0xFF;
+
+// fixme
+
 	//get array inidices
 	while(m_item[index].ucID)
 		{
@@ -383,7 +384,7 @@ void menu_select(void)
 void system_info(void)
 {
 		char stringtemp[17];
-		uint32_t time;
+		uint32_t time =0;
 		uint32_t* pTime;
 		pTime = &time;	
 		//Funktion screen
@@ -413,7 +414,7 @@ void system_info(void)
 			write_ram_text(stringtemp, 255, 255, 255, 2, 100, 3*32+45);
 			
 
-		while(PINA & 1<<PINA0);
+		// fixme while(PINA & 1<<PINA0);
 		//back
 		restore_menu();
 }
