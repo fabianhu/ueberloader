@@ -15,7 +15,7 @@
 
 
 // *********  Task definitions
-OS_DeclareTask(TaskGovernor,200);
+OS_DeclareTask(TaskDisplay,200);
 OS_DeclareTask(TaskCommand,200);
 OS_DeclareTask(TaskCommRX,200);
 OS_DeclareTask(TaskMonitor,200);
@@ -36,11 +36,11 @@ int main(void)
 {
 	CPU_init();
 
-	LCD_init();
+	lcd_init();
 
 	init_menu();
 
-    OS_CreateTask(TaskGovernor, 0);
+    OS_CreateTask(TaskDisplay, 0);
     OS_CreateTask(TaskCommand, 1);
     OS_CreateTask(TaskCommRX, 2);
 	OS_CreateTask(TaskMonitor, 3);
@@ -56,12 +56,12 @@ int main(void)
 
 }
 
-void TaskGovernor(void)
+void TaskDisplay(void)
 {
 	while(1)
 	{
 		OS_WaitTicks(OSALMWaitGov,1001);
-		LCD_show_init_screen();
+		lcd_show_init_screen();
 		OS_WaitTicks(OSALMWaitGov,2001);
 		show_menu();
 		OS_WaitTicks(OSALMWaitGov,2001);
@@ -84,7 +84,7 @@ void TaskGovernor(void)
 		menu_select();
 		OS_WaitTicks(OSALMWaitGov,501);
 		menu_select();
-		OS_WaitTicks(OSALMWaitGov,100001);
+		OS_WaitTicks(OSALMWaitGov,65535);
 
 	}
 
