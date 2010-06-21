@@ -1,3 +1,10 @@
+/*
+	This is the Üeber-LCD
+
+	(c) 2010 Jörg Schmidt
+
+*/
+
 //*****************************************************************************
 //                    I N C L U D E S / D E F I N E S
 //*****************************************************************************
@@ -11,44 +18,20 @@ char txt_init1[] PROGMEM="Powered by";
 char txt_init2[] PROGMEM="FAB";
 char txt_init3[] PROGMEM="OS";
 
-//*****************************************************************************
-//                            P R O T O T Y P E S
-//*****************************************************************************
-void waitms(int ms);
-void LCD_write_cmd(unsigned char cmd);
-void LCD_write_data(unsigned char data);
-unsigned char LCD_read_data();
-void LCD_init(void);
-void LCD_clear(void);
-void LCD_draw_pixel(unsigned char red, unsigned char green, unsigned char blue,unsigned int x_pos,unsigned int y_pos );
-void LCD_draw_line(unsigned char red, unsigned char green, unsigned char blue, unsigned int x_pos1,unsigned int y_pos1,unsigned int x_pos2,unsigned int y_pos2);
-void LCD_draw_circle(unsigned char red, unsigned char green, unsigned char blue, unsigned int center_xpos, unsigned int center_ypos ,unsigned int radius);
-void LCD_draw_filled_box(unsigned char red, unsigned char green, unsigned char blue, unsigned int x_pos,unsigned int y_pos,unsigned int width,unsigned int hight);
-void LCD_draw_box(unsigned char red, unsigned char green, unsigned char blue, unsigned int x_pos,unsigned int y_pos,unsigned int width,unsigned int hight);
-void LCD_draw_bmp(char *ptr_bmp, unsigned char colour, unsigned int x_pos, unsigned int y_pos);
-void LCD_write_char(unsigned char letter, unsigned char red, unsigned char green, unsigned char blue, unsigned char size, unsigned int x_pos, unsigned int y_pos);
-void LCD_write_ram_text(char *text, unsigned char red, unsigned char green, unsigned char blue, unsigned char size, unsigned int x_pos, unsigned int y_pos);
-void LCD_write_flash_text(char *text, unsigned char red, unsigned char green, unsigned char blue, unsigned char size, unsigned int x_pos, unsigned int y_pos);
-void LCD_show_init_screen(void);
 
 //*****************************************************************************
 //                           F U N C T I O N S
 //*****************************************************************************
-void waitms(int ms) {
-  int i;
-  for (i=0;i<ms;i++) _delay_ms(1);
-}
 
-
-void LCD_write_cmd(unsigned char cmd)
+void lcd_write_cmd(uint8_t cmd)
 {
-	LCD_DC_C;	//write cmd
+	LCD_DC_C;	//write cmd // this could eventually be done once instead of every time ? fixme
 	LCD_DATA_PORT = cmd;		//set cmd
 	LCD_WR_C;	//Toggle WR
 	LCD_WR_S;	//Toggle WR		
 }
 
-void LCD_write_data(unsigned char data)
+void lcd_write_data(uint8_t data)
 {
 	LCD_DC_S;	//write data
 	LCD_DATA_PORT = data;		//set data
@@ -56,21 +39,21 @@ void LCD_write_data(unsigned char data)
 	LCD_WR_S;	//Toggle WR	
 }
 
-unsigned char LCD_read_data()
+uint8_t lcd_read_data()
 {
-	unsigned char data;
+	uint8_t data;
 	LCD_DATA_DDR = 0x00;		//port as input
 	LCD_DC_S;	//read data
 	LCD_RD_C;	//Toggle RD
 	data = LCD_DATA_PIN;		//read data
 	LCD_RD_S;	//Toggle RD
-	_delay_us(1);
+	_delay_us(1); // fixme why wait?
 	LCD_DATA_DDR = 0xff;		//port as output
 	return data;	
 }
 
 
-void LCD_init(void)
+void lcd_init(void)
 {
 	//lcd data port as output
 	LCD_DATA_DDR = 0xff;
@@ -85,43 +68,43 @@ void LCD_init(void)
 	LCD_RD_S;
 	//Reset disable
 	LCD_RE_S;
-	_delay_ms(1);
+	_delay_ms(1); // may be replaced by OS-wait, not using the delay lib? fixme
 	//set 24bit colour mode
-	LCD_write_cmd(SET_INTF_PX_F);	//set interface pixel format
-	LCD_write_data(0x07);			//set 24bbp
+	lcd_write_cmd(SET_INTF_PX_F);	//set interface pixel format
+	lcd_write_data(0x07);			//set 24bbp
 	//memory write direction
-	LCD_write_cmd(MEM_ACS_CNTRL);
-	LCD_write_data(0x70);	
+	lcd_write_cmd(MEM_ACS_CNTRL);
+	lcd_write_data(0x70);	
 	//enable LCD
-	LCD_write_cmd(DISP_SLEEP_OUT);	//sleep out
-	LCD_write_cmd(IDLE_MODE_OFF);	//idle off
-	LCD_write_cmd(NORM_MODE_ON);	//normal display mode on
-	LCD_write_cmd(DISP_ON);			//lcd on
+	lcd_write_cmd(DISP_SLEEP_OUT);	//sleep out
+	lcd_write_cmd(IDLE_MODE_OFF);	//idle off
+	lcd_write_cmd(NORM_MODE_ON);	//normal display mode on
+	lcd_write_cmd(DISP_ON);			//lcd on
 	//clear_lcd
-	LCD_clear();
+	lcd_clear();
 	//Enable Backlight
 	LCD_LIGHT_DIR;
 	LCD_LIGHT_ON;
 }
 
-void LCD_clear(void)
+void lcd_clear(void)
 {
-	unsigned int zeile,pos;
+	uint16_t zeile,pos;
 	//set column pointer
-	LCD_write_cmd(COLUMN_ADR_SET);
-	LCD_write_data(0x00);
-	LCD_write_data(0x00);
-	LCD_write_data(0x01);
-	LCD_write_data(0x3F);
+	lcd_write_cmd(COLUMN_ADR_SET);
+	lcd_write_data(0x00);
+	lcd_write_data(0x00);
+	lcd_write_data(0x01);
+	lcd_write_data(0x3F);
 
 	//set page pointer
-	LCD_write_cmd(PAGE_ADR_SET);
-	LCD_write_data(0x00);
-	LCD_write_data(0x00);
-	LCD_write_data(0x00);
-	LCD_write_data(0xEF);
+	lcd_write_cmd(PAGE_ADR_SET);
+	lcd_write_data(0x00);
+	lcd_write_data(0x00);
+	lcd_write_data(0x00);
+	lcd_write_data(0xEF);
 	//clear lcd
-	LCD_write_cmd(MEM_WRITE);	//write memory
+	lcd_write_cmd(MEM_WRITE);	//write memory
 	LCD_DC_S;	//write data
 	LCD_DATA_PORT = 0x00;		//set data
 	for (zeile=0;zeile<240;zeile++)
@@ -147,24 +130,24 @@ void LCD_clear(void)
 		}	
 }
 
-void LCD_draw_pixel(unsigned char red, unsigned char green, unsigned char blue, unsigned int x_pos, unsigned int y_pos )
+void lcd_draw_pixel(uint8_t red, uint8_t green, uint8_t blue, uint16_t x_pos, uint16_t y_pos )
 {
 	//set new pointer addr
-	LCD_write_cmd(COLUMN_ADR_SET);
-	LCD_write_data((unsigned char)(x_pos>>8));
-	LCD_write_data((unsigned char)x_pos);
+	lcd_write_cmd(COLUMN_ADR_SET);
+	lcd_write_data(HIGH(x_pos));
+	lcd_write_data(LOW(x_pos));
 	//set page pointer
-	LCD_write_cmd(PAGE_ADR_SET);
-	LCD_write_data((unsigned char)(y_pos>>8));
-	LCD_write_data((unsigned char)y_pos);
+	lcd_write_cmd(PAGE_ADR_SET);
+	lcd_write_data((HIGH(y_pos)));
+	lcd_write_data(LOW(y_pos));
 	//write pixel
-	LCD_write_cmd(MEM_WRITE);
-	LCD_write_data(red);
-	LCD_write_data(green);
-	LCD_write_data(blue); 
+	lcd_write_cmd(MEM_WRITE);
+	lcd_write_data(red);
+	lcd_write_data(green);
+	lcd_write_data(blue); 
 }
 
-void LCD_draw_line(unsigned char red, unsigned char green, unsigned char blue, unsigned int x_pos1,unsigned int y_pos1,unsigned int x_pos2,unsigned int y_pos2)
+void lcd_draw_line(uint8_t red, uint8_t green, uint8_t blue, uint16_t x_pos1,uint16_t y_pos1,uint16_t x_pos2,uint16_t y_pos2)
 {
   int dx,dy,stepx,stepy,fraction;
 
@@ -184,7 +167,7 @@ void LCD_draw_line(unsigned char red, unsigned char green, unsigned char blue, u
   dy <<= 1;
   dx <<= 1;
 
-  LCD_draw_pixel(red, green, blue, x_pos1,y_pos1);
+  lcd_draw_pixel(red, green, blue, x_pos1,y_pos1);
 
   if (dx > dy)
   {
@@ -198,7 +181,7 @@ void LCD_draw_line(unsigned char red, unsigned char green, unsigned char blue, u
       }
       x_pos1 += stepx;
       fraction += dy;
-      LCD_draw_pixel(red, green, blue, x_pos1,y_pos1);
+      lcd_draw_pixel(red, green, blue, x_pos1,y_pos1);
     }
   }
   else
@@ -213,12 +196,12 @@ void LCD_draw_line(unsigned char red, unsigned char green, unsigned char blue, u
       }
       y_pos1 += stepy;
       fraction += dx;
-      LCD_draw_pixel(red, green, blue, x_pos1,y_pos1);
+      lcd_draw_pixel(red, green, blue, x_pos1,y_pos1);
     }
   }
 }
 
-void LCD_draw_circle(unsigned char red, unsigned char green, unsigned char blue, unsigned int center_xpos, unsigned int center_ypos ,unsigned int radius)
+void lcd_draw_circle(uint8_t red, uint8_t green, uint8_t blue, uint16_t center_xpos, uint16_t center_ypos ,uint16_t radius)
 {
 	int x, y, xchange, ychange, radiusError;
 	x = radius;
@@ -228,14 +211,14 @@ void LCD_draw_circle(unsigned char red, unsigned char green, unsigned char blue,
 	radiusError = 0;
 	while(x >= y)
   		{
-  			LCD_draw_pixel(red, green, blue, center_xpos+x, center_ypos+y); 
-  			LCD_draw_pixel(red, green, blue, center_xpos-x, center_ypos+y); 
-  			LCD_draw_pixel(red, green, blue, center_xpos-x, center_ypos-y);
- 			LCD_draw_pixel(red, green, blue, center_xpos+x, center_ypos-y); 
-  			LCD_draw_pixel(red, green, blue, center_xpos+y, center_ypos+x); 
-  			LCD_draw_pixel(red, green, blue, center_xpos-y, center_ypos+x); 
-  			LCD_draw_pixel(red, green, blue, center_xpos-y, center_ypos-x); 
-  			LCD_draw_pixel(red, green, blue, center_xpos+y, center_ypos-x); 
+  			lcd_draw_pixel(red, green, blue, center_xpos+x, center_ypos+y); 
+  			lcd_draw_pixel(red, green, blue, center_xpos-x, center_ypos+y); 
+  			lcd_draw_pixel(red, green, blue, center_xpos-x, center_ypos-y);
+ 			lcd_draw_pixel(red, green, blue, center_xpos+x, center_ypos-y); 
+  			lcd_draw_pixel(red, green, blue, center_xpos+y, center_ypos+x); 
+  			lcd_draw_pixel(red, green, blue, center_xpos-y, center_ypos+x); 
+  			lcd_draw_pixel(red, green, blue, center_xpos-y, center_ypos-x); 
+  			lcd_draw_pixel(red, green, blue, center_xpos+y, center_ypos-x); 
   			y++;
   			radiusError += ychange;
   			ychange += 2;
@@ -248,157 +231,161 @@ void LCD_draw_circle(unsigned char red, unsigned char green, unsigned char blue,
   		}
 }
 
-void LCD_draw_filled_box(unsigned char red, unsigned char green, unsigned char blue, unsigned int x_pos,unsigned int y_pos,unsigned int width,unsigned int height)
+void lcd_draw_filled_box(uint8_t red, uint8_t green, uint8_t blue, uint16_t x_pos,uint16_t y_pos,uint16_t width,uint16_t height)
 {
 	//plus_bmp minus_bmp ok_bmp cancel_bmp
-	unsigned int i;
+	uint16_t i;
 
 	//set new pointer addr
-	LCD_write_cmd(COLUMN_ADR_SET);
-	LCD_write_data((unsigned char)(x_pos>>8));
-	LCD_write_data((unsigned char)x_pos);
-	LCD_write_data((unsigned char)((x_pos+width-1)>>8));
-	LCD_write_data((unsigned char)(x_pos+width-1));
+	lcd_write_cmd(COLUMN_ADR_SET);
+	lcd_write_data(HIGH(x_pos));
+	lcd_write_data((uint8_t)x_pos);
+	i= x_pos+width-1;
+	lcd_write_data(HIGH(i));
+	lcd_write_data(LOW(i));
 	//set page pointer
-	LCD_write_cmd(PAGE_ADR_SET);
-	LCD_write_data((unsigned char)(y_pos>>8));
-	LCD_write_data((unsigned char)y_pos);
-	LCD_write_data((unsigned char)((y_pos+height-1)>>8));
-	LCD_write_data((unsigned char)(y_pos+height-1));
+	lcd_write_cmd(PAGE_ADR_SET);
+	lcd_write_data(HIGH(y_pos));
+	lcd_write_data(LOW(y_pos));
+	i= y_pos+height-1;
+	lcd_write_data(HIGH(i));
+	lcd_write_data(LOW(i));
 	//write pixel
-	LCD_write_cmd(MEM_WRITE);
+	lcd_write_cmd(MEM_WRITE);
 	for (i=0;i<(3*width*height);i++)
 		{
-		LCD_write_data(red);
-		LCD_write_data(green);
-		LCD_write_data(blue);
+		lcd_write_data(red);
+		lcd_write_data(green);
+		lcd_write_data(blue);
 		}
 	//reset pointer
 	//set column pointer
-	LCD_write_cmd(COLUMN_ADR_SET);
-	LCD_write_data(0x00);
-	LCD_write_data(0x00);
-	LCD_write_data(0x01);
-	LCD_write_data(0x3F);
+	lcd_write_cmd(COLUMN_ADR_SET);
+	lcd_write_data(0x00);
+	lcd_write_data(0x00);
+	lcd_write_data(0x01);
+	lcd_write_data(0x3F);
 
 	//set page pointer
-	LCD_write_cmd(PAGE_ADR_SET);
-	LCD_write_data(0x00);
-	LCD_write_data(0x00);
-	LCD_write_data(0x00);
-	LCD_write_data(0xEF);	
+	lcd_write_cmd(PAGE_ADR_SET);
+	lcd_write_data(0x00);
+	lcd_write_data(0x00);
+	lcd_write_data(0x00);
+	lcd_write_data(0xEF);	
 }
 
-void LCD_draw_box(unsigned char red, unsigned char green, unsigned char blue,unsigned int x_pos,unsigned int y_pos,unsigned int width,unsigned int hight)
+void lcd_draw_box(uint8_t red, uint8_t green, uint8_t blue,uint16_t x_pos,uint16_t y_pos,uint16_t width,uint16_t hight)
 {
-	unsigned int x;
+	uint16_t x;
 	//obere Kante
 	for(x=0;x<width;x++)
 	{
-		LCD_draw_pixel(red, green, blue, x_pos+x, y_pos);
+		lcd_draw_pixel(red, green, blue, x_pos+x, y_pos);
 	}
 	//linke/rechte Kante
 	for(x=0;x<hight;x++)
 	{
-		LCD_draw_pixel(red, green, blue, x_pos,y_pos+x);
-		LCD_draw_pixel(red, green, blue, x_pos+width,y_pos+x);
+		lcd_draw_pixel(red, green, blue, x_pos,y_pos+x);
+		lcd_draw_pixel(red, green, blue, x_pos+width,y_pos+x);
 
 	}
 	//untere Kante
 	for(x=0;x<=width;x++)
 	{
-		LCD_draw_pixel(red, green, blue, x_pos+x,y_pos+hight);
+		lcd_draw_pixel(red, green, blue, x_pos+x,y_pos+hight);
 	}		
 }
 
-void LCD_draw_bmp(char *ptr_bmp, unsigned char colour, unsigned int x_pos, unsigned int y_pos)
+void lcd_draw_bmp(char *ptr_bmp, uint8_t colour, uint16_t x_pos, uint16_t y_pos)
 {
 	//plus_bmp minus_bmp ok_bmp cancel_bmp
-	unsigned int width, height, i;
-	unsigned char greyscale;
+	uint16_t width, height, i;
+	uint8_t greyscale;
 
 	width = pgm_read_byte(ptr_bmp++);
 	height = pgm_read_byte(ptr_bmp++);
 	greyscale = pgm_read_byte(ptr_bmp++);
 
 	//set new pointer addr
-	LCD_write_cmd(COLUMN_ADR_SET);
-	LCD_write_data((unsigned char)(x_pos>>8));
-	LCD_write_data((unsigned char)x_pos);
-	LCD_write_data((unsigned char)((x_pos+width-1)>>8));
-	LCD_write_data((unsigned char)(x_pos+width-1));
+	lcd_write_cmd(COLUMN_ADR_SET);
+	lcd_write_data(HIGH(x_pos));
+	lcd_write_data(LOW(x_pos));
+	i = x_pos+width-1;
+	lcd_write_data(HIGH(i));
+	lcd_write_data(LOW(i));
 	//set page pointer
-	LCD_write_cmd(PAGE_ADR_SET);
-	LCD_write_data((unsigned char)(y_pos>>8));
-	LCD_write_data((unsigned char)y_pos);
-	LCD_write_data((unsigned char)((y_pos+height-1)>>8));
-	LCD_write_data((unsigned char)(y_pos+height-1));
+	lcd_write_cmd(PAGE_ADR_SET);
+	lcd_write_data(HIGH(y_pos));
+	lcd_write_data(LOW(y_pos));
+	i= y_pos+height-1;
+	lcd_write_data(HIGH(i));
+	lcd_write_data(LOW(i));
 	//colour mode
 	if(!greyscale)
 		{
 		//write pixel
-		LCD_write_cmd(MEM_WRITE);
-		for (i=0;i<(3*width*height);i++){LCD_write_data(pgm_read_byte(ptr_bmp++));}
+		lcd_write_cmd(MEM_WRITE);
+		for (i=0;i<(3*width*height);i++){lcd_write_data(pgm_read_byte(ptr_bmp++));}
 		}
 	else //monochrom
 		{
 		//write pixel
-		LCD_write_cmd(MEM_WRITE);
+		lcd_write_cmd(MEM_WRITE);
 		for (i=0;i<(width*height);i++)
 			{
 			switch( colour )
      			{
         		case 0 : //sw
-					LCD_write_data(pgm_read_byte(ptr_bmp));
-					LCD_write_data(pgm_read_byte(ptr_bmp));
-					LCD_write_data(pgm_read_byte(ptr_bmp++));
+					lcd_write_data(pgm_read_byte(ptr_bmp));
+					lcd_write_data(pgm_read_byte(ptr_bmp));
+					lcd_write_data(pgm_read_byte(ptr_bmp++));
 					break;
         		case 1 : //red
-					LCD_write_data(pgm_read_byte(ptr_bmp++));
-					LCD_write_data(0);
-					LCD_write_data(0);
+					lcd_write_data(pgm_read_byte(ptr_bmp++));
+					lcd_write_data(0);
+					lcd_write_data(0);
 					break;
         		case 2 : //green
-					LCD_write_data(0);
-					LCD_write_data(pgm_read_byte(ptr_bmp++));
-					LCD_write_data(0);
+					lcd_write_data(0);
+					lcd_write_data(pgm_read_byte(ptr_bmp++));
+					lcd_write_data(0);
 					break;
         		case 3 : //blue
-					LCD_write_data(0);
-					LCD_write_data(0);
-					LCD_write_data(pgm_read_byte(ptr_bmp++));
+					lcd_write_data(0);
+					lcd_write_data(0);
+					lcd_write_data(pgm_read_byte(ptr_bmp++));
 					break;
         		default  : //sw
-					LCD_write_data(pgm_read_byte(ptr_bmp));
-					LCD_write_data(pgm_read_byte(ptr_bmp));
-					LCD_write_data(pgm_read_byte(ptr_bmp++));
+					lcd_write_data(pgm_read_byte(ptr_bmp));
+					lcd_write_data(pgm_read_byte(ptr_bmp));
+					lcd_write_data(pgm_read_byte(ptr_bmp++));
 				}
      		}		
 		}
 	//reset pointer
 	//set column pointer
-	LCD_write_cmd(COLUMN_ADR_SET);
-	LCD_write_data(0x00);
-	LCD_write_data(0x00);
-	LCD_write_data(0x01);
-	LCD_write_data(0x3F);
+	lcd_write_cmd(COLUMN_ADR_SET);
+	lcd_write_data(0x00);
+	lcd_write_data(0x00);
+	lcd_write_data(0x01);
+	lcd_write_data(0x3F);
 
 	//set page pointer
-	LCD_write_cmd(PAGE_ADR_SET);
-	LCD_write_data(0x00);
-	LCD_write_data(0x00);
-	LCD_write_data(0x00);
-	LCD_write_data(0xEF);
+	lcd_write_cmd(PAGE_ADR_SET);
+	lcd_write_data(0x00);
+	lcd_write_data(0x00);
+	lcd_write_data(0x00);
+	lcd_write_data(0xEF);
 
 		
 }
 
-void LCD_write_char(unsigned char letter, unsigned char red, unsigned char green, unsigned char blue, unsigned char size, unsigned int x_pos, unsigned int y_pos)
+void lcd_write_char(uint8_t letter, uint8_t red, uint8_t green, uint8_t blue, uint8_t size, uint16_t x_pos, uint16_t y_pos)
 {
-	volatile unsigned char act_byte =0x00, bit_nr=0x00, act_row, pixel_width, y_offset;
-	volatile unsigned char x_scale, y_scale;
+	volatile uint8_t act_byte =0x00, bit_nr=0x00, act_row, pixel_width, y_offset;
+	volatile uint8_t x_scale, y_scale;
 	volatile char *ptr_letter; 
-	volatile unsigned int new_x_pos, new_y_pos;
+	volatile uint16_t new_x_pos, new_y_pos;
 	
 	//set pointer and get letter size
 	ptr_letter = font[letter-32];
@@ -426,7 +413,7 @@ void LCD_write_char(unsigned char letter, unsigned char red, unsigned char green
 					{
 					//draw bit
 					if( (1<<(7-bit_nr%8)) & act_byte)
-						{LCD_draw_pixel(red, green, blue, new_x_pos, new_y_pos++);}
+						{lcd_draw_pixel(red, green, blue, new_x_pos, new_y_pos++);}
 					else 
 						{new_y_pos++;}
 					}
@@ -437,9 +424,9 @@ void LCD_write_char(unsigned char letter, unsigned char red, unsigned char green
 		}
 }
 
-void LCD_write_ram_text(char *text, unsigned char red, unsigned char green, unsigned char blue, unsigned char size, unsigned int x_pos, unsigned int y_pos)
+void lcd_write_ram_text(char *text, uint8_t red, uint8_t green, uint8_t blue, uint8_t size, uint16_t x_pos, uint16_t y_pos)
 {
-	unsigned int new_x_pos, new_y_pos;
+	uint16_t new_x_pos, new_y_pos;
 	char *ptr_letter, pixel_width; 
 	new_x_pos=x_pos;
 	new_y_pos=y_pos;
@@ -457,7 +444,7 @@ void LCD_write_ram_text(char *text, unsigned char red, unsigned char green, unsi
 		//write text
 		if(*text!=' ') 
 			{
-			LCD_write_char(*text, red, green, blue, size, new_x_pos, new_y_pos);
+			lcd_write_char(*text, red, green, blue, size, new_x_pos, new_y_pos);
 			new_x_pos+=size*pixel_width+size*2;
 			}
 		//space
@@ -470,9 +457,9 @@ void LCD_write_ram_text(char *text, unsigned char red, unsigned char green, unsi
 		}
 }
 
-void LCD_write_flash_text(char *text, unsigned char red, unsigned char green, unsigned char blue, unsigned char size, unsigned int x_pos, unsigned int y_pos)
+void lcd_write_flash_text(char *text, uint8_t red, uint8_t green, uint8_t blue, uint8_t size, uint16_t x_pos, uint16_t y_pos)
 {
-	unsigned int new_x_pos, new_y_pos;
+	uint16_t new_x_pos, new_y_pos;
 	char *ptr_letter, pixel_width; 
 	new_x_pos=x_pos;
 	new_y_pos=y_pos;
@@ -490,7 +477,7 @@ void LCD_write_flash_text(char *text, unsigned char red, unsigned char green, un
 		//write text
 		if(pgm_read_byte(text)!=' ') 
 			{
-			LCD_write_char(pgm_read_byte(text), red, green, blue, size, new_x_pos, new_y_pos);
+			lcd_write_char(pgm_read_byte(text), red, green, blue, size, new_x_pos, new_y_pos);
 			new_x_pos+=size*pixel_width+size*2;
 			}
 		//space
@@ -503,12 +490,12 @@ void LCD_write_flash_text(char *text, unsigned char red, unsigned char green, un
 		}
 }
 
-void LCD_show_init_screen(void)
+void lcd_show_init_screen(void)
 {
 	//Powered by
-	LCD_write_flash_text(txt_init1, 255, 255, 255, 2, 30, 50);
+	lcd_write_flash_text(txt_init1, 255, 255, 255, 2, 30, 50);
 	//FAB
-	LCD_write_flash_text(txt_init2, 255, 255, 0, 3, 80, 100);
+	lcd_write_flash_text(txt_init2, 255, 255, 0, 3, 80, 100);
 	//OS
-	LCD_write_flash_text(txt_init3, 255, 0, 0, 4, 165, 110);
+	lcd_write_flash_text(txt_init3, 255, 0, 0, 4, 165, 110);
 };

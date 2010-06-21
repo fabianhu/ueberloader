@@ -1,13 +1,19 @@
+/*
+	This is the Üeber-LCD
+
+	(c) 2010 Jörg Schmidt
+
+*/
+
 #ifndef LCD_H
 	#define LCD_H
 
 //*****************************************************************************
 //                            I N C L U D E
 //*****************************************************************************
-#define F_CPU 16000000UL  
 
 #include <util/delay.h>
-#include <stdlib.h>     
+#include <stdlib.h>
 // stdlib.h-examples:
 // Integer in String for 	itoa( i, s, 10 ) i=Integer;s=Zielstring
 // double/float in String 	dtostrf( f, 6, 3, s ) f=float;6=Gesamtstellen;3=Nachkommastelle;s=Zielstring
@@ -16,13 +22,16 @@
 //                            D E F I N E
 //*****************************************************************************
 
-#define LCD_DELAY				1		//Delay in ms 
+/*#define LCD_DELAY				1		//Delay in ms
 #define LCD_READ_DELAY			1		//Delay in us 
 #define LCD_RESET_DELAY			1		//Reset duration
 									
 //other definitions
 #define LOWBYTE(val)	 val & 0x00FF			
-#define HIGHBYTE(val)	(val & 0xFF00) >> 8		
+#define HIGHBYTE(val)	(val & 0xFF00) >> 8		*/
+
+#define LOW(Data) (*((unsigned char *)(&Data)))
+#define HIGH(Data) (*((unsigned char *)((&Data)+1)))
 
 // LCD commands
 //		command		 	value	description						
@@ -86,29 +95,28 @@
 #define LCD_LIGHT_OFF PORTB.OUTCLR = (1<<2)
 
 //other defines
-#define SW						0
+/*#define SW						0
 #define RED						1
 #define GREEN					2
-#define BLUE					3
+#define BLUE					3*/
 
 //*****************************************************************************
 //                            P R O T O T Y P E S
 //*****************************************************************************
-extern void waitms(int ms);
-extern void LCD_write_cmd(unsigned char cmd);
-extern void LCD_write_data(unsigned char data);
-extern unsigned char LCD_read_data();
-extern void LCD_init(void);
-extern void LCD_clear(void);
-extern void LCD_draw_pixel(unsigned char red, unsigned char green, unsigned char blue,unsigned int x_pos,unsigned int y_pos );
-extern void LCD_draw_line(unsigned char red, unsigned char green, unsigned char blue, unsigned int x_pos1,unsigned int y_pos1,unsigned int x_pos2,unsigned int y_pos2);
-extern void LCD_draw_circle(unsigned char red, unsigned char green, unsigned char blue, unsigned int center_xpos, unsigned int center_ypos ,unsigned int radius);
-extern void LCD_draw_filled_box(unsigned char red, unsigned char green, unsigned char blue, unsigned int x_pos,unsigned int y_pos,unsigned int width,unsigned int hight);
-extern void LCD_draw_box(unsigned char red, unsigned char green, unsigned char blue, unsigned int x_pos,unsigned int y_pos,unsigned int width,unsigned int hight);
-extern void LCD_draw_bmp(char *ptr_bmp, unsigned char colour, unsigned int x_pos, unsigned int y_pos);
-extern void LCD_write_char(unsigned char letter, unsigned char red, unsigned char green, unsigned char blue, unsigned char size, unsigned int x_pos, unsigned int y_pos);
-extern void LCD_write_ram_text(char *text, unsigned char red, unsigned char green, unsigned char blue, unsigned char size, unsigned int x_pos, unsigned int y_pos);
-extern void LCD_write_flash_text(char *text, unsigned char red, unsigned char green, unsigned char blue, unsigned char size, unsigned int x_pos, unsigned int y_pos);
-extern void LCD_show_init_screen(void);
+void lcd_write_cmd(uint8_t cmd);
+void lcd_write_data(uint8_t data);
+uint8_t lcd_read_data();
+void lcd_init(void);
+void lcd_clear(void);
+void lcd_draw_pixel(uint8_t red, uint8_t green, uint8_t blue,uint16_t x_pos,uint16_t y_pos );
+void lcd_draw_line(uint8_t red, uint8_t green, uint8_t blue, uint16_t x_pos1,uint16_t y_pos1,uint16_t x_pos2,uint16_t y_pos2);
+void lcd_draw_circle(uint8_t red, uint8_t green, uint8_t blue, uint16_t center_xpos, uint16_t center_ypos ,uint16_t radius);
+void lcd_draw_filled_box(uint8_t red, uint8_t green, uint8_t blue, uint16_t x_pos,uint16_t y_pos,uint16_t width,uint16_t hight);
+void lcd_draw_box(uint8_t red, uint8_t green, uint8_t blue, uint16_t x_pos,uint16_t y_pos,uint16_t width,uint16_t hight);
+void lcd_draw_bmp(char *ptr_bmp, uint8_t colour, uint16_t x_pos, uint16_t y_pos);
+void lcd_write_char(uint8_t letter, uint8_t red, uint8_t green, uint8_t blue, uint8_t size, uint16_t x_pos, uint16_t y_pos);
+void lcd_write_ram_text(char *text, uint8_t red, uint8_t green, uint8_t blue, uint8_t size, uint16_t x_pos, uint16_t y_pos);
+void lcd_write_flash_text(char *text, uint8_t red, uint8_t green, uint8_t blue, uint8_t size, uint16_t x_pos, uint16_t y_pos);
+void lcd_show_init_screen(void);
 
 #endif //LCD_H
