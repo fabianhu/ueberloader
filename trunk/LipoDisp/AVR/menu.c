@@ -156,30 +156,30 @@ void show_menu(void)
 		if(!parameter_en)
 			{
 			//parameter name
-			draw_filled_box(0, 155, 0, 0, 0, 320,40);
-			write_flash_text(m_item[get_index((*gpsActualItem).ucID)].strName, 0, 0, 0, 2, 20, 0);
-			draw_filled_box(0, 0, 0, 0, 41, 320,200);
+			LCD_draw_filled_box(0, 155, 0, 0, 0, 320,40);
+			LCD_write_flash_text(m_item[get_index((*gpsActualItem).ucID)].strName, 0, 0, 0, 2, 20, 0);
+			LCD_draw_filled_box(0, 0, 0, 0, 41, 320,200);
 			//Write old parameter value and limits
 			itoa( (*pParam).sParam, stringtemp, 10 );// i=Integer;s=Zielstring
-			write_ram_text("Old value:", 255, 255, 255, 2, 20, 0*32+45);
-			write_ram_text(stringtemp, 255, 255, 255, 2, 200, 0*32+45);
+			LCD_write_ram_text("Old value:", 255, 255, 255, 2, 20, 0*32+45);
+			LCD_write_ram_text(stringtemp, 255, 255, 255, 2, 200, 0*32+45);
 			itoa( (*pParam).sLowerLimit, stringtemp, 10 );// i=Integer;s=Zielstring
-			write_ram_text("Lower limit:", 255, 255, 255, 2, 20, 1*32+45);
-			write_ram_text(stringtemp, 255, 255, 255, 2, 200, 1*32+45);
+			LCD_write_ram_text("Lower limit:", 255, 255, 255, 2, 20, 1*32+45);
+			LCD_write_ram_text(stringtemp, 255, 255, 255, 2, 200, 1*32+45);
 			itoa( (*pParam).sUpperLimit, stringtemp, 10 );// i=Integer;s=Zielstring
-			write_ram_text("Upper limit:", 255, 255, 255, 2, 20, 2*32+45);
-			write_ram_text(stringtemp, 255, 255, 255, 2, 200, 2*32+45);
+			LCD_write_ram_text("Upper limit:", 255, 255, 255, 2, 20, 2*32+45);
+			LCD_write_ram_text(stringtemp, 255, 255, 255, 2, 200, 2*32+45);
 			//Draw box arround actual value
-			draw_box(0, 255, 0, 0, 4*32+50, 320,30);
+			LCD_draw_box(0, 255, 0, 0, 4*32+50, 320,30);
 			}
 		//set marker parameter edit-mode active
 		parameter_en=1;
 		//clear old value
-		draw_filled_box(0, 0, 0, 180, 4*32+51, 100,28);
+		LCD_draw_filled_box(0, 0, 0, 180, 4*32+51, 100,28);
 		//write actual value
 		itoa( (*pParam).sParam, stringtemp, 10 );// i=Integer;s=Zielstring
-		write_ram_text("New value:", 255, 255, 255, 2, 20, 4*32+45);
-		write_ram_text(stringtemp, 255, 255, 255, 2, 200, 4*32+45);
+		LCD_write_ram_text("New value:", 255, 255, 255, 2, 20, 4*32+45);
+		LCD_write_ram_text(stringtemp, 255, 255, 255, 2, 200, 4*32+45);
 		}
 	else
 		{
@@ -200,13 +200,13 @@ void show_menu(void)
 		if(last_menu_id!=(*gpsActualItem).ucTop)
 			{
 			//Write Menue header
-			draw_filled_box(0, 155, 0, 0, 0, 320,40);
-			write_flash_text(m_item[(*gpsActualItem).ucTop].strName, 0, 0, 0, 2, 20, 0);
+			LCD_draw_filled_box(0, 155, 0, 0, 0, 320,40);
+			LCD_write_flash_text(m_item[(*gpsActualItem).ucTop].strName, 0, 0, 0, 2, 20, 0);
 			}
 		//page changed?
 		if(page!=last_page || last_menu_id!=(*gpsActualItem).ucTop)
 			{
-			draw_filled_box(0, 0, 0, 0, 41, 320,200);
+			LCD_draw_filled_box(0, 0, 0, 0, 41, 320,200);
 			} 
 			//save new menu id and page
 			last_menu_id = (*gpsActualItem).ucTop;
@@ -220,29 +220,29 @@ void show_menu(void)
 			{
 			if(m_item[index].ucItem_sel)
 				{
-				draw_box(0, 255, 0, 0, i*32+50, 300,30);
-				write_flash_text(m_item[index].strName, 255, 255, 255, 2, 20, i*32+45);
+				LCD_draw_box(0, 255, 0, 0, i*32+50, 300,30);
+				LCD_write_flash_text(m_item[index].strName, 255, 255, 255, 2, 20, i*32+45);
 				}
 			else
 				{
-				draw_box(0, 0, 0, 0, i*32+50, 300,30);
-				write_flash_text(m_item[index].strName, 255, 255, 255, 2, 20, i*32+45);
+				LCD_draw_box(0, 0, 0, 0, i*32+50, 300,30);
+				LCD_write_flash_text(m_item[index].strName, 255, 255, 255, 2, 20, i*32+45);
 				}
 			index=m_item[index].ucNext;
 			}
 		//Draw position marker
-		draw_filled_box(0, 0, 0, 308, 49, 12,180);
-		draw_filled_box(0, 255, 0, 313, 49, 2, 182);
-		draw_filled_box(0, 255, 0, 309, 51+(((*gpsActualItem).ucItem_nr-1)*170/((*gpsActualItem).ucNr_grp_items-1)), 10,8);
+		LCD_draw_filled_box(0, 0, 0, 308, 49, 12,180);
+		LCD_draw_filled_box(0, 255, 0, 313, 49, 2, 182);
+		LCD_draw_filled_box(0, 255, 0, 309, 51+(((*gpsActualItem).ucItem_nr-1)*170/((*gpsActualItem).ucNr_grp_items-1)), 10,8);
 		}
 }
 
 void restore_menu(void)
 {
 	//Write Menue header
-	draw_filled_box(0, 155, 0, 0, 0, 320,40);
-	write_flash_text(m_item[(*gpsActualItem).ucTop].strName, 0, 0, 0, 2, 20, 0);
-	draw_filled_box(0, 0, 0, 0, 41, 320,200);
+	LCD_draw_filled_box(0, 155, 0, 0, 0, 320,40);
+	LCD_write_flash_text(m_item[(*gpsActualItem).ucTop].strName, 0, 0, 0, 2, 20, 0);
+	LCD_draw_filled_box(0, 0, 0, 0, 41, 320,200);
 	//Show menue-itmes
 	show_menu();
 }
@@ -387,32 +387,32 @@ void system_info(void)
 		uint32_t time =0;
 		uint32_t* pTime;
 		pTime = &time;	
-		//Funktion screen
-		draw_filled_box(0, 155, 0, 0, 0, 320,40);
-		write_ram_text("System information", 0, 0, 0, 2, 20, 0);
-		draw_filled_box(0, 0, 0, 0, 41, 320,200);
-		write_ram_text("Stack Task1:", 255, 255, 255, 2, 20, 0*32+45);
-		write_ram_text("Stack Task2:", 255, 255, 255, 2, 20, 1*32+45);
-		write_ram_text("Stack Task3:", 255, 255, 255, 2, 20, 2*32+45);
-		write_ram_text("Ticks:", 255, 255, 255, 2, 20, 3*32+45);
-	
-			
+		while(1)
+		{
+			//Funktion screen
+			LCD_draw_filled_box(0, 155, 0, 0, 0, 320,40);
+			LCD_write_ram_text("System information", 0, 0, 0, 2, 20, 0);
+			LCD_draw_filled_box(0, 0, 0, 0, 41, 320,200);
+			LCD_write_ram_text("Stack Task1:", 255, 255, 255, 2, 20, 0*32+45);
+			LCD_write_ram_text("Stack Task2:", 255, 255, 255, 2, 20, 1*32+45);
+			LCD_write_ram_text("Stack Task3:", 255, 255, 255, 2, 20, 2*32+45);
+			LCD_write_ram_text("Ticks:", 255, 255, 255, 2, 20, 3*32+45);
 		
 			//Show task stack usage
-			//itoa( OS_GetUnusedStack(1), stringtemp, 10 );// i=Integer;s=Zielstring
+			itoa( OS_GetUnusedStack(1), stringtemp, 10 );// i=Integer;s=Zielstring
 			
-			write_ram_text(stringtemp, 255, 255, 255, 2, 220, 0*32+45);
-			//itoa( OS_GetUnusedStack(2), stringtemp, 10 );// i=Integer;s=Zielstring
+			LCD_write_ram_text(stringtemp, 255, 255, 255, 2, 220, 0*32+45);
+			itoa( OS_GetUnusedStack(2), stringtemp, 10 );// i=Integer;s=Zielstring
 			
-			write_ram_text(stringtemp, 255, 255, 255, 2, 220, 1*32+45);
-			//itoa( OS_GetUnusedStack(3), stringtemp, 10 );// i=Integer;s=Zielstring
+			LCD_write_ram_text(stringtemp, 255, 255, 255, 2, 220, 1*32+45);
+			itoa( OS_GetUnusedStack(3), stringtemp, 10 );// i=Integer;s=Zielstring
 			
-			write_ram_text(stringtemp, 255, 255, 255, 2, 220, 2*32+45);
-			//OS_GetTicks(pTime);
+			LCD_write_ram_text(stringtemp, 255, 255, 255, 2, 220, 2*32+45);
+			OS_GetTicks(pTime);
 			dtostrf( time, 15, 1, stringtemp);// i=Integer;s=Zielstring
 			
-			write_ram_text(stringtemp, 255, 255, 255, 2, 100, 3*32+45);
-			
+			LCD_write_ram_text(stringtemp, 255, 255, 255, 2, 100, 3*32+45);
+		}	
 
 		// fixme while(PINA & 1<<PINA0);
 		//back

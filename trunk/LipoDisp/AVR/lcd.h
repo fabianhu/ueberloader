@@ -2,38 +2,6 @@
 	#define LCD_H
 
 //*****************************************************************************
-//                        L C D   C O N N E C T I O N
-//*****************************************************************************
-//
-//  AVR / Power					LCD
-//
-// 	0V  						 ->			PIN 1  Backlight LED1 GND
-//  0V  					 	 ->			PIN 2  Backlight LED2 GND
-//  1,8V					 	 ->			PIN 3  Interface Voltage 1,8V
-//	GND				 		 	 ->			PIN 4  GND
-// 	LCD_CMD_PORT PIN0 		 	 -> 		PIN 5  WRX Data read by the display module at rising edge
-// 	LCD_DATA_PORT PIN0 			<-> 		PIN 6  D0 Data to/from Display module
-//  GND              			 -> 		PIN 7  GND
-// 	LCD_DATA_PORT PIN2 			<-> 		PIN 8  D2 Data to/from Display module
-// 	LCD_DATA_PORT PIN4 			<-> 		PIN 9  D4 Data to/from Display module
-// 	LCD_DATA_PORT PIN6 			<-> 		PIN 10 D6 Data to/from Display module
-// 	LCD_CMD_PORT PIN1 		 	 -> 		PIN 11 CSX Display module selected when low
-// 	LCD_CMD_PORT PIN2 		 	 -> 		PIN 12 RESX Reset when low
-// 	LCD_CMD_PORT PIN3 			<-  		PIN 13 TE Tearing Effect Output Pin to synchronise MCU to Frame writing, activated by S/W command
-// 	LCD_DATA_PORT PIN7 			<-> 		PIN 14 D7 Data to/from Display module
-// 	LCD_DATA_PORT PIN5 			<-> 		PIN 15 D5 Data to/from Display module
-// 	GND				 			 -> 		PIN 16 GND
-// 	LCD_DATA_PORT PIN3       	<-> 		PIN 17 D3 Data to/from Display module
-// 	LCD_DATA_PORT PIN1 			<-> 		PIN 18 D1 Data to/from Display module
-// 	LCD_CMD_PORT PIN4 			 -> 		PIN 19 D/CX Data=1/Command=0
-// 	LCD_CMD_PORT PIN5 			 -> 		PIN 20 RDX Host can read the ID or frame memory bytes at rising edge
-// 	GND				 			 -> 		PIN 21 GND
-// 	2,8V				 		 -> 		PIN 22 VCC 2,8V
-// 	6,2V				 		 -> 		PIN 23 Backlight LED2 6,2V
-// 	6,2V				 		 -> 		PIN 24 Backlight LED1 6,2V
-
-
-//*****************************************************************************
 //                            I N C L U D E
 //*****************************************************************************
 #define F_CPU 16000000UL  
@@ -127,20 +95,20 @@
 //                            P R O T O T Y P E S
 //*****************************************************************************
 extern void waitms(int ms);
-extern void write_cmd(unsigned char cmd);
-extern void write_data(unsigned char data);
-extern unsigned char read_data();
-extern void init_lcd(void);
-extern void clear_lcd(void);
-extern void draw_pixel(unsigned char red, unsigned char green, unsigned char blue,unsigned int x_pos,unsigned int y_pos );
-extern void draw_line(unsigned char red, unsigned char green, unsigned char blue, unsigned int x_pos1,unsigned int y_pos1,unsigned int x_pos2,unsigned int y_pos2);
-extern void draw_circle(unsigned char red, unsigned char green, unsigned char blue, unsigned int center_xpos, unsigned int center_ypos ,unsigned int radius);
-extern void draw_filled_box(unsigned char red, unsigned char green, unsigned char blue, unsigned int x_pos,unsigned int y_pos,unsigned int width,unsigned int hight);
-extern void draw_box(unsigned char red, unsigned char green, unsigned char blue, unsigned int x_pos,unsigned int y_pos,unsigned int width,unsigned int hight);
-extern void draw_bmp(char *ptr_bmp, unsigned char colour, unsigned int x_pos, unsigned int y_pos);
-extern void write_char(unsigned char letter, unsigned char red, unsigned char green, unsigned char blue, unsigned char size, unsigned int x_pos, unsigned int y_pos);
-extern void write_ram_text(char *text, unsigned char red, unsigned char green, unsigned char blue, unsigned char size, unsigned int x_pos, unsigned int y_pos);
-extern void write_flash_text(char *text, unsigned char red, unsigned char green, unsigned char blue, unsigned char size, unsigned int x_pos, unsigned int y_pos);
-extern void show_init_screen(void);
+extern void LCD_write_cmd(unsigned char cmd);
+extern void LCD_write_data(unsigned char data);
+extern unsigned char LCD_read_data();
+extern void LCD_init(void);
+extern void LCD_clear(void);
+extern void LCD_draw_pixel(unsigned char red, unsigned char green, unsigned char blue,unsigned int x_pos,unsigned int y_pos );
+extern void LCD_draw_line(unsigned char red, unsigned char green, unsigned char blue, unsigned int x_pos1,unsigned int y_pos1,unsigned int x_pos2,unsigned int y_pos2);
+extern void LCD_draw_circle(unsigned char red, unsigned char green, unsigned char blue, unsigned int center_xpos, unsigned int center_ypos ,unsigned int radius);
+extern void LCD_draw_filled_box(unsigned char red, unsigned char green, unsigned char blue, unsigned int x_pos,unsigned int y_pos,unsigned int width,unsigned int hight);
+extern void LCD_draw_box(unsigned char red, unsigned char green, unsigned char blue, unsigned int x_pos,unsigned int y_pos,unsigned int width,unsigned int hight);
+extern void LCD_draw_bmp(char *ptr_bmp, unsigned char colour, unsigned int x_pos, unsigned int y_pos);
+extern void LCD_write_char(unsigned char letter, unsigned char red, unsigned char green, unsigned char blue, unsigned char size, unsigned int x_pos, unsigned int y_pos);
+extern void LCD_write_ram_text(char *text, unsigned char red, unsigned char green, unsigned char blue, unsigned char size, unsigned int x_pos, unsigned int y_pos);
+extern void LCD_write_flash_text(char *text, unsigned char red, unsigned char green, unsigned char blue, unsigned char size, unsigned int x_pos, unsigned int y_pos);
+extern void LCD_show_init_screen(void);
 
 #endif //LCD_H

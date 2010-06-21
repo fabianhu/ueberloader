@@ -11,6 +11,7 @@
 #include "usart.h"
 #include "serial.h"
 #include "lcd.h"
+#include "menu.h"
 
 
 // *********  Task definitions
@@ -35,7 +36,9 @@ int main(void)
 {
 	CPU_init();
 
-	init_lcd();
+	LCD_init();
+
+	init_menu();
 
     OS_CreateTask(TaskGovernor, 0);
     OS_CreateTask(TaskCommand, 1);
@@ -58,10 +61,30 @@ void TaskGovernor(void)
 	while(1)
 	{
 		OS_WaitTicks(OSALMWaitGov,1001);
-
-		show_init_screen();
-
-		OS_WaitTicks(OSALMWaitGov,10001);
+		LCD_show_init_screen();
+		OS_WaitTicks(OSALMWaitGov,2001);
+		show_menu();
+		OS_WaitTicks(OSALMWaitGov,2001);
+		menu_select();
+		OS_WaitTicks(OSALMWaitGov,501);
+		menu_next(1);
+		OS_WaitTicks(OSALMWaitGov,501);
+		menu_next(1);
+		OS_WaitTicks(OSALMWaitGov,501);
+		menu_next(1);
+		OS_WaitTicks(OSALMWaitGov,501);
+		menu_next(1);
+		OS_WaitTicks(OSALMWaitGov,501);
+		menu_select();
+		OS_WaitTicks(OSALMWaitGov,501);
+		menu_next(1);
+		OS_WaitTicks(OSALMWaitGov,501);
+		menu_next(1);
+		OS_WaitTicks(OSALMWaitGov,501);
+		menu_select();
+		OS_WaitTicks(OSALMWaitGov,501);
+		menu_select();
+		OS_WaitTicks(OSALMWaitGov,100001);
 
 	}
 
