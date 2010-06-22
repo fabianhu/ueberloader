@@ -38,7 +38,7 @@ int main(void)
 
 	lcd_init();
 
-	init_menu();
+	menu_init();
 
     OS_CreateTask(TaskDisplay, 0);
     OS_CreateTask(TaskCommand, 1);
@@ -60,13 +60,10 @@ void TaskDisplay(void)
 {
 	while(1)
 	{
-		//system_info();
-		
-		
 		OS_WaitTicks(OSALMWaitGov,1001);
 		lcd_show_init_screen();
 		OS_WaitTicks(OSALMWaitGov,2001);
-		show_menu();
+		menu_show();
 		OS_WaitTicks(OSALMWaitGov,2001);
 		menu_select();
 		OS_WaitTicks(OSALMWaitGov,501);
