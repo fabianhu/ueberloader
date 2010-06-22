@@ -207,6 +207,7 @@ void OS_StartExecution()
 	//store THIS context for idling!!
 	MyOS.CurrTask = OS_NUMTASKS;
 	OS_Reschedule();
+	OS_LEAVECRITICAL; // the stored context has the interrupts OFF!
 }
 
 

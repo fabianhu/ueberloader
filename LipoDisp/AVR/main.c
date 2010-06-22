@@ -15,7 +15,7 @@
 
 
 // *********  Task definitions
-OS_DeclareTask(TaskDisplay,200);
+OS_DeclareTask(TaskDisplay,500);
 OS_DeclareTask(TaskCommand,200);
 OS_DeclareTask(TaskCommRX,200);
 OS_DeclareTask(TaskMonitor,200);
@@ -60,6 +60,9 @@ void TaskDisplay(void)
 {
 	while(1)
 	{
+		//system_info();
+		
+		
 		OS_WaitTicks(OSALMWaitGov,1001);
 		lcd_show_init_screen();
 		OS_WaitTicks(OSALMWaitGov,2001);

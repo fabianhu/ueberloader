@@ -33,16 +33,16 @@ Parameter_t p_item[] = {//sParam	sLowerLimit		sUpperLimit;
 MenuItem_t m_item[] = {//ucID	strName			pAction			pParam		ucSubMenu		ucPrev		ucNext
 						{ 255 ,	txtmainmenu, 		0, 				0, 			1, 			255,		255},
 						{ 1 , 	txtmenu1, 			0, 				0, 			11, 			3, 			2},
-							{ 11 , 	txtsubmenu11, 	0, 				0, 			0, 			15, 		12},
+							{ 11 , 	txtsubmenu11, 	0,				0, 			0, 			15, 		12},
 							{ 12 , 	txtsubmenu12, 	0, 				0, 			0, 			11,			13},
 							{ 13 , 	txtsubmenu13, 	0, 				0, 			0, 			12, 		14},
 							{ 14 , 	txtsubmenu14, 	0, 				0, 			0, 			13,			15},
 							{ 15 , 	back,			0, 				0, 			0, 			14, 		11},
-						{ 2 , 	txtmenu2, 			0, 				0, 			21, 			1, 			3},
+						{ 2 , 	txtmenu2, 			0, 				0, 			21, 		1, 			3},
 							{ 21 , 	txtsubmenu21, 	0, 				&p_item[0],	0, 			23, 		22},
 							{ 22 , 	txtsubmenu22, 	0, 				&p_item[1],	0, 			21,			23},
 							{ 23 , 	back,			0, 				0, 			0, 			22, 		21},
-						{ 3 , 	txtmenu3, 			0, 				0, 			31, 			2, 			1},
+						{ 3 , 	txtmenu3, 			0, 				0, 			31, 		2, 			1},
 							{ 31 , 	txtsubmenu31, 	&system_info,	0, 			0, 			32, 		32},
 							{ 32 , 	back,			0, 				0, 			0, 			31, 		31},
 						//array termination
@@ -410,7 +410,7 @@ void system_info(void)
 			
 			lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 220, 2*32+45);
 			OS_GetTicks(pTime);
-			dtostrf( time, 15, 1, stringtemp);// i=Integer;s=Zielstring  // nix & never float!!! fixme fixme fixme
+			itoa( time, stringtemp,10);// i=Integer;s=Zielstring  // nix & never float!!! fixme fixme fixme
 			
 			lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 100, 3*32+45);
 		}	
