@@ -15,6 +15,18 @@
 
 #include "FabOS.h"
 
+// variable types for more tasks
+#if OS_NUMTASKS <= 8
+#define OS_TypeTaskBits_t  uint8_t
+#elif OS_NUMTASKS <= 16
+#define OS_TypeTaskBits_t  uint16_t
+#elif OS_NUMTASKS <= 32
+#define OS_TypeTaskBits_t  uint32_t
+#elif OS_NUMTASKS <= 64
+#define OS_TypeTaskBits_t  uint64_t
+#else
+	#error reduce OS_NUMTASKS
+#endif
 FabOS_t MyOS; // the global instance of the OS struct
 
 #if OS_TRACE_ON == 1
@@ -106,7 +118,7 @@ int8_t OS_GetNextTaskNumber() // which is the next task (ready and highest (= ri
 	uint8_t Task;
 	uint8_t	next= OS_NUMTASKS; // NO task is ready, which one to execute?? the idle task !!;
 
-	uint8_t ReadyMask= MyOS.TaskReadyBits; // make working copy
+	OS_TypeTaskBits_t ReadyMask = MyOS.TaskReadyBits; // make working copy
 	
 	OS_TRACE(9);
 
@@ -149,7 +161,7 @@ int8_t OS_GetNextTaskNumber() // which is the next task (ready and highest (= ri
 }
 
 // internal task create function
-void OS_TaskCreateInt( void (*t)(), uint8_t TaskID, uint8_t *stack, uint8_t stackSize ) 
+void OS_TaskCreateInt( void (*t)(), uint8_t TaskID, uint8_t *stack, uint16_t stackSize )
 {
 	uint16_t z ;
 	OS_TRACE(15);
@@ -320,7 +332,8 @@ uint8_t OS_WaitEvent(uint8_t EventMask) //returns event(s), which lead to execut
 
 // ************************** ALARMS
 
-void OS_SetAlarm(uint8_t AlarmID, uint16_t numTicks ) // set Alarm for the future and continue // set alarm to 0 disable an alarm.
+
+void OS_SetAlarm(uint8_t AlarmID, OS_TypeAlarmTick_t numTicks ) // set Alarm for the future and continue // set alarm to 0 disable an alarm.
 {
 	OS_ENTERCRITICAL;
 	OS_TRACE(29);
@@ -477,7 +490,7 @@ void OS_GetTicks(uint32_t* pTime)
 
 
 #if OS_USECOMBINED
-uint8_t OS_WaitEventTimeout(uint8_t EventMask, uint8_t AlarmID, uint16_t numTicks ) //returns event on event, 0 on timeout.
+uint8_t OS_WaitEventTimeout(uint8_t EventMask, uint8_t AlarmID, OS_TypeAlarmTick_t numTicks ) //returns event on event, 0 on timeout.
 {
 	uint8_t ret;
 	OS_SetAlarm(AlarmID,numTicks); // set timeout

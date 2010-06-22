@@ -68,7 +68,7 @@ void lcd_init(void)
 	LCD_RD_S;
 	//Reset disable
 	LCD_RE_S;
-	_delay_ms(1); // may be replaced by OS-wait, not using the delay lib? fixme
+	//_delay_ms(1); // may be replaced by OS-wait, not using the delay lib? fixme
 	//set 24bit colour mode
 	lcd_write_cmd(SET_INTF_PX_F);	//set interface pixel format
 	lcd_write_data(0x07);			//set 24bbp

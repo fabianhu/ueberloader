@@ -40,18 +40,16 @@ typedef struct FabOS_tag
 	OS_Alarm_t	Alarms[OS_NUMALARMS];  // Holds the number of system clock ticks to wait before the task becomes ready to run.
 
 #if OS_USEMEMCHECKS == 1
-	uint8_t*     StackStart[OS_NUMTASKS+1];
+	uint8_t*     StackStart[OS_NUMTASKS+1];		// Stack start pointers for checker function
 #endif
 } FabOS_t;
 
-#define OS_QUEUE_MASK (OS_QUEUE_SIZE-1) // don't forget the braces
- 
 typedef struct OS_Queue_tag {
 	  uint8_t read; // field with oldest content
 	  uint8_t write; // always empty field
-	  uint8_t chunk;
-	  uint8_t size;
-	  uint8_t* data;
+	  uint8_t chunk;	// size of element
+	  uint8_t size;		// number of elements
+	  uint8_t* data;	// pointer to data
 	} OS_Queue_t;
 
 extern FabOS_t MyOS;
@@ -84,12 +82,12 @@ void 	OS_SetEvent(uint8_t TaskID, uint8_t EventMask); // Set one or more events
 
 uint8_t OS_WaitEvent(uint8_t EventMask); //returns event(s) in a mask, which lead to execution
 
-void 	OS_MutexGet(int8_t mutexID); // number of mutexes limited to NUMMUTEX !!!
+void 	OS_MutexGet(int8_t mutexID); // number of mutexes limited to OS_NUMMUTEX !!!
 				// Try to get a mutex; execution will block as long the mutex is occupied. If it is free, it is occupied afterwards.
 
 void 	OS_MutexRelease(int8_t mutexID); // release the occupied mutex
 
-void 	OS_SetAlarm(uint8_t AlarmID, uint16_t numTicks ); // set Alarm for the future and continue // set alarm to 0 disable it.
+void 	OS_SetAlarm(uint8_t AlarmID, OS_TypeAlarmTick_t numTicks ); // set Alarm for the future and continue // set alarm to 0 disable it.
 
 void 	OS_WaitAlarm(uint8_t AlarmID); // Wait for an Alarm set by OS_SetAlarm
 
@@ -111,14 +109,14 @@ void 	OS_GetTicks(uint32_t* pTime); // fills given variable with the OS ticks si
 #endif
 
 #if OS_DO_TESTSUITE == 1
-void 	OS_TestSuite(void); // execute test of FabOS (use only, if changed some internals)
+void 	OS_TestSuite(void); // execute regression test of FabOS (OS development only)
 #endif
 
 
 // Wait for a certain number of OS-ticks (1 = wait to the next timer interrupt)
 
 #if OS_USECOMBINED == 1
-uint8_t OS_WaitEventTimeout(uint8_t EventMask, uint8_t AlarmID, uint16_t numTicks ); //returns event on event, 0 on timeout.
+uint8_t OS_WaitEventTimeout(uint8_t EventMask, uint8_t AlarmID, OS_TypeAlarmTick_t numTicks ); //returns event on event, 0 on timeout.
 #endif
 
 #define OS_WaitTicks(A,X) do{\
@@ -131,7 +129,7 @@ uint8_t OS_WaitEventTimeout(uint8_t EventMask, uint8_t AlarmID, uint16_t numTick
 // *********  internal OS functions, not to be called by the user.
 ISR (OS_ScheduleISR)__attribute__ ((naked,signal)); // OS tick interrupt ISR (vector #defined in FabOS_config.h)
 
-void OS_TaskCreateInt( void (*t)(), uint8_t taskNum, uint8_t *stack, uint8_t stackSize ) ; // Create the task internal
+void OS_TaskCreateInt( void (*t)(), uint8_t taskNum, uint8_t *stack, uint16_t stackSize ) ; // Create the task internal
 
 void OS_Reschedule(void)__attribute__ ((naked)); // internal: Trigger re-scheduling
 
@@ -240,7 +238,7 @@ asm volatile( \
 	(!defined(OS_UNUSEDMASK 	))||\
 	(!defined(OS_TRACE_ON       ))||\
 	(!defined(OS_TRACESIZE      ))
-	#error not all defines in FabOS_config.h are done as described here below!
+	#error not all defines in FabOS_config.h are done as described here (FabOS.h) below!
 #endif
 
 
@@ -285,4 +283,8 @@ asm volatile( \
 
 #if OS_USEMEMCHECKS == 0
 	#undef UNUSEDMASK
+#endif
+
+#if OS_UNUSEDMASK+OS_NUMTASKS > 0xff
+	#error please redefine OS_UNUSEDMASK to a smaller number!
 #endif
