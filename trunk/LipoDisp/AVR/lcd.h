@@ -116,7 +116,7 @@ void lcd_draw_filled_box(uint8_t red, uint8_t green, uint8_t blue, uint16_t x_po
 void lcd_draw_box(uint8_t red, uint8_t green, uint8_t blue, uint16_t x_pos,uint16_t y_pos,uint16_t width,uint16_t hight);
 void lcd_draw_bmp(char *ptr_bmp, uint8_t colour, uint16_t x_pos, uint16_t y_pos);
 void lcd_write_char(uint8_t letter, uint8_t red, uint8_t green, uint8_t blue, uint8_t size, uint16_t x_pos, uint16_t y_pos);
-void lcd_write_ram_text(char *text, uint8_t red, uint8_t green, uint8_t blue, uint8_t size, uint16_t x_pos, uint16_t y_pos);
+uint16_t lcd_write_ram_text(char *text, uint8_t red, uint8_t green, uint8_t blue, uint8_t size, uint16_t x_pos, uint16_t y_pos);
 void lcd_write_flash_text(char *text, uint8_t red, uint8_t green, uint8_t blue, uint8_t size, uint16_t x_pos, uint16_t y_pos);
 void lcd_show_init_screen(void);
 

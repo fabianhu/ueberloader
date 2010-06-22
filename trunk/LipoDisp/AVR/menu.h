@@ -24,7 +24,7 @@ typedef struct MenuItem_tag
 	uint8_t			ucSubMenu; 		//Linked submenu
 	uint8_t			ucPrev;			//Previous menu
 	uint8_t			ucNext;			//Next menu
-	//initialized by init_menu()
+	//initialized by menu_init()
 	uint8_t 		ucTop;			//Top Level menu
 	uint8_t 		ucNr_grp_items;	//Number of items in the group
 	uint8_t 		ucItem_nr;		//Position of the item in the group
@@ -33,10 +33,13 @@ typedef struct MenuItem_tag
 }
 MenuItem_t;
 
-extern void init_menu(void);
-extern void show_menu(void);
+extern void menu_init(void);
+extern void menu_show(void);
 extern void menu_next(unsigned char step);
 extern void menu_prev(unsigned char step);
 extern void menu_select(void);
-#endif //menu
+
+extern void commError(uint8_t errno);
+
+#endif //MENU_H
 

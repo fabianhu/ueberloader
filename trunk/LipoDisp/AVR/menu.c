@@ -3,11 +3,15 @@
  *
  * */
 
+// fixme die Scrollbar rechts evtl. "proportional" machen und per touch bewegen ?
+
+
 #include "menu.h"
 #include "OS/FabOS.h"
 
 //function prototypes
 void system_info (void);
+void commError(uint8_t errno);
 
 //menue strings
 char txtmainmenu[] PROGMEM="Hauptmenue";
@@ -65,7 +69,7 @@ unsigned char get_index(unsigned char ucID)
 }
 
 
-void init_menu(void)
+void menu_init(void)
 {
 	volatile unsigned char start_index=0, act_index=0, item_nr=0;
 	volatile unsigned char index=0;
@@ -136,7 +140,7 @@ void init_menu(void)
 		(*gpsActualItem).ucItem_sel=1;
 }
 
-void show_menu(void)
+void menu_show(void)
 {
 	volatile unsigned char i=0, index=0, page=0, items_per_page=0;
 	static unsigned char last_menu_id=255;
@@ -245,7 +249,7 @@ void restore_menu(void)
 	lcd_write_flash_text(m_item[(*gpsActualItem).ucTop].strName, 0, 0, 0, 2, 20, 0);
 	lcd_draw_filled_box(0, 0, 0, 0, 41, 320,200);
 	//Show menue-itmes
-	show_menu();
+	menu_show();
 }
 
 void menu_next(unsigned char step)//down
@@ -286,7 +290,7 @@ void menu_next(unsigned char step)//down
 			(*gpsActualItem).ucTop=top_id;
 			}
 		//show changed menue
-		show_menu();
+		menu_show();
 		}
 }
 
@@ -328,7 +332,7 @@ void menu_prev(unsigned char step)//up
 			(*gpsActualItem).ucTop=top_id;
 			}
 		//show changed menue
-		show_menu();
+		menu_show();
 		}
 }
 
@@ -379,7 +383,7 @@ void menu_select(void)
 		}
 	
 	//show changed menue
-	show_menu();
+	menu_show();
 }
 
 void system_info(void)
@@ -388,9 +392,9 @@ void system_info(void)
 		uint32_t time =0;
 		uint32_t* pTime;
 		pTime = &time;	
-		while(1)
+		//Funktion screen
+	while(1)
 		{
-			//Funktion screen
 			lcd_draw_filled_box(0, 155, 0, 0, 0, 320,40);
 			lcd_write_ram_text("System information", 0, 0, 0, 2, 20, 0);
 			lcd_draw_filled_box(0, 0, 0, 0, 41, 320,200);
@@ -399,7 +403,7 @@ void system_info(void)
 			lcd_write_ram_text("Stack Task3:", 255, 255, 255, 2, 20, 2*32+45);
 			lcd_write_ram_text("Ticks:", 255, 255, 255, 2, 20, 3*32+45);
 		
-			//Show task stack usage
+					//Show task stack usage
 			itoa( OS_GetUnusedStack(1), stringtemp, 10 );// i=Integer;s=Zielstring
 			
 			lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 220, 0*32+45);
@@ -410,11 +414,24 @@ void system_info(void)
 			
 			lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 220, 2*32+45);
 			OS_GetTicks(pTime);
-			itoa( time, stringtemp,10);// i=Integer;s=Zielstring  // nix & never float!!! fixme fixme fixme
+			itoa( time, stringtemp,10);// i=Integer;s=Zielstring
 			
 			lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 100, 3*32+45);
 		}	
 
 		//back
 		restore_menu();
+}
+
+void commError(uint8_t errno)
+{
+	char stringtemp[17];
+	uint16_t ret;
+
+	lcd_clear();
+	lcd_draw_line(255,0,0,0,0,320,240);
+	lcd_draw_line(255,0,0,320,0,0,240);
+	ret = lcd_write_ram_text("Comm Error ", 255, 255, 255, 1, 30, 220);
+	itoa( errno, stringtemp,10);
+	lcd_write_ram_text(stringtemp, 255, 255, 255, 1, ret, 220);
 }
