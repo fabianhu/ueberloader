@@ -47,7 +47,7 @@ uint8_t lcd_read_data()
 	LCD_RD_C;	//Toggle RD
 	data = LCD_DATA_PIN;		//read data
 	LCD_RD_S;	//Toggle RD
-	_delay_us(1); // fixme why wait?
+	//_delay_us(1); // fixme why wait?
 	LCD_DATA_DDR = 0xff;		//port as output
 	return data;	
 }
@@ -239,7 +239,7 @@ void lcd_draw_filled_box(uint8_t red, uint8_t green, uint8_t blue, uint16_t x_po
 	//set new pointer addr
 	lcd_write_cmd(COLUMN_ADR_SET);
 	lcd_write_data(HIGH(x_pos));
-	lcd_write_data(LOW(x_pos);
+	lcd_write_data(LOW(x_pos));
 	i= x_pos+width-1;
 	lcd_write_data(HIGH(i));
 	lcd_write_data(LOW(i));

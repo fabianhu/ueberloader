@@ -30,8 +30,8 @@
 #define LOWBYTE(val)	 val & 0x00FF			
 #define HIGHBYTE(val)	(val & 0xFF00) >> 8		*/
 
-#define LOW(Data) (*((unsigned char *)(&Data)))
-#define HIGH(Data) (*((unsigned char *)((&Data)+1)))
+#define LOW(Data) (*((uint8_t *)(&Data)))
+#define HIGH(Data) (*(((uint8_t *)&Data)+1))  // obacht! Klammersetzung!
 
 // LCD commands
 //		command		 	value	description						
