@@ -12,7 +12,8 @@
 //                            I N C L U D E
 //*****************************************************************************
 
-#include <util/delay.h>
+//#include <util/delay.h>
+#include <avr/io.h>
 #include <stdlib.h>
 // stdlib.h-examples:
 // Integer in String for 	itoa( i, s, 10 ) i=Integer;s=Zielstring

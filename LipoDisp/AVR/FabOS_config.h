@@ -24,6 +24,7 @@
 #define OS_TRACE_ON  1 		// enable trace to OS_Tracebuffer[]
 #define OS_TRACESIZE 1000	// size of OS_Tracebuffer[] (depending on memory left ;-)
 
+#define OS_TypeAlarmTick_t uint16_t // change this type to uint32_t, if you need longer wait time than 65535 OS ticks.
 
 // Task definitions
 
