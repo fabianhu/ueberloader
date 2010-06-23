@@ -1,6 +1,43 @@
 
 
+#include "touchpad.h"
 #include "OS/FabOS.h"
+
+uint8_t touchcalbytes[5] = TOUCHCALINIT;
+
+
+uint8_t touchGetPad(uint8_t pin)
+{
+	uint8_t cnt,i;
+	uint8_t mask = (1<<pin);
+
+	cnt = 0;
+	OS_ENTERCRITICAL  // no interrupts allowed here!
+	for(i=0;i<TOUCHTIMES;i++)
+	{
+		TOUCHTOGGLEHIGH;
+		while (!(TOUCHPORT.IN & mask))
+		{
+			cnt++;
+		}
+		TOUCHTOGGLELOW;
+		while (TOUCHPORT.IN & mask)
+		{
+			cnt++;
+		}
+	}
+	OS_LEAVECRITICAL
+
+	return cnt - touchcalbytes[pin];
+}
+
+
+void touch_init(void)
+{
+	TOUCHCONFIGPORT;
+
+
+}
 
 volatile uint16_t pads[4];
 void checkTouchpad(void)
@@ -77,3 +114,5 @@ void checkTouchpad(void)
 		asm("nop");
 
 }
+
+

@@ -426,6 +426,7 @@ void lcd_write_char(uint8_t letter, uint8_t red, uint8_t green, uint8_t blue, ui
 
 
 // fixme maybe this function could return the right end of written text in pixels?
+// fixme maybe implement "newline" ?
 uint16_t lcd_write_ram_text(char *text, uint8_t red, uint8_t green, uint8_t blue, uint8_t size, uint16_t x_pos, uint16_t y_pos)
 {
 	uint16_t new_x_pos, new_y_pos;
