@@ -12,6 +12,7 @@
 #include "serial.h"
 #include "lcd.h"
 #include "menu.h"
+#include "touchpad.h"
 
 
 // *********  Task definitions
@@ -58,9 +59,50 @@ int main(void)
 
 void TaskDisplay(void)
 {
+	uint16_t ret, ypos;
+	char buf[8];
+
+#define FONTSIZE 2
+#define LINEDIFF FONTSIZE*16
+
+	touch_init();
+
 	while(1)
 	{
-		OS_WaitTicks(OSALMWaitGov,1001);
+		ypos = 0;
+
+		ret = lcd_write_ram_text("Pin0 ",255,255,255,FONTSIZE,0,ypos);
+		itoa(touchGetPad(0),buf,10);
+		lcd_write_ram_text(buf,255,255,255,FONTSIZE,ret,ypos);
+		ypos += LINEDIFF;
+
+		ret = lcd_write_ram_text("Pin1 ",255,255,255,FONTSIZE,0,ypos);
+		itoa(touchGetPad(1),buf,10);
+		lcd_write_ram_text(buf,255,255,255,FONTSIZE,ret,ypos);
+		ypos += LINEDIFF;
+
+		ret = lcd_write_ram_text("Pin2 ",255,255,255,FONTSIZE,0,ypos);
+		itoa(touchGetPad(2),buf,10);
+		lcd_write_ram_text(buf,255,255,255,FONTSIZE,ret,ypos);
+		ypos += LINEDIFF;
+
+		ret = lcd_write_ram_text("Pin3 ",255,255,255,FONTSIZE,0,ypos);
+		itoa(touchGetPad(3),buf,10);
+		lcd_write_ram_text(buf,255,255,255,FONTSIZE,ret,ypos);
+		ypos += LINEDIFF;
+
+		ret = lcd_write_ram_text("Pin4 ",255,255,255,FONTSIZE,0,ypos);
+		itoa(touchGetPad(4),buf,10);
+		lcd_write_ram_text(buf,255,255,255,FONTSIZE,ret,ypos);
+		ypos += LINEDIFF;
+
+
+
+
+		OS_WaitTicks(OSALMWaitGov,500);
+		lcd_clear();
+
+		/*
 		lcd_show_init_screen();
 		OS_WaitTicks(OSALMWaitGov,2001);
 		menu_show();
@@ -85,7 +127,7 @@ void TaskDisplay(void)
 		OS_WaitTicks(OSALMWaitGov,501);
 		menu_select();
 		OS_WaitTicks(OSALMWaitGov,65535);
-
+*/
 	}
 
 }
