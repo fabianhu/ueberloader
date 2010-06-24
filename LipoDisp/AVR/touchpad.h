@@ -11,7 +11,7 @@
 #include <avr/io.h>
 
 #define TOUCHCONFIGPORT PORTC.DIR = (1<<7);
-#define TOUCHTIMES 3
+#define TOUCHTIMES 1
 #define TOUCHPORT PORTC
 
 #define TOUCHTOGGLEHIGH PORTC.OUTSET = (1<<7);
@@ -20,6 +20,11 @@
 void touch_init(void);
 uint8_t touchGetPad(uint8_t pin);
 
-#define TOUCHCALINIT {98,95,68,68,74}
+#define TOUCHCALINIT {255,255,255,255,255}
+
+#define min(x,y) ((x<y)?x:y)
+#define max(x,y) ((x>y)?x:y)
+#define limit(v,u,l) ((v<l)?l:(v>u)?u:v)
+
 
 #endif /* TOUCHPAD_H_ */

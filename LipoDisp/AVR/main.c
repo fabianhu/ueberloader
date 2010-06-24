@@ -46,6 +46,12 @@ int main(void)
     OS_CreateTask(TaskCommRX, 2);
 	OS_CreateTask(TaskMonitor, 3);
 
+	OS_CreateAlarm(OSALMWaitDisp,OSTSKDisplay);
+	OS_CreateAlarm(OSALMCommandWait,OSTSKCommand);
+	OS_CreateAlarm(OSALMCommandRepeat,OSTSKCommand);
+	OS_CreateAlarm(OSALMCommTimeout,OSTSKCommRX);
+	OS_CreateAlarm(OSALMonitorRepeat,OSTSKMonitor);
+
 	OS_StartExecution() ;
 	while(1)
 	{
@@ -57,76 +63,118 @@ int main(void)
 
 }
 
+extern char font[96][36] PROGMEM;
+
+uint16_t lcd_get_text_len(char *text, uint8_t size)
+{
+	uint8_t *ptr_letter;
+	uint16_t total_width=0;
+	while(*text!=0x00)
+	{
+		//get letter width
+		ptr_letter = font[*text-32];
+		total_width += pgm_read_byte(ptr_letter)+size;
+		//next letter
+		text++;
+	}
+	return total_width*size;
+}
+
+void lcd_write_value_after_text_w_cl(char* text,uint16_t value, char* unit, uint8_t r,uint8_t g,uint8_t b, uint8_t size, uint16_t xpos, uint16_t ypos)
+{
+	uint16_t ret,ret2;
+	char buf[8];
+	ret = lcd_get_text_len(text,size);
+	itoa(value,buf,10);
+	ret2 = lcd_get_text_len(buf,size);
+	ret2 += lcd_get_text_len(unit,size);
+	lcd_draw_filled_box(0,0,0,ret,ypos,ret2+size*10,size*16); // size*10 is spare, if next number is shorter.
+	ret = lcd_write_ram_text(buf,r,g,b,size,ret,ypos);
+	lcd_write_ram_text(unit,r,g,b,size,ret,ypos);
+
+}
+
 void TaskDisplay(void)
 {
-	uint16_t ret, ypos;
-	char buf[8];
+	uint16_t ypos=0;
+	uint32_t t1,t2;
 
 #define FONTSIZE 2
 #define LINEDIFF FONTSIZE*16
 
 	touch_init();
 
+	lcd_show_init_screen();
+	OS_WaitTicks(OSALMWaitDisp,500);
+	lcd_clear();
+
+	lcd_write_ram_text("Pin0 ",255,255,255,FONTSIZE,0,ypos);
+	ypos += LINEDIFF;
+	lcd_write_ram_text("Pin1 ",255,255,255,FONTSIZE,0,ypos);
+	ypos += LINEDIFF;
+	lcd_write_ram_text("Pin2 ",255,255,255,FONTSIZE,0,ypos);
+	ypos += LINEDIFF;
+	lcd_write_ram_text("Pin3 ",255,255,255,FONTSIZE,0,ypos);
+	ypos += LINEDIFF;
+	lcd_write_ram_text("Pin4 ",255,255,255,FONTSIZE,0,ypos);
+	ypos += LINEDIFF;
+	ypos += LINEDIFF;
+	lcd_write_ram_text("Time ",255,255,255,FONTSIZE,0,ypos);
+
+
 	while(1)
 	{
 		ypos = 0;
 
-		ret = lcd_write_ram_text("Pin0 ",255,255,255,FONTSIZE,0,ypos);
-		itoa(touchGetPad(0),buf,10);
-		lcd_write_ram_text(buf,255,255,255,FONTSIZE,ret,ypos);
+		OS_GetTicks(&t1);
+
+		lcd_write_value_after_text_w_cl("Pin0 ",touchGetPad(0)," touchs",255,255,255,FONTSIZE,0,ypos);
+		ypos += LINEDIFF;
+		lcd_write_value_after_text_w_cl("Pin1 ",touchGetPad(1)," touchs",255,255,255,FONTSIZE,0,ypos);
+		ypos += LINEDIFF;
+		lcd_write_value_after_text_w_cl("Pin2 ",touchGetPad(2)," touchs",255,255,255,FONTSIZE,0,ypos);
+		ypos += LINEDIFF;
+		lcd_write_value_after_text_w_cl("Pin3 ",touchGetPad(3)," touchs",255,255,255,FONTSIZE,0,ypos);
+		ypos += LINEDIFF;
+		lcd_write_value_after_text_w_cl("Pin4 ",touchGetPad(4)," touchs",255,255,255,FONTSIZE,0,ypos);
+		ypos += LINEDIFF;
 		ypos += LINEDIFF;
 
-		ret = lcd_write_ram_text("Pin1 ",255,255,255,FONTSIZE,0,ypos);
-		itoa(touchGetPad(1),buf,10);
-		lcd_write_ram_text(buf,255,255,255,FONTSIZE,ret,ypos);
-		ypos += LINEDIFF;
+		OS_GetTicks(&t2);
 
-		ret = lcd_write_ram_text("Pin2 ",255,255,255,FONTSIZE,0,ypos);
-		itoa(touchGetPad(2),buf,10);
-		lcd_write_ram_text(buf,255,255,255,FONTSIZE,ret,ypos);
-		ypos += LINEDIFF;
-
-		ret = lcd_write_ram_text("Pin3 ",255,255,255,FONTSIZE,0,ypos);
-		itoa(touchGetPad(3),buf,10);
-		lcd_write_ram_text(buf,255,255,255,FONTSIZE,ret,ypos);
-		ypos += LINEDIFF;
-
-		ret = lcd_write_ram_text("Pin4 ",255,255,255,FONTSIZE,0,ypos);
-		itoa(touchGetPad(4),buf,10);
-		lcd_write_ram_text(buf,255,255,255,FONTSIZE,ret,ypos);
-		ypos += LINEDIFF;
+		t2=t2-t1;
+		lcd_write_value_after_text_w_cl("Time ",(uint16_t)t2," ms",255,255,255,FONTSIZE,0,ypos);
 
 
 
-
-		OS_WaitTicks(OSALMWaitGov,500);
-		lcd_clear();
+		OS_WaitTicks(OSALMWaitDisp,33);
+		//lcd_clear();
 
 		/*
 		lcd_show_init_screen();
-		OS_WaitTicks(OSALMWaitGov,2001);
+		OS_WaitTicks(OSALMWaitDisp,2001);
 		menu_show();
-		OS_WaitTicks(OSALMWaitGov,2001);
+		OS_WaitTicks(OSALMWaitDisp,2001);
 		menu_select();
-		OS_WaitTicks(OSALMWaitGov,501);
+		OS_WaitTicks(OSALMWaitDisp,501);
 		menu_next(1);
-		OS_WaitTicks(OSALMWaitGov,501);
+		OS_WaitTicks(OSALMWaitDisp,501);
 		menu_next(1);
-		OS_WaitTicks(OSALMWaitGov,501);
+		OS_WaitTicks(OSALMWaitDisp,501);
 		menu_next(1);
-		OS_WaitTicks(OSALMWaitGov,501);
+		OS_WaitTicks(OSALMWaitDisp,501);
 		menu_next(1);
-		OS_WaitTicks(OSALMWaitGov,501);
+		OS_WaitTicks(OSALMWaitDisp,501);
 		menu_select();
-		OS_WaitTicks(OSALMWaitGov,501);
+		OS_WaitTicks(OSALMWaitDisp,501);
 		menu_next(1);
-		OS_WaitTicks(OSALMWaitGov,501);
+		OS_WaitTicks(OSALMWaitDisp,501);
 		menu_next(1);
-		OS_WaitTicks(OSALMWaitGov,501);
+		OS_WaitTicks(OSALMWaitDisp,501);
 		menu_select();
-		OS_WaitTicks(OSALMWaitGov,501);
+		OS_WaitTicks(OSALMWaitDisp,501);
 		menu_select();
-		OS_WaitTicks(OSALMWaitGov,65535);
+		OS_WaitTicks(OSALMWaitDisp,65535);
 */
 	}
 
@@ -136,7 +184,7 @@ void TaskCommand(void)
 {
 	while(1)
 	{
-		OS_WaitTicks(OSALMBalRepeat,1000);
+		OS_WaitTicks(OSALMCommandRepeat,1000);
 
 		UCIFrame_t myU;
 
@@ -145,7 +193,7 @@ void TaskCommand(void)
 		myU.len = UCIHEADERLEN;
 		UCISendBlockCrc(&myU);
 
-		OS_WaitTicks(OSALMBalWait,100);
+		OS_WaitTicks(OSALMCommandWait,100);
 
 		myU.ID = 55;
 		myU.UCI = UCI_GET_CMDs;

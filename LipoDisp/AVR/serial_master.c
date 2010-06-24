@@ -97,7 +97,7 @@ ISR(USARTE0_RXC_vect)
 
 	if(g_tUCIRXFrame.len == g_ucRXLength)
 	{
-		OS_SetEvent(OSTaskCommRX,OSEVTDataRecvd);
+		OS_SetEvent(OSTSKCommRX,OSEVTDataRecvd);
 	}
 }
 
