@@ -28,6 +28,8 @@ uint8_t touchGetPad(uint8_t pin)
 	}
 	OS_LEAVECRITICAL
 
+	touchcalbytes[pin] = min(touchcalbytes[pin],cnt);
+
 	return cnt - touchcalbytes[pin];
 }
 
@@ -39,7 +41,7 @@ void touch_init(void)
 
 }
 
-volatile uint16_t pads[4];
+/*volatile uint16_t pads[4];
 void checkTouchpad(void)
 {
 	uint8_t i;
@@ -79,7 +81,7 @@ void checkTouchpad(void)
 		PORTE.PIN0CTRL = PORT_OPC_TOTEM_gc;
 		pads[1]=cnt;
 
-	/*	cnt = 0;
+		cnt = 0;
 		for(i=0;i<3;i++)
 		{
 			PORTE.PIN2CTRL = PORT_OPC_PULLUP_gc;
@@ -109,10 +111,10 @@ void checkTouchpad(void)
 				cnt++;
 			}
 		}
-		pads[3]=cnt;*/
+		pads[3]=cnt;
 
 		asm("nop");
 
 }
-
+*/
 

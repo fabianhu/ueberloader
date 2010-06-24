@@ -384,7 +384,7 @@ void lcd_write_char(uint8_t letter, uint8_t red, uint8_t green, uint8_t blue, ui
 {
 	volatile uint8_t act_byte =0x00, bit_nr=0x00, act_row, pixel_width, y_offset;
 	volatile uint8_t x_scale, y_scale;
-	volatile char *ptr_letter; 
+	volatile uint8_t *ptr_letter;
 	volatile uint16_t new_x_pos, new_y_pos;
 	
 	//set pointer and get letter size
@@ -430,7 +430,7 @@ void lcd_write_char(uint8_t letter, uint8_t red, uint8_t green, uint8_t blue, ui
 uint16_t lcd_write_ram_text(char *text, uint8_t red, uint8_t green, uint8_t blue, uint8_t size, uint16_t x_pos, uint16_t y_pos)
 {
 	uint16_t new_x_pos, new_y_pos;
-	char *ptr_letter, pixel_width; 
+	uint8_t *ptr_letter, pixel_width;
 	new_x_pos=x_pos;
 	new_y_pos=y_pos;
 	while(*text!=0x00)
@@ -464,7 +464,7 @@ uint16_t lcd_write_ram_text(char *text, uint8_t red, uint8_t green, uint8_t blue
 void lcd_write_flash_text(char *text, uint8_t red, uint8_t green, uint8_t blue, uint8_t size, uint16_t x_pos, uint16_t y_pos)
 {
 	uint16_t new_x_pos, new_y_pos;
-	char *ptr_letter, pixel_width; 
+	uint8_t *ptr_letter, pixel_width;
 	new_x_pos=x_pos;
 	new_y_pos=y_pos;
 	while(pgm_read_byte(text)!=0x00)
