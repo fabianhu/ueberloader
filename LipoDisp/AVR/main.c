@@ -63,7 +63,7 @@ int main(void)
 
 }
 
-extern char font[96][36] PROGMEM;
+extern uint8_t font[96][36] PROGMEM;
 
 uint16_t lcd_get_text_len(char *text, uint8_t size)
 {
