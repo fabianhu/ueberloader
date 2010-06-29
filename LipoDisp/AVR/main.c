@@ -14,6 +14,8 @@
 #include "menu.h"
 #include "touchpad.h"
 
+extern Battery_Info_t g_tBattery_Info;
+extern uint8_t glCommError; // fixme do better!!
 
 // *********  Task definitions
 OS_DeclareTask(TaskDisplay,500);
@@ -108,11 +110,11 @@ void TaskDisplay(void)
 	OS_WaitTicks(OSALMWaitDisp,500);
 	lcd_clear();
 
-	lcd_write_ram_text("Pin0 ",255,255,255,FONTSIZE,0,ypos);
+	lcd_write_ram_text("vBatt ",255,255,255,FONTSIZE,0,ypos);
 	ypos += LINEDIFF;
-	lcd_write_ram_text("Pin1 ",255,255,255,FONTSIZE,0,ypos);
+	lcd_write_ram_text("Current ",255,255,255,FONTSIZE,0,ypos);
 	ypos += LINEDIFF;
-	lcd_write_ram_text("Pin2 ",255,255,255,FONTSIZE,0,ypos);
+	lcd_write_ram_text("Battery has ",255,255,255,FONTSIZE,0,ypos);
 	ypos += LINEDIFF;
 	lcd_write_ram_text("Pin3 ",255,255,255,FONTSIZE,0,ypos);
 	ypos += LINEDIFF;
@@ -128,11 +130,13 @@ void TaskDisplay(void)
 
 		OS_GetTicks(&t1);
 
-		lcd_write_value_after_text_w_cl("Pin0 ",touchGetPad(0)," touchs",255,255,255,FONTSIZE,0,ypos);
+		if(!glCommError)
+		{
+		lcd_write_value_after_text_w_cl("vBatt ",g_tBattery_Info.usActVoltage_mV," mV",255,255,255,FONTSIZE,0,ypos);
 		ypos += LINEDIFF;
-		lcd_write_value_after_text_w_cl("Pin1 ",touchGetPad(1)," touchs",255,255,255,FONTSIZE,0,ypos);
+		lcd_write_value_after_text_w_cl("Current ",g_tBattery_Info.sActCurrent_mA," mA",255,255,255,FONTSIZE,0,ypos);
 		ypos += LINEDIFF;
-		lcd_write_value_after_text_w_cl("Pin2 ",touchGetPad(2)," touchs",255,255,255,FONTSIZE,0,ypos);
+		lcd_write_value_after_text_w_cl("Battery has ",g_tBattery_Info.ucNumberOfCells," Cells",255,255,255,FONTSIZE,0,ypos);
 		ypos += LINEDIFF;
 		lcd_write_value_after_text_w_cl("Pin3 ",touchGetPad(3)," touchs",255,255,255,FONTSIZE,0,ypos);
 		ypos += LINEDIFF;
@@ -144,7 +148,12 @@ void TaskDisplay(void)
 
 		t2=t2-t1;
 		lcd_write_value_after_text_w_cl("Time ",(uint16_t)t2," ms",255,255,255,FONTSIZE,0,ypos);
+		}
+		else
+		{
+			commError(glCommError);
 
+		}
 
 
 		OS_WaitTicks(OSALMWaitDisp,33);
@@ -182,9 +191,11 @@ void TaskDisplay(void)
 
 void TaskCommand(void)
 {
+	OS_SetAlarm(OSALMCommandRepeat,1000);
 	while(1)
 	{
-		OS_WaitTicks(OSALMCommandRepeat,1000);
+		OS_WaitAlarm(OSALMCommandRepeat);
+		OS_SetAlarm(OSALMCommandRepeat,1000);
 
 		UCIFrame_t myU;
 
@@ -193,7 +204,7 @@ void TaskCommand(void)
 		myU.len = UCIHEADERLEN;
 		UCISendBlockCrc(&myU);
 
-		OS_WaitTicks(OSALMCommandWait,100);
+		OS_WaitTicks(OSALMCommandWait,250);
 
 		myU.ID = 55;
 		myU.UCI = UCI_GET_CMDs;

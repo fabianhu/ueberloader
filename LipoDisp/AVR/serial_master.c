@@ -11,6 +11,9 @@
 
 Battery_Info_t g_tBattery_Info;
 Command_t g_tCommand;
+
+uint8_t glCommError=0;
+
 /*
 
 Serial Protocol:
@@ -62,6 +65,7 @@ void HandleSerial(UCIFrame_t *_RXFrame)
 			break;
 		case UCI_GET_OPVs:
 			OS_MutexGet(OSMTXBattInfo);
+			glCommError =0;
 			memcpy((uint8_t*)&g_tBattery_Info, _RXFrame->values, sizeof(g_tBattery_Info));
 			OS_MutexRelease(OSMTXBattInfo);
 			break;
@@ -89,6 +93,8 @@ ISR(USARTE0_RXC_vect)
 
 		OS_SetAlarm(OSALMCommTimeout,5); // reset Alarm, if stuff arrives
 	}
+	else
+		glCommError = 1;
 
 //	if(g_ucRXLength == 3)
 //	{	// update rest of bytes to wait
@@ -104,13 +110,14 @@ ISR(USARTE0_RXC_vect)
 void TaskCommRX(void)
 {
 	g_tUCIRXFrame.len = 0xff;
+	static timeoutctr = 0;
 
 	OS_WaitTicks(OSALMCommTimeout, 2000); // wait for Slave init
 	uint8_t ret;
 
 	while(1)
 	{
-		ret = OS_WaitEventTimeout(OSEVTDataRecvd,OSALMCommTimeout,5);
+		ret = OS_WaitEventTimeout(OSEVTDataRecvd,OSALMCommTimeout,100);
 		if(ret == OSEVTDataRecvd)
 		{
 			//real event
@@ -119,10 +126,20 @@ void TaskCommRX(void)
 				// CRC is OK:
 				HandleSerial(&g_tUCIRXFrame);
 			}
+			else
+			{	
+				glCommError = 2;
+			}
+
 		}
 		else
 		{
 			//timeout
+			timeoutctr++;
+			if(timeoutctr > 11) // 1100 ms!
+			{
+				glCommError = 3;
+			}
 		}
 
 		// re-init for new frame
