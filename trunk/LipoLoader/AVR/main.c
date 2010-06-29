@@ -113,6 +113,8 @@ void CPU_init(void)
 
 	USARTinit();
 
+	// invert RX pin
+	// not nec. PORTE.PIN2CTRL = 1<<6; //INVEN;
 
 	// *** NO global interrupts enabled at this point!!!
 
