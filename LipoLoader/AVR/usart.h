@@ -1,5 +1,5 @@
 /*
- * USART
+ * SHARED USART
  */
 #include <avr/io.h>
 

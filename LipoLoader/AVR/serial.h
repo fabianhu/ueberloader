@@ -1,5 +1,5 @@
 /*
- * serial.h
+ * SHARED serial.h
  *
  *  Created on: 25.05.2010
  *      Author: Fabian

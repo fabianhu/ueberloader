@@ -1,11 +1,12 @@
 /*
-	This is the Üeberloader USART
+	This is the Üeberloader SHARED USART
 
 	(c) 2010 Fabian Huslik
 
 */
 
 #include "usart.h"
+#include "usart_variant.h"
 #include "OS/FabOS.h"
 
 
@@ -16,8 +17,6 @@ void USARTinit(void)
 	//	2. Set the TxD pin as output.
 	PORTE.DIRSET = (1<<3);
 	//	3. Set the baud rate and frame format.
-#define BSEL 3301
-#define BSCALE -5
 
 	USARTE0.BAUDCTRLA = BSEL & 0xFF; // BSEL 7:0
 	USARTE0.BAUDCTRLB = BSCALE << 4 | (BSEL & 0xF00)>>8; // BSCALE, BSEL 11:8
