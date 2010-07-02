@@ -20,7 +20,7 @@ extern uint8_t glCommError; // fixme do better!!
 // *********  Task definitions
 OS_DeclareTask(TaskDisplay,500);
 OS_DeclareTask(TaskCommand,200);
-OS_DeclareTask(TaskCommRX,200);
+//OS_DeclareTask(TaskCommRX,200);
 OS_DeclareTask(TaskMonitor,200);
 
 //OS_DeclareQueue(DemoQ,10,4);
@@ -45,13 +45,13 @@ int main(void)
 
     OS_CreateTask(TaskDisplay, 0);
     OS_CreateTask(TaskCommand, 1);
-    OS_CreateTask(TaskCommRX, 2);
-	OS_CreateTask(TaskMonitor, 3);
+	OS_CreateTask(TaskMonitor, 2);
+    //OS_CreateTask(TaskCommRX, 2);
 
 	OS_CreateAlarm(OSALMWaitDisp,OSTSKDisplay);
 	OS_CreateAlarm(OSALMCommandWait,OSTSKCommand);
 	OS_CreateAlarm(OSALMCommandRepeat,OSTSKCommand);
-	OS_CreateAlarm(OSALMCommTimeout,OSTSKCommRX);
+	OS_CreateAlarm(OSALMCommandTimeout,OSTSKCommand);
 	OS_CreateAlarm(OSALMonitorRepeat,OSTSKMonitor);
 
 	OS_StartExecution() ;
@@ -189,6 +189,27 @@ void TaskDisplay(void)
 
 }
 
+extern UCIFrame_t g_tUCIRXFrame;
+extern uint8_t    g_ucRXLength;
+
+extern uint8_t vWaitForResult( void)
+{
+	uint8_t ret;
+	uint8_t commerror = 0;
+	ret = OS_WaitEventTimeout(OSEVTDataRecvd,OSALMCommandTimeout, 200);
+    if(ret == OSEVTDataRecvd)
+		{
+			HandleSerial(&g_tUCIRXFrame);
+		}
+		else
+		{
+			commerror = 22;
+		}
+    g_ucRXLength = 0;
+    g_tUCIRXFrame.len = UCIHEADERLEN;
+    return commerror;
+}
+
 void TaskCommand(void)
 {
 	OS_SetAlarm(OSALMCommandRepeat,1000);
@@ -203,13 +224,13 @@ void TaskCommand(void)
 		myU.UCI = UCI_GET_OPVs;
 		myU.len = UCIHEADERLEN;
 		UCISendBlockCrc(&myU);
+	    glCommError = vWaitForResult();
 
-		OS_WaitTicks(OSALMCommandWait,250);
-
-		myU.ID = 55;
-		myU.UCI = UCI_GET_CMDs;
-		myU.len = UCIHEADERLEN;
-		UCISendBlockCrc(&myU);
+	    myU.ID = 55;
+	    myU.UCI = UCI_GET_CMDs;
+	    myU.len = UCIHEADERLEN;
+	    UCISendBlockCrc(&myU);
+	    glCommError = vWaitForResult();
 
 	}
 }

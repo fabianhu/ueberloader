@@ -10,6 +10,7 @@
 
 #include <avr/io.h>
 
+//Masters Commands:
 #define UCI_SET_CMDs 			22 // Set actual command struct (Command_t) (no answer expected todo
 #define UCI_GET_CMDs			33 // Get Actual command setting (Command_t)
 #define UCI_GET_OPVs 			44 // Get actual Operating values (Battery_Info_t)
@@ -75,6 +76,7 @@ typedef struct UCIFrame_tag
 
 void UCISendBlockCrc( UCIFrame_t* pU);
 uint8_t UCIGetCRC( UCIFrame_t* pU);
+void HandleSerial(UCIFrame_t *_RXFrame);
 
 
 

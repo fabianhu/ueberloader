@@ -2,7 +2,7 @@
  * eeprom.c
  *
  *  Created on: 07.06.2010
- *      Author: Fabian
+ *      Author: Fabian, based on Atmels sample code
  */
 
 #include <avr/io.h>

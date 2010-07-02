@@ -6,7 +6,7 @@
 
 // *********  USER Configurable Block BEGIN
 
-#define OS_NUMTASKS 4 // Number of (OS_Create)Tasks ; never >8 (idle task is not counted here!)
+#define OS_NUMTASKS 3 // Number of (OS_Create)Tasks ; never >8 (idle task is not counted here!)
 #define OS_NUMMUTEX 3 // Number of Mutexes
 #define OS_NUMALARMS 5 // Number of Alarms
 
@@ -30,8 +30,8 @@
 
 #define OSTSKDisplay   0
 #define OSTSKCommand  1
-#define OSTSKCommRX   2
-#define OSTSKMonitor  3
+//#define OSTSKCommRX   2
+#define OSTSKMonitor  2
 
 // Event Names
 
@@ -45,11 +45,11 @@
 
 // Alarm Names
 
-#define OSALMCommTimeout  0
-#define OSALMWaitDisp      1
-#define OSALMCommandRepeat    2
-#define OSALMCommandWait      3
-#define OSALMonitorRepeat 4
+#define OSALMWaitDisp     	0
+#define OSALMCommandRepeat	1
+#define OSALMCommandTimeout	2
+#define OSALMCommandWait    3
+#define OSALMonitorRepeat 	4
 
 
 // *********  USER Configurable Block END 
