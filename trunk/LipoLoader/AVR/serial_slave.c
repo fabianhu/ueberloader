@@ -14,47 +14,72 @@ extern Battery_Info_t g_tBattery_Info;
 extern ADC_Values_t g_tADCValues;
 extern Command_t g_tCommand;
 
-/*
-
-Serial Protocol:
-
-ID:UCI:Value(optional)
-
-ID: byte 0..255, where 0 is broadcast
-broadcast expects no answer.
-
-Masters Commands:
- Set State ((Sets also to manual mode))
- Set Current
- Set Cell Voltage
- Set Cell Count
-
- Get State
- Get Current setting
- Get Cell Voltage setting
- Get Cell Count setting
-
- Get actual Voltage (Battery, Supply)
- Get Cell Voltages (all Cell voltages 0..5)
- Get actual Current mA
-
-...
- Get Balancer PWM (one byte per cell)
- Get actual Capacity mAh
- Get actual Capacity mWh
-
- Set Max Charge (mAh)
-
- */
-
 #define MYSERIALID 55
-
-
 
 UCIFrame_t g_tUCIRXFrame;
 uint8_t    g_ucRXLength;
 UCIFrame_t g_tUCITXFrame;
 extern uint16_t gTest;
+
+ISR(USARTE0_RXC_vect)
+{
+	uint8_t* p = (uint8_t*)&g_tUCIRXFrame;
+	if(g_ucRXLength < sizeof(UCIFrame_t)) // avoid over-write of the frame (too long)
+	{
+		p[g_ucRXLength] = USARTE0.DATA;
+		g_ucRXLength++;
+
+		OS_SetAlarm(OSALMCommTimeout,5); // reset Alarm, if stuff arrives
+	}
+
+//	if(g_ucRXLength == 3)
+//	{	// update rest of bytes to wait
+//		g_tUCIRXFrame.len = g_tUCIRXFrame.len;
+//	}
+
+	if(g_tUCIRXFrame.len == g_ucRXLength)
+	{
+		OS_SetEvent(OSTaskCommRX,OSEVTDataRecvd);
+	}
+}
+
+#define TIMEOUTRXMINORCYCLE 5
+
+void TaskCommRX(void)
+{
+	g_tUCIRXFrame.len = 0xff;
+
+	OS_WaitTicks(OSALMCommTimeout,1000); // wait for ADC init
+	uint8_t ret;
+
+	while(1)
+	{
+		ret = OS_WaitEventTimeout(OSEVTDataRecvd,OSALMCommTimeout,TIMEOUTRXMINORCYCLE);
+		if(ret == OSEVTDataRecvd)
+		{
+			HandleSerial(&g_tUCIRXFrame);
+		}
+		else
+		{
+			//timeout
+		}
+
+		// re-init for new frame
+		g_ucRXLength = 0;
+		g_tUCIRXFrame.len = UCIHEADERLEN;
+
+
+//			OS_ENTERCRITICAL;
+//			g_tCommand.usCurrentSetpoint = 500;
+//			g_tCommand.usMinBalanceVolt_mV = 3000;
+//			g_tCommand.usVoltageSetpoint_mV = 4150;
+//			g_tCommand.eChargerMode = eModeAuto;
+//			OS_LEAVECRITICAL;
+
+
+	}
+
+}
 
 void HandleSerial(UCIFrame_t *_RXFrame)
 {
@@ -63,7 +88,9 @@ void HandleSerial(UCIFrame_t *_RXFrame)
 	g_tUCITXFrame.ID = MYSERIALID;
 	g_tUCITXFrame.UCI = _RXFrame->UCI; // Prepare answer
 
-	if(_RXFrame->ID == MYSERIALID)
+	if(
+		(_RXFrame->ID == MYSERIALID) &&
+		(UCIGetCRC(&g_tUCIRXFrame) == g_tUCIRXFrame.crc) )
 	{
 		switch(_RXFrame->UCI)
 		{
@@ -92,79 +119,18 @@ void HandleSerial(UCIFrame_t *_RXFrame)
 			len = 0;
 		}
 
-		if(len > 0)
-			{
+
+		if(len > 0) // sending of answer necessary?
+		{
 			g_tUCITXFrame.len = len+UCIHEADERLEN;
 			UCISendBlockCrc(&g_tUCITXFrame);
-			}
-	}
-
-}
-
-
-ISR(USARTE0_RXC_vect)
-{
-	uint8_t* p = (uint8_t*)&g_tUCIRXFrame;
-	if(g_ucRXLength < sizeof(UCIFrame_t)) // avoid over-write of the frame (too long)
-	{
-		p[g_ucRXLength] = USARTE0.DATA;
-		g_ucRXLength++;
-
-		OS_SetAlarm(OSALMCommTimeout,5); // reset Alarm, if stuff arrives
-	}
-
-//	if(g_ucRXLength == 3)
-//	{	// update rest of bytes to wait
-//		g_tUCIRXFrame.len = g_tUCIRXFrame.len;
-//	}
-
-	if(g_tUCIRXFrame.len == g_ucRXLength)
-	{
-		OS_SetEvent(OSTaskCommRX,OSEVTDataRecvd);
-	}
-}
-
-void TaskCommRX(void)
-{
-	g_tUCIRXFrame.len = 0xff;
-
-	OS_WaitTicks(OSALMCommTimeout,1000); // wait for ADC init
-	uint8_t ret;
-
-	while(1)
-	{
-		ret = OS_WaitEventTimeout(OSEVTDataRecvd,OSALMCommTimeout,5);
-		if(ret == OSEVTDataRecvd)
-		{
-			//real event
-			if(UCIGetCRC(&g_tUCIRXFrame) == g_tUCIRXFrame.crc)
-			{
-				// CRC is OK:
-				HandleSerial(&g_tUCIRXFrame);
-			}
 		}
-		else
-		{
-			//timeout
-		}
-
-		// re-init for new frame
-		g_ucRXLength = 0;
-		g_tUCIRXFrame.len = 0x0;
-
-
-//			OS_ENTERCRITICAL;
-//			g_tCommand.usCurrentSetpoint = 500;
-//			g_tCommand.usMinBalanceVolt_mV = 3000;
-//			g_tCommand.usVoltageSetpoint_mV = 4150;
-//			g_tCommand.eChargerMode = eModeAuto;
-//			OS_LEAVECRITICAL;
-
-
 	}
-
+	else
+	{
+		// comm error
+	}
 }
-
 
 void UCISendBlockCrc( UCIFrame_t* pU)
 {
