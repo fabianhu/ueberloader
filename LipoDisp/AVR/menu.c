@@ -423,8 +423,11 @@ void system_info(void)
 		restore_menu();
 }
 
+uint16_t glCommerrcnt; // fixme remove!
+
 void commError(uint8_t errno)
 {
+
 	char stringtemp[17];
 	uint16_t ret;
 
@@ -433,5 +436,8 @@ void commError(uint8_t errno)
 	lcd_draw_line(255,0,0,320,0,0,240);
 	ret = lcd_write_ram_text("Comm Error ", 255, 255, 255, 1, 30, 220);
 	itoa( errno, stringtemp,10);
-	lcd_write_ram_text(stringtemp, 255, 255, 255, 1, ret, 220);
+	ret = lcd_write_ram_text(stringtemp, 255, 255, 255, 1, ret, 220);
+	itoa( glCommerrcnt, stringtemp,10);
+	ret = lcd_write_ram_text(" #", 255, 255, 255, 1, ret, 220);
+	ret = lcd_write_ram_text(stringtemp, 255, 255, 255, 1, ret, 220);
 }

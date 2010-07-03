@@ -31,11 +31,6 @@ ISR(USARTE0_RXC_vect)
 	else
 		glCommError = 1;
 
-//	if(g_ucRXLength == 3)
-//	{	// update rest of bytes to wait
-//		g_tUCIRXFrame.len = g_tUCIRXFrame.len;
-//	}
-
 	if(g_tUCIRXFrame.len == g_ucRXLength)
 	{
 		OS_SetEvent(OSTSKCommand,OSEVTDataRecvd);
@@ -74,7 +69,7 @@ void HandleSerial(UCIFrame_t *_RXFrame)
 	}
 	else
 	{
-		glCommError = 3;
+		glCommError = 3; // CRC wrong
 	}
 
 }
