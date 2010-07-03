@@ -96,33 +96,32 @@ void lcd_write_value_after_text_w_cl(char* text,uint16_t value, char* unit, uint
 
 }
 
+void lcd_write_value_text(char* text,uint16_t value, char* unit, uint8_t size, uint16_t xpos, uint16_t ypos)
+{
+#define R 255
+#define G 255
+#define B 255
+
+	uint16_t ret;
+	char buf[8];
+	itoa(value,buf,10);
+	ret = lcd_write_ram_text(text,R,G,B,size,xpos,ypos);
+	ret = lcd_write_ram_text(buf,R,G,0,size,ret,ypos);
+	lcd_write_ram_text(unit,R,G,B,size,ret,ypos);
+}
+
 void TaskDisplay(void)
 {
 	uint16_t ypos=0;
 	uint32_t t1,t2;
 
-#define FONTSIZE 2
+#define FONTSIZE 1
 #define LINEDIFF FONTSIZE*16
 
 	touch_init();
 
 	lcd_show_init_screen();
 	OS_WaitTicks(OSALMWaitDisp,500);
-	lcd_clear();
-
-	lcd_write_ram_text("vBatt ",255,255,255,FONTSIZE,0,ypos);
-	ypos += LINEDIFF;
-	lcd_write_ram_text("Current ",255,255,255,FONTSIZE,0,ypos);
-	ypos += LINEDIFF;
-	lcd_write_ram_text("Battery has ",255,255,255,FONTSIZE,0,ypos);
-	ypos += LINEDIFF;
-	lcd_write_ram_text("Pin3 ",255,255,255,FONTSIZE,0,ypos);
-	ypos += LINEDIFF;
-	lcd_write_ram_text("Pin4 ",255,255,255,FONTSIZE,0,ypos);
-	ypos += LINEDIFF;
-	ypos += LINEDIFF;
-	lcd_write_ram_text("Time ",255,255,255,FONTSIZE,0,ypos);
-
 
 	while(1)
 	{
@@ -132,22 +131,45 @@ void TaskDisplay(void)
 
 		if(!glCommError)
 		{
-		lcd_write_value_after_text_w_cl("vBatt ",g_tBattery_Info.usActVoltage_mV," mV",255,255,255,FONTSIZE,0,ypos);
-		ypos += LINEDIFF;
-		lcd_write_value_after_text_w_cl("Current ",g_tBattery_Info.sActCurrent_mA," mA",255,255,255,FONTSIZE,0,ypos);
-		ypos += LINEDIFF;
-		lcd_write_value_after_text_w_cl("Battery has ",g_tBattery_Info.ucNumberOfCells," Cells",255,255,255,FONTSIZE,0,ypos);
-		ypos += LINEDIFF;
-		lcd_write_value_after_text_w_cl("Pin3 ",touchGetPad(3)," touchs",255,255,255,FONTSIZE,0,ypos);
-		ypos += LINEDIFF;
-		lcd_write_value_after_text_w_cl("Pin4 ",touchGetPad(4)," touchs",255,255,255,FONTSIZE,0,ypos);
-		ypos += LINEDIFF;
-		ypos += LINEDIFF;
+			lcd_clear();
 
-		OS_GetTicks(&t2);
+			lcd_write_value_text("vBatt ",g_tBattery_Info.usActVoltage_mV," mV",2,0,ypos);
+			ypos += LINEDIFF*2;
+			lcd_write_value_text("Current ",g_tBattery_Info.sActCurrent_mA," mA",2,0,ypos);
+			ypos += LINEDIFF*2;
+			lcd_write_value_text("Battery has ",g_tBattery_Info.ucNumberOfCells," Cells.",FONTSIZE,0,ypos);
+			ypos += LINEDIFF;
+			ypos += LINEDIFF;
+			lcd_write_value_text("Pin0 ",touchGetPad(0)," t",FONTSIZE,0,ypos);
+			ypos += LINEDIFF;
+			lcd_write_value_text("Pin1 ",touchGetPad(1)," t",FONTSIZE,0,ypos);
+			ypos += LINEDIFF;
+			lcd_write_value_text("Pin2 ",touchGetPad(2)," t",FONTSIZE,0,ypos);
+			ypos += LINEDIFF;
+			lcd_write_value_text("Pin3 ",touchGetPad(3)," t",FONTSIZE,0,ypos);
+			ypos += LINEDIFF;
+			lcd_write_value_text("Pin4 ",touchGetPad(4)," t",FONTSIZE,0,ypos);
 
-		t2=t2-t1;
-		lcd_write_value_after_text_w_cl("Time ",(uint16_t)t2," ms",255,255,255,FONTSIZE,0,ypos);
+			ypos = 64;
+
+			lcd_write_value_text("Cell0 ",g_tBattery_Info.Cells[0].usVoltage_mV," mV",FONTSIZE,160,ypos);
+			ypos += LINEDIFF;
+			lcd_write_value_text("Cell1 ",g_tBattery_Info.Cells[1].usVoltage_mV," mV",FONTSIZE,160,ypos);
+			ypos += LINEDIFF;
+			lcd_write_value_text("Cell2 ",g_tBattery_Info.Cells[2].usVoltage_mV," mV",FONTSIZE,160,ypos);
+			ypos += LINEDIFF;
+			lcd_write_value_text("Cell3 ",g_tBattery_Info.Cells[3].usVoltage_mV," mV",FONTSIZE,160,ypos);
+			ypos += LINEDIFF;
+			lcd_write_value_text("Cell4 ",g_tBattery_Info.Cells[4].usVoltage_mV," mV",FONTSIZE,160,ypos);
+			ypos += LINEDIFF;
+			lcd_write_value_text("Cell5 ",g_tBattery_Info.Cells[5].usVoltage_mV," mV",FONTSIZE,160,ypos);
+			ypos += LINEDIFF;
+			ypos += LINEDIFF;
+
+			OS_GetTicks(&t2);
+
+			t2=t2-t1;
+			lcd_write_value_text("Time ",(uint16_t)t2," ms",FONTSIZE,0,220);
 		}
 		else
 		{
@@ -156,7 +178,7 @@ void TaskDisplay(void)
 		}
 
 
-		OS_WaitTicks(OSALMWaitDisp,33);
+		OS_WaitTicks(OSALMWaitDisp,500);
 		//lcd_clear();
 
 		/*
@@ -191,6 +213,7 @@ void TaskDisplay(void)
 
 extern UCIFrame_t g_tUCIRXFrame;
 extern uint8_t    g_ucRXLength;
+extern uint16_t glCommerrcnt; // fixme remove!
 
 extern uint8_t vWaitForResult( void)
 {
@@ -204,6 +227,7 @@ extern uint8_t vWaitForResult( void)
 		else
 		{
 			commerror = 22;
+			glCommerrcnt++; // fixme remove!
 		}
     g_ucRXLength = 0;
     g_tUCIRXFrame.len = UCIHEADERLEN;
