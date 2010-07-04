@@ -69,12 +69,12 @@ void TaskCommRX(void)
 		g_tUCIRXFrame.len = UCIHEADERLEN;
 
 
-//			OS_ENTERCRITICAL;
-//			g_tCommand.usCurrentSetpoint = 500;
-//			g_tCommand.usMinBalanceVolt_mV = 3000;
-//			g_tCommand.usVoltageSetpoint_mV = 4150;
-//			g_tCommand.eChargerMode = eModeAuto;
-//			OS_LEAVECRITICAL;
+			OS_ENTERCRITICAL;
+			g_tCommand.usCurrentSetpoint = 500;
+			g_tCommand.usMinBalanceVolt_mV = 3000;
+			g_tCommand.usVoltageSetpoint_mV = 4150;
+			g_tCommand.eChargerMode = eModeAuto;
+			OS_LEAVECRITICAL;
 
 
 	}

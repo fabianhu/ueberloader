@@ -123,7 +123,7 @@ void TaskGovernor(void)
  // just in case...
 
 
-		if (usU_in_act < 8000)
+		if (usU_in_act < 6000)
 			emstop(1);
 		if (usU_in_act > 22000)
 			emstop(2);
@@ -253,9 +253,9 @@ void TaskBalance(void)
 			mean +=3; // add some difference to prevent swinging
 
 			// Balancer logic
-			for(i=0;i<g_tBattery_Info.ucNumberOfCells;i++)
+			for(i=0;i<6;i++)
 			{
-				if(usBalanceCells[i] > mean)
+				if(usBalanceCells[i] > mean || i > g_tBattery_Info.ucNumberOfCells)
 				{
 					// switch on Balancer for this cell
 					PORTC.OUTSET = (1<<(2+i));
@@ -273,7 +273,23 @@ void TaskBalance(void)
 		else
 		{
 			// balancer off
-			PORTC.OUTCLR = (0b111111<<2);
+			for(i=0;i<6;i++)
+			{
+				if( i >= g_tBattery_Info.ucNumberOfCells)
+				{
+					// switch on Balancer for this cell
+					PORTC.OUTSET = (1<<(2+i));
+					ucBalanceBits |= (1<<i);
+				}
+				else
+				{
+					// switch off Balancer for this cell
+					PORTC.OUTCLR = (1<<(2+i));
+					ucBalanceBits &= ~(1<<i);
+				}
+			}
+
+			//PORTC.OUTCLR = (0b111111<<2);
 			ucBalanceBits = 0;
 		}
 

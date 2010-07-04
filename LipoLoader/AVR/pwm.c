@@ -4,6 +4,9 @@
  * */
 
 #include "pwm.h"
+#include "serial.h"
+#include "OS/FabOS.h"
+extern Battery_Info_t g_tBattery_Info;
 
 void vPWM_Init(void)
 {
@@ -196,6 +199,13 @@ void vGovernor(
 			if(usPower>0)
 				usPower--;
 		}
+
+		// fixme
+		OS_MutexGet(OSMTXBattInfo);
+		//pwm und pwmdings
+		g_tBattery_Info.usPWM = usPower;
+		g_tBattery_Info.usPWMStep = usStartstep;
+		OS_MutexRelease(OSMTXBattInfo);
 
 
 		int16_t usDiffAbs = (diff>0)?diff:-diff;
