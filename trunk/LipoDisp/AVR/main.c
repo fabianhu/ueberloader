@@ -7,6 +7,7 @@
 
 #include "OS/FabOS.h"
 #include <avr/pgmspace.h>
+#include <string.h>
 
 #include "usart.h"
 #include "serial.h"
@@ -110,10 +111,37 @@ void lcd_write_value_text(char* text,uint16_t value, char* unit, uint8_t size, u
 	lcd_write_ram_text(unit,R,G,B,size,ret,ypos);
 }
 
+uint16_t tabs[]={0,20,65};
+char* colheaders[3]= {"C","mV","mAh "};
+
+void lcd_write_cell_info(uint8_t CellNumber,uint16_t xpos, uint16_t ypos)
+{
+	char buf[8];
+
+	itoa(CellNumber+1,buf,10);
+	lcd_write_ram_text(buf,255,255,255,1,xpos+tabs[0],ypos);
+	itoa(g_tBattery_Info.Cells[CellNumber].usVoltage_mV,buf,10);
+	lcd_write_ram_text(buf,255,255,255,1,xpos+tabs[1],ypos);
+	itoa(g_tBattery_Info.Cells[CellNumber].unDisChTicks,buf,10);
+	lcd_write_ram_text(buf,255,255,255,1,xpos+tabs[2],ypos);
+
+}
+
+void lcd_write_cell_header(uint16_t xpos, uint16_t ypos)
+{
+	uint8_t i;
+
+	for(i=0;i<sizeof(tabs)/2;i++)
+	{
+		lcd_write_ram_text(colheaders[i],255,0,0,1,xpos+tabs[i],ypos);
+	}
+}
+
 void TaskDisplay(void)
 {
 	uint16_t ypos=0;
 	uint32_t t1,t2;
+	uint8_t i;
 
 #define FONTSIZE 1
 #define LINEDIFF FONTSIZE*16
@@ -137,34 +165,64 @@ void TaskDisplay(void)
 			ypos += LINEDIFF*2;
 			lcd_write_value_text("Current ",g_tBattery_Info.sActCurrent_mA," mA",2,0,ypos);
 			ypos += LINEDIFF*2;
-			lcd_write_value_text("Battery has ",g_tBattery_Info.ucNumberOfCells," Cells.",FONTSIZE,0,ypos);
+			lcd_write_value_text("Batt ",g_tBattery_Info.ucNumberOfCells," Cell",FONTSIZE,230,8);
+			
+//			lcd_write_value_text("Pin0 ",touchGetPad(0)," t",FONTSIZE,0,ypos);
+//			ypos += LINEDIFF;
+//			lcd_write_value_text("Pin1 ",touchGetPad(1)," t",FONTSIZE,0,ypos);
+//			ypos += LINEDIFF;
+//			lcd_write_value_text("Pin2 ",touchGetPad(2)," t",FONTSIZE,0,ypos);
+//			ypos += LINEDIFF;
+//			lcd_write_value_text("Pin3 ",touchGetPad(3)," t",FONTSIZE,0,ypos);
+//			ypos += LINEDIFF;
+//			lcd_write_value_text("Pin4 ",touchGetPad(4)," t",FONTSIZE,0,ypos);
+
+			ypos = 180;
+			lcd_write_value_text("PWM ",g_tBattery_Info.usPWM,"/4096",FONTSIZE,160,ypos);
 			ypos += LINEDIFF;
-			ypos += LINEDIFF;
-			lcd_write_value_text("Pin0 ",touchGetPad(0)," t",FONTSIZE,0,ypos);
-			ypos += LINEDIFF;
-			lcd_write_value_text("Pin1 ",touchGetPad(1)," t",FONTSIZE,0,ypos);
-			ypos += LINEDIFF;
-			lcd_write_value_text("Pin2 ",touchGetPad(2)," t",FONTSIZE,0,ypos);
-			ypos += LINEDIFF;
-			lcd_write_value_text("Pin3 ",touchGetPad(3)," t",FONTSIZE,0,ypos);
-			ypos += LINEDIFF;
-			lcd_write_value_text("Pin4 ",touchGetPad(4)," t",FONTSIZE,0,ypos);
+			lcd_write_value_text("PWS ",g_tBattery_Info.usPWMStep," ppt",FONTSIZE,160,ypos);
 
 			ypos = 64;
 
-			lcd_write_value_text("Cell0 ",g_tBattery_Info.Cells[0].usVoltage_mV," mV",FONTSIZE,160,ypos);
-			ypos += LINEDIFF;
-			lcd_write_value_text("Cell1 ",g_tBattery_Info.Cells[1].usVoltage_mV," mV",FONTSIZE,160,ypos);
-			ypos += LINEDIFF;
-			lcd_write_value_text("Cell2 ",g_tBattery_Info.Cells[2].usVoltage_mV," mV",FONTSIZE,160,ypos);
-			ypos += LINEDIFF;
-			lcd_write_value_text("Cell3 ",g_tBattery_Info.Cells[3].usVoltage_mV," mV",FONTSIZE,160,ypos);
-			ypos += LINEDIFF;
-			lcd_write_value_text("Cell4 ",g_tBattery_Info.Cells[4].usVoltage_mV," mV",FONTSIZE,160,ypos);
-			ypos += LINEDIFF;
-			lcd_write_value_text("Cell5 ",g_tBattery_Info.Cells[5].usVoltage_mV," mV",FONTSIZE,160,ypos);
-			ypos += LINEDIFF;
-			ypos += LINEDIFF;
+//			lcd_write_value_text("Cell0 ",g_tBattery_Info.Cells[0].usVoltage_mV," mV",FONTSIZE,160,ypos);
+//			ypos += LINEDIFF;
+//			lcd_write_value_text("Cell1 ",g_tBattery_Info.Cells[1].usVoltage_mV," mV",FONTSIZE,160,ypos);
+//			ypos += LINEDIFF;
+//			lcd_write_value_text("Cell2 ",g_tBattery_Info.Cells[2].usVoltage_mV," mV",FONTSIZE,160,ypos);
+//			ypos += LINEDIFF;
+//			lcd_write_value_text("Cell3 ",g_tBattery_Info.Cells[3].usVoltage_mV," mV",FONTSIZE,160,ypos);
+//			ypos += LINEDIFF;
+//			lcd_write_value_text("Cell4 ",g_tBattery_Info.Cells[4].usVoltage_mV," mV",FONTSIZE,160,ypos);
+//			ypos += LINEDIFF;
+//			lcd_write_value_text("Cell5 ",g_tBattery_Info.Cells[5].usVoltage_mV," mV",FONTSIZE,160,ypos);
+//			ypos += LINEDIFF;
+//			ypos += LINEDIFF;
+
+			lcd_write_cell_header(0,64);
+			for (i = 0; i < 6; ++i) {
+				lcd_write_cell_info(i,0,64+16+i*16);
+			}
+
+			char buf[10];
+			switch (g_tBattery_Info.eState)
+			{
+				case eBattCharging:
+					strcpy(buf,"Charging");
+					break;
+				case eBattFull:
+					strcpy(buf,"Full");
+					break;
+				case eBattUnknown:
+					strcpy(buf,"Unknown");
+					break;
+				case eBattError:
+					strcpy(buf,"Batt.Error");
+					break;
+				default:
+					strcpy(buf,"Waaargh!!!");
+					break;
+			}
+			lcd_write_ram_text(buf,0,255,0,2,0,180);
 
 			OS_GetTicks(&t2);
 
