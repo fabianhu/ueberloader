@@ -68,7 +68,8 @@ int main(void)
 
 extern uint8_t font[96][36] PROGMEM;
 
-uint16_t lcd_get_text_len(char *text, uint8_t size)
+//not needed anymore ;-)
+/*uint16_t lcd_get_text_len(char *text, uint8_t size)
 {
 	uint8_t *ptr_letter;
 	uint16_t total_width=0;
@@ -81,9 +82,10 @@ uint16_t lcd_get_text_len(char *text, uint8_t size)
 		text++;
 	}
 	return total_width*size;
-}
+}*/
 
-void lcd_write_value_after_text_w_cl(char* text,uint16_t value, char* unit, uint8_t r,uint8_t g,uint8_t b, uint8_t size, uint16_t xpos, uint16_t ypos)
+//not needed anymore ;-)
+/*void lcd_write_value_after_text_w_cl(char* text,uint16_t value, char* unit, uint8_t r,uint8_t g,uint8_t b, uint8_t size, uint16_t xpos, uint16_t ypos)
 {
 	uint16_t ret,ret2;
 	char buf[8];
@@ -95,9 +97,10 @@ void lcd_write_value_after_text_w_cl(char* text,uint16_t value, char* unit, uint
 	ret = lcd_write_ram_text(buf,r,g,b,size,ret,ypos);
 	lcd_write_ram_text(unit,r,g,b,size,ret,ypos);
 
-}
+}*/
 
-void lcd_write_value_text(char* text,uint16_t value, char* unit, uint8_t size, uint16_t xpos, uint16_t ypos)
+//not needed anymore ;-)
+/*void lcd_write_value_text(char* text,uint16_t value, char* unit, uint8_t size, uint16_t xpos, uint16_t ypos)
 {
 #define R 255
 #define G 255
@@ -109,33 +112,7 @@ void lcd_write_value_text(char* text,uint16_t value, char* unit, uint8_t size, u
 	ret = lcd_write_ram_text(text,R,G,B,size,xpos,ypos);
 	ret = lcd_write_ram_text(buf,R,G,0,size,ret,ypos);
 	lcd_write_ram_text(unit,R,G,B,size,ret,ypos);
-}
-
-uint16_t tabs[]={0,20,65};
-char* colheaders[3]= {"C","mV","mAh "};
-
-void lcd_write_cell_info(uint8_t CellNumber,uint16_t xpos, uint16_t ypos)
-{
-	char buf[8];
-
-	itoa(CellNumber+1,buf,10);
-	lcd_write_ram_text(buf,255,255,255,1,xpos+tabs[0],ypos);
-	itoa(g_tBattery_Info.Cells[CellNumber].usVoltage_mV,buf,10);
-	lcd_write_ram_text(buf,255,255,255,1,xpos+tabs[1],ypos);
-	itoa(g_tBattery_Info.Cells[CellNumber].unDisChTicks,buf,10);
-	lcd_write_ram_text(buf,255,255,255,1,xpos+tabs[2],ypos);
-
-}
-
-void lcd_write_cell_header(uint16_t xpos, uint16_t ypos)
-{
-	uint8_t i;
-
-	for(i=0;i<sizeof(tabs)/2;i++)
-	{
-		lcd_write_ram_text(colheaders[i],255,0,0,1,xpos+tabs[i],ypos);
-	}
-}
+}*/
 
 void TaskDisplay(void)
 {
@@ -149,6 +126,7 @@ void TaskDisplay(void)
 	touch_init();
 
 	lcd_show_init_screen();
+	lcd_clear();//lcd clear needed here because a new screen is shown
 	OS_WaitTicks(OSALMWaitDisp,500);
 
 	while(1)
@@ -157,63 +135,47 @@ void TaskDisplay(void)
 
 		OS_GetTicks(&t1);
 
-		if(!glCommError)
+		//fixme for lcd_print function test
+		if(1)//(!glCommError)
 		{
-			lcd_clear();
-
-			lcd_write_value_text("vBatt ",g_tBattery_Info.usActVoltage_mV," mV",2,0,ypos);
+			//the lcd_print function overwrites old text-> no lcd_clear needed!
+			//lcd_clear();
+			lcd_print(YELLOW, BLACK, 2, 0, ypos,"vBatt  /t%i mV    ",g_tBattery_Info.usActVoltage_mV);
 			ypos += LINEDIFF*2;
-			lcd_write_value_text("Current ",g_tBattery_Info.sActCurrent_mA," mA",2,0,ypos);
+			lcd_print(YELLOW, BLACK, 2, 0, ypos,"Current/t%i mA   ",g_tBattery_Info.sActCurrent_mA);
 			ypos += LINEDIFF*2;
-			lcd_write_value_text("Batt ",g_tBattery_Info.ucNumberOfCells," Cell",FONTSIZE,230,8);
-			
-//			lcd_write_value_text("Pin0 ",touchGetPad(0)," t",FONTSIZE,0,ypos);
-//			ypos += LINEDIFF;
-//			lcd_write_value_text("Pin1 ",touchGetPad(1)," t",FONTSIZE,0,ypos);
-//			ypos += LINEDIFF;
-//			lcd_write_value_text("Pin2 ",touchGetPad(2)," t",FONTSIZE,0,ypos);
-//			ypos += LINEDIFF;
-//			lcd_write_value_text("Pin3 ",touchGetPad(3)," t",FONTSIZE,0,ypos);
-//			ypos += LINEDIFF;
-//			lcd_write_value_text("Pin4 ",touchGetPad(4)," t",FONTSIZE,0,ypos);
+			lcd_print(WHITE, BLACK, FONTSIZE, 230, 200,"Batt. %i Cells ",g_tBattery_Info.ucNumberOfCells);
 
-			ypos = 180;
-			lcd_write_value_text("PWM ",g_tBattery_Info.usPWM,"/4096",FONTSIZE,160,ypos);
+			/*ypos = 100;
+			lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"Pin0/t%i/tt      " ,touchGetPad(0));
 			ypos += LINEDIFF;
-			lcd_write_value_text("PWS ",g_tBattery_Info.usPWMStep," ppt",FONTSIZE,160,ypos);
-
+			lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"Pin1/t%i/tt      " ,touchGetPad(1));
+			ypos += LINEDIFF;
+			lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"Pin2/t%i/tt      " ,touchGetPad(2));
+			ypos += LINEDIFF;
+			lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"Pin3/t%i/tt      " ,touchGetPad(3));
+			ypos += LINEDIFF;
+			lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"Pin4/t%i/tt      " ,touchGetPad(4));
+*/
 			ypos = 64;
-
-//			lcd_write_value_text("Cell0 ",g_tBattery_Info.Cells[0].usVoltage_mV," mV",FONTSIZE,160,ypos);
-//			ypos += LINEDIFF;
-//			lcd_write_value_text("Cell1 ",g_tBattery_Info.Cells[1].usVoltage_mV," mV",FONTSIZE,160,ypos);
-//			ypos += LINEDIFF;
-//			lcd_write_value_text("Cell2 ",g_tBattery_Info.Cells[2].usVoltage_mV," mV",FONTSIZE,160,ypos);
-//			ypos += LINEDIFF;
-//			lcd_write_value_text("Cell3 ",g_tBattery_Info.Cells[3].usVoltage_mV," mV",FONTSIZE,160,ypos);
-//			ypos += LINEDIFF;
-//			lcd_write_value_text("Cell4 ",g_tBattery_Info.Cells[4].usVoltage_mV," mV",FONTSIZE,160,ypos);
-//			ypos += LINEDIFF;
-//			lcd_write_value_text("Cell5 ",g_tBattery_Info.Cells[5].usVoltage_mV," mV",FONTSIZE,160,ypos);
-//			ypos += LINEDIFF;
-//			ypos += LINEDIFF;
-
-			lcd_write_cell_header(0,64);
+			
 			for (i = 0; i < 6; ++i) {
-				lcd_write_cell_info(i,0,64+16+i*16);
+			lcd_print(WHITE, BLACK, FONTSIZE, 0,ypos,"Cell%i/t%i/tmV/t%i mAh     " ,i,g_tBattery_Info.Cells[i].usVoltage_mV, g_tBattery_Info.Cells[i].unDisChTicks);
+			ypos += LINEDIFF;
 			}
+
 
 			char buf[10];
 			switch (g_tBattery_Info.eState)
 			{
 				case eBattCharging:
-					strcpy(buf,"Charging");
+					strcpy(buf,"Charging  ");
 					break;
 				case eBattFull:
-					strcpy(buf,"Full");
+					strcpy(buf,"Full      ");
 					break;
 				case eBattUnknown:
-					strcpy(buf,"Unknown");
+					strcpy(buf,"Unknown   ");
 					break;
 				case eBattError:
 					strcpy(buf,"Batt.Error");
@@ -222,12 +184,13 @@ void TaskDisplay(void)
 					strcpy(buf,"Waaargh!!!");
 					break;
 			}
-			lcd_write_ram_text(buf,0,255,0,2,0,180);
+			lcd_print(GREEN,BLACK,2,0,180,buf);
+
 
 			OS_GetTicks(&t2);
 
 			t2=t2-t1;
-			lcd_write_value_text("Time ",(uint16_t)t2," ms",FONTSIZE,0,220);
+			lcd_print(GREY, BLACK, FONTSIZE, 0, 220,"Time: %i ms     " ,(uint16_t)t2);	
 		}
 		else
 		{
@@ -237,34 +200,6 @@ void TaskDisplay(void)
 
 
 		OS_WaitTicks(OSALMWaitDisp,500);
-		//lcd_clear();
-
-		/*
-		lcd_show_init_screen();
-		OS_WaitTicks(OSALMWaitDisp,2001);
-		menu_show();
-		OS_WaitTicks(OSALMWaitDisp,2001);
-		menu_select();
-		OS_WaitTicks(OSALMWaitDisp,501);
-		menu_next(1);
-		OS_WaitTicks(OSALMWaitDisp,501);
-		menu_next(1);
-		OS_WaitTicks(OSALMWaitDisp,501);
-		menu_next(1);
-		OS_WaitTicks(OSALMWaitDisp,501);
-		menu_next(1);
-		OS_WaitTicks(OSALMWaitDisp,501);
-		menu_select();
-		OS_WaitTicks(OSALMWaitDisp,501);
-		menu_next(1);
-		OS_WaitTicks(OSALMWaitDisp,501);
-		menu_next(1);
-		OS_WaitTicks(OSALMWaitDisp,501);
-		menu_select();
-		OS_WaitTicks(OSALMWaitDisp,501);
-		menu_select();
-		OS_WaitTicks(OSALMWaitDisp,65535);
-*/
 	}
 
 }

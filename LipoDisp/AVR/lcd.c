@@ -10,7 +10,7 @@
 //*****************************************************************************
 #include "lcd.h"
 #include "font.h"
-
+#include <stdio.h>
 //*****************************************************************************
 //                    S T R I N G S  / V A R S
 //*****************************************************************************
@@ -149,6 +149,21 @@ void lcd_draw_pixel(uint8_t red, uint8_t green, uint8_t blue, uint16_t x_pos, ui
 
 void lcd_draw_line(uint8_t red, uint8_t green, uint8_t blue, uint16_t x_pos1,uint16_t y_pos1,uint16_t x_pos2,uint16_t y_pos2)
 {
+  //reset pointer
+	//set column pointer
+	lcd_write_cmd(COLUMN_ADR_SET);
+	lcd_write_data(0x00);
+	lcd_write_data(0x00);
+	lcd_write_data(0x01);
+	lcd_write_data(0x3F);
+
+	//set page pointer
+	lcd_write_cmd(PAGE_ADR_SET);
+	lcd_write_data(0x00);
+	lcd_write_data(0x00);
+	lcd_write_data(0x00);
+	lcd_write_data(0xEF);
+
   int dx,dy,stepx,stepy,fraction;
 
   dy = y_pos2 - y_pos1;
@@ -203,6 +218,21 @@ void lcd_draw_line(uint8_t red, uint8_t green, uint8_t blue, uint16_t x_pos1,uin
 
 void lcd_draw_circle(uint8_t red, uint8_t green, uint8_t blue, uint16_t center_xpos, uint16_t center_ypos ,uint16_t radius)
 {
+	//reset pointer
+	//set column pointer
+	lcd_write_cmd(COLUMN_ADR_SET);
+	lcd_write_data(0x00);
+	lcd_write_data(0x00);
+	lcd_write_data(0x01);
+	lcd_write_data(0x3F);
+
+	//set page pointer
+	lcd_write_cmd(PAGE_ADR_SET);
+	lcd_write_data(0x00);
+	lcd_write_data(0x00);
+	lcd_write_data(0x00);
+	lcd_write_data(0xEF);
+
 	int x, y, xchange, ychange, radiusError;
 	x = radius;
 	y = 0;
@@ -258,20 +288,6 @@ void lcd_draw_filled_box(uint8_t red, uint8_t green, uint8_t blue, uint16_t x_po
 		lcd_write_data(green);
 		lcd_write_data(blue);
 		}
-	//reset pointer
-	//set column pointer
-	lcd_write_cmd(COLUMN_ADR_SET);
-	lcd_write_data(0x00);
-	lcd_write_data(0x00);
-	lcd_write_data(0x01);
-	lcd_write_data(0x3F);
-
-	//set page pointer
-	lcd_write_cmd(PAGE_ADR_SET);
-	lcd_write_data(0x00);
-	lcd_write_data(0x00);
-	lcd_write_data(0x00);
-	lcd_write_data(0xEF);	
 }
 
 void lcd_draw_box(uint8_t red, uint8_t green, uint8_t blue,uint16_t x_pos,uint16_t y_pos,uint16_t width,uint16_t hight)
@@ -362,144 +378,214 @@ void lcd_draw_bmp(char *ptr_bmp, uint8_t colour, uint16_t x_pos, uint16_t y_pos)
 				}
      		}		
 		}
-	//reset pointer
-	//set column pointer
-	lcd_write_cmd(COLUMN_ADR_SET);
-	lcd_write_data(0x00);
-	lcd_write_data(0x00);
-	lcd_write_data(0x01);
-	lcd_write_data(0x3F);
-
-	//set page pointer
-	lcd_write_cmd(PAGE_ADR_SET);
-	lcd_write_data(0x00);
-	lcd_write_data(0x00);
-	lcd_write_data(0x00);
-	lcd_write_data(0xEF);
-
 		
 }
 
-void lcd_write_char(uint8_t letter, uint8_t red, uint8_t green, uint8_t blue, uint8_t size, uint16_t x_pos, uint16_t y_pos)
+void lcd_write_char(uint8_t letter, uint8_t font_red, uint8_t font_green, uint8_t font_blue,  uint8_t back_red, uint8_t back_green, uint8_t back_blue, uint8_t size, uint16_t x_pos, uint16_t y_pos)
 {
-	volatile uint8_t act_byte =0x00, bit_nr=0x00, act_row, pixel_width, y_offset;
-	volatile uint8_t x_scale, y_scale;
-	volatile uint8_t *ptr_letter;
-	volatile uint16_t new_x_pos, new_y_pos;
-	
+		
+	uint16_t i;
+	uint8_t width, space, space_width, y_scale, x_scale, act_byte =0x00, bit_nr=0x00, act_row, y_offset;
+	uint8_t *ptr_letter;
+
+	space_width = 2; 	//distance between two letters
+
 	//set pointer and get letter size
-	ptr_letter = font[letter-32];
-	pixel_width = pgm_read_byte(ptr_letter++);
-	y_offset = size*pgm_read_byte(ptr_letter++);
-	//set x pos
-	new_x_pos = x_pos;
-	//draw letter
-	for(act_row=0;act_row<pixel_width;act_row++)
+	ptr_letter = font[letter-32];			//font sign pointer
+	width = pgm_read_byte(ptr_letter++);	//width of the letter in pixel
+	y_offset = pgm_read_byte(ptr_letter++); //distance bewteen top of "letter-frame" and start of letter itself in pixel
+
+	//Define a memory area where the MCU can access the lcd memory
+	//Access to other memory areas are denied
+	//set new pointer addr (width of the area)
+	lcd_write_cmd(COLUMN_ADR_SET);
+	lcd_write_data(HIGH(x_pos));
+	lcd_write_data(LOW(x_pos));
+	i = x_pos+(width+space_width)*size-1;
+	lcd_write_data(HIGH(i));
+	lcd_write_data(LOW(i));
+	//set page pointer (height of the area)
+	lcd_write_cmd(PAGE_ADR_SET);
+	lcd_write_data(HIGH(y_pos));
+	lcd_write_data(LOW(y_pos));
+	i= y_pos+FONTHEIGHT*size-1;
+	lcd_write_data(HIGH(i));
+	lcd_write_data(LOW(i));
+	//start writing to lcd ram
+	lcd_write_cmd(MEM_WRITE);	
+	
+	//fill pixel offset field
+	for(act_row=0;act_row<y_offset*size;act_row++)
 		{
-		for(x_scale=0;x_scale<size;x_scale++)
+		for(bit_nr=0;bit_nr<(width+space_width)*size;bit_nr++)
+			{
+			lcd_write_data(back_red);
+			lcd_write_data(back_green);
+			lcd_write_data(back_blue);
+			}
+		}
+	//draw sign
+	for(act_row=0;act_row<FONTHEIGHT-y_offset;act_row++)
+		{
+		for(y_scale=0;y_scale<size;y_scale++)
 			{
 			ptr_letter = &font[letter-32][2+act_row*2];
-			//set y pos
-			new_y_pos = y_pos+y_offset;
-			//draw column
-			for(bit_nr=0;bit_nr<16;bit_nr++)
+			for(bit_nr=0;bit_nr<width;bit_nr++)
 				{
 				//load next byte
 				if(bit_nr%8==0)
 					{
 					act_byte = pgm_read_byte(ptr_letter++);
 					}
-				for(y_scale=0;y_scale<size;y_scale++)
+				for(x_scale=0;x_scale<size;x_scale++)
 					{
-					//draw bit
+					//draw pixel in fontcolour
 					if( (1<<(7-bit_nr%8)) & act_byte)
-						{lcd_draw_pixel(red, green, blue, new_x_pos, new_y_pos++);}
+						{
+						lcd_write_data(font_red);
+						lcd_write_data(font_green);
+						lcd_write_data(font_blue);
+						}
+					//draw pixel in backgroundcolour
 					else 
-						{new_y_pos++;}
+						{
+						lcd_write_data(back_red);
+						lcd_write_data(back_green);
+						lcd_write_data(back_blue);
+						}
 					}
 				}
-			//set new x pos
-			new_x_pos++;
-			}
-		}
-}
-
-
-// fixme maybe this function could return the right end of written text in pixels?
-// fixme maybe implement "newline" ?
-uint16_t lcd_write_ram_text(char *text, uint8_t red, uint8_t green, uint8_t blue, uint8_t size, uint16_t x_pos, uint16_t y_pos)
-{
-	uint16_t new_x_pos, new_y_pos;
-	uint8_t *ptr_letter, pixel_width;
-	new_x_pos=x_pos;
-	new_y_pos=y_pos;
-	while(*text!=0x00)
-		{
-		//get letter width
-		ptr_letter = font[*text-32];
-		pixel_width = pgm_read_byte(ptr_letter);
-		//end of line?
-		if(new_x_pos > 320-pixel_width) 
-			{
-			new_y_pos+= size*16;
-			new_x_pos=x_pos;
-			}
-		//write text
-		if(*text!=' ') 
-			{
-			lcd_write_char(*text, red, green, blue, size, new_x_pos, new_y_pos);
-			new_x_pos+=size*pixel_width+size*2;
-			}
-		//space
-		else
-			{
-			new_x_pos+=size*4;
-			}
-		//next letter
-		text++;
-		}
-	return new_x_pos;
-}
-
-void lcd_write_flash_text(char *text, uint8_t red, uint8_t green, uint8_t blue, uint8_t size, uint16_t x_pos, uint16_t y_pos)
-{
-	uint16_t new_x_pos, new_y_pos;
-	uint8_t *ptr_letter, pixel_width;
-	new_x_pos=x_pos;
-	new_y_pos=y_pos;
-	while(pgm_read_byte(text)!=0x00)
-		{
-		//get letter width
-		ptr_letter = font[pgm_read_byte(text)-32];
-		pixel_width = pgm_read_byte(ptr_letter);
-		//end of line?
-		if(new_x_pos > 320-pixel_width) 
-			{
-			new_y_pos+= size*16;
-			new_x_pos=x_pos;
-			}
-		//write text
-		if(pgm_read_byte(text)!=' ') 
-			{
-			lcd_write_char(pgm_read_byte(text), red, green, blue, size, new_x_pos, new_y_pos);
-			new_x_pos+=size*pixel_width+size*2;
-			}
-		//space
-		else
-			{
-			new_x_pos+=size*4;
-			}
-		//next letter
-		text++;
-		}
+				//write space between two letters
+				for(space=0;space<space_width*size;space++)
+					{//draw pixel in backgroundcolour
+					lcd_write_data(back_red);
+					lcd_write_data(back_green);
+					lcd_write_data(back_blue);
+					}
+			} 
+		}	
 }
 
 void lcd_show_init_screen(void)
 {
 	//Powered by
-	lcd_write_flash_text(txt_init1, 255, 255, 255, 2, 30, 50);
+	lcd_print(WHITE, BLACK , 2, 30, 50,flash2ram(&txt_init1));
 	//FAB
-	lcd_write_flash_text(txt_init2, 255, 255, 0, 3, 80, 100);
+	lcd_print(YELLOW, BLACK , 2, 100, 100,flash2ram(&txt_init2));
 	//OS
-	lcd_write_flash_text(txt_init3, 255, 0, 0, 4, 165, 110);
+	lcd_print(RED, BLACK , 2, 185, 110,flash2ram(&txt_init3));
 };
+
+void lcd_print(uint8_t font_red,uint8_t font_green, uint8_t font_blue,uint8_t back_red,uint8_t back_green, uint8_t back_blue, uint8_t size, uint16_t x_pos, uint16_t y_pos,char *ptr_string,...)
+{
+    va_list specifier;                  //list of specifier ,...                
+    va_start (specifier, ptr_string);   	//initialize specifier list       
+    char act_sign;                      //actual sign of the string
+	char pixel_width, *ptr_buf, buf[8]={};
+	uint8_t tabwidth=0;	
+	uint16_t new_x_pos, new_y_pos;
+	//get position
+	new_x_pos=x_pos;
+	new_y_pos=y_pos;
+			
+    	while (*ptr_string)
+    	{
+	  	//Get next sign
+		act_sign = *ptr_string++;
+		//get letter width
+		pixel_width = pgm_read_byte(font[act_sign-32]);
+		//check if line ends
+		if(new_x_pos+pixel_width*size>319)
+			{
+			new_x_pos=0;
+			new_y_pos+=FONTHEIGHT*size;
+			}
+        if (act_sign=='%')              //value-placeholder?
+        {
+            //Get next sign
+			act_sign = *ptr_string++;
+
+            switch (act_sign)
+                {           
+                case 'i': //lcd_print integerchar
+                    //tx_wr_pos += sprintf(tx_wr_pos,"%c",//va_arg(specifier,int));
+                    //convert uint16_t
+					itoa(va_arg(specifier,uint16_t),buf,10);
+					//lcd_print value
+					ptr_buf=buf;
+					while(*ptr_buf)
+						{
+						//get letter width
+						pixel_width = pgm_read_byte(font[*ptr_buf-32]);
+						//check if line ends
+						if(new_x_pos+pixel_width*size>319)
+						{
+						new_x_pos=0;
+						new_y_pos+=FONTHEIGHT*size;
+						}
+						//Write sign
+						lcd_write_char(*ptr_buf++, font_red, font_green, font_blue, back_red, back_green, back_blue, size, new_x_pos, new_y_pos);
+        				//adjust position
+						new_x_pos+=size*(pixel_width+CHARSPACE);
+						}
+					break;
+				//fixme other "itoa's"                                                    
+                }
+        }
+		else if (act_sign=='/')  //format sign, e.g. tab
+		{
+            //Get next sign
+	        act_sign = *ptr_string++;
+
+            switch (act_sign)
+                {           
+                case 't': //increase xpos
+					tabwidth=TABSIZE-(new_x_pos%TABSIZE);
+					lcd_draw_filled_box(back_red, back_green, back_blue, new_x_pos,new_y_pos, tabwidth, FONTHEIGHT*size);
+                    new_x_pos+=tabwidth;
+					break;
+				case '/': //lcd_print '/'
+					lcd_write_char(act_sign, font_red, font_green, font_blue, back_red, back_green, back_blue, size, new_x_pos, new_y_pos);
+        			//adjust position
+					new_x_pos+=size*(pixel_width+CHARSPACE);
+					break;
+				case '%': //lcd_print '%'
+					lcd_write_char(act_sign, font_red, font_green, font_blue, back_red, back_green, back_blue, size, new_x_pos, new_y_pos);
+        			//adjust position
+					new_x_pos+=size*(pixel_width+CHARSPACE);
+					break;
+				case 'n': //create newline
+					new_x_pos=0;
+					new_y_pos+=FONTHEIGHT*size;
+					break;
+                //default: 
+                }
+        }
+        else //write "normal" sign
+        {
+            //Write sign
+			lcd_write_char(act_sign, font_red, font_green, font_blue, back_red, back_green, back_blue, size, new_x_pos, new_y_pos);
+        	//adjust position
+			new_x_pos+=size*(pixel_width+CHARSPACE);
+		}
+        
+    }
+  va_end(specifier); //close the specifier list     
+}
+
+char *flash2ram(char *ptr_string)
+{
+	static char returnstring[40]={}, *ptr_returnstring; // fixme Vorsicht, hier wird der Speicher auf dem Stack allokiert. Falls vor der Verwendung dieses Speichers eine andere Funktion aufgerufen wird, ist der Inhalt MATSCH.
+	//copy string 
+    ptr_returnstring=returnstring;
+	while (pgm_read_byte(ptr_string))
+    	{
+	  	//Get next sign
+        *ptr_returnstring++ = pgm_read_byte(ptr_string++);    
+		}
+	//terminate string
+	*ptr_returnstring='\0';
+	
+	return returnstring;
+ 
+}
