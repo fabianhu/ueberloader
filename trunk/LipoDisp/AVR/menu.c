@@ -162,18 +162,18 @@ void menu_show(void)
 			{
 			//parameter name
 			lcd_draw_filled_box(0, 155, 0, 0, 0, 320,40);
-			lcd_write_flash_text(m_item[get_index((*gpsActualItem).ucID)].strName, 0, 0, 0, 2, 20, 0);
+			//fixme change function 2 lcd_print lcd_write_flash_text(m_item[get_index((*gpsActualItem).ucID)].strName, 0, 0, 0, 2, 20, 0);
 			lcd_draw_filled_box(0, 0, 0, 0, 41, 320,200);
 			//Write old parameter value and limits
 			itoa( (*pParam).sParam, stringtemp, 10 );// i=Integer;s=Zielstring
-			lcd_write_ram_text("Old value:", 255, 255, 255, 2, 20, 0*32+45);
-			lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 200, 0*32+45);
+			//fixme change to lcd_print lcd_write_ram_text("Old value:", 255, 255, 255, 2, 20, 0*32+45);
+			//fixme change to lcd_print lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 200, 0*32+45);
 			itoa( (*pParam).sLowerLimit, stringtemp, 10 );// i=Integer;s=Zielstring
-			lcd_write_ram_text("Lower limit:", 255, 255, 255, 2, 20, 1*32+45);
-			lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 200, 1*32+45);
+			//fixme change to lcd_print lcd_write_ram_text("Lower limit:", 255, 255, 255, 2, 20, 1*32+45);
+			//fixme change to lcd_print lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 200, 1*32+45);
 			itoa( (*pParam).sUpperLimit, stringtemp, 10 );// i=Integer;s=Zielstring
-			lcd_write_ram_text("Upper limit:", 255, 255, 255, 2, 20, 2*32+45);
-			lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 200, 2*32+45);
+			//fixme change to lcd_print lcd_write_ram_text("Upper limit:", 255, 255, 255, 2, 20, 2*32+45);
+			//fixme change to lcd_print lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 200, 2*32+45);
 			//Draw box arround actual value
 			lcd_draw_box(0, 255, 0, 0, 4*32+50, 320,30);
 			}
@@ -183,8 +183,8 @@ void menu_show(void)
 		lcd_draw_filled_box(0, 0, 0, 180, 4*32+51, 100,28);
 		//write actual value
 		itoa( (*pParam).sParam, stringtemp, 10 );// i=Integer;s=Zielstring
-		lcd_write_ram_text("New value:", 255, 255, 255, 2, 20, 4*32+45);
-		lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 200, 4*32+45);
+		//fixme change to lcd_print lcd_write_ram_text("New value:", 255, 255, 255, 2, 20, 4*32+45);
+		//fixme change to lcd_print lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 200, 4*32+45);
 		}
 	else
 		{
@@ -206,7 +206,7 @@ void menu_show(void)
 			{
 			//Write Menue header
 			lcd_draw_filled_box(0, 155, 0, 0, 0, 320,40);
-			lcd_write_flash_text(m_item[(*gpsActualItem).ucTop].strName, 0, 0, 0, 2, 20, 0);
+			//fixme change function 2 lcd_print lcd_write_flash_text(m_item[(*gpsActualItem).ucTop].strName, 0, 0, 0, 2, 20, 0);
 			}
 		//page changed?
 		if(page!=last_page || last_menu_id!=(*gpsActualItem).ucTop)
@@ -226,12 +226,12 @@ void menu_show(void)
 			if(m_item[index].ucItem_sel)
 				{
 				lcd_draw_box(0, 255, 0, 0, i*32+50, 300,30);
-				lcd_write_flash_text(m_item[index].strName, 255, 255, 255, 2, 20, i*32+45);
+				//fixme change function 2 lcd_print lcd_write_flash_text(m_item[index].strName, 255, 255, 255, 2, 20, i*32+45);
 				}
 			else
 				{
 				lcd_draw_box(0, 0, 0, 0, i*32+50, 300,30);
-				lcd_write_flash_text(m_item[index].strName, 255, 255, 255, 2, 20, i*32+45);
+				//fixme change function 2 lcd_print lcd_write_flash_text(m_item[index].strName, 255, 255, 255, 2, 20, i*32+45);
 				}
 			index=m_item[index].ucNext;
 			}
@@ -246,7 +246,7 @@ void restore_menu(void)
 {
 	//Write Menue header
 	lcd_draw_filled_box(0, 155, 0, 0, 0, 320,40);
-	lcd_write_flash_text(m_item[(*gpsActualItem).ucTop].strName, 0, 0, 0, 2, 20, 0);
+	//fixme change function 2 lcd_print lcd_write_flash_text(m_item[(*gpsActualItem).ucTop].strName, 0, 0, 0, 2, 20, 0);
 	lcd_draw_filled_box(0, 0, 0, 0, 41, 320,200);
 	//Show menue-itmes
 	menu_show();
@@ -396,27 +396,27 @@ void system_info(void)
 	while(1)
 		{
 			lcd_draw_filled_box(0, 155, 0, 0, 0, 320,40);
-			lcd_write_ram_text("System information", 0, 0, 0, 2, 20, 0);
+			//fixme change to lcd_print lcd_write_ram_text("System information", 0, 0, 0, 2, 20, 0);
 			lcd_draw_filled_box(0, 0, 0, 0, 41, 320,200);
-			lcd_write_ram_text("Stack Task1:", 255, 255, 255, 2, 20, 0*32+45);
-			lcd_write_ram_text("Stack Task2:", 255, 255, 255, 2, 20, 1*32+45);
-			lcd_write_ram_text("Stack Task3:", 255, 255, 255, 2, 20, 2*32+45);
-			lcd_write_ram_text("Ticks:", 255, 255, 255, 2, 20, 3*32+45);
+			//fixme change to lcd_print lcd_write_ram_text("Stack Task1:", 255, 255, 255, 2, 20, 0*32+45);
+			//fixme change to lcd_print lcd_write_ram_text("Stack Task2:", 255, 255, 255, 2, 20, 1*32+45);
+			//fixme change to lcd_print lcd_write_ram_text("Stack Task3:", 255, 255, 255, 2, 20, 2*32+45);
+			//fixme change to lcd_print lcd_write_ram_text("Ticks:", 255, 255, 255, 2, 20, 3*32+45);
 		
 					//Show task stack usage
 			itoa( OS_GetUnusedStack(1), stringtemp, 10 );// i=Integer;s=Zielstring
 			
-			lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 220, 0*32+45);
+			//fixme change to lcd_print lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 220, 0*32+45);
 			itoa( OS_GetUnusedStack(2), stringtemp, 10 );// i=Integer;s=Zielstring
 			
-			lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 220, 1*32+45);
+			//fixme change to lcd_print lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 220, 1*32+45);
 			itoa( OS_GetUnusedStack(3), stringtemp, 10 );// i=Integer;s=Zielstring
 			
-			lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 220, 2*32+45);
+			//fixme change to lcd_print lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 220, 2*32+45);
 			OS_GetTicks(pTime);
 			itoa( time, stringtemp,10);// i=Integer;s=Zielstring
 			
-			lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 100, 3*32+45);
+			//fixme change to lcd_print lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 100, 3*32+45);
 		}	
 
 		//back
@@ -428,16 +428,17 @@ uint16_t glCommerrcnt; // fixme remove!
 void commError(uint8_t errno)
 {
 
-	char stringtemp[17];
-	uint16_t ret;
+	//char stringtemp[17];
+	//uint16_t ret;
 
 	lcd_clear();
 	lcd_draw_line(255,0,0,0,0,320,240);
 	lcd_draw_line(255,0,0,320,0,0,240);
-	ret = lcd_write_ram_text("Comm Error ", 255, 255, 255, 1, 30, 220);
-	itoa( errno, stringtemp,10);
-	ret = lcd_write_ram_text(stringtemp, 255, 255, 255, 1, ret, 220);
-	itoa( glCommerrcnt, stringtemp,10);
-	ret = lcd_write_ram_text(" #", 255, 255, 255, 1, ret, 220);
-	ret = lcd_write_ram_text(stringtemp, 255, 255, 255, 1, ret, 220);
+	lcd_print(WHITE, BLACK, 1,30, 220,"Comm Error:%i #%i",errno ,glCommerrcnt);
+	//ret = //fixme change to lcd_print lcd_write_ram_text("Comm Error ", 255, 255, 255, 1, 30, 220);
+	//itoa( errno, stringtemp,10);
+	//ret = //fixme change to lcd_print lcd_write_ram_text(stringtemp, 255, 255, 255, 1, ret, 220);
+	//itoa( glCommerrcnt, stringtemp,10);
+	//ret = //fixme change to lcd_print lcd_write_ram_text(" #", 255, 255, 255, 1, ret, 220);
+	//ret = //fixme change to lcd_print lcd_write_ram_text(stringtemp, 255, 255, 255, 1, ret, 220);
 }

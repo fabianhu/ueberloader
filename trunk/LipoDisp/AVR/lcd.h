@@ -96,10 +96,19 @@
 #define LCD_LIGHT_OFF PORTB.OUTCLR = (1<<2)
 
 //other defines
-/*#define SW						0
-#define RED						1
-#define GREEN					2
-#define BLUE					3*/
+#define CHARSPACE 2 		//space between 2 letter in pixel (function lcd_print)
+#define TABSIZE	40		//Distance between 2 tabs in pixel
+#define FONTHEIGHT 16 //height of font in pixel
+
+//some colours
+#define BLACK 0,0,0
+#define WHITE 255,255,255
+#define RED 255,0,0
+#define GREEN 0,255,0
+#define BLUE 0,0,255
+#define YELLOW 255,255,0
+#define ORANGE 255,128,0
+#define GREY 128,128,128
 
 //*****************************************************************************
 //                            P R O T O T Y P E S
@@ -115,9 +124,9 @@ void lcd_draw_circle(uint8_t red, uint8_t green, uint8_t blue, uint16_t center_x
 void lcd_draw_filled_box(uint8_t red, uint8_t green, uint8_t blue, uint16_t x_pos,uint16_t y_pos,uint16_t width,uint16_t hight);
 void lcd_draw_box(uint8_t red, uint8_t green, uint8_t blue, uint16_t x_pos,uint16_t y_pos,uint16_t width,uint16_t hight);
 void lcd_draw_bmp(char *ptr_bmp, uint8_t colour, uint16_t x_pos, uint16_t y_pos);
-void lcd_write_char(uint8_t letter, uint8_t red, uint8_t green, uint8_t blue, uint8_t size, uint16_t x_pos, uint16_t y_pos);
-uint16_t lcd_write_ram_text(char *text, uint8_t red, uint8_t green, uint8_t blue, uint8_t size, uint16_t x_pos, uint16_t y_pos);
-void lcd_write_flash_text(char *text, uint8_t red, uint8_t green, uint8_t blue, uint8_t size, uint16_t x_pos, uint16_t y_pos);
+void lcd_write_char(uint8_t letter, uint8_t font_red, uint8_t font_green, uint8_t font_blue,  uint8_t back_red, uint8_t back_green, uint8_t back_blue, uint8_t size, uint16_t x_pos, uint16_t y_pos);
 void lcd_show_init_screen(void);
+void lcd_print(uint8_t font_red,uint8_t font_green,uint8_t font_blue,uint8_t back_red,uint8_t back_green,uint8_t back_blue, uint8_t size, uint16_t x_pos, uint16_t y_pos,char *text,...);
+char *flash2ram(char *ptr_string);
 
 #endif //LCD_H
