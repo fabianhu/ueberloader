@@ -140,6 +140,8 @@ void TaskGovernor(void)
 
 		if(g_tBattery_Info.eState == eBattCharging)
 		{
+			uint32_t t,t2;
+			OS_GetTicks(&t);
 			vGovernor(
 					myISetpoint,
 					myUSetpoint,
@@ -148,6 +150,8 @@ void TaskGovernor(void)
 					usU_in_act
 					);
 			LED_ON;
+			OS_GetTicks(&t2);
+			t = t2-t;
 		}
 		else
 		{

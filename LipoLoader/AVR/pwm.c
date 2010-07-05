@@ -6,6 +6,8 @@
 #include "pwm.h"
 #include "serial.h"
 #include "OS/FabOS.h"
+#include "ueberloader.h"
+
 extern Battery_Info_t g_tBattery_Info;
 
 void vPWM_Init(void)
@@ -158,6 +160,15 @@ void vGovernor(
 	static uint16_t usPower = 0, usStartstep = STARTMAX;
 	static uint8_t cn = 0;
 	static int16_t I_Set_mA_Ramped = 0;
+		int32_t nConverterPower_W = ((_I_Act_mA) * (_U_Act_mV - _U_Supp_mV));
+
+	if(		_I_Act_mA > (_I_Set_mA+(_I_Set_mA/10)) ||
+			_U_Act_mV > (_U_Set_mV+(_U_Set_mV/10))
+		)
+	{
+		// overshoot prevention
+		//_I_Set_mA = 0; // fixme does not work!!!!!!
+	}
 
 	if(_I_Set_mA <= 0)
 	{
@@ -171,17 +182,6 @@ void vGovernor(
 	else
 	{
 
-//			if(
-//					usI_out_act > (s_Command.I_Max_Set+(s_Command.I_Max_Set/10)) ||
-//					usU_out_act > (s_Command.U_Setpoint+(s_Command.U_Setpoint/10))
-//				)
-//			{
-//				// overshoot prevention
-//				usPower = 0;
-//			}
-//			else
-//			{
-
 		if(_I_Set_mA > STARTUPLEVEL_mA)
 		{
 			if(usStartstep > 0)
@@ -190,21 +190,9 @@ void vGovernor(
 			}
 		}
 
-		int32_t nConverterPower_W = ((_I_Act_mA) * (_U_Act_mV - _U_Supp_mV))/1000000;
 
 
-//      int16_t diff = _I_Act_mA - _I_Set_mA;
-//		if(_U_Act_mV < _U_Set_mV && _I_Act_mA < _I_Set_mA /*&& sConverterPower < MAXCONVERTERPOWER_W*/)
-//		{
-//			if (usPower < PERIOD_H*17/10)
-//				usPower++;
-//		}
-//		else
-//		{
-//			if(usPower>0)
-//				usPower--;
-//		}
-
+// calculate Current setpoint
 		if(_U_Act_mV < _U_Set_mV /*&& sConverterPower < MAXCONVERTERPOWER_W*/)
 		{
 			if (I_Set_mA_Ramped < _I_Set_mA)
@@ -219,7 +207,6 @@ void vGovernor(
 
 		usPower = PID(_I_Act_mA, I_Set_mA_Ramped, 0, 1, 0, 0, PERIOD_H*17/10, 0);
 
-	    int16_t diff = _I_Act_mA - _I_Set_mA;
 
 		// fixme
 		OS_MutexGet(OSMTXBattInfo);
@@ -228,12 +215,10 @@ void vGovernor(
 		g_tBattery_Info.usPWMStep = usStartstep;
 		g_tBattery_Info.usConverterPower_W = (uint16_t)nConverterPower_W;
 		g_tBattery_Info.sISetpoint = I_Set_mA_Ramped;
-		g_tBattery_Info.sDiff = diff;
+		g_tBattery_Info.sDiff = _I_Act_mA - I_Set_mA_Ramped;
 		OS_MutexRelease(OSMTXBattInfo);
 
-		int16_t usDiffAbs = (diff>0)?diff:-diff;
-
-		if(usDiffAbs < _I_Set_mA/20 && _I_Set_mA > STARTUPLEVEL_mA/2)
+		if(abs(_I_Act_mA - _I_Set_mA) < _I_Set_mA/20 && _I_Set_mA > STARTUPLEVEL_mA/2)
 		{
 			if (++cn == 3)
 			{
@@ -241,7 +226,6 @@ void vGovernor(
 				if (usStartstep >0)
 					usStartstep--; // muss null werden.
 			}
-			//usStartstep =0;
 		}
 		else
 		{
@@ -267,9 +251,9 @@ uint16_t PID(int16_t actual, int16_t set, uint16_t kP, int16_t kI, uint16_t kD, 
 	der = actual-old_actual;
 	old_actual= actual;
 
-	P = (kP * diff)/8;
+	P = (kP * diff)/255;
 	I = I + (kI*diff);
-	I = limit(I,(uint32_t)lowerLimit*64,(uint32_t)upperLimit*64); // windup prot.
+	I = limit(I,(uint32_t)lowerLimit*255,(uint32_t)upperLimit*255); // wind-up protection
 	D = der*kD;
 
 	// reset integrator
@@ -281,10 +265,10 @@ uint16_t PID(int16_t actual, int16_t set, uint16_t kP, int16_t kI, uint16_t kD, 
 	}
 	else
 	{
-		asm("nop");
+		asm("nop"); // fixme breakpoint only
 	}
 
-	res = P+I/64+D;
+	res = P+I/255+D;
 
 	return limit(res,lowerLimit,upperLimit);
 }
