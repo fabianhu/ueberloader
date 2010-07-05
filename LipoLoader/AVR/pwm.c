@@ -155,8 +155,9 @@ void vGovernor(
 		uint16_t _U_Act_mV,
 		uint16_t _U_Supp_mV)
 {
-	static uint16_t usPower, usStartstep;
-	static uint8_t cn=0;
+	static uint16_t usPower = 0, usStartstep = STARTMAX;
+	static uint8_t cn = 0;
+	static int16_t I_Set_mA_Ramped = 0;
 
 	if(_I_Set_mA <= 0)
 	{
@@ -164,6 +165,8 @@ void vGovernor(
 		ENABLE_A_OFF;ENABLE_B_OFF;
 		usStartstep = STARTMAX;
 		vPWM_Set(usPower,usStartstep);
+		PID(0,0,0,0,0,0,0,1);
+		I_Set_mA_Ramped = 0;
 	}
 	else
 	{
@@ -182,31 +185,51 @@ void vGovernor(
 		if(_I_Set_mA > STARTUPLEVEL_mA)
 		{
 			if(usStartstep > 0)
+			{
 				_I_Set_mA = STARTUPLEVEL_mA;
+			}
 		}
 
-		int16_t diff = _I_Act_mA - _I_Set_mA;
-		//int16_t sConverterPower = (_I_Act_mA/1000) * ((_U_Act_mV - _U_Supp_mV)/1000);
+		int32_t nConverterPower_W = ((_I_Act_mA) * (_U_Act_mV - _U_Supp_mV))/1000000;
 
 
-		if(_U_Act_mV < _U_Set_mV && _I_Act_mA < _I_Set_mA /*&& sConverterPower < MAXCONVERTERPOWER_W*/)
+//      int16_t diff = _I_Act_mA - _I_Set_mA;
+//		if(_U_Act_mV < _U_Set_mV && _I_Act_mA < _I_Set_mA /*&& sConverterPower < MAXCONVERTERPOWER_W*/)
+//		{
+//			if (usPower < PERIOD_H*17/10)
+//				usPower++;
+//		}
+//		else
+//		{
+//			if(usPower>0)
+//				usPower--;
+//		}
+
+		if(_U_Act_mV < _U_Set_mV /*&& sConverterPower < MAXCONVERTERPOWER_W*/)
 		{
-			if (usPower < PERIOD_H*17/10)
-				usPower++;
+			if (I_Set_mA_Ramped < _I_Set_mA)
+				I_Set_mA_Ramped++;
 		}
 		else
 		{
-			if(usPower>0)
-				usPower--;
+			if (I_Set_mA_Ramped > 0)
+				I_Set_mA_Ramped--;
 		}
+
+
+		usPower = PID(_I_Act_mA, I_Set_mA_Ramped, 0, 1, 0, 0, PERIOD_H*17/10, 0);
+
+	    int16_t diff = _I_Act_mA - _I_Set_mA;
 
 		// fixme
 		OS_MutexGet(OSMTXBattInfo);
 		//pwm und pwmdings
 		g_tBattery_Info.usPWM = usPower;
 		g_tBattery_Info.usPWMStep = usStartstep;
+		g_tBattery_Info.usConverterPower_W = (uint16_t)nConverterPower_W;
+		g_tBattery_Info.sISetpoint = I_Set_mA_Ramped;
+		g_tBattery_Info.sDiff = diff;
 		OS_MutexRelease(OSMTXBattInfo);
-
 
 		int16_t usDiffAbs = (diff>0)?diff:-diff;
 
@@ -230,27 +253,40 @@ void vGovernor(
 	}
 }
 
-uint16_t PID(int16_t in, int16_t set, uint16_t kP, uint16_t kI, uint16_t kD)
+uint16_t PID(int16_t actual, int16_t set, uint16_t kP, int16_t kI, uint16_t kD, int16_t lowerLimit, int16_t upperLimit, uint8_t zero)
 {
-	static uint16_t in1;
+	int32_t res;
+	int16_t P,D;
+	static int32_t I;
+	static int16_t old_actual;
+	int16_t diff;
+	int16_t der;
 
-	int16_t diff = in-set;
-	int16_t der = in-in1;
-	in1= in;
+	diff = set-actual;
 
-	uint16_t P,D;
-	static uint16_t I;
+	der = actual-old_actual;
+	old_actual= actual;
 
-	P = kP * diff;
-	I = I + kI*diff;
+	P = (kP * diff)/8;
+	I = I + (kI*diff);
+	I = limit(I,(uint32_t)lowerLimit*64,(uint32_t)upperLimit*64); // windup prot.
 	D = der*kD;
 
-
-	// limit integrator
 	// reset integrator
+	if (zero)
+	{
+		P = 0;
+		I = 0;
+		D = 0;
+	}
+	else
+	{
+		asm("nop");
+	}
 
+	res = P+I/64+D;
 
-	return limit(P+I+D,0,100);
+	return limit(res,lowerLimit,upperLimit);
 }
 
 

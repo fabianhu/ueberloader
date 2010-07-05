@@ -70,7 +70,7 @@ void TaskCommRX(void)
 
 
 			OS_ENTERCRITICAL;
-			g_tCommand.usCurrentSetpoint = 500;
+			g_tCommand.usCurrentSetpoint = 1000;
 			g_tCommand.usMinBalanceVolt_mV = 3000;
 			g_tCommand.usVoltageSetpoint_mV = 4150;
 			g_tCommand.eChargerMode = eModeAuto;
