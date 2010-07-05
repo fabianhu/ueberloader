@@ -118,15 +118,15 @@ void TaskDisplay(void)
 			}
 
 			ypos = 64;
-			lcd_print(WHITE, BLACK, 1, 200, ypos,"PWM %i  ",g_tBattery_Info.usPWM);
+			lcd_print(WHITE, BLACK, 1, 200, ypos,"PWM %i   ",g_tBattery_Info.usPWM);
 			ypos += LINEDIFF;
-			lcd_print(WHITE, BLACK, 1, 200, ypos,"ASYNC %i  ",g_tBattery_Info.usPWMStep);
+			lcd_print(WHITE, BLACK, 1, 200, ypos,"ASYNC %i   ",g_tBattery_Info.usPWMStep);
 			ypos += LINEDIFF;
-			lcd_print(WHITE, BLACK, 1, 200, ypos,"ConvPwr %i  ",g_tBattery_Info.usConverterPower_W);
+			lcd_print(WHITE, BLACK, 1, 200, ypos,"ConvPwr %i   ",g_tBattery_Info.usConverterPower_W);
 			ypos += LINEDIFF;
-			lcd_print(WHITE, BLACK, 1, 200, ypos,"Setp %i mA  ",g_tBattery_Info.sISetpoint);
+			lcd_print(WHITE, BLACK, 1, 200, ypos,"Setp %i mA   ",g_tBattery_Info.sISetpoint);
 			ypos += LINEDIFF;
-			lcd_print(WHITE, BLACK, 1, 200, ypos,"diff %i mA  ",g_tBattery_Info.sDiff);
+			lcd_print(WHITE, BLACK, 1, 200, ypos,"diff %i mA   ",g_tBattery_Info.sDiff);
 			ypos += LINEDIFF;
 
 			char buf[10];
@@ -139,7 +139,7 @@ void TaskDisplay(void)
 					strcpy(buf,"Full      ");
 					break;
 				case eBattUnknown:
-					strcpy(buf,"Unknown   ");
+					strcpy(buf,"Waiting   ");
 					break;
 				case eBattError:
 					strcpy(buf,"Batt.Error");
@@ -163,7 +163,7 @@ void TaskDisplay(void)
 		}
 
 
-		OS_WaitTicks(OSALMWaitDisp,333);
+		OS_WaitTicks(OSALMWaitDisp,100);
 	}
 
 }
