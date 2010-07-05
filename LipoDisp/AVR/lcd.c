@@ -490,7 +490,7 @@ void itoa10(int value, char* result)
 	do {
 		tmp_value = value;
 		value /= 10;
-		*pt1++ = '0'+abs(tmp_value - value * 10);
+		*pt1++ = '0'+abs(tmp_value - (value * 10));
 	} while ( value );
 	// negative?
 	if (tmp_value < 0) *pt1++ = '-';
