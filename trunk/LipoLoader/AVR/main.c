@@ -11,9 +11,9 @@
 #include "usart.h"
 
 // *********  Task definitions
-OS_DeclareTask(TaskGovernor,200);
-OS_DeclareTask(TaskBalance,200);
-OS_DeclareTask(TaskCommRX,200);
+OS_DeclareTask(TaskGovernor,300);
+OS_DeclareTask(TaskBalance,300);
+OS_DeclareTask(TaskCommRX,300);
 OS_DeclareTask(TaskMonitor,200);
 
 //OS_DeclareQueue(DemoQ,10,4);

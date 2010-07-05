@@ -42,7 +42,7 @@ void usFilter(uint16_t* o, uint16_t* n)
 	else
 	{
 		temp = *o * 9ul + *n;
-		*o = temp / 10;
+		*o = (temp+5) / 10; // "halbes dazu, wg Rundungsfehler"
 	}
 }
 
@@ -54,7 +54,7 @@ void sFilter(int16_t* o, int16_t* n)
 	else
 	{
 		temp = *o * 9ul + *n;
-		*o = temp / 10;
+		*o = (temp+5) / 10; // "halbes dazu, wg Rundungsfehler"
 	}
 }
 

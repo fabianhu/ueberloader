@@ -19,6 +19,8 @@ void vGovernor(
 		uint16_t _U_Supp_mV
 		);
 
+uint16_t PID(int16_t actual, int16_t set, uint16_t kP, int16_t kI, uint16_t kD, int16_t lowerLimit, int16_t upperLimit, uint8_t zero);
+
 // Defines
 #define ENABLE_A_OFF	TCC0.CCBBUF = 0;
 #define ENABLE_B_OFF	TCD0.CCBBUF = TCD0.PERBUF +4; // inverted
@@ -37,6 +39,6 @@ void vGovernor(
 #define MAXCONVERTERPOWER_W 13 // maximum converter power
 
 
-#define min(x,y) ((x<y)?x:y)
-#define max(x,y) ((x>y)?x:y)
-#define limit(v,u,l) ((v<l)?l:(v>u)?u:v)
+#define min(x,y) (((x)<(y))?(x):(y))
+#define max(x,y) (((x)>(y))?(x):(y))
+#define limit(v,l,u) (((v)<(l))?(l):(((v)>(u))?(u):(v)))
