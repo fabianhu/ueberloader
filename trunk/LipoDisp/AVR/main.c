@@ -44,9 +44,9 @@ int main(void)
 
 	menu_init();
 
-    OS_CreateTask(TaskDisplay, 0);
-    OS_CreateTask(TaskCommand, 1);
-	OS_CreateTask(TaskMonitor, 2);
+    OS_CreateTask(TaskDisplay, OSTSKDisplay);
+    OS_CreateTask(TaskCommand, OSTSKCommand);
+	OS_CreateTask(TaskMonitor, OSTSKMonitor);
     //OS_CreateTask(TaskCommRX, 2);
 
 	OS_CreateAlarm(OSALMWaitDisp,OSTSKDisplay);
@@ -197,7 +197,7 @@ void TaskCommand(void)
 	while(1)
 	{
 		OS_WaitAlarm(OSALMCommandRepeat);
-		OS_SetAlarm(OSALMCommandRepeat,1000);
+		OS_SetAlarm(OSALMCommandRepeat,333);
 
 		UCIFrame_t myU;
 

@@ -28,8 +28,8 @@
 
 // Task definitions
 
-#define OSTSKDisplay   0
-#define OSTSKCommand  1
+#define OSTSKDisplay   1
+#define OSTSKCommand  0
 //#define OSTSKCommRX   2
 #define OSTSKMonitor  2
 
