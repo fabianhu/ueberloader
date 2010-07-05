@@ -11,6 +11,7 @@
 #include "lcd.h"
 #include "font.h"
 #include <stdio.h>
+#include <string.h>
 //*****************************************************************************
 //                    S T R I N G S  / V A R S
 //*****************************************************************************
@@ -471,10 +472,55 @@ void lcd_show_init_screen(void)
 	//Powered by
 	lcd_print(WHITE, BLACK , 2, 30, 50,flash2ram(&txt_init1));
 	//FAB
-	lcd_print(YELLOW, BLACK , 2, 100, 100,flash2ram(&txt_init2));
+	lcd_print(YELLOW, BLACK , 3, 100, 100,flash2ram(&txt_init2));
 	//OS
-	lcd_print(RED, BLACK , 2, 185, 110,flash2ram(&txt_init3));
+	lcd_print(RED, BLACK , 3, 185, 110,flash2ram(&txt_init3));
 };
+
+
+
+void itoa10(int value, char* result)
+{
+	char* pt1 = result;
+	char* pt2 = result;
+	char tmp_char;
+	int tmp_value;
+
+	// div by 10
+	do {
+		tmp_value = value;
+		value /= 10;
+		*pt1++ = '0'+abs(tmp_value - value * 10);
+	} while ( value );
+	// negative?
+	if (tmp_value < 0) *pt1++ = '-';
+	*pt1-- = '\0';
+	// revert
+	while(pt2 < pt1) {
+		tmp_char = *pt1;
+		*pt1--= *pt2;
+		*pt2++ = tmp_char;
+	}
+}
+
+void itoa10ra(int value, char* result)
+{
+	char* pt1 = result+5;
+	*(pt1+1) = '\0';
+	int tmp_value;
+
+	memset(result,' ',6);
+
+	// div by 10
+	do {
+		tmp_value = value;
+		value /= 10;
+		*pt1-- = '0'+abs(tmp_value - value * 10);
+	} while ( value );
+	// negative?
+	if (tmp_value < 0) *pt1++ = '-';
+	
+}
 
 void lcd_print(uint8_t font_red,uint8_t font_green, uint8_t font_blue,uint8_t back_red,uint8_t back_green, uint8_t back_blue, uint8_t size, uint16_t x_pos, uint16_t y_pos,char *ptr_string,...)
 {
@@ -482,7 +528,7 @@ void lcd_print(uint8_t font_red,uint8_t font_green, uint8_t font_blue,uint8_t ba
     va_start (specifier, ptr_string);   	//initialize specifier list       
     char act_sign;                      //actual sign of the string
 	char pixel_width, *ptr_buf, buf[8]={};
-	uint8_t tabwidth=0;	
+	uint8_t tabwidth=0;
 	uint16_t new_x_pos, new_y_pos;
 	//get position
 	new_x_pos=x_pos;
@@ -507,29 +553,53 @@ void lcd_print(uint8_t font_red,uint8_t font_green, uint8_t font_blue,uint8_t ba
 
             switch (act_sign)
                 {           
-                case 'i': //lcd_print integerchar
-                    //tx_wr_pos += sprintf(tx_wr_pos,"%c",//va_arg(specifier,int));
-                    //convert uint16_t
-					itoa(va_arg(specifier,uint16_t),buf,10);
-					//lcd_print value
-					ptr_buf=buf;
-					while(*ptr_buf)
+					case 'i': //lcd_print integerchar
+						//convert uint16_t
+						itoa10(va_arg(specifier,uint16_t),buf);
+						//lcd_print value
+						ptr_buf=buf;
+						while(*ptr_buf)
 						{
-						//get letter width
-						pixel_width = pgm_read_byte(font[*ptr_buf-32]);
-						//check if line ends
-						if(new_x_pos+pixel_width*size>319)
+							//get letter width
+							pixel_width = pgm_read_byte(font[*ptr_buf-32]);
+							//check if line ends
+							if(new_x_pos+pixel_width*size>319)
+							{
+								new_x_pos=0;
+								new_y_pos+=FONTHEIGHT*size;
+							}
+							//Write sign
+							lcd_write_char(*ptr_buf++, font_red, font_green, font_blue, back_red, back_green, back_blue, size, new_x_pos, new_y_pos);
+							//adjust position
+							new_x_pos+=size*(pixel_width+CHARSPACE);
+						}
+						break;
+					case 'd': // fixed point; next char is: comma shift to !left! (%d1 = xxxx.x %d2= xxx.xx etc.)
+						;
+						uint8_t shift = (*ptr_string++)-48; // get shift amount
+											//convert uint16_t
+						itoa10(va_arg(specifier,uint16_t),buf);
+						//lcd_print value
+						ptr_buf=buf;
+						while(*ptr_buf)
 						{
-						new_x_pos=0;
-						new_y_pos+=FONTHEIGHT*size;
+							//get letter width
+							pixel_width = pgm_read_byte(font[*ptr_buf-32]);
+							//check if line ends
+							if(new_x_pos+pixel_width*size>319)
+							{
+								new_x_pos=0;
+								new_y_pos+=FONTHEIGHT*size;
+							}
+							//Write sign
+							lcd_write_char(*ptr_buf++, font_red, font_green, font_blue, back_red, back_green, back_blue, size, new_x_pos, new_y_pos);
+							//adjust position
+							new_x_pos+=size*(pixel_width+CHARSPACE);
 						}
-						//Write sign
-						lcd_write_char(*ptr_buf++, font_red, font_green, font_blue, back_red, back_green, back_blue, size, new_x_pos, new_y_pos);
-        				//adjust position
-						new_x_pos+=size*(pixel_width+CHARSPACE);
-						}
-					break;
-				//fixme other "itoa's"                                                    
+						break;
+					default:
+						break;
+					//fixme other "itoa's"
                 }
         }
 		else if (act_sign=='/')  //format sign, e.g. tab
