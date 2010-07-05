@@ -165,13 +165,13 @@ void menu_show(void)
 			//fixme change function 2 lcd_print lcd_write_flash_text(m_item[get_index((*gpsActualItem).ucID)].strName, 0, 0, 0, 2, 20, 0);
 			lcd_draw_filled_box(0, 0, 0, 0, 41, 320,200);
 			//Write old parameter value and limits
-			itoa( (*pParam).sParam, stringtemp, 10 );// i=Integer;s=Zielstring
+			itoa10( (*pParam).sParam, stringtemp);// i=Integer;s=Zielstring
 			//fixme change to lcd_print lcd_write_ram_text("Old value:", 255, 255, 255, 2, 20, 0*32+45);
 			//fixme change to lcd_print lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 200, 0*32+45);
-			itoa( (*pParam).sLowerLimit, stringtemp, 10 );// i=Integer;s=Zielstring
+			itoa10( (*pParam).sLowerLimit, stringtemp);// i=Integer;s=Zielstring
 			//fixme change to lcd_print lcd_write_ram_text("Lower limit:", 255, 255, 255, 2, 20, 1*32+45);
 			//fixme change to lcd_print lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 200, 1*32+45);
-			itoa( (*pParam).sUpperLimit, stringtemp, 10 );// i=Integer;s=Zielstring
+			itoa10( (*pParam).sUpperLimit, stringtemp);// i=Integer;s=Zielstring
 			//fixme change to lcd_print lcd_write_ram_text("Upper limit:", 255, 255, 255, 2, 20, 2*32+45);
 			//fixme change to lcd_print lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 200, 2*32+45);
 			//Draw box arround actual value
@@ -182,7 +182,7 @@ void menu_show(void)
 		//clear old value
 		lcd_draw_filled_box(0, 0, 0, 180, 4*32+51, 100,28);
 		//write actual value
-		itoa( (*pParam).sParam, stringtemp, 10 );// i=Integer;s=Zielstring
+		itoa10( (*pParam).sParam, stringtemp);// i=Integer;s=Zielstring
 		//fixme change to lcd_print lcd_write_ram_text("New value:", 255, 255, 255, 2, 20, 4*32+45);
 		//fixme change to lcd_print lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 200, 4*32+45);
 		}
@@ -404,17 +404,17 @@ void system_info(void)
 			//fixme change to lcd_print lcd_write_ram_text("Ticks:", 255, 255, 255, 2, 20, 3*32+45);
 		
 					//Show task stack usage
-			itoa( OS_GetUnusedStack(1), stringtemp, 10 );// i=Integer;s=Zielstring
+			itoa10( OS_GetUnusedStack(1), stringtemp);// i=Integer;s=Zielstring
 			
 			//fixme change to lcd_print lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 220, 0*32+45);
-			itoa( OS_GetUnusedStack(2), stringtemp, 10 );// i=Integer;s=Zielstring
+			itoa10( OS_GetUnusedStack(2), stringtemp);// i=Integer;s=Zielstring
 			
 			//fixme change to lcd_print lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 220, 1*32+45);
-			itoa( OS_GetUnusedStack(3), stringtemp, 10 );// i=Integer;s=Zielstring
+			itoa10( OS_GetUnusedStack(3), stringtemp);// i=Integer;s=Zielstring
 			
 			//fixme change to lcd_print lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 220, 2*32+45);
 			OS_GetTicks(pTime);
-			itoa( time, stringtemp,10);// i=Integer;s=Zielstring
+			itoa10( time, stringtemp);// i=Integer;s=Zielstring
 			
 			//fixme change to lcd_print lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 100, 3*32+45);
 		}	
@@ -435,10 +435,4 @@ void commError(uint8_t errno)
 	lcd_draw_line(255,0,0,0,0,320,240);
 	lcd_draw_line(255,0,0,320,0,0,240);
 	lcd_print(WHITE, BLACK, 1,30, 220,"Comm Error:%i #%i",errno ,glCommerrcnt);
-	//ret = //fixme change to lcd_print lcd_write_ram_text("Comm Error ", 255, 255, 255, 1, 30, 220);
-	//itoa( errno, stringtemp,10);
-	//ret = //fixme change to lcd_print lcd_write_ram_text(stringtemp, 255, 255, 255, 1, ret, 220);
-	//itoa( glCommerrcnt, stringtemp,10);
-	//ret = //fixme change to lcd_print lcd_write_ram_text(" #", 255, 255, 255, 1, ret, 220);
-	//ret = //fixme change to lcd_print lcd_write_ram_text(stringtemp, 255, 255, 255, 1, ret, 220);
 }

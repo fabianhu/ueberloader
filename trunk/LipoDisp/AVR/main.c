@@ -19,8 +19,8 @@ extern Battery_Info_t g_tBattery_Info;
 extern uint8_t glCommError; // fixme do better!!
 
 // *********  Task definitions
-OS_DeclareTask(TaskDisplay,500);
-OS_DeclareTask(TaskCommand,200);
+OS_DeclareTask(TaskDisplay,700);
+OS_DeclareTask(TaskCommand,300);
 //OS_DeclareTask(TaskCommRX,200);
 OS_DeclareTask(TaskMonitor,200);
 
@@ -66,54 +66,6 @@ int main(void)
 
 }
 
-extern uint8_t font[96][36] PROGMEM;
-
-//not needed anymore ;-)
-/*uint16_t lcd_get_text_len(char *text, uint8_t size)
-{
-	uint8_t *ptr_letter;
-	uint16_t total_width=0;
-	while(*text!=0x00)
-	{
-		//get letter width
-		ptr_letter = font[*text-32];
-		total_width += pgm_read_byte(ptr_letter)+size;
-		//next letter
-		text++;
-	}
-	return total_width*size;
-}*/
-
-//not needed anymore ;-)
-/*void lcd_write_value_after_text_w_cl(char* text,uint16_t value, char* unit, uint8_t r,uint8_t g,uint8_t b, uint8_t size, uint16_t xpos, uint16_t ypos)
-{
-	uint16_t ret,ret2;
-	char buf[8];
-	ret = lcd_get_text_len(text,size);
-	itoa(value,buf,10);
-	ret2 = lcd_get_text_len(buf,size);
-	ret2 += lcd_get_text_len(unit,size);
-	lcd_draw_filled_box(0,0,0,ret,ypos,ret2+size*10,size*16); // size*10 is spare, if next number is shorter.
-	ret = lcd_write_ram_text(buf,r,g,b,size,ret,ypos);
-	lcd_write_ram_text(unit,r,g,b,size,ret,ypos);
-
-}*/
-
-//not needed anymore ;-)
-/*void lcd_write_value_text(char* text,uint16_t value, char* unit, uint8_t size, uint16_t xpos, uint16_t ypos)
-{
-#define R 255
-#define G 255
-#define B 255
-
-	uint16_t ret;
-	char buf[8];
-	itoa(value,buf,10);
-	ret = lcd_write_ram_text(text,R,G,B,size,xpos,ypos);
-	ret = lcd_write_ram_text(buf,R,G,0,size,ret,ypos);
-	lcd_write_ram_text(unit,R,G,B,size,ret,ypos);
-}*/
-
 void TaskDisplay(void)
 {
 	uint16_t ypos=0;
@@ -125,9 +77,10 @@ void TaskDisplay(void)
 
 	touch_init();
 
-	lcd_show_init_screen();
 	lcd_clear();//lcd clear needed here because a new screen is shown
-	OS_WaitTicks(OSALMWaitDisp,500);
+	lcd_show_init_screen();
+	OS_WaitTicks(OSALMWaitDisp,1000);
+	lcd_clear();//lcd clear needed here because a new screen is shown
 
 	while(1)
 	{
@@ -136,7 +89,7 @@ void TaskDisplay(void)
 		OS_GetTicks(&t1);
 
 		//fixme for lcd_print function test
-		if(1)//(!glCommError)
+		if(!glCommError)
 		{
 			//the lcd_print function overwrites old text-> no lcd_clear needed!
 			//lcd_clear();
@@ -164,6 +117,17 @@ void TaskDisplay(void)
 			ypos += LINEDIFF;
 			}
 
+			ypos = 64;
+			lcd_print(WHITE, BLACK, 1, 200, ypos,"PWM %i  ",g_tBattery_Info.usPWM);
+			ypos += LINEDIFF;
+			lcd_print(WHITE, BLACK, 1, 200, ypos,"ASYNC %i  ",g_tBattery_Info.usPWMStep);
+			ypos += LINEDIFF;
+			lcd_print(WHITE, BLACK, 1, 200, ypos,"ConvPwr %i  ",g_tBattery_Info.usConverterPower_W);
+			ypos += LINEDIFF;
+			lcd_print(WHITE, BLACK, 1, 200, ypos,"Setp %i mA  ",g_tBattery_Info.sISetpoint);
+			ypos += LINEDIFF;
+			lcd_print(WHITE, BLACK, 1, 200, ypos,"diff %i mA  ",g_tBattery_Info.sDiff);
+			ypos += LINEDIFF;
 
 			char buf[10];
 			switch (g_tBattery_Info.eState)
@@ -199,7 +163,7 @@ void TaskDisplay(void)
 		}
 
 
-		OS_WaitTicks(OSALMWaitDisp,500);
+		OS_WaitTicks(OSALMWaitDisp,333);
 	}
 
 }

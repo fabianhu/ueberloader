@@ -14,7 +14,7 @@
 
 //#include <util/delay.h>
 #include <avr/io.h>
-#include <stdlib.h>
+//#include <stdlib.h>
 // stdlib.h-examples:
 // Integer in String for 	itoa( i, s, 10 ) i=Integer;s=Zielstring
 // double/float in String 	dtostrf( f, 6, 3, s ) f=float;6=Gesamtstellen;3=Nachkommastelle;s=Zielstring
@@ -110,6 +110,9 @@
 #define ORANGE 255,128,0
 #define GREY 128,128,128
 
+
+#define abs(X) (X<0?-X:X)
+
 //*****************************************************************************
 //                            P R O T O T Y P E S
 //*****************************************************************************
@@ -128,5 +131,6 @@ void lcd_write_char(uint8_t letter, uint8_t font_red, uint8_t font_green, uint8_
 void lcd_show_init_screen(void);
 void lcd_print(uint8_t font_red,uint8_t font_green,uint8_t font_blue,uint8_t back_red,uint8_t back_green,uint8_t back_blue, uint8_t size, uint16_t x_pos, uint16_t y_pos,char *text,...);
 char *flash2ram(char *ptr_string);
+void itoa10(int value, char* result);
 
 #endif //LCD_H
