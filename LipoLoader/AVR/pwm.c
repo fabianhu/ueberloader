@@ -39,6 +39,8 @@ void vPWM_Init(void)
 
 	// sync timers via event 0
 	EVSYS.STROBE = 0b00000001;
+
+	vPWM_Set(0,STARTMAX);
 }
 
 
@@ -148,76 +150,28 @@ void SetEnableBoost(uint16_t usStartstep) // 1000-0 scaled; 0= fully started
 	}
 }
 
-uint16_t gTest;
-
-void vGovernor(
-		uint16_t _I_Set_mA,
-		uint16_t _U_Set_mV,
-		uint16_t _I_Act_mA,
-		uint16_t _U_Act_mV,
-		uint16_t _U_Supp_mV)
+void vGovernor(	uint16_t _I_Set_mA,	uint16_t _I_Act_mA)
 {
-	static uint16_t usPower = 0, usStartstep = STARTMAX;
+	uint16_t usPower = 0;
+	static uint16_t usStartstep = STARTMAX;
 	static uint8_t cn = 0;
-	static int16_t I_Set_mA_Ramped = 0;
-		int32_t nConverterPower_W = ((_I_Act_mA) * (_U_Act_mV - _U_Supp_mV));
-
-	if(		_I_Act_mA > (_I_Set_mA+(_I_Set_mA/10)) ||
-			_U_Act_mV > (_U_Set_mV+(_U_Set_mV/10))
-		)
-	{
-		// overshoot prevention
-		//_I_Set_mA = 0; // fixme does not work!!!!!!
-	}
 
 	if(_I_Set_mA <= 0)
 	{
-		usPower = 0;
 		ENABLE_A_OFF;ENABLE_B_OFF;
-		usStartstep = STARTMAX;
-		vPWM_Set(usPower,usStartstep);
+		usStartstep = STARTMAX; // reset, because of static !!
+		vPWM_Set(0,usStartstep);
 		PID(0,0,0,0,0,0,0,1);
-		I_Set_mA_Ramped = 0;
 	}
 	else
 	{
 
-		if(_I_Set_mA > STARTUPLEVEL_mA)
+		if(_I_Set_mA > STARTUPLEVEL_mA && usStartstep > 0)
 		{
-			if(usStartstep > 0)
-			{
 				_I_Set_mA = STARTUPLEVEL_mA;
-			}
 		}
 
-
-
-// calculate Current setpoint
-		if(_U_Act_mV < _U_Set_mV /*&& sConverterPower < MAXCONVERTERPOWER_W*/)
-		{
-			if (I_Set_mA_Ramped < _I_Set_mA)
-				I_Set_mA_Ramped++;
-		}
-		else
-		{
-			if (I_Set_mA_Ramped > 0)
-				I_Set_mA_Ramped--;
-		}
-
-
-		usPower = PID(_I_Act_mA, I_Set_mA_Ramped, 0, 1, 0, 0, PERIOD_H*17/10, 0);
-
-
-		// fixme
-		OS_MutexGet(OSMTXBattInfo);
-		//pwm und pwmdings
-		g_tBattery_Info.usPWM = usPower;
-		g_tBattery_Info.usPWMStep = usStartstep;
-		g_tBattery_Info.usConverterPower_W = (uint16_t)nConverterPower_W;
-		g_tBattery_Info.sISetpoint = I_Set_mA_Ramped;
-		g_tBattery_Info.sDiff = _I_Act_mA - I_Set_mA_Ramped;
-		OS_MutexRelease(OSMTXBattInfo);
-
+// calculate startstep
 		if(abs(_I_Act_mA - _I_Set_mA) < _I_Set_mA/20 && _I_Set_mA > STARTUPLEVEL_mA/2)
 		{
 			if (++cn == 3)
@@ -227,21 +181,56 @@ void vGovernor(
 					usStartstep--; // muss null werden.
 			}
 		}
-		else
-		{
-			//usStartstep = STARTMAX;
-		}
+
+		usPower = PID(_I_Act_mA, _I_Set_mA, 0, 1, 0, 0, PERIOD_H*17/10, 0);
 
 		vPWM_Set(usPower,usStartstep);
-		gTest = usPower;
 	}
+
+	// fixme
+	OS_MutexGet(OSMTXBattInfo);
+	//pwm und pwmdings
+	g_tBattery_Info.usPWM = usPower;
+	g_tBattery_Info.usPWMStep = usStartstep;
+	g_tBattery_Info.sISetpoint = _I_Set_mA;
+	g_tBattery_Info.sDiff = _I_Act_mA - _I_Set_mA;
+	OS_MutexRelease(OSMTXBattInfo);
 }
+
+/*
+void RampUpDn(uint16_t* ramped, uint16_t target)
+{
+	if(*ramped < target)
+		(*ramped)++;
+	else if(*ramped > target)
+		(*ramped)--;
+}
+
+void RampUp(uint16_t* ramped, uint16_t target)
+{
+	if(*ramped < target)
+		(*ramped)++;
+	else if(*ramped > target)
+		(*ramped)= target;
+}
+
+void RampDn(uint16_t* ramped, uint16_t target)
+{
+	if(*ramped < target)
+		(*ramped)= target;
+	else if(*ramped > target)
+		(*ramped)--;
+}*/
 
 uint16_t PID(int16_t actual, int16_t set, uint16_t kP, int16_t kI, uint16_t kD, int16_t lowerLimit, int16_t upperLimit, uint8_t zero)
 {
+
+#define I_REDUCTION 128
+
 	int32_t res;
 	int16_t P,D;
-	static int32_t I;
+	//static uint8_t r=0;
+	static int32_t I=0;
 	static int16_t old_actual;
 	int16_t diff;
 	int16_t der;
@@ -251,9 +240,9 @@ uint16_t PID(int16_t actual, int16_t set, uint16_t kP, int16_t kI, uint16_t kD, 
 	der = actual-old_actual;
 	old_actual= actual;
 
-	P = (kP * diff)/255;
+	P = (kP * diff)/8192;
 	I = I + (kI*diff);
-	I = limit(I,(uint32_t)lowerLimit*255,(uint32_t)upperLimit*255); // wind-up protection
+	I = limit(I,(uint32_t)lowerLimit*I_REDUCTION,(uint32_t)upperLimit*I_REDUCTION); // wind-up protection
 	D = der*kD;
 
 	// reset integrator
@@ -268,7 +257,29 @@ uint16_t PID(int16_t actual, int16_t set, uint16_t kP, int16_t kI, uint16_t kD, 
 		asm("nop"); // fixme breakpoint only
 	}
 
-	res = P+I/255+D;
+/*
+
+	r++;
+	if (r == 10)
+	{
+		if(actual < set)
+		{
+			I+=255;
+		}
+		else if (actual > set)
+		{
+			I-=255;
+		}
+		r=0;
+	}
+	P=0;D=0;
+
+	I = limit(I,(uint32_t)lowerLimit*255,(uint32_t)upperLimit*255);
+
+	if (zero) I = 0;
+	*/
+
+	res = P + I/I_REDUCTION + D;
 
 	return limit(res,lowerLimit,upperLimit);
 }
