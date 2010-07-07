@@ -101,7 +101,7 @@ void HandleSerial(UCIFrame_t *_RXFrame)
 			OS_MutexRelease(OSMTXCommand);
 			break;
 		case UCI_GET_INTs:
-
+			// fixme implement!
 			break;
 		case UCI_GET_OPVs:
 			OS_MutexGet(OSMTXBattInfo);
