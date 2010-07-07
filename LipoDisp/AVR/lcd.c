@@ -48,7 +48,6 @@ uint8_t lcd_read_data()
 	LCD_RD_C;	//Toggle RD
 	data = LCD_DATA_PIN;		//read data
 	LCD_RD_S;	//Toggle RD
-	//_delay_us(1); // fixme why wait?
 	LCD_DATA_DDR = 0xff;		//port as output
 	return data;	
 }
@@ -574,7 +573,7 @@ void lcd_print(uint8_t font_red,uint8_t font_green, uint8_t font_blue,uint8_t ba
 							new_x_pos+=size*(pixel_width+CHARSPACE);
 						}
 						break;
-					case 'd': // fixed point; next char is: comma shift to !left! (%d1 = xxxx.x %d2= xxx.xx etc.)
+					case 'd': // fixed point; next char is: comma shift to !left! (%d1 = ####.# %d2= ###.## etc.)
 						;
 						uint8_t shift = (*ptr_string++)-48; // get shift amount
 											//convert uint16_t
@@ -645,7 +644,7 @@ void lcd_print(uint8_t font_red,uint8_t font_green, uint8_t font_blue,uint8_t ba
 
 char *flash2ram(char *ptr_string)
 {
-	static char returnstring[40]={}, *ptr_returnstring; // fixme Vorsicht, hier wird der Speicher auf dem Stack allokiert. Falls vor der Verwendung dieses Speichers eine andere Funktion aufgerufen wird, ist der Inhalt MATSCH.
+	static char returnstring[40]={}, *ptr_returnstring; // fixme anders, Speicher schonen!
 	//copy string 
     ptr_returnstring=returnstring;
 	while (pgm_read_byte(ptr_string))

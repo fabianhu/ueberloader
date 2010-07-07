@@ -75,8 +75,6 @@ void menu_init(void)
 	volatile unsigned char index=0;
 	//set io pins
 
-// fixme wie was wo???
-
 	//get array inidices
 	while(m_item[index].ucID)
 		{

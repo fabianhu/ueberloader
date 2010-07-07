@@ -88,7 +88,6 @@ void TaskDisplay(void)
 
 		OS_GetTicks(&t1);
 
-		//fixme for lcd_print function test
 		if(!glCommError)
 		{
 			//the lcd_print function overwrites old text-> no lcd_clear needed!
@@ -291,8 +290,10 @@ void CPU_init(void)
 
 ISR(OSC_XOSCF_vect)
 {
-	// oscillator failure
-	emstop(99);// emergency stop here!
+	// oscillator failure	emstop(99);// emergency stop here!
+	CCP = CCP_IOREG_gc; // unlock
+	RST.CTRL = 1; // SW reset
+
 }
 
 
