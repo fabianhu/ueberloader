@@ -22,9 +22,9 @@ uint8_t touchGetPad(uint8_t pin);
 
 #define TOUCHCALINIT {255,255,255,255,255}
 
-#define min(x,y) ((x<y)?x:y)
-#define max(x,y) ((x>y)?x:y)
-#define limit(v,u,l) ((v<l)?l:(v>u)?u:v)
+#define min(x,y) (((x)<(y))?(x):(y))
+#define max(x,y) (((x)>(y))?(x):(y))
+#define limit(v,l,u) (((v)<(l))?(l):(((v)>(u))?(u):(v)))
 
 
 #endif /* TOUCHPAD_H_ */

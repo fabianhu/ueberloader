@@ -89,3 +89,4 @@ uint8_t UCIGetCRC( UCIFrame_t* pU)
 	pU->crc = tempCRC;
 	return res;
 }
+
