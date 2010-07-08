@@ -16,6 +16,15 @@
 // ******** Globals
 
 Command_t g_tCommand = {0,0,0,0,0};
+/*
+=
+{
+usCurrentSetpoint = 1000,
+usMinBalanceVolt_mV = 3000,
+usVoltageSetpoint_mV = 4150,
+eChargerMode = eModeAuto
+};
+ */
 ADC_Values_t g_tADCValues;
 Battery_Info_t g_tBattery_Info;
 
@@ -149,7 +158,7 @@ void TaskGovernor(void)
 		if(g_tBattery_Info.eState == eBattCharging)
 		{
 			ccc++;
-			if(usU_out_act < myUSetpoint /*&& sConverterPower < MAXCONVERTERPOWER_W*/ && usU_in_act > 8000)
+			if(usU_out_act < myUSetpoint /*&& sConverterPower < MAXCONVERTERPOWER_W*/ && usU_in_act > 8000 && I_Set_mA_Ramped <= myISetpoint)
 			{
 				if (I_Set_mA_Ramped < myISetpoint && ccc==10)
 				{

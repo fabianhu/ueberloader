@@ -12,7 +12,7 @@
 
 extern Battery_Info_t g_tBattery_Info;
 extern ADC_Values_t g_tADCValues;
-extern Command_t g_tCommand;
+extern Command_t g_tCommand ;
 
 #define MYSERIALID 55
 
@@ -69,12 +69,7 @@ void TaskCommRX(void)
 		g_tUCIRXFrame.len = UCIHEADERLEN;
 
 
-			OS_ENTERCRITICAL;
-			g_tCommand.usCurrentSetpoint = 1000;
-			g_tCommand.usMinBalanceVolt_mV = 3000;
-			g_tCommand.usVoltageSetpoint_mV = 4150;
-			g_tCommand.eChargerMode = eModeAuto;
-			OS_LEAVECRITICAL;
+
 
 
 	}
