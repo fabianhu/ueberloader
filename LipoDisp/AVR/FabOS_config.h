@@ -8,7 +8,7 @@
 
 #define OS_NUMTASKS 3 // Number of (OS_Create)Tasks ; never >8 (idle task is not counted here!)
 #define OS_NUMMUTEX 3 // Number of Mutexes
-#define OS_NUMALARMS 5 // Number of Alarms
+#define OS_NUMALARMS 6 // Number of Alarms
 
 #if defined (__AVR_ATmega32__)
 	#define OS_ScheduleISR TIMER1_COMPA_vect // Interrupt Vector used for OS-tick generation (check out CustomOS_ISRCode if you want to add isr code)
@@ -28,10 +28,10 @@
 
 // Task definitions
 
-#define OSTSKDisplay   1
 #define OSTSKCommand  0
+#define OSTSKDisplay   1
 //#define OSTSKCommRX   2
-#define OSTSKMonitor  2
+#define OSTSKTouch  2
 
 // Event Names
 
@@ -49,7 +49,8 @@
 #define OSALMCommandRepeat	1
 #define OSALMCommandTimeout	2
 #define OSALMCommandWait    3
-#define OSALMonitorRepeat 	4
+#define OSALTouchRepeat 	4
+#define OSALTouchPause	 	5
 
 
 // *********  USER Configurable Block END 

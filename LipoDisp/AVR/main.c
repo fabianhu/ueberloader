@@ -16,13 +16,14 @@
 #include "touchpad.h"
 
 extern Battery_Info_t g_tBattery_Info;
+extern Command_t g_tCommand;
 extern uint8_t glCommError; // fixme do better!!
+extern uint16_t glTestMutexBlocked;
 
 // *********  Task definitions
-OS_DeclareTask(TaskDisplay,700);
 OS_DeclareTask(TaskCommand,300);
-//OS_DeclareTask(TaskCommRX,200);
-OS_DeclareTask(TaskMonitor,200);
+OS_DeclareTask(TaskTouch,200);
+OS_DeclareTask(TaskDisplay,700);
 
 //OS_DeclareQueue(DemoQ,10,4);
 
@@ -44,16 +45,16 @@ int main(void)
 
 	menu_init();
 
-    OS_CreateTask(TaskDisplay, OSTSKDisplay);
     OS_CreateTask(TaskCommand, OSTSKCommand);
-	OS_CreateTask(TaskMonitor, OSTSKMonitor);
-    //OS_CreateTask(TaskCommRX, 2);
+	OS_CreateTask(TaskTouch, OSTSKTouch);
+    OS_CreateTask(TaskDisplay, OSTSKDisplay);
 
 	OS_CreateAlarm(OSALMWaitDisp,OSTSKDisplay);
 	OS_CreateAlarm(OSALMCommandWait,OSTSKCommand);
 	OS_CreateAlarm(OSALMCommandRepeat,OSTSKCommand);
 	OS_CreateAlarm(OSALMCommandTimeout,OSTSKCommand);
-	OS_CreateAlarm(OSALMonitorRepeat,OSTSKMonitor);
+	OS_CreateAlarm(OSALTouchRepeat,OSTSKTouch);
+	OS_CreateAlarm(OSALTouchPause,OSTSKTouch);
 
 	OS_StartExecution() ;
 	while(1)
@@ -121,9 +122,9 @@ void TaskDisplay(void)
 			ypos += LINEDIFF;
 			lcd_print(WHITE, BLACK, 1, 200, ypos,"ASYNC %i   ",g_tBattery_Info.usPWMStep);
 			ypos += LINEDIFF;
-			lcd_print(WHITE, BLACK, 1, 200, ypos,"ConvPwr %i   ",g_tBattery_Info.usConverterPower_W);
+			lcd_print(WHITE, BLACK, 1, 200, ypos,"MTXd %i   ",glTestMutexBlocked); //g_tBattery_Info.usConverterPower_W);
 			ypos += LINEDIFF;
-			lcd_print(WHITE, BLACK, 1, 200, ypos,"Setp %i mA   ",g_tBattery_Info.sISetpoint);
+			lcd_print(WHITE, BLACK, 1, 200, ypos,"Setp %i mA   ",g_tCommand.usCurrentSetpoint);
 			ypos += LINEDIFF;
 			lcd_print(WHITE, BLACK, 1, 200, ypos,"diff %i mA   ",g_tBattery_Info.sDiff);
 			ypos += LINEDIFF;
@@ -171,7 +172,7 @@ extern UCIFrame_t g_tUCIRXFrame;
 extern uint8_t    g_ucRXLength;
 extern uint16_t glCommerrcnt; // fixme remove!
 
-extern uint8_t vWaitForResult( void)
+uint8_t vWaitForResult( void)
 {
 	uint8_t ret;
 	uint8_t commerror = 0;
@@ -190,6 +191,8 @@ extern uint8_t vWaitForResult( void)
     return commerror;
 }
 
+uint8_t g_NewComand =0; // indicates new command to be sent
+
 void TaskCommand(void)
 {
 	OS_SetAlarm(OSALMCommandRepeat,1000);
@@ -206,22 +209,78 @@ void TaskCommand(void)
 		UCISendBlockCrc(&myU);
 	    glCommError = vWaitForResult();
 
-	    myU.ID = 55;
+
+	    if(g_NewComand)
+	    {
+	    	myU.ID = 55;
+			myU.UCI = UCI_SET_CMDs;
+			myU.len = UCIHEADERLEN+sizeof(Command_t);
+	    	OS_MutexGet(OSMTXCommand);
+				memcpy(myU.values,&g_tCommand,sizeof(Command_t));
+	    	OS_MutexRelease(OSMTXCommand);
+	    	UCISendBlockCrc(&myU);
+	    	//OS_WaitTicks(OSALMCommandWait,20);
+			//glCommError = vWaitForResult();
+	    	g_NewComand = 0;
+	    }
+
+	    /*myU.ID = 55;
 	    myU.UCI = UCI_GET_CMDs;
 	    myU.len = UCIHEADERLEN;
 	    UCISendBlockCrc(&myU);
-	    glCommError = vWaitForResult();
-
+	    glCommError = vWaitForResult();*/
 	}
 }
 
 
-void TaskMonitor()
+void TaskTouch()
 {
-		
+	uint8_t i;
+	uint8_t t[5];
+	OS_SetAlarm(OSALTouchRepeat,10);
+
+#define TOUCHSENSELEVEL 15
+
+		OS_ENTERCRITICAL;
+		g_tCommand.usCurrentSetpoint = 1000;
+		g_tCommand.usMinBalanceVolt_mV = 3000;
+		g_tCommand.usVoltageSetpoint_mV = 4150;
+		g_tCommand.eChargerMode = eModeAuto;
+		OS_LEAVECRITICAL;
+
 	while(1)
 	{
-		OS_WaitTicks(OSALMonitorRepeat,102);
+
+
+		OS_WaitAlarm(OSALTouchRepeat);
+		OS_SetAlarm(OSALTouchRepeat,10);
+
+		for (i = 0; i < 5; ++i)
+		{
+			t[i] = touchGetPad(i);
+			OS_WaitTicks(OSALTouchPause,1);
+		}
+		if(t[2]>TOUCHSENSELEVEL)
+		{
+			OS_MutexGet(OSMTXCommand);
+			g_tCommand.usCurrentSetpoint=0;
+			OS_MutexRelease(OSMTXCommand);
+			g_NewComand = 1;
+		}
+		else if(t[0]>TOUCHSENSELEVEL)
+		{
+			OS_MutexGet(OSMTXCommand);
+			if(g_tCommand.usCurrentSetpoint < 3000) g_tCommand.usCurrentSetpoint++;
+			OS_MutexRelease(OSMTXCommand);
+			g_NewComand = 1;
+		}
+		else if((t[4]>TOUCHSENSELEVEL))
+		{
+			OS_MutexGet(OSMTXCommand);
+			if(g_tCommand.usCurrentSetpoint > 0) g_tCommand.usCurrentSetpoint--;
+			OS_MutexRelease(OSMTXCommand);
+			g_NewComand = 1;
+		}
 	}
 }
 
@@ -322,11 +381,18 @@ void OS_ErrorHook(uint8_t ErrNo)
 		case 8:
 			// OS_WaitAlarm: Alarm was not active
 			break;
+		case 9:
+			// OS_WaitAlarm: Alarm is not assigned to the task (critical!)
+			break;
 		default:
 			break;	
 	}
 	
 	dummy = ErrNo; // dummy code
+
+	#if OS_DO_TESTSUITE == 1
+	asm("break"); // for automated tests of OS. may be removed in production code.
+	#endif
 }
 #endif
 
