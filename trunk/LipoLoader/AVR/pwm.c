@@ -225,7 +225,7 @@ void RampDn(uint16_t* ramped, uint16_t target)
 uint16_t PID(int16_t actual, int16_t set, uint16_t kP, int16_t kI, uint16_t kD, int16_t lowerLimit, int16_t upperLimit, uint8_t zero)
 {
 
-#define I_REDUCTION 128
+#define I_REDUCTION 64
 
 	int32_t res;
 	int16_t P,D;

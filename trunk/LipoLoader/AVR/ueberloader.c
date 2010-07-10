@@ -172,6 +172,8 @@ void TaskGovernor(void)
 					I_Set_mA_Ramped--; // maybe more?
 			}
 
+			if(myISetpoint == 0) I_Set_mA_Ramped = 0; // switch off on zero.
+
 			/*if(		sI_out_act > (myISetpoint+(myISetpoint/5)) ||
 					usU_out_act > (myUSetpoint+(myUSetpoint/5))
 				)
@@ -408,6 +410,8 @@ void StateMachineBattery(void) // ONLY run in TaskBalance!
 				default:
 					break;
 			}
+
+			// fixme erase all measured values?
 			break;
 		case eBattCharging:
 				// Charging!
