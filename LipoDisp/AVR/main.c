@@ -72,6 +72,7 @@ void TaskDisplay(void)
 	uint16_t ypos=0;
 	uint32_t t1,t2;
 	uint8_t i;
+	static uint8_t cec=0;
 
 #define FONTSIZE 1
 #define LINEDIFF FONTSIZE*16
@@ -155,10 +156,18 @@ void TaskDisplay(void)
 
 			t2=t2-t1;
 			lcd_print(GREY, BLACK, FONTSIZE, 0, 220,"Time: %i ms     " ,(uint16_t)t2);	
+
+			if (cec>0) cec--;
 		}
 		else
 		{
-			commError(glCommError);
+
+			cec++;
+			if(cec >= 3)
+			{
+				commError(glCommError);
+				cec =0;
+			}
 
 		}
 
@@ -244,7 +253,7 @@ void TaskTouch()
 		OS_ENTERCRITICAL;
 		g_tCommand.usCurrentSetpoint = 1000;
 		g_tCommand.usMinBalanceVolt_mV = 3000;
-		g_tCommand.usVoltageSetpoint_mV = 4150;
+		g_tCommand.usVoltageSetpoint_mV = 3850;//4150;
 		g_tCommand.eChargerMode = eModeAuto;
 		OS_LEAVECRITICAL;
 

@@ -30,6 +30,10 @@ uint8_t touchGetPad(uint8_t pin)
 
 	touchcalbytes[pin] = min(touchcalbytes[pin],cnt);
 
+
+	// every some time, correct the calibration bytes.. even, if a touch is recognized... -> provides self healing..
+
+
 	return cnt - touchcalbytes[pin];
 }
 
