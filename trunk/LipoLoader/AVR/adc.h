@@ -29,6 +29,6 @@ void ADC_ActivateLoCurrentMeas(void);
 
 void ADC_StartConvCh3Pin(uint8_t c);
 void ADC_StartConvInt(uint8_t c);
-uint16_t ADC_ScaleCell_mV(uint16_t in);
-uint16_t ADC_ScaleVolt_mV(uint16_t in);
+int16_t ADC_ScaleCell_mV(int16_t in);
+int16_t ADC_ScaleVolt_mV(int16_t in);
 

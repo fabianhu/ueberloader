@@ -19,7 +19,7 @@ Command_t g_tCommand = {0,0,0,0,0};
 /*
 =
 {
-usCurrentSetpoint = 1000,
+sCurrentSetpoint = 1000,
 usMinBalanceVolt_mV = 3000,
 usVoltageSetpoint_mV = 4150,
 eChargerMode = eModeAuto
@@ -72,8 +72,9 @@ void TaskGovernor(void)
 {
 	g_tCalibration.sADCOffset = ADCinit();
 
-	uint16_t usU_in_act,usU_out_act;
-	int16_t sI_out_act; // mV / mA
+	int16_t sU_in_act,sU_out_act;
+	int16_t sU_in_act_flt,sU_out_act_flt;
+	int16_t sI_out_act,sI_out_act_flt; // mV / mA
 
 	vPWM_Init();
 
@@ -101,34 +102,39 @@ void TaskGovernor(void)
 
 		OS_WaitTicks(OSALMWaitGov,1); // wait during ADC conversion
 
-		usU_in_act = ADC_ScaleVolt_mV(g_asADCvalues[0]) ;
-		usU_out_act = ADC_ScaleVolt_mV(g_asADCvalues[1]) ;;
+		sU_in_act = ADC_ScaleVolt_mV(g_asADCvalues[0]) ;
+		sU_out_act = ADC_ScaleVolt_mV(g_asADCvalues[1]) ;;
 
-		OS_MutexGet(OSMTXBattInfo);
-		usFilter(&g_tBattery_Info.usActVoltage_mV, &usU_out_act);
-		OS_MutexRelease(OSMTXBattInfo);
 
 		if((ADCA.CH2.MUXCTRL & (0xf<<3)) == ADC_CH_MUXPOS_PIN7_gc) // is high current config...
 		{
 			// high current
 			sI_out_act = (g_asADCvalues[2]-sZeroHiMeas) * 10; // [mA] 1V = 10A  (fixme)
+			sU_out_act -= sI_out_act*1/125; // High current resistor value (0.005R)(+3mR MosFet) * Current
 		}
 		else
 		{
 			// low current
 			sI_out_act = (g_asADCvalues[2]- (uint32_t)g_tCalibration.sADCOffset)*3/2; // [mA]  2V = 3A  (fixme)
+			sU_out_act -= sI_out_act*2/19; // Low current resistor value (0.105R) * Current
 		}
+
+		sFilter(&sU_out_act_flt, &sU_out_act);
+		OS_MutexGet(OSMTXBattInfo);
+		g_tBattery_Info.sActVoltage_mV = sU_out_act_flt;
+		OS_MutexRelease(OSMTXBattInfo);
 
 		if(sI_out_act > 2500)
 			ADC_ActivateHiCurrentMeas();
 		else if (sI_out_act < 2000)
 			ADC_ActivateLoCurrentMeas();
 
-		int32_t nConverterPower_W = ((sI_out_act) * (usU_out_act /*- usU_in_act*/))/1000; // fixme converter pwr
+		int32_t nConverterPower_W = ((sI_out_act) * (sU_out_act /*- usU_in_act*/))/1000; // fixme converter pwr
 
+
+		sFilter(&sI_out_act_flt, &sI_out_act);
 		OS_MutexGet(OSMTXBattInfo);
-		sFilter(&g_tBattery_Info.sActCurrent_mA, &sI_out_act);
-
+		g_tBattery_Info.sActCurrent_mA = sI_out_act_flt;
 		g_tBattery_Info.usConverterPower_W = (uint16_t)nConverterPower_W; // fixme remove
 		OS_MutexRelease(OSMTXBattInfo);
 
@@ -136,18 +142,18 @@ void TaskGovernor(void)
  // just in case...
 
 
-		if (usU_in_act < 7000)
+		if (sU_in_act < 7000)
 			emstop(1);
-		if (usU_in_act > 22000)
+		if (sU_in_act > 22000)
 			emstop(2);
 		if (sI_out_act > 10000)
 			emstop(3);
-		if (usU_out_act > 4250*6)
+		if (sU_out_act > 4250*6)
 			emstop(4);
 
 		OS_ENTERCRITICAL;
-		uint16_t myISetpoint = g_tCommand.usCurrentSetpoint;
-		uint16_t myUSetpoint = g_tCommand.usVoltageSetpoint_mV*g_tBattery_Info.ucNumberOfCells;
+		int16_t myISetpoint = g_tCommand.sCurrentSetpoint;
+		int16_t myUSetpoint = g_tCommand.usVoltageSetpoint_mV*g_tBattery_Info.ucNumberOfCells;
 		OS_LEAVECRITICAL;
 
 		// calculate Current setpoint
@@ -158,18 +164,20 @@ void TaskGovernor(void)
 		if(g_tBattery_Info.eState == eBattCharging)
 		{
 			ccc++;
-			if(usU_out_act < myUSetpoint /*&& sConverterPower < MAXCONVERTERPOWER_W*/ && usU_in_act > 8000 && I_Set_mA_Ramped <= myISetpoint)
+			if (ccc == 20) ccc=0;
+			if(sU_out_act_flt < myUSetpoint /*&& sConverterPower < MAXCONVERTERPOWER_W*/ && sU_in_act > 8000 && I_Set_mA_Ramped <= myISetpoint)
 			{
-				if (I_Set_mA_Ramped < myISetpoint && ccc==10)
+				if (I_Set_mA_Ramped < myISetpoint && ccc==0)
 				{
 					I_Set_mA_Ramped++;
-					ccc=0;
 				}
 			}
 			else // usU_in_act< MAX_SUPP_VOLT ? for discharge
 			{
-				if (I_Set_mA_Ramped > 0)
+				if (I_Set_mA_Ramped > 0 && ccc==0)
+				{
 					I_Set_mA_Ramped--; // maybe more?
+				}
 			}
 
 			if(myISetpoint == 0) I_Set_mA_Ramped = 0; // switch off on zero.
@@ -183,7 +191,7 @@ void TaskGovernor(void)
 				LED_OFF;
 			}
 			else*/
-				LED_ON;
+			LED_ON;
 		}
 		else
 		{
@@ -205,8 +213,7 @@ void TaskGovernor(void)
 void TaskBalance(void)
 {
 	int16_t sTemp;
-	uint16_t usTemp;
-	uint16_t usBalanceCells[6]; // quasi static
+	int16_t sBalanceCells[6]; // quasi static
 	uint8_t ucBalanceBits;
 	uint8_t i;
 
@@ -227,13 +234,14 @@ void TaskBalance(void)
 			ADC_StartConvCh3Pin(i);
 			OS_WaitTicks(OSALMBalWait,ADCWAITTIME);
 			// push voltage of channel into array
-			usTemp = ADC_ScaleCell_mV(ADCA.CH3.RES);
-			usFilter(&usBalanceCells[i], &usTemp);
+			sTemp = ADC_ScaleCell_mV(ADCA.CH3.RES);
+
+			sFilter(&sBalanceCells[i], &sTemp);
 		}
 		ADC_StartConvCh3Pin(10);
 		OS_WaitTicks(OSALMBalWait,ADCWAITTIME);
-		usTemp = ADC_ScaleCell_mV(ADCA.CH3.RES);
-		usFilter(&usBalanceCells[0], &usTemp);
+		sTemp = ADC_ScaleCell_mV(ADCA.CH3.RES);
+		sFilter(&sBalanceCells[0], &sTemp);
 
 		ADC_StartConvCh3Pin(11); // temperature external2
 		OS_WaitTicks(OSALMBalWait,ADCWAITTIME);
@@ -270,7 +278,7 @@ void TaskBalance(void)
 		OS_LEAVECRITICAL;
 
 		// mean Cell Voltage
-		uint16_t mean = 0, bBalance=0;
+		int16_t mean = 0, bBalance=0;
 
 		OS_MutexGet(OSMTXCommand);
 		uint16_t usBalanceRelease_mV = g_tCommand.usMinBalanceVolt_mV;
@@ -279,8 +287,8 @@ void TaskBalance(void)
 		// Calculate release
 		for(i=0;i<g_tBattery_Info.ucNumberOfCells;i++)
 		{
-			mean += usBalanceCells[i];
-			if(usBalanceCells[i] > usBalanceRelease_mV)
+			mean += sBalanceCells[i];
+			if(sBalanceCells[i] > usBalanceRelease_mV) // if eine Zelle hoch genug, dann gehts los.
 				bBalance = 1;
 		}
 
@@ -293,7 +301,7 @@ void TaskBalance(void)
 			// Balancer logic
 			for(i=0;i<6;i++)
 			{
-				if(usBalanceCells[i] > mean || i >= g_tBattery_Info.ucNumberOfCells)
+				if(sBalanceCells[i] > mean /*|| i >= g_tBattery_Info.ucNumberOfCells*/)
 				{
 					// switch on Balancer for this cell
 					PORTC.OUTSET = (1<<(2+i));
@@ -313,18 +321,18 @@ void TaskBalance(void)
 			// balancer off
 			for(i=0;i<6;i++)
 			{
-				if( i >= g_tBattery_Info.ucNumberOfCells)
+				/*if( i >= g_tBattery_Info.ucNumberOfCells)
 				{
 					// switch on Balancer for this cell
 					PORTC.OUTSET = (1<<(2+i));
 					ucBalanceBits |= (1<<i);
 				}
 				else
-				{
+				{*/
 					// switch off Balancer for this cell
 					PORTC.OUTCLR = (1<<(2+i));
 					ucBalanceBits &= ~(1<<i);
-				}
+				//}
 			}
 
 			//PORTC.OUTCLR = (0b111111<<2);
@@ -335,7 +343,7 @@ void TaskBalance(void)
 		// Copy voltage stuff
 		for(i=0;i<6;i++)
 		{
-			g_tBattery_Info.Cells[i].usVoltage_mV = usBalanceCells[i];
+			g_tBattery_Info.Cells[i].sVoltage_mV = sBalanceCells[i];
 			if(ucBalanceBits & (1<<i))
 			{
 				g_tBattery_Info.Cells[i].unDisChTicks++;
@@ -371,12 +379,12 @@ void StateMachineBattery(void) // ONLY run in TaskBalance!
 	uint8_t NumberOfCells = 0;
 
 	OS_MutexGet(OSMTXBattInfo);
-	uint16_t myBattVoltage = g_tBattery_Info.usActVoltage_mV;
+	uint16_t myBattVoltage = g_tBattery_Info.sActVoltage_mV;
 	int16_t myBattCurrent = g_tBattery_Info.sActCurrent_mA;
 	OS_MutexRelease(OSMTXBattInfo);
 
 	OS_MutexGet(OSMTXCommand);
-	uint16_t usCommandCurrent = g_tCommand.usCurrentSetpoint;
+	uint16_t usCommandCurrent = g_tCommand.sCurrentSetpoint;
 	OS_MutexRelease(OSMTXCommand);
 
 	switch (g_tBattery_Info.eState)
@@ -423,7 +431,7 @@ void StateMachineBattery(void) // ONLY run in TaskBalance!
 				if(GetCellcount(g_tBattery_Info.Cells,&myBattVoltage)!=g_tBattery_Info.ucNumberOfCells)
 				{
 					g_tBattery_Info.ucNumberOfCells = 0;
-					g_tBattery_Info.eState = eBattError;
+					g_tBattery_Info.eState = eBattUnknown;
 				}
 			break;
 
@@ -437,13 +445,13 @@ void StateMachineBattery(void) // ONLY run in TaskBalance!
 			if(GetCellcount(g_tBattery_Info.Cells,&myBattVoltage)!=g_tBattery_Info.ucNumberOfCells)
 			{
 				g_tBattery_Info.ucNumberOfCells = 0;
-				g_tBattery_Info.eState = eBattError;
+				g_tBattery_Info.eState = eBattUnknown;
 			}
 			break;
 		case eBattError:
-			// fixme switch off everything and wait for user commands.
-			g_tCommand.eChargerMode = eModeManual;
-			g_tBattery_Info.eState = eBattUnknown;
+			// fixme // set Event "Battery disconnected" for Display ??
+
+			//g_tBattery_Info.eState = eBattUnknown;
 			break;
 		default:
 			emstop(22);
@@ -467,9 +475,9 @@ uint8_t GetCellcount(BatteryCell_t cells[], uint16_t* pusBattVoltage)
 
 	for (i= 0;i<6;i++) // 0..5 iterate over possible cell count
 	{
-		if(cells[i].usVoltage_mV > MINCELLVOLTAGE_mV)
+		if(cells[i].sVoltage_mV > MINCELLVOLTAGE_mV)
 		{
-			usUges_mV += cells[i].usVoltage_mV; // sum up cell voltage
+			usUges_mV += cells[i].sVoltage_mV; // sum up cell voltage
 			ucCellCount ++;
 		}
 	}

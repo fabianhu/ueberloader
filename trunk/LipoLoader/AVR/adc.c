@@ -224,13 +224,13 @@ void ADC_StartConvInt(uint8_t c)
 	ADCA.CH3.CTRL |= ADC_CH_START_bm;
 }
 
-uint16_t ADC_ScaleCell_mV(uint16_t in)
+int16_t ADC_ScaleCell_mV(int16_t in)
 {
-	return (int32_t)in * (int32_t)g_tCalibration.sADCRef_mV / 957ul; // 957 = (2048 / factor of amplification)
+	return (int32_t)in * (int32_t)g_tCalibration.sADCRef_mV / 957l; // 957 = (2048 / factor of amplification)
 }
 
-uint16_t ADC_ScaleVolt_mV(uint16_t in)
+int16_t ADC_ScaleVolt_mV(int16_t in)
 {
-	return (int32_t)in * (int32_t)g_tCalibration.sADCRef_mV / 2048ul * 13ul; // 158 = (2048 / factor of amplification (13))
+	return (int32_t)in * (int32_t)g_tCalibration.sADCRef_mV / 2048l * 13l; // 158 = (2048 / factor of amplification (13))
 }
 
