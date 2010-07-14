@@ -18,6 +18,10 @@ OS_DeclareTask(TaskMonitor,200);
 
 //OS_DeclareQueue(DemoQ,10,4);
 
+#include "serial.h"
+extern Battery_Info_t g_tBattery_Info;
+extern uint16_t glTestMutexBlocked;
+
 // *********  Prototypes
 void CPU_init(void);
 
@@ -52,6 +56,9 @@ int main(void)
 		
 		// TODO add your code here
 		asm("nop"); //at least one instruction is required!!!
+
+		g_tBattery_Info.mtx = glTestMutexBlocked;
+
 	}
 
 }
