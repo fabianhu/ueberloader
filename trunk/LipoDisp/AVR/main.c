@@ -94,7 +94,7 @@ void TaskDisplay(void)
 		{
 			//the lcd_print function overwrites old text-> no lcd_clear needed!
 			//lcd_clear();
-			lcd_print(YELLOW, BLACK, 2, 0, ypos,"vBatt  /t%i mV    ",g_tBattery_Info.usActVoltage_mV);
+			lcd_print(YELLOW, BLACK, 2, 0, ypos,"vBatt  /t%i mV    ",g_tBattery_Info.sActVoltage_mV);
 			ypos += LINEDIFF*2;
 			lcd_print(YELLOW, BLACK, 2, 0, ypos,"Current/t%i mA   ",g_tBattery_Info.sActCurrent_mA);
 			ypos += LINEDIFF*2;
@@ -114,7 +114,7 @@ void TaskDisplay(void)
 			ypos = 64;
 			
 			for (i = 0; i < 6; ++i) {
-			lcd_print(WHITE, BLACK, FONTSIZE, 0,ypos,"Cell%i/t%i/tmV/t%i mAh     " ,i,g_tBattery_Info.Cells[i].usVoltage_mV, g_tBattery_Info.Cells[i].unDisChTicks);
+			lcd_print(WHITE, BLACK, FONTSIZE, 0,ypos,"Cell%i/t%i/tmV/t%i mAh     " ,i,g_tBattery_Info.Cells[i].sVoltage_mV, g_tBattery_Info.Cells[i].unDisChTicks);
 			ypos += LINEDIFF;
 			}
 
@@ -123,9 +123,9 @@ void TaskDisplay(void)
 			ypos += LINEDIFF;
 			lcd_print(WHITE, BLACK, 1, 200, ypos,"ASYNC %i   ",g_tBattery_Info.usPWMStep);
 			ypos += LINEDIFF;
-			lcd_print(WHITE, BLACK, 1, 200, ypos,"MTXd %i   ",glTestMutexBlocked); //g_tBattery_Info.usConverterPower_W);
+			lcd_print(WHITE, BLACK, 1, 200, ypos,"MTXd %i   ",g_tBattery_Info.mtx); //g_tBattery_Info.usConverterPower_W);
 			ypos += LINEDIFF;
-			lcd_print(WHITE, BLACK, 1, 200, ypos,"Setp %i mA   ",g_tCommand.usCurrentSetpoint);
+			lcd_print(WHITE, BLACK, 1, 200, ypos,"Setp %i mA   ",g_tCommand.sCurrentSetpoint);
 			ypos += LINEDIFF;
 			lcd_print(WHITE, BLACK, 1, 200, ypos,"diff %i mA   ",g_tBattery_Info.sDiff);
 			ypos += LINEDIFF;
@@ -251,10 +251,11 @@ void TaskTouch()
 #define TOUCHSENSELEVEL 15
 
 		OS_ENTERCRITICAL;
-		g_tCommand.usCurrentSetpoint = 1000;
+		g_tCommand.sCurrentSetpoint = 1000;
 		g_tCommand.usMinBalanceVolt_mV = 3000;
 		g_tCommand.usVoltageSetpoint_mV = 3850;//4150;
 		g_tCommand.eChargerMode = eModeAuto;
+		g_tCommand.ucUserCellCount = 0;
 		OS_LEAVECRITICAL;
 
 	while(1)
@@ -272,21 +273,21 @@ void TaskTouch()
 		if(t[2]>TOUCHSENSELEVEL)
 		{
 			OS_MutexGet(OSMTXCommand);
-			g_tCommand.usCurrentSetpoint=0;
+			g_tCommand.sCurrentSetpoint=0;
 			OS_MutexRelease(OSMTXCommand);
 			g_NewComand = 1;
 		}
 		else if(t[0]>TOUCHSENSELEVEL)
 		{
 			OS_MutexGet(OSMTXCommand);
-			if(g_tCommand.usCurrentSetpoint < 3000) g_tCommand.usCurrentSetpoint++;
+			if(g_tCommand.sCurrentSetpoint < 3000) g_tCommand.sCurrentSetpoint++;
 			OS_MutexRelease(OSMTXCommand);
 			g_NewComand = 1;
 		}
 		else if((t[4]>TOUCHSENSELEVEL))
 		{
 			OS_MutexGet(OSMTXCommand);
-			if(g_tCommand.usCurrentSetpoint > 0) g_tCommand.usCurrentSetpoint--;
+			if(g_tCommand.sCurrentSetpoint > 0) g_tCommand.sCurrentSetpoint--;
 			OS_MutexRelease(OSMTXCommand);
 			g_NewComand = 1;
 		}
