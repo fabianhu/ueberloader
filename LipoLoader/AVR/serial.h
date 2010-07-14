@@ -27,7 +27,7 @@ typedef enum //BatteryStatus
 
 typedef struct BatteryCell_tag
 {
-	uint16_t usVoltage_mV;
+	int16_t  sVoltage_mV;
 	uint32_t unDisCharge_mAs;
 	uint32_t unDisCharge_mWs;
 	uint32_t unDisChTicks; // this will vanish, if the other is working!
@@ -36,7 +36,7 @@ typedef struct BatteryCell_tag
 typedef struct Battery_Info_tag
 {
 	BatteryStatus_t eState;
-	uint16_t usActVoltage_mV;
+	int16_t  sActVoltage_mV;
 	int16_t  sActCurrent_mA;
 	uint8_t  ucNumberOfCells;
 	uint32_t unCharge_mAs;
@@ -47,6 +47,7 @@ typedef struct Battery_Info_tag
 	uint16_t usConverterPower_W; // temporary-remove fixme
 	int16_t  sISetpoint;
 	int16_t  sDiff;
+	uint16_t mtx;
 
 	BatteryCell_t Cells[6];
 
@@ -62,7 +63,7 @@ typedef struct Command_tag
 {
 	uint32_t unQ_max_mAs; // max Capacity
 	uint16_t usVoltageSetpoint_mV; // volt per cell
-	uint16_t usCurrentSetpoint;  // max current
+	int16_t  sCurrentSetpoint;  // max current
 	uint16_t usMinBalanceVolt_mV; // voltage to start balancing
 	uint8_t  ucUserCellCount; // 0 for auto
 	ChargerMode_t  eChargerMode;
