@@ -31,4 +31,5 @@ void ADC_StartConvCh3Pin(uint8_t c);
 void ADC_StartConvInt(uint8_t c);
 int16_t ADC_ScaleCell_mV(int16_t in);
 int16_t ADC_ScaleVolt_mV(int16_t in);
-
+int16_t ADC_ScaleLowAmp_mA(int16_t in);
+int16_t ADC_ScaleHighAmp_mA(int16_t in);

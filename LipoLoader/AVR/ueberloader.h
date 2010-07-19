@@ -3,7 +3,7 @@
 #include <avr/io.h>
 
 
-
+void ResetLastBatteryInfo(void);
 
 
 typedef struct ADC_Values_tag

@@ -28,6 +28,9 @@ eChargerMode = eModeAuto
 ADC_Values_t g_tADCValues;
 Battery_Info_t g_tBattery_Info;
 
+uint8_t gucDisChTicks[6];
+uint8_t bBalancerOverload; // True, if one cell has reached Voltage limit.
+
 //uint16_t usStartstep =STARTMAX;
 //uint16_t I_Max_ABS = 25000;
 //volatile uint16_t g_I_filt;
@@ -109,13 +112,13 @@ void TaskGovernor(void)
 		if((ADCA.CH2.MUXCTRL & (0xf<<3)) == ADC_CH_MUXPOS_PIN7_gc) // is high current config...
 		{
 			// high current
-			sI_out_act = (g_asADCvalues[2]-sZeroHiMeas) * 10; // [mA] 1V = 10A  (fixme)
+			sI_out_act = ADC_ScaleHighAmp_mA(g_asADCvalues[2]-sZeroHiMeas);
 			sU_out_act -= sI_out_act*1/125; // High current resistor value (0.005R)(+3mR MosFet) * Current
 		}
 		else
 		{
 			// low current
-			sI_out_act = (g_asADCvalues[2]- (uint32_t)g_tCalibration.sADCOffset)*3/2; // [mA]  2V = 3A  (fixme)
+			sI_out_act = ADC_ScaleLowAmp_mA(g_asADCvalues[2]- (uint32_t)g_tCalibration.sADCOffset);
 			sU_out_act -= sI_out_act*2/19; // Low current resistor value (0.105R) * Current
 		}
 
@@ -167,7 +170,7 @@ void TaskGovernor(void)
 			if (ccc == 20) ccc=0;
 			if(sU_out_act_flt < myUSetpoint /*&& sConverterPower < MAXCONVERTERPOWER_W*/ && sU_in_act > 8000 && I_Set_mA_Ramped <= myISetpoint)
 			{
-				if (I_Set_mA_Ramped < myISetpoint && ccc==0)
+				if (I_Set_mA_Ramped < myISetpoint && ccc==0 && bBalancerOverload == 0)
 				{
 					I_Set_mA_Ramped++;
 				}
@@ -180,7 +183,7 @@ void TaskGovernor(void)
 				}
 			}
 
-			if(myISetpoint == 0) I_Set_mA_Ramped = 0; // switch off on zero.
+			if(myISetpoint <= 0) I_Set_mA_Ramped = 0; // switch off on zero.
 
 			/*if(		sI_out_act > (myISetpoint+(myISetpoint/5)) ||
 					usU_out_act > (myUSetpoint+(myUSetpoint/5))
@@ -209,6 +212,7 @@ void TaskGovernor(void)
 
 
 #define ADCWAITTIME 1
+#define BALANCEREPEATTIME 100L
 
 void TaskBalance(void)
 {
@@ -226,8 +230,8 @@ void TaskBalance(void)
 
 	while(1)
 	{
-		OS_WaitTicks(OSALMBalWait,ADCWAITTIME);
-
+		OS_WaitAlarm(OSALMBalRepeat);
+		OS_SetAlarm(OSALMBalRepeat, BALANCEREPEATTIME);
 
 		for(i=1;i<6;i++)
 		{
@@ -278,10 +282,12 @@ void TaskBalance(void)
 		OS_LEAVECRITICAL;
 
 		// mean Cell Voltage
-		int16_t mean = 0, bBalance=0;
+		int16_t mean = 0;
+		uint8_t bBalance=0;
 
 		OS_MutexGet(OSMTXCommand);
 		uint16_t usBalanceRelease_mV = g_tCommand.usMinBalanceVolt_mV;
+		uint16_t usMaxCell_mV = g_tCommand.usVoltageSetpoint_mV;
 		OS_MutexRelease(OSMTXCommand);
 
 		// Calculate release
@@ -290,6 +296,19 @@ void TaskBalance(void)
 			mean += sBalanceCells[i];
 			if(sBalanceCells[i] > usBalanceRelease_mV) // if eine Zelle hoch genug, dann gehts los.
 				bBalance = 1;
+		}
+
+		// calculate overvolt protection per cell
+		for(i=0;i<g_tBattery_Info.ucNumberOfCells;i++)
+		{
+			if(sBalanceCells[i]>usMaxCell_mV)
+			{
+				bBalancerOverload = 1;
+			}
+			else
+			{
+				bBalancerOverload = 0;
+			}
 		}
 
 		// balancing allowed
@@ -346,7 +365,7 @@ void TaskBalance(void)
 			g_tBattery_Info.Cells[i].sVoltage_mV = sBalanceCells[i];
 			if(ucBalanceBits & (1<<i))
 			{
-				g_tBattery_Info.Cells[i].unDisChTicks++;
+				gucDisChTicks[i]++;
 			}
 		}
 		OS_MutexRelease(OSMTXBattInfo);
@@ -362,6 +381,9 @@ void TaskBalance(void)
 
 void TaskMonitor(void)
 {
+	uint8_t i;
+	int32_t curr_mA, charge_mAs;
+
 	OS_WaitTicks(OSALMonitorRepeat,100); // wait for ADC init
 
 	OS_SetAlarm(OSALMonitorRepeat,1000);
@@ -370,6 +392,25 @@ void TaskMonitor(void)
 		OS_WaitAlarm(OSALMonitorRepeat);
 		OS_SetAlarm(OSALMonitorRepeat,1000);
 		// count the charged Q
+		if(g_tBattery_Info.eState == eBattCharging)
+		{
+			OS_MutexGet(OSMTXBattInfo);
+			g_tBattery_Info.unCharge_mAs += g_tBattery_Info.sActCurrent_mA;
+			g_tBattery_Info.unTimeCharging_s++;
+			OS_MutexRelease(OSMTXBattInfo);
+		}
+		OS_MutexGet(OSMTXBattInfo);
+		// calc cell Balancing mAh
+		for(i=0;i<6;i++)
+		{
+			curr_mA = g_tBattery_Info.Cells[i].sVoltage_mV/10;
+			charge_mAs = (int32_t)curr_mA * (int32_t)gucDisChTicks[i] * BALANCEREPEATTIME /1000L; // max one tick per run
+			g_tBattery_Info.Cells[i].unDisCharge_mAs += charge_mAs;
+			gucDisChTicks[i]=0;
+		}
+		OS_MutexRelease(OSMTXBattInfo);
+
+
 
 	}
 }
@@ -400,6 +441,7 @@ void StateMachineBattery(void) // ONLY run in TaskBalance!
 					{
 						g_tBattery_Info.ucNumberOfCells = NumberOfCells;
 						g_tBattery_Info.eState = eBattCharging;
+						ResetLastBatteryInfo();
 					}
 					break;
 				case eModeManual:
@@ -409,6 +451,7 @@ void StateMachineBattery(void) // ONLY run in TaskBalance!
 					{
 						g_tBattery_Info.ucNumberOfCells = g_tCommand.ucUserCellCount;
 						g_tBattery_Info.eState = eBattCharging;
+						ResetLastBatteryInfo();
 					}
 					else
 					{
@@ -432,6 +475,7 @@ void StateMachineBattery(void) // ONLY run in TaskBalance!
 				{
 					g_tBattery_Info.ucNumberOfCells = 0;
 					g_tBattery_Info.eState = eBattUnknown;
+					// fixme wait here some time
 				}
 			break;
 
@@ -496,4 +540,20 @@ uint8_t GetCellcount(BatteryCell_t cells[], uint16_t* pusBattVoltage)
 
 }
 
+
+void ResetLastBatteryInfo(void)
+{
+	uint8_t i;
+	OS_MutexGet(OSMTXBattInfo);
+	g_tBattery_Info.unCharge_mAs = 0;
+	g_tBattery_Info.unCharge_mWs = 0;
+	g_tBattery_Info.unTimeCharging_s =0;
+	for (i = 0; i < 6; ++i)
+	{
+		g_tBattery_Info.Cells[i].unDisCharge_mAs = 0;
+		g_tBattery_Info.Cells[i].unDisCharge_mWs = 0;
+	}
+
+	OS_MutexRelease(OSMTXBattInfo);
+}
 
