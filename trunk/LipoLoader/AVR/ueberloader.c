@@ -299,16 +299,21 @@ void TaskBalance(void)
 		}
 
 		// calculate overvolt protection per cell
+		uint8_t j=0;
 		for(i=0;i<g_tBattery_Info.ucNumberOfCells;i++)
 		{
 			if(sBalanceCells[i]>usMaxCell_mV)
 			{
-				bBalancerOverload = 1;
+				j++;
 			}
-			else
-			{
-				bBalancerOverload = 0;
-			}
+		}
+		if(j)
+		{
+			bBalancerOverload = 1;
+		}
+		else
+		{
+			bBalancerOverload = 0;
 		}
 
 		// balancing allowed
