@@ -57,8 +57,6 @@ int main(void)
 		// TODO add your code here
 		asm("nop"); //at least one instruction is required!!!
 
-		g_tBattery_Info.mtx = glTestMutexBlocked;
-
 	}
 
 }

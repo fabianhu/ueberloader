@@ -32,18 +32,13 @@ ISR(USARTE0_RXC_vect)
 		OS_SetAlarm(OSALMCommTimeout,5); // reset Alarm, if stuff arrives
 	}
 
-//	if(g_ucRXLength == 3)
-//	{	// update rest of bytes to wait
-//		g_tUCIRXFrame.len = g_tUCIRXFrame.len;
-//	}
-
 	if(g_tUCIRXFrame.len == g_ucRXLength)
 	{
 		OS_SetEvent(OSTaskCommRX,OSEVTDataRecvd);
 	}
 }
 
-#define TIMEOUTRXMINORCYCLE 5
+#define TIMEOUTRXMINORCYCLE 10
 
 void TaskCommRX(void)
 {
@@ -62,15 +57,12 @@ void TaskCommRX(void)
 		else
 		{
 			//timeout
+			//g_tBattery_Info.LastErr = 7;
 		}
 
 		// re-init for new frame
 		g_ucRXLength = 0;
 		g_tUCIRXFrame.len = UCIHEADERLEN;
-
-
-
-
 
 	}
 
@@ -124,6 +116,15 @@ void HandleSerial(UCIFrame_t *_RXFrame)
 	else
 	{
 		// comm error
+		if(_RXFrame->ID != MYSERIALID)
+		{
+			g_tBattery_Info.LastErr = 8;
+		}
+		else
+		{
+			g_tBattery_Info.LastErr = 9;
+		}
+
 	}
 }
 
