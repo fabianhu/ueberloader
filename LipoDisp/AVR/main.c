@@ -191,7 +191,7 @@ uint8_t vWaitForResult(void)
 {
 	uint8_t ret;
 	uint8_t commerror = 0;
-	ret = OS_WaitEventTimeout(OSEVTDataRecvd,OSALMCommandTimeout, 100);
+	ret = OS_WaitEventTimeout(OSEVTDataRecvd,OSALMCommandTimeout, 130 * sizeof(Battery_Info_t) / 95); // at 9600 baud it takes 105 ms to transfer the stuff.
     if(ret == OSEVTDataRecvd)
 		{
 			HandleSerial(&g_tUCIRXFrame);

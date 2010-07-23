@@ -26,7 +26,7 @@ ISR(USARTE0_RXC_vect)
 		p[g_ucRXLength] = USARTE0.DATA;
 		g_ucRXLength++;
 
-		OS_SetAlarm(OSALMCommandTimeout,5); // reset Alarm, if stuff arrives
+		//OS_SetAlarm(OSALMCommandTimeout,5); // reset Alarm, if stuff arrives
 		if(g_tUCIRXFrame.len == g_ucRXLength)
 		{
 			OS_SetEvent(OSTSKCommand,OSEVTDataRecvd);
