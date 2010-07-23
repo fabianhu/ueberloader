@@ -47,6 +47,7 @@ typedef struct Battery_Info_tag
 	int16_t  sISetpoint;
 	int16_t  sDiff;
 	uint16_t mtx;
+	uint8_t  LastErr;
 
 	BatteryCell_t Cells[6];
 

@@ -27,13 +27,16 @@ ISR(USARTE0_RXC_vect)
 		g_ucRXLength++;
 
 		OS_SetAlarm(OSALMCommandTimeout,5); // reset Alarm, if stuff arrives
+		if(g_tUCIRXFrame.len == g_ucRXLength)
+		{
+			OS_SetEvent(OSTSKCommand,OSEVTDataRecvd);
+		}
 	}
 	else
-		glCommError = 1;
-
-	if(g_tUCIRXFrame.len == g_ucRXLength)
 	{
-		OS_SetEvent(OSTSKCommand,OSEVTDataRecvd);
+		glCommError = 1;
+		g_ucRXLength = 0; // reset received data length
+		g_tUCIRXFrame.len = UCIHEADERLEN; // reset header length in recd. data
 	}
 }
 

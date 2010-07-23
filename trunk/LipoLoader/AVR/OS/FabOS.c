@@ -17,8 +17,6 @@
 
 FabOS_t MyOS; // the global instance of the OS struct
 
-uint16_t glTestMutexBlocked = 0;
-
 #if OS_TRACE_ON == 1
 	uint8_t OS_Tracebuffer[OS_TRACESIZE];
 	#if OS_TRACESIZE <= 0xff
@@ -206,6 +204,10 @@ void OS_StartExecution()
 	}
 #endif
 
+#if OS_USECLOCK == 1
+	MyOS.OSTicks = 0L; 	// reset the RT-clock...
+#endif
+
 	//store THIS context for idling!!
 	MyOS.CurrTask = OS_NUMTASKS;
 	OS_Reschedule();
@@ -231,7 +233,6 @@ void OS_MutexGet(int8_t mutexID)
 	{
 		OS_TRACE(18);
 		MyOS.MutexTaskWaiting[MyOS.CurrTask] = mutexID; // set waiting info for priority inversion of scheduler
-		glTestMutexBlocked++;
 		OS_Reschedule(); // also re-enables interrupts...
 		OS_ENTERCRITICAL;
 		OS_TRACE(19);

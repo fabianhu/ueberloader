@@ -133,7 +133,8 @@ void TaskDisplay(void)
 			ypos += LINEDIFF;
 			lcd_print(WHITE, BLACK, 1, 160, ypos,"Charge %i mAh   ",(g_tBattery_Info.unCharge_mAs/3600));
 			ypos += LINEDIFF;
-
+			lcd_print(WHITE, BLACK, 1, 160, ypos,"SlaveErr %i    ",(g_tBattery_Info.LastErr));
+			ypos += LINEDIFF;
 
 			char buf[10];
 			switch (g_tBattery_Info.eState)
@@ -184,21 +185,21 @@ void TaskDisplay(void)
 
 extern UCIFrame_t g_tUCIRXFrame;
 extern uint8_t    g_ucRXLength;
-extern uint16_t glCommerrcnt; // fixme remove!
+extern uint16_t gsCommerrcnt; // fixme remove!
 
-uint8_t vWaitForResult( void)
+uint8_t vWaitForResult(void)
 {
 	uint8_t ret;
 	uint8_t commerror = 0;
-	ret = OS_WaitEventTimeout(OSEVTDataRecvd,OSALMCommandTimeout, 200);
+	ret = OS_WaitEventTimeout(OSEVTDataRecvd,OSALMCommandTimeout, 100);
     if(ret == OSEVTDataRecvd)
 		{
 			HandleSerial(&g_tUCIRXFrame);
 		}
 		else
 		{
-			commerror = 22;
-			glCommerrcnt++; // fixme remove!
+			commerror = 100;
+			gsCommerrcnt++;
 		}
     g_ucRXLength = 0;
     g_tUCIRXFrame.len = UCIHEADERLEN;
@@ -213,7 +214,7 @@ void TaskCommand(void)
 	while(1)
 	{
 		OS_WaitAlarm(OSALMCommandRepeat);
-		OS_SetAlarm(OSALMCommandRepeat,333);
+		OS_SetAlarm(OSALMCommandRepeat,350);
 
 		UCIFrame_t myU;
 
