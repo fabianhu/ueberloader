@@ -23,7 +23,7 @@ typedef enum //BatteryStatus
 	eBattFull,
 	eBattError,
 	//eBattEmpty,
-}BatteryStatus_t;
+}eBatteryStatus_t;
 
 typedef struct BatteryCell_tag
 {
@@ -34,7 +34,7 @@ typedef struct BatteryCell_tag
 
 typedef struct Battery_Info_tag
 {
-	BatteryStatus_t eState;
+	eBatteryStatus_t eState;
 	int16_t  sActVoltage_mV;
 	int16_t  sActCurrent_mA;
 	uint8_t  ucNumberOfCells;
