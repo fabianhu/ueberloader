@@ -421,7 +421,7 @@ void system_info(void)
 		restore_menu();
 }
 
-uint16_t glCommerrcnt; // fixme remove!
+uint16_t gsCommerrcnt; // fixme remove!
 
 void commError(uint8_t errno)
 {
@@ -432,5 +432,5 @@ void commError(uint8_t errno)
 	lcd_clear();
 	lcd_draw_line(255,0,0,0,0,320,240);
 	lcd_draw_line(255,0,0,320,0,0,240);
-	lcd_print(WHITE, BLACK, 1,30, 220,"Comm Error:%i #%i",errno ,glCommerrcnt);
+	lcd_print(WHITE, BLACK, 1,30, 220,"Comm Error:%i #%i",errno ,gsCommerrcnt);
 }
