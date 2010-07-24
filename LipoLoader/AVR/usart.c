@@ -8,7 +8,9 @@
 #include "usart.h"
 #include "usart_variant.h"
 #include "OS/FabOS.h"
+#include "serial.h" // fixme remove
 
+extern uint8_t glCommError; // fixme do better!!
 
 void USARTinit(void)
 {
@@ -21,7 +23,7 @@ void USARTinit(void)
 	USARTE0.BAUDCTRLA = BSEL & 0xFF; // BSEL 7:0
 	USARTE0.BAUDCTRLB = BSCALE << 4 | (BSEL & 0xF00)>>8; // BSCALE, BSEL 11:8
 	//	4. Set mode of operation.
-	USARTE0.CTRLA = USART_RXCINTLVL0_bm; // RX isr low prio
+	USARTE0.CTRLA = USART_RXCINTLVL_HI_gc; // RX isr low prio
 	USARTE0.CTRLC = 0b011; // asyncronous, no parity, one stop bit, 8 bits
 	//	5. Enable the Transmitter or the Receiver depending on the usage.
 	USARTE0.CTRLB =  USART_RXEN_bm |USART_TXEN_bm; //
@@ -63,6 +65,7 @@ uint8_t USARTSendBlockDMA(DMA_CH_t* DMAch, uint8_t* pArray, uint8_t Len) // retu
 	if(DMAch->CTRLB & DMA_CH_CHBUSY_bm || DMAch->CTRLB & DMA_CH_CHPEND_bm)
 	{
 		// Error, Busy.
+		glCommError = 88;
 		return 1;
 	}
 	else

@@ -46,7 +46,7 @@ typedef struct Battery_Info_tag
 	uint16_t usConverterPower_W; // temporary-remove fixme
 	int16_t  sISetpoint;
 	int16_t  sDiff;
-	uint16_t mtx;
+	uint16_t ErrCnt;
 	uint8_t  LastErr;
 
 	BatteryCell_t Cells[6];

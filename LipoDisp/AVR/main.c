@@ -15,10 +15,15 @@
 #include "menu.h"
 #include "touchpad.h"
 
+
 extern Battery_Info_t g_tBattery_Info;
 extern Command_t g_tCommand;
 extern uint8_t glCommError; // fixme do better!!
 extern uint16_t glTestMutexBlocked;
+
+extern UCIFrame_t g_tUCIRXFrame;
+extern uint8_t    g_ucRXLength;
+extern uint8_t test;
 
 // *********  Task definitions
 OS_DeclareTask(TaskCommand,300);
@@ -34,7 +39,7 @@ void emstop(uint8_t e);
 
 
 // Global variables
-
+static volatile uint16_t a,b,c;
 
 // *********  THE main()
 int main(void)
@@ -63,6 +68,11 @@ int main(void)
 		// NO OS_Wait.. functions are allowed here!!!
 		
 		asm("nop"); //at least one instruction is required!!!
+
+		a = OS_GetUnusedStack(OSTSKCommand);
+		b = OS_GetUnusedStack(OSTSKTouch);
+		c = OS_GetUnusedStack(OSTSKDisplay);
+
 	}
 
 }
@@ -81,7 +91,7 @@ void TaskDisplay(void)
 
 	lcd_clear();//lcd clear needed here because a new screen is shown
 	lcd_show_init_screen();
-	OS_WaitTicks(OSALMWaitDisp,1000);
+	OS_WaitTicks(OSALMWaitDisp,333);
 	lcd_clear();//lcd clear needed here because a new screen is shown
 
 	while(1)
@@ -123,13 +133,13 @@ void TaskDisplay(void)
 			ypos += LINEDIFF;
 			lcd_print(WHITE, BLACK, 1, 200, ypos,"ASYNC %i   ",g_tBattery_Info.usPWMStep);
 			ypos += LINEDIFF;
-			lcd_print(WHITE, BLACK, 1, 200, ypos,"MTXd %i   ",g_tBattery_Info.mtx); //g_tBattery_Info.usConverterPower_W);
-			ypos += LINEDIFF;
 			lcd_print(WHITE, BLACK, 1, 200, ypos,"Setp %i mA   ",g_tCommand.sCurrentSetpoint);
 			ypos += LINEDIFF;
 			lcd_print(WHITE, BLACK, 1, 200, ypos,"diff %i mA   ",g_tBattery_Info.sDiff);
 			ypos += LINEDIFF;
 			lcd_print(WHITE, BLACK, 1, 200, ypos,"Time %i s   ",(uint16_t)g_tBattery_Info.unTimeCharging_s);
+			ypos += LINEDIFF;
+			lcd_print(WHITE, BLACK, 1, 200, ypos,"ErrCnt %i   ",g_tBattery_Info.ErrCnt); //g_tBattery_Info.usConverterPower_W);
 			ypos += LINEDIFF;
 			lcd_print(WHITE, BLACK, 1, 160, ypos,"Charge %i mAh   ",(g_tBattery_Info.unCharge_mAs/3600));
 			ypos += LINEDIFF;
@@ -191,16 +201,17 @@ uint8_t vWaitForResult(void)
 {
 	uint8_t ret;
 	uint8_t commerror = 0;
-	ret = OS_WaitEventTimeout(OSEVTDataRecvd,OSALMCommandTimeout, 130 * sizeof(Battery_Info_t) / 95); // at 9600 baud it takes 105 ms to transfer the stuff.
+
+	ret = OS_WaitEventTimeout(OSEVTDataRecvd,OSALMCommandTimeout, 150); // at 9600 baud it takes 105 ms to transfer the stuff.
     if(ret == OSEVTDataRecvd)
-		{
-			HandleSerial(&g_tUCIRXFrame);
-		}
-		else
-		{
-			commerror = 100;
-			gsCommerrcnt++;
-		}
+	{
+		HandleSerial(&g_tUCIRXFrame);
+	}
+	else
+	{
+		commerror = 100;
+		gsCommerrcnt++;
+	}
     g_ucRXLength = 0;
     g_tUCIRXFrame.len = UCIHEADERLEN;
     return commerror;
@@ -214,7 +225,7 @@ void TaskCommand(void)
 	while(1)
 	{
 		OS_WaitAlarm(OSALMCommandRepeat);
-		OS_SetAlarm(OSALMCommandRepeat,350);
+		OS_SetAlarm(OSALMCommandRepeat,200);
 
 		UCIFrame_t myU;
 
@@ -223,7 +234,6 @@ void TaskCommand(void)
 		myU.len = UCIHEADERLEN;
 		UCISendBlockCrc(&myU);
 	    glCommError = vWaitForResult();
-
 
 	    if(g_NewComand)
 	    {
@@ -349,7 +359,7 @@ void CPU_init(void)
 	TCC1.CTRLE = 0;
 	TCC1.INTCTRLA = 0;
 	TCC1.INTCTRLB = TC_CCAINTLVL_HI_gc; // enable compare match A
-	TCC1.CCA = 16000;// compare at 32000 gives 1ms clock
+	TCC1.CCA = 16000;//  gives 1ms clock @ 16 MHz
 
 	//Enable Interrupts in INT CTRL
 	PMIC.CTRL = PMIC_HILVLEN_bm|PMIC_MEDLVLEN_bm|PMIC_LOLVLEN_bm;
