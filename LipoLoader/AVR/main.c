@@ -15,6 +15,8 @@ OS_DeclareTask(TaskGovernor,300);
 OS_DeclareTask(TaskBalance,300);
 OS_DeclareTask(TaskCommRX,300);
 OS_DeclareTask(TaskMonitor,200);
+OS_DeclareTask(TaskLED,150);
+OS_DeclareTask(TaskState,150);
 
 //OS_DeclareQueue(DemoQ,10,4);
 
@@ -35,21 +37,30 @@ void emstop(uint8_t e);
 
 Calibration_t g_tCalibration;
 
+uint16_t UnusedStackSpace[OS_NUMTASKS+1];
+
 // *********  THE main()
 int main(void)
 {
 	CPU_init();
 
-    OS_CreateTask(TaskGovernor, OSTaskGovernor);
-    OS_CreateTask(TaskBalance, OSTaskBalance);
-    OS_CreateTask(TaskCommRX, OSTaskCommRX);
-	OS_CreateTask(TaskMonitor, OSTaskMonitor);
+    uint8_t i;
 
-	OS_CreateAlarm(OSALMBalRepeat, OSTaskBalance);
-	OS_CreateAlarm(OSALMBalWait, OSTaskBalance);
-	OS_CreateAlarm(OSALMCommTimeout, OSTaskCommRX);
-	OS_CreateAlarm(OSALMWaitGov, OSTaskGovernor);
-	OS_CreateAlarm(OSALMonitorRepeat, OSTaskMonitor);
+	OS_CreateTask(TaskGovernor, OSTSKGovernor);
+    OS_CreateTask(TaskBalance, OSTSKBalance);
+    OS_CreateTask(TaskCommRX, OSTSKCommRX);
+	OS_CreateTask(TaskMonitor, OSTSKMonitor);
+	OS_CreateTask(TaskLED, OSTSKLED);
+	OS_CreateTask(TaskState, OSTSKState);
+
+	OS_CreateAlarm(OSALMBalRepeat, OSTSKBalance);
+	OS_CreateAlarm(OSALMBalWait, OSTSKBalance);
+	OS_CreateAlarm(OSALMCommTimeout, OSTSKCommRX);
+	OS_CreateAlarm(OSALMWaitGov, OSTSKGovernor);
+	OS_CreateAlarm(OSALMonitorRepeat, OSTSKMonitor);
+	OS_CreateAlarm(OSALMLEDRepeat, OSTSKLED);
+	OS_CreateAlarm(OSALMLEDWait, OSTSKLED);
+	OS_CreateAlarm(OSALMStateWait, OSTSKState);
 
 	OS_StartExecution() ;
 	while(1)
@@ -62,6 +73,12 @@ int main(void)
 
 		g_tBattery_Info.ErrCnt = gCommErrCnt;
 		g_tBattery_Info.LastErr = gCommErr;
+
+
+		for (i = 0; i <= OS_NUMTASKS; ++i)
+		{
+			UnusedStackSpace[i] = OS_GetUnusedStack(i);
+		}
 
 	}
 
@@ -128,9 +145,6 @@ void CPU_init(void)
 	// not nec. PORTE.PIN2CTRL = 1<<6; //INVEN;
 
 	// *** NO global interrupts enabled at this point!!!
-
-
-
 }
 
 ISR(OSC_XOSCF_vect)
@@ -198,5 +212,73 @@ void emstop(uint8_t e)
 
 	CCP = CCP_IOREG_gc; // unlock
 	RST.CTRL = 1; // SW reset
+
+}
+
+#define LEDMAXTIME 20
+#define LEDRATIO 8
+
+void TaskLED(void)
+{
+	uint8_t i;
+
+
+
+	OS_SetAlarm(OSALMLEDRepeat,LEDMAXTIME);
+	while(1)
+	{
+		OS_WaitAlarm(OSALMLEDRepeat);
+		OS_SetAlarm(OSALMLEDRepeat,LEDMAXTIME);
+
+
+		switch (g_tBattery_Info.eState)
+		{
+			case eBattWaiting:
+				// nicht vollständig angesteckt
+				LED_ON;
+				OS_WaitTicks(OSALMLEDWait,50);
+				LED_OFF;
+				OS_WaitTicks(OSALMLEDWait,2000-LEDMAXTIME-50);
+				break;
+			case eBattUnknown:
+				// nicht vollständig angesteckt
+				LED_ON;
+				OS_WaitTicks(OSALMLEDWait,200);
+				LED_OFF;
+				OS_WaitTicks(OSALMLEDWait,200);
+				break;
+			case eBattCharging:
+				// Charging!
+
+				LED_ON;
+				i++;
+
+				OS_WaitTicks(OSALMLEDWait,i/LEDRATIO/2);
+				if (i>LEDMAXTIME*LEDRATIO) i=0;
+
+				LED_OFF;
+
+				break;
+
+	//		case eBattEmpty:
+	//			break;
+
+			case eBattFull:
+				LED_ON;
+				break;
+			case eBattError:
+				LED_ON;
+				OS_WaitTicks(OSALMLEDWait,250);
+				LED_OFF;
+				OS_WaitTicks(OSALMLEDWait,250);
+				break;
+			default:
+				LED_OFF;
+				break;
+
+		}
+
+
+	}
 
 }

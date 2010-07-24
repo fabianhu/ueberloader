@@ -6,9 +6,9 @@
 
 // *********  USER Configurable Block BEGIN
 
-#define OS_NUMTASKS  4 // Number of (OS_Create)Tasks ; never >8 (idle task is not counted here!)
+#define OS_NUMTASKS  6 // Number of (OS_Create)Tasks ; never >8 (idle task is not counted here!)
 #define OS_NUMMUTEX  3 // Number of Mutexes
-#define OS_NUMALARMS 5 // Number of Alarms
+#define OS_NUMALARMS 8 // Number of Alarms
 
 #if defined (__AVR_ATmega32__)
 	#define OS_ScheduleISR TIMER1_COMPA_vect // Interrupt Vector used for OS-tick generation (check out CustomOS_ISRCode if you want to add isr code)
@@ -28,14 +28,17 @@
 
 // Task definitions
 
-#define OSTaskGovernor 0
-#define OSTaskBalance 1
-#define OSTaskCommRX 2
-#define OSTaskMonitor 3
+#define OSTSKGovernor 0
+#define OSTSKBalance 1
+#define OSTSKCommRX 2
+#define OSTSKMonitor 3
+#define OSTSKLED 4
+#define OSTSKState 5
 
 // Event Names
 
 #define OSEVTDataRecvd 1
+#define OSEVTState 1
 
 // Mutex Names
 
@@ -50,6 +53,9 @@
 #define OSALMBalRepeat    2
 #define OSALMBalWait      3
 #define OSALMonitorRepeat 4
+#define OSALMLEDRepeat    5
+#define OSALMLEDWait      6
+#define OSALMStateWait    7
 
 // *********  USER Configurable Block END 
 
