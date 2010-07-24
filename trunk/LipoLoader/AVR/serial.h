@@ -18,10 +18,11 @@
 
 typedef enum //BatteryStatus
 {
-	eBattUnknown, // = idle
+	eBattWaiting, // = idle
 	eBattCharging,
 	eBattFull,
 	eBattError,
+	eBattUnknown,
 	//eBattEmpty,
 }eBatteryStatus_t;
 

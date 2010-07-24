@@ -155,8 +155,11 @@ void TaskDisplay(void)
 				case eBattFull:
 					strcpy(buf,"Full      ");
 					break;
-				case eBattUnknown:
+				case eBattWaiting:
 					strcpy(buf,"Waiting   ");
+					break;
+				case eBattUnknown:
+					strcpy(buf,"Unknown   ");
 					break;
 				case eBattError:
 					strcpy(buf,"Batt.Error");
