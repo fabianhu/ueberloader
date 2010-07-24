@@ -286,6 +286,27 @@ void OS_SetEvent(uint8_t TaskID, uint8_t EventMask) // Set one or more events
 	}
 }
 
+void OS_SetEventfromISR(uint8_t TaskID, uint8_t EventMask) // Set one or more events from within ISR without re-scheduling!!
+//(The Problem may be, that global interrupts get enabled, but we are still IN "hi level" interrupt; -> The ISR gets prolonged by the recheduling. This is a speciality with the XMEGA controllers)
+{
+	OS_ENTERCRITICAL;
+	OS_TRACE(22);
+	MyOS.EventMask[TaskID] |= EventMask; // set the event mask, as there may be more events than waited for.
+
+	if(EventMask & MyOS.EventWaiting[TaskID]) // Targeted task is waiting for one of this events
+	{
+		OS_TRACE(23);
+		// wake up this task directly
+		MyOS.TaskReadyBits |= 1<<TaskID ;   // Make the task ready to run again.
+	}
+	else
+	{
+		OS_TRACE(24);
+		// remember the event and task continues on its call of WaitEvent directly.
+	}
+	OS_LEAVECRITICAL;
+}
+
 uint8_t OS_WaitEvent(uint8_t EventMask) //returns event(s), which lead to execution
 {
 #if OS_USEEXTCHECKS == 1
