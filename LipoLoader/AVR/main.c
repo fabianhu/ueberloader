@@ -22,6 +22,9 @@ OS_DeclareTask(TaskMonitor,200);
 extern Battery_Info_t g_tBattery_Info;
 extern uint16_t glTestMutexBlocked;
 
+extern uint8_t gCommErr;
+extern uint16_t gCommErrCnt;
+
 // *********  Prototypes
 void CPU_init(void);
 
@@ -56,6 +59,9 @@ int main(void)
 		
 		// TODO add your code here
 		asm("nop"); //at least one instruction is required!!!
+
+		g_tBattery_Info.ErrCnt = gCommErrCnt;
+		g_tBattery_Info.LastErr = gCommErr;
 
 	}
 

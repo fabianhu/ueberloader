@@ -43,9 +43,6 @@ void StateMachineBattery(void);
 extern void emstop(uint8_t e);
 
 
-#define LED_ON  PORTD.OUTSET = (1<<3);
-#define LED_OFF PORTD.OUTCLR = (1<<3);
-
 void usFilter(uint16_t* o, uint16_t* n)
 {
 	uint32_t temp;
@@ -466,8 +463,6 @@ void StateMachineBattery(void) // ONLY run in TaskBalance!
 				default:
 					break;
 			}
-
-			// fixme erase all measured values?
 			break;
 		case eBattCharging:
 				// Charging!

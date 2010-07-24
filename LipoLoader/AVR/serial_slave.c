@@ -21,20 +21,35 @@ uint8_t    g_ucRXLength;
 UCIFrame_t g_tUCITXFrame;
 extern uint16_t gTest;
 
+uint8_t gCommErr = 0; // fixme remove
+uint16_t gCommErrCnt = 0;
+
 ISR(USARTE0_RXC_vect)
 {
 	uint8_t* p = (uint8_t*)&g_tUCIRXFrame;
+	if((USARTE0.STATUS & USART_FERR_bm) || (USARTE0.STATUS & USART_BUFOVF_bm))
+	{
+		gCommErr = 45;
+		g_ucRXLength = 0; // reset received data length
+		g_tUCIRXFrame.len = UCIHEADERLEN; // reset header length in recd. data
+	}
+
 	if(g_ucRXLength < sizeof(UCIFrame_t)) // avoid over-write of the frame (too long)
 	{
 		p[g_ucRXLength] = USARTE0.DATA;
 		g_ucRXLength++;
 
 		OS_SetAlarm(OSALMCommTimeout,5); // reset Alarm, if stuff arrives
+		if(g_tUCIRXFrame.len == g_ucRXLength)
+		{
+			OS_SetEvent/*fromISR fixme*/(OSTaskCommRX,OSEVTDataRecvd);
+		}
 	}
-
-	if(g_tUCIRXFrame.len == g_ucRXLength)
+	else
 	{
-		OS_SetEvent(OSTaskCommRX,OSEVTDataRecvd);
+		gCommErr = 1;
+		g_ucRXLength = 0; // reset received data length
+		g_tUCIRXFrame.len = UCIHEADERLEN; // reset header length in recd. data
 	}
 }
 
@@ -57,7 +72,8 @@ void TaskCommRX(void)
 		else
 		{
 			//timeout
-			//g_tBattery_Info.LastErr = 7;
+//			gCommErr = 1;
+//			gCommErrCnt++;
 		}
 
 		// re-init for new frame
@@ -118,11 +134,13 @@ void HandleSerial(UCIFrame_t *_RXFrame)
 		// comm error
 		if(_RXFrame->ID != MYSERIALID)
 		{
-			g_tBattery_Info.LastErr = 8;
+			gCommErr = 3;
+			gCommErrCnt++;
 		}
 		else
 		{
-			g_tBattery_Info.LastErr = 9;
+			gCommErr = 4;
+			gCommErrCnt++;
 		}
 
 	}
@@ -130,6 +148,10 @@ void HandleSerial(UCIFrame_t *_RXFrame)
 
 void UCISendBlockCrc( UCIFrame_t* pU)
 {
+	// prepare RX for answer BEFORE sending, as we could be interrupted afterwards.
+
+	g_ucRXLength = 0; // reset received data length
+	g_tUCIRXFrame.len = UCIHEADERLEN; // reset header length in recd. data
 	pU->crc = 0;
 	pU->crc = CRC8x((uint8_t*)pU ,pU->len);
 	USARTSendBlockDMA(&DMA.CH1,(uint8_t*)pU ,pU->len);
