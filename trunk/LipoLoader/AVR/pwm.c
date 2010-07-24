@@ -187,7 +187,7 @@ void vGovernor(	uint16_t _I_Set_mA,	uint16_t _I_Act_mA)
 		vPWM_Set(usPower,usStartstep);
 	}
 
-	// fixme
+	// fixme additional info to be removed ?
 	OS_MutexGet(OSMTXBattInfo);
 	//pwm und pwmdings
 	g_tBattery_Info.usPWM = usPower;

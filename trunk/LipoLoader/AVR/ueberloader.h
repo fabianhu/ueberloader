@@ -15,7 +15,10 @@ typedef struct ADC_Values_tag
 }ADC_Values_t;
 
 
-
+#define LED_ON  PORTD.OUTSET = (1<<3);
+#define LED_OFF PORTD.OUTCLR = (1<<3);
 
 
 #define abs(X) (((X)<0)?-(X):(X))
+
+
