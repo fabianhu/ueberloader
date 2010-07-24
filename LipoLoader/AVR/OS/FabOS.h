@@ -67,6 +67,15 @@ typedef struct OS_Queue_tag {
 
 extern FabOS_t MyOS;
 
+#if OS_TRACE_ON == 1
+	extern uint8_t OS_Tracebuffer[OS_TRACESIZE];
+	#if OS_TRACESIZE <= 0xff
+		extern uint8_t OS_TraceIdx;
+	#else
+		extern uint16_t OS_TraceIdx;
+	#endif
+#endif
+
 // *********  Macros to simplify the API
 
 #define OS_DeclareQueue(NAME,COUNT,CHUNK) uint8_t OSQD##NAME[(COUNT+1)*CHUNK]; OS_Queue_t NAME = {0,0,CHUNK,(COUNT+1)*CHUNK,OSQD##NAME}
@@ -92,6 +101,7 @@ void 	OS_CustomISRCode(); // do not call; just fill in your code.
 void 	OS_StartExecution(); // Start the operating system
 
 void 	OS_SetEvent(uint8_t TaskID, uint8_t EventMask); // Set one or more events
+void 	OS_SetEventfromISR(uint8_t TaskID, uint8_t EventMask); // Set one or more events out of ISR
 
 uint8_t OS_WaitEvent(uint8_t EventMask); //returns event(s) in a mask, which lead to execution
 
