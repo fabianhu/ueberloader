@@ -124,26 +124,26 @@ void TaskDisplay(void)
 			ypos = 64;
 			
 			for (i = 0; i < 6; ++i) {
-			lcd_print(WHITE, BLACK, FONTSIZE, 0,ypos,"Cell%i/t%i/tmV/t%i mAs     " ,i,g_tBattery_Info.Cells[i].sVoltage_mV, g_tBattery_Info.Cells[i].unDisCharge_mAs);
+			lcd_print(WHITE, BLACK, FONTSIZE, 0,ypos,"Cell%i/t%i/tmV/t%i mAh     " ,i,g_tBattery_Info.Cells[i].sVoltage_mV, g_tBattery_Info.Cells[i].unDisCharge_mAs/3600);
 			ypos += LINEDIFF;
 			}
 
 			ypos = 64;
-			lcd_print(WHITE, BLACK, 1, 200, ypos,"PWM %i   ",g_tBattery_Info.usPWM);
+			lcd_print(RED, BLACK, 1, 200, ypos,"PWM %i   ",g_tBattery_Info.usPWM);
 			ypos += LINEDIFF;
-			lcd_print(WHITE, BLACK, 1, 200, ypos,"ASYNC %i   ",g_tBattery_Info.usPWMStep);
+			lcd_print(RED, BLACK, 1, 200, ypos,"ASYNC %i   ",g_tBattery_Info.usPWMStep);
+			ypos += LINEDIFF;
+			lcd_print(RED, BLACK, 1, 200, ypos,"SlErrCnt %i   ",g_tBattery_Info.ErrCnt); //g_tBattery_Info.usConverterPower_W);
+			ypos += LINEDIFF;
+			lcd_print(RED, BLACK, 1, 200, ypos,"SlaveErr %i    ",(g_tBattery_Info.LastErr));
+			ypos += LINEDIFF;
+			lcd_print(RED, BLACK, 1, 200, ypos,"diff %i mA   ",g_tBattery_Info.sDiff);
 			ypos += LINEDIFF;
 			lcd_print(WHITE, BLACK, 1, 200, ypos,"Setp %i mA   ",g_tCommand.sCurrentSetpoint);
 			ypos += LINEDIFF;
-			lcd_print(WHITE, BLACK, 1, 200, ypos,"diff %i mA   ",g_tBattery_Info.sDiff);
-			ypos += LINEDIFF;
 			lcd_print(WHITE, BLACK, 1, 200, ypos,"Time %i s   ",(uint16_t)g_tBattery_Info.unTimeCharging_s);
 			ypos += LINEDIFF;
-			lcd_print(WHITE, BLACK, 1, 200, ypos,"ErrCnt %i   ",g_tBattery_Info.ErrCnt); //g_tBattery_Info.usConverterPower_W);
-			ypos += LINEDIFF;
 			lcd_print(WHITE, BLACK, 1, 160, ypos,"Charge %i mAh   ",(g_tBattery_Info.unCharge_mAs/3600));
-			ypos += LINEDIFF;
-			lcd_print(WHITE, BLACK, 1, 160, ypos,"SlaveErr %i    ",(g_tBattery_Info.LastErr));
 			ypos += LINEDIFF;
 
 			char buf[10];
