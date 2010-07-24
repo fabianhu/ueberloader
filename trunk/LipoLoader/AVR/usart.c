@@ -8,9 +8,6 @@
 #include "usart.h"
 #include "usart_variant.h"
 #include "OS/FabOS.h"
-#include "serial.h" // fixme remove
-
-extern uint8_t glCommError; // fixme do better!!
 
 void USARTinit(void)
 {
@@ -65,7 +62,6 @@ uint8_t USARTSendBlockDMA(DMA_CH_t* DMAch, uint8_t* pArray, uint8_t Len) // retu
 	if(DMAch->CTRLB & DMA_CH_CHBUSY_bm || DMAch->CTRLB & DMA_CH_CHPEND_bm)
 	{
 		// Error, Busy.
-		glCommError = 88;
 		return 1;
 	}
 	else
