@@ -188,15 +188,15 @@ void TaskGovernor(void)
 			{
 				// overshoot prevention
 				I_Set_mA_Ramped = 0;
-				LED_OFF;
+				;
 			}
 			else*/
-			LED_ON;
+			;
 		}
 		else
 		{
 			I_Set_mA_Ramped = 0;
-			LED_OFF;
+			;
 		}
 
 		vGovernor( I_Set_mA_Ramped,	sI_out_act	);
@@ -372,8 +372,9 @@ void TaskBalance(void)
 		}
 		OS_MutexRelease(OSMTXBattInfo);
 
-		StateMachineBattery();
+		//StateMachineBattery();
 
+		OS_SetEvent(OSTSKState, OSEVTState);
 
 
 	}// while(1)
@@ -416,94 +417,6 @@ void TaskMonitor(void)
 
 	}
 }
-
-void StateMachineBattery(void) // ONLY run in TaskBalance!
-{
-	uint8_t NumberOfCells = 0;
-
-	OS_MutexGet(OSMTXBattInfo);
-	uint16_t myBattVoltage = g_tBattery_Info.sActVoltage_mV;
-	int16_t myBattCurrent = g_tBattery_Info.sActCurrent_mA;
-	OS_MutexRelease(OSMTXBattInfo);
-
-	OS_MutexGet(OSMTXCommand);
-	uint16_t usCommandCurrent = g_tCommand.sCurrentSetpoint;
-	OS_MutexRelease(OSMTXCommand);
-
-	switch (g_tBattery_Info.eState)
-	{
-		case eBattUnknown:
-			// nicht vollständig angesteckt
-			switch(g_tCommand.eChargerMode)
-			{
-				case eModeAuto:
-					// charge if ok.
-					NumberOfCells = GetCellcount(g_tBattery_Info.Cells,&myBattVoltage);
-					if(NumberOfCells > 0)
-					{
-						g_tBattery_Info.ucNumberOfCells = NumberOfCells;
-						g_tBattery_Info.eState = eBattCharging;
-						ResetLastBatteryInfo();
-					}
-					break;
-				case eModeManual:
-					// Manual mode
-					if(	GetCellcount(g_tBattery_Info.Cells,&myBattVoltage)== g_tCommand.ucUserCellCount &&
-							g_tCommand.ucUserCellCount >0)
-					{
-						g_tBattery_Info.ucNumberOfCells = g_tCommand.ucUserCellCount;
-						g_tBattery_Info.eState = eBattCharging;
-						ResetLastBatteryInfo();
-					}
-					else
-					{
-						g_tBattery_Info.eState = eBattError; // set Error for Display
-					}
-					break;
-				default:
-					break;
-			}
-			break;
-		case eBattCharging:
-				// Charging!
-				if(myBattVoltage >= g_tCommand.usVoltageSetpoint_mV*g_tBattery_Info.ucNumberOfCells &&
-						myBattCurrent < usCommandCurrent / 10) // fixme 10 ?
-				{
-					g_tBattery_Info.eState = eBattFull;
-				}
-				if(GetCellcount(g_tBattery_Info.Cells,&myBattVoltage)!=g_tBattery_Info.ucNumberOfCells)
-				{
-					g_tBattery_Info.ucNumberOfCells = 0;
-					g_tBattery_Info.eState = eBattUnknown;
-					// fixme wait here some time
-				}
-			break;
-
-//		case eBattEmpty:
-//			// vollständig angesteckt, Sollwert nicht erreicht
-//			if(1/*all cells >= setpoint*/)
-//				eBattState = eBattFull;
-//			break;
-		case eBattFull:
-			// vollständig angesteckt, Sollwert erreicht
-			if(GetCellcount(g_tBattery_Info.Cells,&myBattVoltage)!=g_tBattery_Info.ucNumberOfCells)
-			{
-				g_tBattery_Info.ucNumberOfCells = 0;
-				g_tBattery_Info.eState = eBattUnknown;
-			}
-			break;
-		case eBattError:
-			// fixme // set Event "Battery disconnected" for Display ??
-
-			//g_tBattery_Info.eState = eBattUnknown;
-			break;
-		default:
-			emstop(22);
-			break;
-
-	}
-}
-
 
 #define CELLDIFF_mV 100 // millivolt tolerance per cell to total voltage
 #define MINCELLVOLTAGE_mV 2000 // minimum cell voltage
@@ -556,4 +469,102 @@ void ResetLastBatteryInfo(void)
 
 	OS_MutexRelease(OSMTXBattInfo);
 }
+
+void TaskState(void)
+{
+	while(1)
+	{
+		OS_WaitEvent(OSEVTState);
+
+		uint8_t NumberOfCells = 0;
+
+		OS_MutexGet(OSMTXBattInfo);
+		uint16_t myBattVoltage = g_tBattery_Info.sActVoltage_mV;
+		int16_t myBattCurrent = g_tBattery_Info.sActCurrent_mA;
+		OS_MutexRelease(OSMTXBattInfo);
+
+		OS_MutexGet(OSMTXCommand);
+		uint16_t usCommandCurrent = g_tCommand.sCurrentSetpoint;
+		OS_MutexRelease(OSMTXCommand);
+
+		switch (g_tBattery_Info.eState)
+		{
+			case eBattWaiting:
+				// nicht vollständig angesteckt
+				switch(g_tCommand.eChargerMode)
+				{
+					case eModeAuto:
+						// charge if ok.
+						NumberOfCells = GetCellcount(g_tBattery_Info.Cells,&myBattVoltage);
+						if(NumberOfCells > 0)
+						{
+							g_tBattery_Info.ucNumberOfCells = NumberOfCells;
+							g_tBattery_Info.eState = eBattCharging;
+							ResetLastBatteryInfo();
+						}
+						break;
+					case eModeManual:
+						// Manual mode
+						if(	GetCellcount(g_tBattery_Info.Cells,&myBattVoltage)== g_tCommand.ucUserCellCount &&
+								g_tCommand.ucUserCellCount >0)
+						{
+							g_tBattery_Info.ucNumberOfCells = g_tCommand.ucUserCellCount;
+							g_tBattery_Info.eState = eBattCharging;
+							ResetLastBatteryInfo();
+						}
+						else
+						{
+							g_tBattery_Info.eState = eBattError; // set Error for Display
+						}
+						break;
+					default:
+						break;
+				}
+				break;
+			case eBattCharging:
+					// Charging!
+					if(myBattVoltage >= g_tCommand.usVoltageSetpoint_mV*g_tBattery_Info.ucNumberOfCells &&
+							myBattCurrent < usCommandCurrent / 10) // fixme 10 ?
+					{
+						g_tBattery_Info.eState = eBattFull;
+					}
+					if(GetCellcount(g_tBattery_Info.Cells,&myBattVoltage)!=g_tBattery_Info.ucNumberOfCells)
+					{
+						g_tBattery_Info.ucNumberOfCells = 0;
+						g_tBattery_Info.eState = eBattUnknown;
+					}
+				break;
+
+	//		case eBattEmpty:
+	//			// vollständig angesteckt, Sollwert nicht erreicht
+	//			if(1/*all cells >= setpoint*/)
+	//				eBattState = eBattFull;
+	//			break;
+			case eBattFull:
+				// vollständig angesteckt, Sollwert erreicht
+				if(GetCellcount(g_tBattery_Info.Cells,&myBattVoltage)!=g_tBattery_Info.ucNumberOfCells)
+				{
+					g_tBattery_Info.ucNumberOfCells = 0;
+					g_tBattery_Info.eState = eBattUnknown;
+				}
+				break;
+
+			case eBattUnknown:
+					OS_WaitTicks(OSALMStateWait,2000);
+					g_tBattery_Info.eState = eBattWaiting;
+				break;
+
+			case eBattError:
+				// fixme // set Event "Battery disconnected" for Display ??
+
+				//g_tBattery_Info.eState = eBattWaiting;
+				break;
+			default:
+				emstop(22);
+				break;
+
+		}
+	}
+}
+
 

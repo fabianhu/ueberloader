@@ -42,7 +42,7 @@ ISR(USARTE0_RXC_vect)
 		OS_SetAlarm(OSALMCommTimeout,5); // reset Alarm, if stuff arrives
 		if(g_tUCIRXFrame.len == g_ucRXLength)
 		{
-			OS_SetEvent/*fromISR fixme*/(OSTaskCommRX,OSEVTDataRecvd);
+			OS_SetEvent/*fromISR fixme*/(OSTSKCommRX,OSEVTDataRecvd);
 		}
 	}
 	else
