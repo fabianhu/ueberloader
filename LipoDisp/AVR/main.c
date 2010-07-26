@@ -77,6 +77,19 @@ int main(void)
 
 }
 
+void sFilter(int16_t* o, int16_t* n)
+{
+	int32_t temp;
+	if(*o == 0)
+		*o = *n;
+	else
+	{
+		temp = *o * 3ul + *n;
+		*o = (temp+2) / 4; // "halbes dazu, wg Rundungsfehler"
+	}
+}
+
+
 void TaskDisplay(void)
 {
 	uint16_t ypos=0;
@@ -104,71 +117,126 @@ void TaskDisplay(void)
 		{
 			//the lcd_print function overwrites old text-> no lcd_clear needed!
 			//lcd_clear();
-			lcd_print(YELLOW, BLACK, 2, 0, ypos,"vBatt  /t%i mV    ",g_tBattery_Info.sActVoltage_mV);
+		/*	lcd_print(YELLOW, BLACK, 2, 0, ypos,"vBatt  /t%i mV    ",g_tBattery_Info.sActVoltage_mV);
 			ypos += LINEDIFF*2;
 			lcd_print(YELLOW, BLACK, 2, 0, ypos,"Current/t%i mA   ",g_tBattery_Info.sActCurrent_mA);
 			ypos += LINEDIFF*2;
-			lcd_print(WHITE, BLACK, FONTSIZE, 230, 200,"Batt. %i Cells ",g_tBattery_Info.ucNumberOfCells);
+			lcd_print(WHITE, BLACK, FONTSIZE, 230, 200,"Batt. %i Cells ",g_tBattery_Info.ucNumberOfCells);*/
 
-			/*ypos = 100;
-			lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"Pin0/t%i/tt      " ,touchGetPad(0));
-			ypos += LINEDIFF;
+			static uint8_t bwasInvalid;
+			ypos = 200;
+			int16_t nypos1 = touchGetSchwerpunkt();
+			int16_t nypos;
+			if(nypos1 >0)
+			{
+				sFilter(&nypos,&nypos1);
+			}
+			else bwasInvalid = 1;
+
+			static int16_t oypos;
+
+
+			lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"COG/t%i/tt      " ,nypos);
+
+			lcd_draw_box(0,0,0,315,oypos,5,5);
+			if(nypos1 >0)
+			{
+				
+				lcd_draw_box(0,255,0,315,nypos/4,5,5);
+				oypos = nypos/4;
+			}
+
+
+			static uint16_t gonypos;
+			static int16_t gradient =0;
+
+			static int16_t filtered =0;
+
+			if(nypos1 > 0 && bwasInvalid)
+			{
+				// first touch
+				bwasInvalid =0;
+				gradient = 0;
+				gonypos = nypos1;
+				nypos = nypos1;
+			}
+			
+
+			if(nypos1 > 0)
+			{
+				gradient = nypos - gonypos;
+				gonypos = nypos;
+				sFilter(&filtered,&gradient);
+			}
+
+				//gradient = 0;
+
+			static uint16_t g;
+
+			lcd_draw_pixel(255,0,0,g++,filtered+128);
+			if (g == 320)
+			{
+				lcd_clear();
+				g =0;
+			}
+
+			/*ypos += LINEDIFF;
 			lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"Pin1/t%i/tt      " ,touchGetPad(1));
 			ypos += LINEDIFF;
 			lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"Pin2/t%i/tt      " ,touchGetPad(2));
 			ypos += LINEDIFF;
 			lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"Pin3/t%i/tt      " ,touchGetPad(3));
 			ypos += LINEDIFF;
-			lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"Pin4/t%i/tt      " ,touchGetPad(4));
-*/
-			ypos = 64;
-			
-			for (i = 0; i < 6; ++i) {
-			lcd_print(WHITE, BLACK, FONTSIZE, 0,ypos,"Cell%i/t%i/tmV/t%i mAh     " ,i,g_tBattery_Info.Cells[i].sVoltage_mV, g_tBattery_Info.Cells[i].unDisCharge_mAs/3600);
-			ypos += LINEDIFF;
-			}
+			lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"Pin4/t%i/tt      " ,touchGetPad(4));*/
 
-			ypos = 64;
-			lcd_print(RED, BLACK, 1, 200, ypos,"PWM %i   ",g_tBattery_Info.usPWM);
-			ypos += LINEDIFF;
-			lcd_print(RED, BLACK, 1, 200, ypos,"ASYNC %i   ",g_tBattery_Info.usPWMStep);
-			ypos += LINEDIFF;
-			lcd_print(RED, BLACK, 1, 200, ypos,"SlErrCnt %i   ",g_tBattery_Info.ErrCnt); //g_tBattery_Info.usConverterPower_W);
-			ypos += LINEDIFF;
-			lcd_print(RED, BLACK, 1, 200, ypos,"SlaveErr %i    ",(g_tBattery_Info.LastErr));
-			ypos += LINEDIFF;
-			lcd_print(RED, BLACK, 1, 200, ypos,"diff %i mA   ",g_tBattery_Info.sDiff);
-			ypos += LINEDIFF;
-			lcd_print(WHITE, BLACK, 1, 200, ypos,"Setp %i mA   ",g_tCommand.sCurrentSetpoint);
-			ypos += LINEDIFF;
-			lcd_print(WHITE, BLACK, 1, 200, ypos,"Time %i s   ",(uint16_t)g_tBattery_Info.unTimeCharging_s);
-			ypos += LINEDIFF;
-			lcd_print(WHITE, BLACK, 1, 160, ypos,"Charge %i mAh   ",(g_tBattery_Info.unCharge_mAs/3600));
-			ypos += LINEDIFF;
+//			ypos = 64;
+//
+//			for (i = 0; i < 6; ++i) {
+//			lcd_print(WHITE, BLACK, FONTSIZE, 0,ypos,"Cell%i/t%i/tmV/t%i mAs     " ,i,g_tBattery_Info.Cells[i].sVoltage_mV, g_tBattery_Info.Cells[i].unDisCharge_mAs);
+//			ypos += LINEDIFF;
+//			}
 
-			char buf[10];
-			switch (g_tBattery_Info.eState)
-			{
-				case eBattCharging:
-					strcpy(buf,"Charging  ");
-					break;
-				case eBattFull:
-					strcpy(buf,"Full      ");
-					break;
-				case eBattWaiting:
-					strcpy(buf,"Waiting   ");
-					break;
-				case eBattUnknown:
-					strcpy(buf,"Unknown   ");
-					break;
-				case eBattError:
-					strcpy(buf,"Batt.Error");
-					break;
-				default:
-					strcpy(buf,"Waaargh!!!");
-					break;
-			}
-			lcd_print(GREEN,BLACK,2,0,180,buf);
+//			ypos = 64;
+//			lcd_print(WHITE, BLACK, 1, 200, ypos,"PWM %i   ",g_tBattery_Info.usPWM);
+//			ypos += LINEDIFF;
+//			lcd_print(WHITE, BLACK, 1, 200, ypos,"ASYNC %i   ",g_tBattery_Info.usPWMStep);
+//			ypos += LINEDIFF;
+//			lcd_print(WHITE, BLACK, 1, 200, ypos,"Setp %i mA   ",g_tCommand.sCurrentSetpoint);
+//			ypos += LINEDIFF;
+//			lcd_print(WHITE, BLACK, 1, 200, ypos,"diff %i mA   ",g_tBattery_Info.sDiff);
+//			ypos += LINEDIFF;
+//			lcd_print(WHITE, BLACK, 1, 200, ypos,"Time %i s   ",(uint16_t)g_tBattery_Info.unTimeCharging_s);
+//			ypos += LINEDIFF;
+//			lcd_print(WHITE, BLACK, 1, 200, ypos,"ErrCnt %i   ",g_tBattery_Info.ErrCnt); //g_tBattery_Info.usConverterPower_W);
+//			ypos += LINEDIFF;
+//			lcd_print(WHITE, BLACK, 1, 160, ypos,"Charge %i mAh   ",(g_tBattery_Info.unCharge_mAs/3600));
+//			ypos += LINEDIFF;
+//			lcd_print(WHITE, BLACK, 1, 160, ypos,"SlaveErr %i    ",(g_tBattery_Info.LastErr));
+//			ypos += LINEDIFF;
+
+//			char buf[10];
+//			switch (g_tBattery_Info.eState)
+//			{
+//				case eBattCharging:
+//					strcpy(buf,"Charging  ");
+//					break;
+//				case eBattFull:
+//					strcpy(buf,"Full      ");
+//					break;
+//				case eBattWaiting:
+//					strcpy(buf,"Waiting   ");
+//					break;
+//				case eBattUnknown:
+//					strcpy(buf,"Unknown   ");
+//					break;
+//				case eBattError:
+//					strcpy(buf,"Batt.Error");
+//					break;
+//				default:
+//					strcpy(buf,"Waaargh!!!");
+//					break;
+//			}
+//			lcd_print(GREEN,BLACK,2,0,180,buf);
 
 
 			OS_GetTicks(&t2);
@@ -191,7 +259,7 @@ void TaskDisplay(void)
 		}
 
 
-		OS_WaitTicks(OSALMWaitDisp,100);
+		OS_WaitTicks(OSALMWaitDisp,20);
 	}
 
 }
