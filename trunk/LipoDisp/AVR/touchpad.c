@@ -3,7 +3,7 @@
 #include "touchpad.h"
 #include "OS/FabOS.h"
 
-uint8_t touchcalbytes[5] = TOUCHCALINIT;
+uint16_t touchcalbytes[5] = TOUCHCALINIT;
 
 
 uint8_t touchGetPad(uint8_t pin)
@@ -13,7 +13,7 @@ uint8_t touchGetPad(uint8_t pin)
 
 	cnt = 0;
 	OS_ENTERCRITICAL  // no interrupts allowed here!
-	for(i=0;i<TOUCHTIMES;i++)
+	for(i=0;i<TOUCHREPCNT;i++)
 	{
 		TOUCHTOGGLEHIGH;
 		while (!(TOUCHPORT.IN & mask))
@@ -28,97 +28,83 @@ uint8_t touchGetPad(uint8_t pin)
 	}
 	OS_LEAVECRITICAL
 
-	touchcalbytes[pin] = min(touchcalbytes[pin],cnt);
+	touchcalbytes[pin] = min(touchcalbytes[pin],cnt*100);
+
+	touchcalbytes[pin]++; // every some time, correct the calibration bytes.. even, if a touch is recognized... -> provides self healing..
 
 
-	// every some time, correct the calibration bytes.. even, if a touch is recognized... -> provides self healing..
-
-
-	return cnt - touchcalbytes[pin];
+	return cnt - (touchcalbytes[pin]/100);
 }
 
 
 void touch_init(void)
 {
 	TOUCHCONFIGPORT;
-
-
 }
+#define TOUCHCOUNT 5
 
-/*volatile uint16_t pads[4];
-void checkTouchpad(void)
+uint16_t touchpads[TOUCHCOUNT];
+
+void touch(void)
 {
 	uint8_t i;
-	uint8_t cnt;
-
-	cnt = 0;
-		for(i=0;i<3;i++)
-		{
-			PORTE.PIN1CTRL = PORT_OPC_PULLUP_gc;
-			while (!(PORTE.IN & (1<<0)))
-			{
-				cnt++;
-			}
-			PORTE.PIN1CTRL = PORT_OPC_PULLDOWN_gc;
-			while (PORTE.IN & (1<<0))
-			{
-				cnt++;
-			}
-		}
-		PORTE.PIN1CTRL = PORT_OPC_TOTEM_gc;
-		pads[0]=cnt;
-
-		cnt = 0;
-		for(i=0;i<3;i++)
-		{
-			PORTE.PIN0CTRL = PORT_OPC_PULLUP_gc;
-			while (!(PORTE.IN & (1<<1)))
-			{
-				cnt++;
-			}
-			PORTE.PIN0CTRL = PORT_OPC_PULLDOWN_gc;
-			while (PORTE.IN & (1<<1))
-			{
-				cnt++;
-			}
-		}
-		PORTE.PIN0CTRL = PORT_OPC_TOTEM_gc;
-		pads[1]=cnt;
-
-		cnt = 0;
-		for(i=0;i<3;i++)
-		{
-			PORTE.PIN2CTRL = PORT_OPC_PULLUP_gc;
-			while (!(PORTE.IN & (1<<2)))
-			{
-				cnt++;
-			}
-			PORTE.PIN2CTRL = PORT_OPC_PULLDOWN_gc;
-			while (PORTE.IN & (1<<2))
-			{
-				cnt++;
-			}
-		}
-		pads[2]=cnt;
-
-		cnt = 0;
-		for(i=0;i<3;i++)
-		{
-			PORTE.PIN3CTRL = PORT_OPC_PULLUP_gc;
-			while (!(PORTE.IN & (1<<3)))
-			{
-				cnt++;
-			}
-			PORTE.PIN3CTRL = PORT_OPC_PULLDOWN_gc;
-			while (PORTE.IN & (1<<3))
-			{
-				cnt++;
-			}
-		}
-		pads[3]=cnt;
-
-		asm("nop");
-
+	for (i = 0; i < TOUCHCOUNT; ++i)
+	{
+		touchpads[i] = touchGetPad(i);
+	}
 }
-*/
+
+int16_t touchGetSchwerpunkt(void)
+{
+	uint16_t force;
+
+	uint16_t maxVal1=0,maxVal2=0;
+	int8_t maxIdx1=0,maxIdx2=0,i;
+
+	touch(); // fixme ?
+	
+	for (i = 0; i < TOUCHCOUNT; ++i)
+	{
+		if(touchpads[i] >= maxVal1)
+		{
+			maxVal2 = maxVal1; // eins schieben
+			maxVal1 = touchpads[i];
+			maxIdx2 = maxIdx1;
+			maxIdx1 = i;
+		}
+		else if (touchpads[i] >= maxVal2)
+		{
+			maxVal2 = touchpads[i];
+			maxIdx2 =  i;
+		}
+	}
+
+	force = maxVal1;//(maxVal1 + maxVal2) /2;
+
+	if (abs(maxIdx2-maxIdx1) <= 1 && force > 6) // fixme adapt
+	{
+		// only one or no difference.
+		if(maxIdx1 > maxIdx2)
+		{
+			return maxIdx2*250 + ((maxVal1*250 / (maxVal1+maxVal2)));
+		}
+		else
+		{
+			return maxIdx1*250 + ((maxVal2*250 / (maxVal1+maxVal2)));
+		}
+
+
+
+	}
+	else
+	{
+		// double touch!
+
+	}
+
+
+
+	return -1;
+}
+
 
