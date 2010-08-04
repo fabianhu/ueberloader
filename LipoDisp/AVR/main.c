@@ -77,18 +77,10 @@ int main(void)
 
 }
 
-void sFilter(int16_t* o, int16_t* n)
-{
-	int32_t temp;
-	if(*o == 0)
-		*o = *n;
-	else
-	{
-		temp = *o * 3ul + *n;
-		*o = (temp+2) / 4; // "halbes dazu, wg Rundungsfehler"
-	}
-}
+int16_t gttestfixme;
 
+extern uint16_t maxVal[3];
+extern int8_t maxIdx[3];
 
 void TaskDisplay(void)
 {
@@ -107,13 +99,16 @@ void TaskDisplay(void)
 	OS_WaitTicks(OSALMWaitDisp,333);
 	lcd_clear();//lcd clear needed here because a new screen is shown
 
+	touchSetValue(0L,-100L,100L);
+
 	while(1)
 	{
 		ypos = 0;
+static int32_t value =0;; // DER Wert
 
 		OS_GetTicks(&t1);
 
-		if(!glCommError)
+		if(1)//!glCommError) fixme
 		{
 			//the lcd_print function overwrites old text-> no lcd_clear needed!
 			//lcd_clear();
@@ -123,62 +118,53 @@ void TaskDisplay(void)
 			ypos += LINEDIFF*2;
 			lcd_print(WHITE, BLACK, FONTSIZE, 230, 200,"Batt. %i Cells ",g_tBattery_Info.ucNumberOfCells);*/
 
-			static uint8_t bwasInvalid;
+
 			ypos = 200;
-			int16_t nypos1 = touchGetSchwerpunkt();
-			int16_t nypos;
-			if(nypos1 >0)
-			{
-				sFilter(&nypos,&nypos1);
-			}
-			else bwasInvalid = 1;
 
+
+
+
+//			for (i = 0; i < 3; i++)
+//			{
+//				lcd_print(WHITE, BLACK, 1, 0, 16*i,"val/t%i/tIdx/t%i      " ,maxVal[i],maxIdx[i]);
+//			}
+//
 			static int16_t oypos;
+			int16_t nypos1;
+			nypos1 = gttestfixme;
+
+			touchGetValue(&value,0);
+
+			lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"VAL/t%i/tt      " ,value);
 
 
-			lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"COG/t%i/tt      " ,nypos);
+
+
 
 			lcd_draw_box(0,0,0,315,oypos,5,5);
 			if(nypos1 >0)
 			{
 				
-				lcd_draw_box(0,255,0,315,nypos/4,5,5);
-				oypos = nypos/4;
+				lcd_draw_box(0,255,0,315,nypos1/4,5,5);
+				oypos = nypos1/4;
 			}
 
+static uint16_t g;
 
-			static uint16_t gonypos;
-			static int16_t gradient =0;
 
-			static int16_t filtered =0;
-
-			if(nypos1 > 0 && bwasInvalid)
-			{
-				// first touch
-				bwasInvalid =0;
-				gradient = 0;
-				gonypos = nypos1;
-				nypos = nypos1;
-			}
-			
-
-			if(nypos1 > 0)
-			{
-				gradient = nypos - gonypos;
-				gonypos = nypos;
-				sFilter(&filtered,&gradient);
-			}
-
-				//gradient = 0;
-
-			static uint16_t g;
-
-			lcd_draw_pixel(255,0,0,g++,filtered+128);
+			g++;
+			//lcd_draw_pixel(RED,g,filtered+128);
+			lcd_draw_pixel(GREEN,g,128-value);
+			lcd_draw_pixel(YELLOW,g,nypos1/4);
 			if (g == 320)
 			{
 				lcd_clear();
 				g =0;
 			}
+
+
+
+
 
 			/*ypos += LINEDIFF;
 			lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"Pin1/t%i/tt      " ,touchGetPad(1));
@@ -345,39 +331,46 @@ void TaskTouch()
 		g_tCommand.ucUserCellCount = 0;
 		OS_LEAVECRITICAL;
 
+
+
 	while(1)
 	{
 
 
 		OS_WaitAlarm(OSALTouchRepeat);
-		OS_SetAlarm(OSALTouchRepeat,10);
+		OS_SetAlarm(OSALTouchRepeat,3);
 
-		for (i = 0; i < 5; ++i)
-		{
-			t[i] = touchGetPad(i);
-			OS_WaitTicks(OSALTouchPause,1);
-		}
-		if(t[2]>TOUCHSENSELEVEL)
-		{
-			OS_MutexGet(OSMTXCommand);
-			g_tCommand.sCurrentSetpoint=0;
-			OS_MutexRelease(OSMTXCommand);
-			g_NewComand = 1;
-		}
-		else if(t[0]>TOUCHSENSELEVEL)
-		{
-			OS_MutexGet(OSMTXCommand);
-			if(g_tCommand.sCurrentSetpoint < 3000) g_tCommand.sCurrentSetpoint++;
-			OS_MutexRelease(OSMTXCommand);
-			g_NewComand = 1;
-		}
-		else if((t[4]>TOUCHSENSELEVEL))
-		{
-			OS_MutexGet(OSMTXCommand);
-			if(g_tCommand.sCurrentSetpoint > 0) g_tCommand.sCurrentSetpoint--;
-			OS_MutexRelease(OSMTXCommand);
-			g_NewComand = 1;
-		}
+
+		gttestfixme = touch();
+
+//		for (i = 0; i < 5; ++i)
+//		{
+//			t[i] = touchGetPad(i);
+//			//OS_WaitTicks(OSALTouchPause,1);
+//		}
+
+
+//		if(t[2]>TOUCHSENSELEVEL)
+//		{
+//			OS_MutexGet(OSMTXCommand);
+//			g_tCommand.sCurrentSetpoint=0;
+//			OS_MutexRelease(OSMTXCommand);
+//			g_NewComand = 1;
+//		}
+//		else if(t[0]>TOUCHSENSELEVEL)
+//		{
+//			OS_MutexGet(OSMTXCommand);
+//			if(g_tCommand.sCurrentSetpoint < 3000) g_tCommand.sCurrentSetpoint++;
+//			OS_MutexRelease(OSMTXCommand);
+//			g_NewComand = 1;
+//		}
+//		else if((t[4]>TOUCHSENSELEVEL))
+//		{
+//			OS_MutexGet(OSMTXCommand);
+//			if(g_tCommand.sCurrentSetpoint > 0) g_tCommand.sCurrentSetpoint--;
+//			OS_MutexRelease(OSMTXCommand);
+//			g_NewComand = 1;
+//		}
 	}
 }
 

@@ -94,6 +94,7 @@
 #define LCD_LIGHT_DIR PORTB.DIRSET = (1<<2)
 #define LCD_LIGHT_ON PORTB.OUTSET = (1<<2)
 #define LCD_LIGHT_OFF PORTB.OUTCLR = (1<<2)
+#define LCD_LIGHT_TGL PORTB.OUTTGL = (1<<2)
 
 //other defines
 #define CHARSPACE 2 		//space between 2 letter in pixel (function lcd_print)
