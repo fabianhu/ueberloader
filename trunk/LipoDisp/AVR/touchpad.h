@@ -18,8 +18,11 @@
 #define TOUCHTOGGLELOW  PORTC.OUTCLR = (1<<7);
 
 void touch_init(void);
-uint8_t touchGetPad(uint8_t pin);
-int16_t touchGetSchwerpunkt(void);
+//uint8_t touchGetPad(uint8_t pin);
+//int16_t touchGetSchwerpunkt(void);
+int16_t touch(void);
+void touchGetValue(int32_t* pValue, uint8_t Mutex);
+void touchSetValue(int16_t v, int16_t lower, int16_t upper);
 
 #define TOUCHCALINIT {0xffff,0xffff,0xffff,0xffff,0xffff}
 
