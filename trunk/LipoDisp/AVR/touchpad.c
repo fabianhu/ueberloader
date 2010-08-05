@@ -182,7 +182,7 @@ int16_t touch(void)
 				if(TapTime > TAPMINTIME && TapTime < TAPMAXTIME)
 				{
 					// yeah!
-					LCD_LIGHT_TGL;
+					//fixme LCD_LIGHT_TGL; <- doesn't work with my hardware, best regards Joe 
 					TapState = 0;
 				}
 			}

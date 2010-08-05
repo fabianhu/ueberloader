@@ -159,9 +159,9 @@ void menu_show(void)
 		if(!parameter_en)
 			{
 			//parameter name
-			lcd_draw_filled_box(0, 155, 0, 0, 0, 320,40);
+		//	lcd_draw_filled_box(0, 155, 0, 0, 0, 320,40);
 			//fixme change function 2 lcd_print lcd_write_flash_text(m_item[get_index((*gpsActualItem).ucID)].strName, 0, 0, 0, 2, 20, 0);
-			lcd_draw_filled_box(0, 0, 0, 0, 41, 320,200);
+		//	lcd_draw_filled_box(0, 0, 0, 0, 41, 320,200);
 			//Write old parameter value and limits
 			itoa10( (*pParam).sParam, stringtemp);// i=Integer;s=Zielstring
 			//fixme change to lcd_print lcd_write_ram_text("Old value:", 255, 255, 255, 2, 20, 0*32+45);
@@ -173,12 +173,12 @@ void menu_show(void)
 			//fixme change to lcd_print lcd_write_ram_text("Upper limit:", 255, 255, 255, 2, 20, 2*32+45);
 			//fixme change to lcd_print lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 200, 2*32+45);
 			//Draw box arround actual value
-			lcd_draw_box(0, 255, 0, 0, 4*32+50, 320,30);
+	////		lcd_draw_box(0, 255, 0, 0, 4*32+50, 320,30);
 			}
 		//set marker parameter edit-mode active
 		parameter_en=1;
 		//clear old value
-		lcd_draw_filled_box(0, 0, 0, 180, 4*32+51, 100,28);
+	//	lcd_draw_filled_box(0, 0, 0, 180, 4*32+51, 100,28);
 		//write actual value
 		itoa10( (*pParam).sParam, stringtemp);// i=Integer;s=Zielstring
 		//fixme change to lcd_print lcd_write_ram_text("New value:", 255, 255, 255, 2, 20, 4*32+45);
@@ -203,13 +203,13 @@ void menu_show(void)
 		if(last_menu_id!=(*gpsActualItem).ucTop)
 			{
 			//Write Menue header
-			lcd_draw_filled_box(0, 155, 0, 0, 0, 320,40);
+	//		lcd_draw_filled_box(0, 155, 0, 0, 0, 320,40);
 			//fixme change function 2 lcd_print lcd_write_flash_text(m_item[(*gpsActualItem).ucTop].strName, 0, 0, 0, 2, 20, 0);
 			}
 		//page changed?
 		if(page!=last_page || last_menu_id!=(*gpsActualItem).ucTop)
 			{
-			lcd_draw_filled_box(0, 0, 0, 0, 41, 320,200);
+	//		lcd_draw_filled_box(0, 0, 0, 0, 41, 320,200);
 			} 
 			//save new menu id and page
 			last_menu_id = (*gpsActualItem).ucTop;
@@ -223,29 +223,29 @@ void menu_show(void)
 			{
 			if(m_item[index].ucItem_sel)
 				{
-				lcd_draw_box(0, 255, 0, 0, i*32+50, 300,30);
+	//			lcd_draw_box(0, 255, 0, 0, i*32+50, 300,30);
 				//fixme change function 2 lcd_print lcd_write_flash_text(m_item[index].strName, 255, 255, 255, 2, 20, i*32+45);
 				}
 			else
 				{
-				lcd_draw_box(0, 0, 0, 0, i*32+50, 300,30);
+	//			lcd_draw_box(0, 0, 0, 0, i*32+50, 300,30);
 				//fixme change function 2 lcd_print lcd_write_flash_text(m_item[index].strName, 255, 255, 255, 2, 20, i*32+45);
 				}
 			index=m_item[index].ucNext;
 			}
 		//Draw position marker
-		lcd_draw_filled_box(0, 0, 0, 308, 49, 12,180);
-		lcd_draw_filled_box(0, 255, 0, 313, 49, 2, 182);
-		lcd_draw_filled_box(0, 255, 0, 309, 51+(((*gpsActualItem).ucItem_nr-1)*170/((*gpsActualItem).ucNr_grp_items-1)), 10,8);
+	//	lcd_draw_filled_box(0, 0, 0, 308, 49, 12,180);
+	//	lcd_draw_filled_box(0, 255, 0, 313, 49, 2, 182);
+	//	lcd_draw_filled_box(0, 255, 0, 309, 51+(((*gpsActualItem).ucItem_nr-1)*170/((*gpsActualItem).ucNr_grp_items-1)), 10,8);
 		}
 }
 
 void restore_menu(void)
 {
 	//Write Menue header
-	lcd_draw_filled_box(0, 155, 0, 0, 0, 320,40);
+//	lcd_draw_filled_box(0, 155, 0, 0, 0, 320,40);
 	//fixme change function 2 lcd_print lcd_write_flash_text(m_item[(*gpsActualItem).ucTop].strName, 0, 0, 0, 2, 20, 0);
-	lcd_draw_filled_box(0, 0, 0, 0, 41, 320,200);
+//	lcd_draw_filled_box(0, 0, 0, 0, 41, 320,200);
 	//Show menue-itmes
 	menu_show();
 }
@@ -393,9 +393,9 @@ void system_info(void)
 		//Funktion screen
 	while(1)
 		{
-			lcd_draw_filled_box(0, 155, 0, 0, 0, 320,40);
+			//lcd_draw_filled_box(0, 155, 0, 0, 0, 320,40);
 			//fixme change to lcd_print lcd_write_ram_text("System information", 0, 0, 0, 2, 20, 0);
-			lcd_draw_filled_box(0, 0, 0, 0, 41, 320,200);
+			//lcd_draw_filled_box(0, 0, 0, 0, 41, 320,200);
 			//fixme change to lcd_print lcd_write_ram_text("Stack Task1:", 255, 255, 255, 2, 20, 0*32+45);
 			//fixme change to lcd_print lcd_write_ram_text("Stack Task2:", 255, 255, 255, 2, 20, 1*32+45);
 			//fixme change to lcd_print lcd_write_ram_text("Stack Task3:", 255, 255, 255, 2, 20, 2*32+45);
@@ -430,7 +430,7 @@ void commError(uint8_t errno)
 	//uint16_t ret;
 
 	lcd_clear();
-	lcd_draw_line(255,0,0,0,0,320,240);
-	lcd_draw_line(255,0,0,320,0,0,240);
+	lcd_draw_line(0xf00,0,0,320,240);
+	lcd_draw_line(0xf00,320,0,0,240);
 	lcd_print(WHITE, BLACK, 1,30, 220,"Comm Error:%i #%i",errno ,gsCommerrcnt);
 }
