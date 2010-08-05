@@ -12,6 +12,7 @@
 #include "font.h"
 #include <stdio.h>
 #include <string.h>
+#include <util/delay.h>
 //*****************************************************************************
 //                    S T R I N G S  / V A R S
 //*****************************************************************************
@@ -55,6 +56,7 @@ uint8_t lcd_read_data()
 
 void lcd_init(void)
 {
+	uint8_t i;
 	//lcd data port as output
 	LCD_DATA_DDR = 0xff;
 	//lcd cmd port as output except TE
@@ -68,10 +70,39 @@ void lcd_init(void)
 	LCD_RD_S;
 	//Reset disable
 	LCD_RE_S;
-	//_delay_ms(1); // may be replaced by OS-wait, not using the delay lib? fixme
+	_delay_ms(1);
 	//set 24bit colour mode
+		//lcd_write_cmd(SET_INTF_PX_F);	//set interface pixel format
+		//lcd_write_data(0x07);			//set 24bbp
+	//set 12bit colour mode
 	lcd_write_cmd(SET_INTF_PX_F);	//set interface pixel format
-	lcd_write_data(0x07);			//set 24bbp
+	lcd_write_data(0x03);			//set 12bbp
+	//set colour
+	lcd_write_cmd(SET_COLOUR);		//write LUT
+	for(i=0;i<16;i++)				//init red
+		{
+		lcd_write_data(i*16);			
+		}
+	for(i=0;i<48;i++)				//dont care
+		{
+		lcd_write_data(0x00);			
+		}
+	for(i=0;i<16;i++)				//init green
+		{
+		lcd_write_data(i*16);			
+		}
+	for(i=0;i<48;i++)				//dont care
+		{
+		lcd_write_data(0x00);			
+		}
+	for(i=0;i<16;i++)				//init blue
+		{
+		lcd_write_data(i*16);			
+		}
+	for(i=0;i<48;i++)				//dont care
+		{
+		lcd_write_data(0x00);			
+		}
 	//memory write direction
 	lcd_write_cmd(MEM_ACS_CNTRL);
 	lcd_write_data(0x70);	
@@ -80,16 +111,23 @@ void lcd_init(void)
 	lcd_write_cmd(IDLE_MODE_OFF);	//idle off
 	lcd_write_cmd(NORM_MODE_ON);	//normal display mode on
 	lcd_write_cmd(DISP_ON);			//lcd on
-	//clear_lcd
-	lcd_clear();
 	//Enable Backlight
 	LCD_LIGHT_DIR;
 	LCD_LIGHT_ON;
+	//clear lcd
+	lcd_clear();
+
+	lcd_draw_circle(0x00f, 100, 100 ,100);
+	lcd_draw_filled_box(0x0f0, 50, 50, 100, 50);
+	lcd_draw_box(0xf00, 200, 200 , 20, 20);
+	lcd_print(RED, BLUE, 1, 10, 100, "Geht das g?!");
+
+	lcd_clear();
 }
 
 void lcd_clear(void)
 {
-	uint16_t zeile,pos;
+	uint8_t zeile,pos;
 	//set column pointer
 	lcd_write_cmd(COLUMN_ADR_SET);
 	lcd_write_data(0x00);
@@ -111,15 +149,7 @@ void lcd_clear(void)
 		{
 		for (pos=0;pos<160;pos++)
 			{
-			//1 pixel
-			LCD_WR_C;	//Toggle WR
-			LCD_WR_S;	//Toggle WR
-			LCD_WR_C;	//Toggle WR
-			LCD_WR_S;	//Toggle WR
-			LCD_WR_C;	//Toggle WR
-			LCD_WR_S;	//Toggle WR
-			
-			//2 pixel
+			//2 pixel in 12bit=3byte
 			LCD_WR_C;	//Toggle WR
 			LCD_WR_S;	//Toggle WR
 			LCD_WR_C;	//Toggle WR
@@ -130,8 +160,12 @@ void lcd_clear(void)
 		}	
 }
 
-void lcd_draw_pixel(uint8_t red, uint8_t green, uint8_t blue, uint16_t x_pos, uint16_t y_pos )
+void lcd_draw_pixel(uint16_t color, uint16_t x_pos, uint16_t y_pos )
 {
+	uint8_t byte1=0x00, byte2=0x00;
+	//create bytes to send
+	byte1|= (uint8_t)(color>>4);
+	byte2|= (uint8_t)(color<<4);
 	//set new pointer addr
 	lcd_write_cmd(COLUMN_ADR_SET);
 	lcd_write_data(HIGH(x_pos));
@@ -142,12 +176,11 @@ void lcd_draw_pixel(uint8_t red, uint8_t green, uint8_t blue, uint16_t x_pos, ui
 	lcd_write_data(LOW(y_pos));
 	//write pixel
 	lcd_write_cmd(MEM_WRITE);
-	lcd_write_data(red);
-	lcd_write_data(green);
-	lcd_write_data(blue); 
+	lcd_write_data(byte1);
+	lcd_write_data(byte2);
 }
 
-void lcd_draw_line(uint8_t red, uint8_t green, uint8_t blue, uint16_t x_pos1,uint16_t y_pos1,uint16_t x_pos2,uint16_t y_pos2)
+void lcd_draw_line(uint16_t color, uint16_t x_pos1,uint16_t y_pos1,uint16_t x_pos2,uint16_t y_pos2)
 {
   //reset pointer
 	//set column pointer
@@ -182,7 +215,7 @@ void lcd_draw_line(uint8_t red, uint8_t green, uint8_t blue, uint16_t x_pos1,uin
   dy <<= 1;
   dx <<= 1;
 
-  lcd_draw_pixel(red, green, blue, x_pos1,y_pos1);
+  lcd_draw_pixel(color, x_pos1,y_pos1);
 
   if (dx > dy)
   {
@@ -196,7 +229,7 @@ void lcd_draw_line(uint8_t red, uint8_t green, uint8_t blue, uint16_t x_pos1,uin
       }
       x_pos1 += stepx;
       fraction += dy;
-      lcd_draw_pixel(red, green, blue, x_pos1,y_pos1);
+      lcd_draw_pixel(color, x_pos1,y_pos1);
     }
   }
   else
@@ -211,12 +244,12 @@ void lcd_draw_line(uint8_t red, uint8_t green, uint8_t blue, uint16_t x_pos1,uin
       }
       y_pos1 += stepy;
       fraction += dx;
-      lcd_draw_pixel(red, green, blue, x_pos1,y_pos1);
+      lcd_draw_pixel(color, x_pos1,y_pos1);
     }
   }
 }
 
-void lcd_draw_circle(uint8_t red, uint8_t green, uint8_t blue, uint16_t center_xpos, uint16_t center_ypos ,uint16_t radius)
+void lcd_draw_circle(uint16_t color, uint16_t center_xpos, uint16_t center_ypos ,uint16_t radius)
 {
 	//reset pointer
 	//set column pointer
@@ -241,14 +274,14 @@ void lcd_draw_circle(uint8_t red, uint8_t green, uint8_t blue, uint16_t center_x
 	radiusError = 0;
 	while(x >= y)
   		{
-  			lcd_draw_pixel(red, green, blue, center_xpos+x, center_ypos+y); 
-  			lcd_draw_pixel(red, green, blue, center_xpos-x, center_ypos+y); 
-  			lcd_draw_pixel(red, green, blue, center_xpos-x, center_ypos-y);
- 			lcd_draw_pixel(red, green, blue, center_xpos+x, center_ypos-y); 
-  			lcd_draw_pixel(red, green, blue, center_xpos+y, center_ypos+x); 
-  			lcd_draw_pixel(red, green, blue, center_xpos-y, center_ypos+x); 
-  			lcd_draw_pixel(red, green, blue, center_xpos-y, center_ypos-x); 
-  			lcd_draw_pixel(red, green, blue, center_xpos+y, center_ypos-x); 
+  			lcd_draw_pixel(color, center_xpos+x, center_ypos+y); 
+  			lcd_draw_pixel(color, center_xpos-x, center_ypos+y); 
+  			lcd_draw_pixel(color, center_xpos-x, center_ypos-y);
+ 			lcd_draw_pixel(color, center_xpos+x, center_ypos-y); 
+  			lcd_draw_pixel(color, center_xpos+y, center_ypos+x); 
+  			lcd_draw_pixel(color, center_xpos-y, center_ypos+x); 
+  			lcd_draw_pixel(color, center_xpos-y, center_ypos-x); 
+  			lcd_draw_pixel(color, center_xpos+y, center_ypos-x); 
   			y++;
   			radiusError += ychange;
   			ychange += 2;
@@ -261,11 +294,18 @@ void lcd_draw_circle(uint8_t red, uint8_t green, uint8_t blue, uint16_t center_x
   		}
 }
 
-void lcd_draw_filled_box(uint8_t red, uint8_t green, uint8_t blue, uint16_t x_pos,uint16_t y_pos,uint16_t width,uint16_t height)
+void lcd_draw_filled_box(uint16_t color, uint16_t x_pos,uint16_t y_pos,uint16_t width,uint16_t height)
 {
-	//plus_bmp minus_bmp ok_bmp cancel_bmp
 	uint16_t i;
+	
+	uint8_t byte1=0x00, byte2=0x00, byte3=0x00, toggle=0;
+	//create bytes to send
+	byte1|= (uint8_t)(color>>4);
+	byte2|= (uint8_t)(color<<4);
+	byte2|= (uint8_t)(color>>4)&0x0f;
+	byte3|= (uint8_t)(color);
 
+		
 	//set new pointer addr
 	lcd_write_cmd(COLUMN_ADR_SET);
 	lcd_write_data(HIGH(x_pos));
@@ -282,39 +322,46 @@ void lcd_draw_filled_box(uint8_t red, uint8_t green, uint8_t blue, uint16_t x_po
 	lcd_write_data(LOW(i));
 	//write pixel
 	lcd_write_cmd(MEM_WRITE);
-	for (i=0;i<(3*width*height);i++)
+	for (i=0;i<width*height;i++)
 		{
-		lcd_write_data(red);
-		lcd_write_data(green);
-		lcd_write_data(blue);
+		if(toggle++)
+			{
+			toggle=0;
+			lcd_write_data(byte3);
+			}
+		else
+			{
+			lcd_write_data(byte1);
+			lcd_write_data(byte2);
+			}
 		}
 }
 
-void lcd_draw_box(uint8_t red, uint8_t green, uint8_t blue,uint16_t x_pos,uint16_t y_pos,uint16_t width,uint16_t hight)
+void lcd_draw_box(uint16_t color, uint16_t x_pos,uint16_t y_pos,uint16_t width,uint16_t hight)
 {
 	uint16_t x;
 	//obere Kante
 	for(x=0;x<width;x++)
 	{
-		lcd_draw_pixel(red, green, blue, x_pos+x, y_pos);
+		lcd_draw_pixel(color, x_pos+x, y_pos);
 	}
 	//linke/rechte Kante
 	for(x=0;x<hight;x++)
 	{
-		lcd_draw_pixel(red, green, blue, x_pos,y_pos+x);
-		lcd_draw_pixel(red, green, blue, x_pos+width,y_pos+x);
+		lcd_draw_pixel(color, x_pos,y_pos+x);
+		lcd_draw_pixel(color, x_pos+width,y_pos+x);
 
 	}
 	//untere Kante
 	for(x=0;x<=width;x++)
 	{
-		lcd_draw_pixel(red, green, blue, x_pos+x,y_pos+hight);
+		lcd_draw_pixel(color, x_pos+x,y_pos+hight);
 	}		
 }
 
 void lcd_draw_bmp(char *ptr_bmp, uint8_t colour, uint16_t x_pos, uint16_t y_pos)
 {
-	//plus_bmp minus_bmp ok_bmp cancel_bmp
+/*	//plus_bmp minus_bmp ok_bmp cancel_bmp
 	uint16_t width, height, i;
 	uint8_t greyscale;
 
@@ -378,16 +425,17 @@ void lcd_draw_bmp(char *ptr_bmp, uint8_t colour, uint16_t x_pos, uint16_t y_pos)
 				}
      		}		
 		}
-		
+*/		
 }
 
-void lcd_write_char(uint8_t letter, uint8_t font_red, uint8_t font_green, uint8_t font_blue,  uint8_t back_red, uint8_t back_green, uint8_t back_blue, uint8_t size, uint16_t x_pos, uint16_t y_pos)
+void lcd_write_char(uint8_t letter, uint8_t font1_font2, uint8_t font3_font1, uint8_t font2_font3, uint8_t font3_back1, uint8_t back1_back2, uint8_t back3_back1, uint8_t back2_back3, uint8_t back3_font1, uint8_t size, uint16_t x_pos, uint16_t y_pos)
 {
 		
 	uint16_t i;
 	uint8_t width, space, space_width, y_scale, x_scale, act_byte =0x00, bit_nr=0x00, act_row, y_offset;
-	uint8_t *ptr_letter;
+	uint8_t *ptr_letter, toggle_flag=0, last_pixel=BACK;
 
+	
 	space_width = 2; 	//distance between two letters
 
 	//set pointer and get letter size
@@ -419,9 +467,16 @@ void lcd_write_char(uint8_t letter, uint8_t font_red, uint8_t font_green, uint8_
 		{
 		for(bit_nr=0;bit_nr<(width+space_width)*size;bit_nr++)
 			{
-			lcd_write_data(back_red);
-			lcd_write_data(back_green);
-			lcd_write_data(back_blue);
+			if(toggle_flag++)
+				{
+				toggle_flag=0;
+				lcd_write_data(back3_back1);
+				lcd_write_data(back2_back3);
+				}
+			else
+				{
+				lcd_write_data(back1_back2);
+				}
 			}
 		}
 	//draw sign
@@ -442,25 +497,94 @@ void lcd_write_char(uint8_t letter, uint8_t font_red, uint8_t font_green, uint8_
 					//draw pixel in fontcolour
 					if( (1<<(7-bit_nr%8)) & act_byte)
 						{
-						lcd_write_data(font_red);
-						lcd_write_data(font_green);
-						lcd_write_data(font_blue);
+						if(last_pixel)//last pixel was backcolor
+							{
+							if(toggle_flag++)
+								{
+								toggle_flag=0;
+								lcd_write_data(back3_font1);
+								lcd_write_data(font2_font3);
+								}
+							else
+								{
+								lcd_write_data(font1_font2);
+								}
+							}
+						else//last pixel was fontcolor
+							{
+							if(toggle_flag++)
+								{
+								toggle_flag=0;
+								lcd_write_data(font3_font1);
+								lcd_write_data(font2_font3);
+								}
+							else
+								{
+								lcd_write_data(font1_font2);
+								}
+							}
 						}
 					//draw pixel in backgroundcolour
 					else 
 						{
-						lcd_write_data(back_red);
-						lcd_write_data(back_green);
-						lcd_write_data(back_blue);
+						if(last_pixel)//last pixel was backcolor
+							{
+							if(toggle_flag++)
+								{
+								toggle_flag=0;
+								lcd_write_data(back3_back1);
+								lcd_write_data(back2_back3);
+								}
+							else
+								{
+								lcd_write_data(back1_back2);
+								}
+							}
+						else//last pixel was fontcolor
+							{
+							if(toggle_flag++)
+								{
+								toggle_flag=0;
+								lcd_write_data(font3_back1);
+								lcd_write_data(back2_back3);
+								}
+							else
+								{
+								lcd_write_data(back1_back2);
+								}
+							}
 						}
 					}
 				}
 				//write space between two letters
 				for(space=0;space<space_width*size;space++)
 					{//draw pixel in backgroundcolour
-					lcd_write_data(back_red);
-					lcd_write_data(back_green);
-					lcd_write_data(back_blue);
+					if(last_pixel)//last pixel was backcolor
+						{	
+						if(toggle_flag++)
+							{
+							toggle_flag=0;
+							lcd_write_data(back3_back1);
+							lcd_write_data(back2_back3);
+							}
+						else
+							{
+							lcd_write_data(back1_back2);
+							}
+						}
+					else//last pixel was fontcolor
+						{
+						if(toggle_flag++)
+							{
+							toggle_flag=0;
+							lcd_write_data(font3_back1);
+							lcd_write_data(back2_back3);
+							}
+						else
+							{
+							lcd_write_data(back1_back2);
+							}
+						}
 					}
 			} 
 		}	
@@ -469,11 +593,11 @@ void lcd_write_char(uint8_t letter, uint8_t font_red, uint8_t font_green, uint8_
 void lcd_show_init_screen(void)
 {
 	//Powered by
-	lcd_print(WHITE, BLACK , 2, 30, 50,flash2ram(&txt_init1));
+	//lcd_print(WHITE, BLACK , 2, 30, 50,flash2ram(&txt_init1));
 	//FAB
-	lcd_print(YELLOW, BLACK , 3, 100, 100,flash2ram(&txt_init2));
+	//lcd_print(YELLOW, BLACK , 3, 100, 100,flash2ram(&txt_init2));
 	//OS
-	lcd_print(RED, BLACK , 3, 185, 110,flash2ram(&txt_init3));
+	//lcd_print(RED, BLACK , 3, 185, 110,flash2ram(&txt_init3));
 };
 
 
@@ -521,7 +645,7 @@ void itoa10ra(int value, char* result)
 	
 }
 
-void lcd_print(uint8_t font_red,uint8_t font_green, uint8_t font_blue,uint8_t back_red,uint8_t back_green, uint8_t back_blue, uint8_t size, uint16_t x_pos, uint16_t y_pos,char *ptr_string,...)
+void lcd_print(uint16_t font_color, uint16_t back_color, uint8_t size, uint16_t x_pos, uint16_t y_pos,char *ptr_string,...)
 {
     va_list specifier;                  //list of specifier ,...                
     va_start (specifier, ptr_string);   	//initialize specifier list       
@@ -529,9 +653,24 @@ void lcd_print(uint8_t font_red,uint8_t font_green, uint8_t font_blue,uint8_t ba
 	char pixel_width, *ptr_buf, buf[8]={};
 	uint8_t tabwidth=0;
 	uint16_t new_x_pos, new_y_pos;
+
+	uint8_t font1_font2=0x00, font3_font1=0x00, font2_font3=0x00, font3_back1=0x00;
+	uint8_t back1_back2=0x00, back3_back1=0x00, back2_back3=0x00, back3_font1=0x00;
+
+	//get colors
+	font1_font2 = (uint8_t)(font_color>>4);
+	font3_font1 = (uint8_t)(font_color<<4)|(font_color>>8);
+	font2_font3 = (uint8_t)(font_color);
+	font3_back1 = (uint8_t)(font_color<<4)|(back_color>>8);
+	back1_back2 = (uint8_t)(back_color>>4);
+	back3_back1 = (uint8_t)(back_color<<4)|(back_color>>8);
+	back2_back3 = (uint8_t)(back_color);
+	back3_font1 = (uint8_t)(back_color<<4)|(font_color>>8);
+
 	//get position
 	new_x_pos=x_pos;
 	new_y_pos=y_pos;
+
 			
     	while (*ptr_string)
     	{
@@ -568,14 +707,14 @@ void lcd_print(uint8_t font_red,uint8_t font_green, uint8_t font_blue,uint8_t ba
 								new_y_pos+=FONTHEIGHT*size;
 							}
 							//Write sign
-							lcd_write_char(*ptr_buf++, font_red, font_green, font_blue, back_red, back_green, back_blue, size, new_x_pos, new_y_pos);
+							lcd_write_char(*ptr_buf++, font1_font2, font3_font1, font2_font3, font3_back1, back1_back2, back3_back1, back2_back3, back3_font1, size, new_x_pos, new_y_pos);
 							//adjust position
 							new_x_pos+=size*(pixel_width+CHARSPACE);
 						}
 						break;
 					case 'd': // fixed point; next char is: comma shift to !left! (%d1 = ####.# %d2= ###.## etc.)
 						;
-						uint8_t shift = (*ptr_string++)-48; // get shift amount
+						//fixme uint8_t shift = (*ptr_string++)-48; // get shift amount
 											//convert uint16_t
 						itoa10(va_arg(specifier,uint16_t),buf);
 						//lcd_print value
@@ -591,7 +730,7 @@ void lcd_print(uint8_t font_red,uint8_t font_green, uint8_t font_blue,uint8_t ba
 								new_y_pos+=FONTHEIGHT*size;
 							}
 							//Write sign
-							lcd_write_char(*ptr_buf++, font_red, font_green, font_blue, back_red, back_green, back_blue, size, new_x_pos, new_y_pos);
+							lcd_write_char(*ptr_buf++, font1_font2, font3_font1, font2_font3, font3_back1, back1_back2, back3_back1, back2_back3, back3_font1, size, new_x_pos, new_y_pos);
 							//adjust position
 							new_x_pos+=size*(pixel_width+CHARSPACE);
 						}
@@ -610,16 +749,16 @@ void lcd_print(uint8_t font_red,uint8_t font_green, uint8_t font_blue,uint8_t ba
                 {           
                 case 't': //increase xpos
 					tabwidth=TABSIZE-(new_x_pos%TABSIZE);
-					lcd_draw_filled_box(back_red, back_green, back_blue, new_x_pos,new_y_pos, tabwidth, FONTHEIGHT*size);
+					lcd_draw_filled_box(back_color, new_x_pos,new_y_pos, tabwidth, FONTHEIGHT*size);
                     new_x_pos+=tabwidth;
 					break;
 				case '/': //lcd_print '/'
-					lcd_write_char(act_sign, font_red, font_green, font_blue, back_red, back_green, back_blue, size, new_x_pos, new_y_pos);
+					lcd_write_char(act_sign, font1_font2, font3_font1, font2_font3, font3_back1, back1_back2, back3_back1, back2_back3, back3_font1, size, new_x_pos, new_y_pos);
         			//adjust position
 					new_x_pos+=size*(pixel_width+CHARSPACE);
 					break;
 				case '%': //lcd_print '%'
-					lcd_write_char(act_sign, font_red, font_green, font_blue, back_red, back_green, back_blue, size, new_x_pos, new_y_pos);
+					lcd_write_char(act_sign, font1_font2, font3_font1, font2_font3, font3_back1, back1_back2, back3_back1, back2_back3, back3_font1, size, new_x_pos, new_y_pos);
         			//adjust position
 					new_x_pos+=size*(pixel_width+CHARSPACE);
 					break;
@@ -633,7 +772,7 @@ void lcd_print(uint8_t font_red,uint8_t font_green, uint8_t font_blue,uint8_t ba
         else //write "normal" sign
         {
             //Write sign
-			lcd_write_char(act_sign, font_red, font_green, font_blue, back_red, back_green, back_blue, size, new_x_pos, new_y_pos);
+			lcd_write_char(act_sign, font1_font2, font3_font1, font2_font3, font3_back1, back1_back2, back3_back1, back2_back3, back3_font1, size, new_x_pos, new_y_pos);
         	//adjust position
 			new_x_pos+=size*(pixel_width+CHARSPACE);
 		}
@@ -657,4 +796,32 @@ char *flash2ram(char *ptr_string)
 	
 	return returnstring;
  
+}
+
+
+void lcd_init_scrollmode(void)
+{	
+	uint16_t tfa, sa, bfa;
+	//top fixed area
+	tfa = 20;
+	//scroll area
+	sa = 280;
+	//bottom fixed area
+	bfa = 20;
+
+	lcd_write_cmd(VERT_SCR);
+	lcd_write_data(HIGH(tfa));
+	lcd_write_data(LOW(tfa));
+	lcd_write_data(HIGH(sa));
+	lcd_write_data(LOW(sa));
+	lcd_write_data(HIGH(bfa));
+	lcd_write_data(LOW(bfa));
+}
+
+void lcd_scrollmode(uint16_t saddr)
+{
+
+	lcd_write_cmd(VERT_SCR_START);
+	lcd_write_data(HIGH(saddr));
+	lcd_write_data(LOW(saddr));
 }

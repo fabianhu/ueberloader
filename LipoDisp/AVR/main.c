@@ -141,11 +141,11 @@ static int32_t value =0;; // DER Wert
 
 
 
-			lcd_draw_box(0,0,0,315,oypos,5,5);
+			lcd_draw_box( 0,315,oypos,5,5);
 			if(nypos1 >0)
 			{
 				
-				lcd_draw_box(0,255,0,315,nypos1/4,5,5);
+				lcd_draw_box(0,315,nypos1/4,5,5);
 				oypos = nypos1/4;
 			}
 

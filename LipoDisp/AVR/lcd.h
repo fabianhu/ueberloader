@@ -99,20 +99,22 @@
 //other defines
 #define CHARSPACE 2 		//space between 2 letter in pixel (function lcd_print)
 #define TABSIZE	40		//Distance between 2 tabs in pixel
-#define FONTHEIGHT 16 //height of font in pixel
+#define FONTHEIGHT 18 //height of font in pixel
 
 //some colours
-#define BLACK 0,0,0
-#define WHITE 255,255,255
-#define RED 255,0,0
-#define GREEN 0,255,0
-#define BLUE 0,0,255
-#define YELLOW 255,255,0
-#define ORANGE 255,128,0
-#define GREY 128,128,128
+#define BLACK  0x000
+#define WHITE  0xfff
+#define RED    0xf00
+#define GREEN  0x0f0
+#define BLUE   0x00f
+#define YELLOW 0xff0
+#define ORANGE 0xf70
+#define GREY   0x777
 
 
 #define abs(X) ((X)<0?-(X):(X))
+#define FONT 0
+#define BACK 1
 
 //*****************************************************************************
 //                            P R O T O T Y P E S
@@ -122,16 +124,20 @@ void lcd_write_data(uint8_t data);
 uint8_t lcd_read_data();
 void lcd_init(void);
 void lcd_clear(void);
-void lcd_draw_pixel(uint8_t red, uint8_t green, uint8_t blue,uint16_t x_pos,uint16_t y_pos );
-void lcd_draw_line(uint8_t red, uint8_t green, uint8_t blue, uint16_t x_pos1,uint16_t y_pos1,uint16_t x_pos2,uint16_t y_pos2);
-void lcd_draw_circle(uint8_t red, uint8_t green, uint8_t blue, uint16_t center_xpos, uint16_t center_ypos ,uint16_t radius);
-void lcd_draw_filled_box(uint8_t red, uint8_t green, uint8_t blue, uint16_t x_pos,uint16_t y_pos,uint16_t width,uint16_t hight);
-void lcd_draw_box(uint8_t red, uint8_t green, uint8_t blue, uint16_t x_pos,uint16_t y_pos,uint16_t width,uint16_t hight);
+void lcd_draw_pixel(uint16_t color, uint16_t x_pos,uint16_t y_pos );
+void lcd_draw_line(uint16_t color, uint16_t x_pos1,uint16_t y_pos1,uint16_t x_pos2,uint16_t y_pos2);
+void lcd_draw_circle(uint16_t color, uint16_t center_xpos, uint16_t center_ypos ,uint16_t radius);
+void lcd_draw_filled_box(uint16_t color, uint16_t x_pos,uint16_t y_pos,uint16_t width,uint16_t hight);
+void lcd_draw_box(uint16_t color, uint16_t x_pos,uint16_t y_pos,uint16_t width,uint16_t hight);
 void lcd_draw_bmp(char *ptr_bmp, uint8_t colour, uint16_t x_pos, uint16_t y_pos);
-void lcd_write_char(uint8_t letter, uint8_t font_red, uint8_t font_green, uint8_t font_blue,  uint8_t back_red, uint8_t back_green, uint8_t back_blue, uint8_t size, uint16_t x_pos, uint16_t y_pos);
+void lcd_write_char(uint8_t letter, uint8_t font1_font2, uint8_t font3_font1, uint8_t font2_font3, uint8_t font3_back1, uint8_t back1_back2, uint8_t back3_back1, uint8_t back2_back3, uint8_t back3_font1, uint8_t size, uint16_t x_pos, uint16_t y_pos);
 void lcd_show_init_screen(void);
-void lcd_print(uint8_t font_red,uint8_t font_green,uint8_t font_blue,uint8_t back_red,uint8_t back_green,uint8_t back_blue, uint8_t size, uint16_t x_pos, uint16_t y_pos,char *text,...);
+void lcd_print(uint16_t font_color, uint16_t back_color, uint8_t size, uint16_t x_pos, uint16_t y_pos,char *ptr_string,...);
 char *flash2ram(char *ptr_string);
 void itoa10(int value, char* result);
+
+void lcd_init_scrollmode(void);
+void lcd_scrollmode(uint16_t saddr);
+
 
 #endif //LCD_H
