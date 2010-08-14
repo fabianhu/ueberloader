@@ -1,11 +1,10 @@
 /* definitions for menu */
-#ifndef MENU_H
-	#define MENU_H
+
 
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 #include "lcd.h"
-//#include "OS/FabOS.h"//get unused stack
+
 
 typedef struct Parameter_tag
 {
@@ -13,6 +12,13 @@ typedef struct Parameter_tag
 	int16_t		sLowerLimit;
 	int16_t		sUpperLimit;
 }Parameter_t;
+
+typedef struct MenuItemName_tag
+{
+	//must be initialized by user
+	char* 			strName;		//Name
+}
+MenuItemName_t;
 
 typedef struct MenuItem_tag
 {
@@ -33,13 +39,21 @@ typedef struct MenuItem_tag
 }
 MenuItem_t;
 
+//Errorcode
+#define INFINITE_LOOP 	1			//A infinite loop exists in the menu structure
+#define WRONG_SUB_UCID 	2			//The ID of the sub menu item is wrong
+#define WRONG_PREV_UCID 3			//The ID of the previous menu item is wrong
+#define WRONG_NEXT_UCID	4			//The ID of the next menu item is wrong
+
+//Menusettings
+#define ITEMSCOUNT_PAGE 3			
+
+
+//extern Prototypes
 extern void menu_init(void);
 extern void menu_show(void);
 extern void menu_next(unsigned char step);
 extern void menu_prev(unsigned char step);
 extern void menu_select(void);
 
-extern void commError(uint8_t errno);
-
-#endif //MENU_H
 

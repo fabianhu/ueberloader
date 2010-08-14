@@ -3,52 +3,56 @@
  *
  * */
 
-// fixme die Scrollbar rechts evtl. "proportional" machen und per touch bewegen ?
-
 
 #include "menu.h"
-#include "OS/FabOS.h"
 
 //function prototypes
-void system_info (void);
-void commError(uint8_t errno);
+void menu_init(void);
 
 //menue strings
-char txtmainmenu[] PROGMEM="Hauptmenue";
+char txtmainmenu[] PROGMEM="Main Menu";
 char back[] PROGMEM="(back)";
 
-char txtmenu1[] PROGMEM="Sample submenues";
-	char txtsubmenu11[] PROGMEM="SSubmenue11";
-	char txtsubmenu12[] PROGMEM="SSubmenue12";
-	char txtsubmenu13[] PROGMEM="SSubmenue13";
-	char txtsubmenu14[] PROGMEM="SSubmenue14";
-char txtmenu2[] PROGMEM="Sample parameter";
-	char txtsubmenu21[] PROGMEM="SParameter1";
-	char txtsubmenu22[] PROGMEM="SParameter2";
-char txtmenu3[] PROGMEM="Sample function";
-	char txtsubmenu31[] PROGMEM="SFunction";
+char txtmenu1[] PROGMEM="Injection";
+	char txtsubmenu11[] PROGMEM="Single shoot";
+	char txtsubmenu12[] PROGMEM="Sequence";
+char txtmenu2[] PROGMEM="Settings";
+	char txtsubmenu21[] PROGMEM="Trigger Mode";
+	char txtsubmenu22[] PROGMEM="Sequence";
+	char txtsubmenu23[] PROGMEM="Current Profiles";
 
 
 Parameter_t p_item[] = {//sParam	sLowerLimit		sUpperLimit;
 						{0,			0,				100},
 						{50,		50,				60},
-						}; 
+						};
+						
+						 
+MenuItemName_t n_item[]	=	{//Menu item name
+						{"Profile1"},
+						{"Profile2"},
+						{"Profile3"},
+						{"Profile4"},
+						{"Profile5"},
+						};	
 
-MenuItem_t m_item[] = {//ucID	strName			pAction			pParam		ucSubMenu		ucPrev		ucNext
-						{ 255 ,	txtmainmenu, 		0, 				0, 			1, 			255,		255},
-						{ 1 , 	txtmenu1, 			0, 				0, 			11, 			3, 			2},
-							{ 11 , 	txtsubmenu11, 	0,				0, 			0, 			15, 		12},
-							{ 12 , 	txtsubmenu12, 	0, 				0, 			0, 			11,			13},
-							{ 13 , 	txtsubmenu13, 	0, 				0, 			0, 			12, 		14},
-							{ 14 , 	txtsubmenu14, 	0, 				0, 			0, 			13,			15},
-							{ 15 , 	back,			0, 				0, 			0, 			14, 		11},
-						{ 2 , 	txtmenu2, 			0, 				0, 			21, 		1, 			3},
-							{ 21 , 	txtsubmenu21, 	0, 				&p_item[0],	0, 			23, 		22},
-							{ 22 , 	txtsubmenu22, 	0, 				&p_item[1],	0, 			21,			23},
-							{ 23 , 	back,			0, 				0, 			0, 			22, 		21},
-						{ 3 , 	txtmenu3, 			0, 				0, 			31, 		2, 			1},
-							{ 31 , 	txtsubmenu31, 	&system_info,	0, 			0, 			32, 		32},
-							{ 32 , 	back,			0, 				0, 			0, 			31, 		31},
+MenuItem_t m_item[] = {//ucID	strName						pAction			pParam		ucSubMenu	ucPrev		ucNext 	//array index (only f. debug)
+						{ 255 ,	txtmainmenu, 				0, 				0, 			1, 			255,		255},	//0
+						{ 1 , 	txtmenu1, 					0, 				0, 			11, 		0, 			2},		//1
+							{ 11 , 	txtsubmenu11, 			0,				0, 			0, 			0, 			12},	//2
+							{ 12 , 	txtsubmenu12, 			0, 				0, 			0, 			11,			13},	//3
+							{ 13 , 	back,					0, 				0, 			0, 			12, 		0},		//4
+						{ 2 , 	txtmenu2, 					0, 				0, 			21, 		1, 			0},		//5
+							{ 21 , 	txtsubmenu21, 			0, 				0,			0, 			0, 			22},	//6
+							{ 22 , 	txtsubmenu22, 			0, 				0,			0, 			21,			23},	//7
+							{ 23 , 	txtsubmenu23, 			0, 				0,			231,		22,			24},	//8
+								{ 231 ,	"Profile01", 		0, 				0,			0, 			236,		232},	//9
+								{ 232 ,	"Profile02", 		0, 				0,			0, 			231,		233},	//10
+								{ 233 ,	"Profile03", 		0, 				0,			0, 			232,		234},	//11
+								{ 234 ,	"Profile04", 		0, 				0,			0, 			233,		235},	//12
+								{ 235 ,	"Profile05", 		0, 				0,			0, 			234,		236},	//13
+								{ 236 ,	back, 				0, 				0,			0, 			235,		231},	//14
+							{ 24 , 	back,					0, 				0, 			0, 			23, 		0},		//15
 						//array termination
 						{ 0,0,0,0,0,0,0},
 						};
@@ -58,196 +62,274 @@ MenuItem_t* gpsActualItem = &m_item[0];
 
 unsigned char get_index(unsigned char ucID)
 {
-	unsigned char index=1;
+	
+	unsigned char index=0;
+	
+	if (ucID)
+		{
+		while(m_item[index].ucID)
+			{
+				if(m_item[index].ucID==ucID) //ucID found
+					{
+					break; 
+					}
+				index++;
+			}
+		if(m_item[index].ucID==0) //ucID not found
+			{
+			index = 0; 
+			}
+		
+		}
 
-	while(m_item[index].ucID)
-	{
-		if(m_item[index].ucID==ucID) break;
-		index++;
-	}
 	return(index);
 }
 
+void menu_errorhandler(uint8_t error, uint8_t array_index)
+{
+	switch (error)
+		{
+		case INFINITE_LOOP: 
+			{
+			//lcd_write_var("INFINITE LOOP: ID%0",(uint16_t)array_index,1,0);
+			lcd_print(WHITE, BLACK, 1, 0, 0, "INFINITE_LOOP at ID:%i",array_index);
+			}  break;
+      	
+		case WRONG_SUB_UCID: 
+			{
+			//lcd_write_var("WRONG SUB UCID: ID%0",(uint16_t)array_index,1,0);
+			lcd_print(WHITE, BLACK, 1, 0, 0, "WRONG_SUB_UCID at ID:%i",array_index);
+			}  break;
+	    
+		case WRONG_PREV_UCID: 
+			{
+			//lcd_write_var("WRONG PREV UCID: ID%0",(uint16_t)array_index,1,0);
+			lcd_print(WHITE, BLACK, 1, 0, 0, "WRONG_PREV_UCID at ID:%i",array_index);
+			}  break;
+		
+		case WRONG_NEXT_UCID: 
+			{
+			//lcd_write_var("WRONG NEXT UCID: ID%0",(uint16_t)array_index,1,0);
+			lcd_print(WHITE, BLACK, 1, 0, 0, "WRONG_NEXT_UCID at ID:%i",array_index);
+			}  break;
+		
+		default:
+			{};
+      }
+
+	while(1); //stop program execution here
+}
 
 void menu_init(void)
 {
-	volatile unsigned char start_index=0, act_index=0, item_nr=0;
-	volatile unsigned char index=0;
-	//set io pins
+	volatile uint8_t start_index=0, act_index=0, item_nr=0;
+	volatile uint8_t ucID = 0, index=0, temp_index=0, error=0, errorlocation=0;
 
-	//get array inidices
-	while(m_item[index].ucID)
+	//get and check array inidices
+	while((*gpsActualItem).ucID)//(m_item[index].ucID)
 		{
+		//save menu arra index
+			errorlocation = (*gpsActualItem).ucID;															//save menu array index	
 		//get sub menu item array position
-		if(m_item[index].ucSubMenu)	m_item[index].ucSubMenu = get_index(m_item[index].ucSubMenu);
-		//get previous menu item array position
-		if(m_item[index].ucPrev)m_item[index].ucPrev = get_index(m_item[index].ucPrev);
-		//get next menu item array position
-		if(m_item[index].ucNext) m_item[index].ucNext = get_index(m_item[index].ucNext);		
-		//next menu item
-		index++;
-		}
-	//get nr of items in the group and use ucItem_sel as "proceeded-marker"
-	//start with first menu after the mainmenu m_item[1]
-	index=1;
-	while(m_item[index].ucID)
-		{
-		//start with first array item
-		act_index = index;
-		//nr of group items is 1
-		item_nr = 1;
-		//check if actual menu item has group members and item is not processed (.ucItem_sel=0)
-		if(m_item[act_index].ucNext && !m_item[act_index].ucItem_sel)
-			{
-			//save start index
-			start_index = get_index(m_item[act_index].ucID);
-			do
+			ucID = m_item[index].ucSubMenu;																//get sub menu ucID
+			temp_index = get_index((*gpsActualItem).ucSubMenu);											//get array index of sub menu
+			if((temp_index == 0 && (*gpsActualItem).ucSubMenu) && ucID != 255)								//check return value of get_index
 				{
-				//assign group position
-				m_item[act_index].ucItem_nr=item_nr++;
-				//get next item in the group
-				act_index = m_item[act_index].ucNext;
+				error = WRONG_SUB_UCID;
+				break;
 				}
-			while(start_index!=act_index);
-			//save number of items in the group
+			else
+				{		
+				(*gpsActualItem).ucSubMenu = temp_index;													//save array index of sub menu ucID
+				}
+		//get previous menu item array position
+			ucID = (*gpsActualItem).ucPrev;																//get sub menu ucID
+			temp_index = get_index((*gpsActualItem).ucPrev);												//get array index of sub menu
+			if((temp_index == 0 && (*gpsActualItem).ucPrev) && ucID != 255)													//check return value of get_index
+				{
+				error = WRONG_PREV_UCID;
+				break;
+				}
+			else
+				{		
+				(*gpsActualItem).ucPrev = temp_index;														//save array index of prev menu ucID
+				}
+		//get next menu item array position
+			ucID = m_item[index].ucNext;																//get sub menu ucID
+			temp_index = get_index((*gpsActualItem).ucNext);												//get array index of sub menu
+			if((temp_index == 0 && (*gpsActualItem).ucNext) && ucID != 255)									//check return value of get_index
+				{
+				error = WRONG_NEXT_UCID;
+				break;
+				}
+			else
+				{		
+				(*gpsActualItem).ucNext = temp_index;														//save array index of next menu ucID
+				}		
+		//next menu item
+			gpsActualItem++;
+		}
+	//reset pointer
+	gpsActualItem = &m_item[0];
+	if(!error)
+		{
+		//get nr of items in the group and use ucItem_sel as "proceeded-marker"
+		//start with first menu after the mainmenu m_item[1]
+		index=1;
+		while(m_item[index].ucID)
+			{
 			//start with first array item
 			act_index = index;
-			//calculate nr of items in the group
-			item_nr--;
-			//save start index again
-			start_index = get_index(m_item[act_index].ucID);
-			do
+			//nr of group items is 1
+			item_nr = 1;
+			//check if actual menu item has group members and item is not processed (.ucItem_sel=0)
+			if(m_item[act_index].ucNext && !m_item[act_index].ucItem_sel)
 				{
-				//assign nr of group members
-				m_item[act_index].ucNr_grp_items=item_nr;
-				//mark item as processed
-				m_item[act_index].ucItem_sel=1;
-				//get next item in the group
-				act_index = m_item[act_index].ucNext;
+				//save start index
+				start_index = get_index(m_item[act_index].ucID);
+				do
+					{
+					//assign group position
+					m_item[act_index].ucItem_nr=item_nr++;
+					//get next item in the group
+					act_index = m_item[act_index].ucNext;
+					}
+				while((start_index!=act_index) && (m_item[act_index].ucNext !=0) && (item_nr<255));
+				//check for infinite loops
+				if(item_nr==255)
+					{
+					error = INFINITE_LOOP;
+					break;
+					}
+				//if last item has no ucNext, store group position in this item
+				if(!m_item[act_index].ucNext)
+					{
+					m_item[act_index].ucItem_nr = item_nr++;
+					}
+				//save number of items in the group
+				//start with first array item
+				act_index = index;
+				//calculate nr of items in the group
+				item_nr--;
+				//save start index again
+				start_index = get_index(m_item[act_index].ucID);
+				do
+					{
+					//assign nr of group members
+					m_item[act_index].ucNr_grp_items=item_nr;
+					//mark item as processed
+					m_item[act_index].ucItem_sel=1;
+					//get next item in the group
+					act_index = m_item[act_index].ucNext;
+					}
+				while((start_index!=act_index) && (m_item[act_index].ucNext !=0) && (item_nr<255));
+				//check for infinite loops
+				if(item_nr==255)
+					{
+					error = INFINITE_LOOP;
+					break;
+					}
+				//if last item has no ucNext, store nr of group items in this item
+				if(!m_item[act_index].ucNext)
+					{
+					m_item[act_index].ucNr_grp_items = item_nr;
+					}
 				}
-			while(start_index!=act_index);
+			//get next menu item
+			index++;
 			}
-		//get next menu item
-		index++;
+			if(!error)
+				{
+				//Clear the select flag
+				index=0;
+				while(m_item[index++].ucID) {m_item[index].ucItem_sel=0;}
+				//Select first menu
+				gpsActualItem = &m_item[m_item[0].ucSubMenu];
+				(*gpsActualItem).ucItem_sel=1;
+				}
 		}
-		//Clear the select flag
-		index=0;
-		while(m_item[index++].ucID) {m_item[index].ucItem_sel=0;}
-		//Select first menu
-		gpsActualItem = &m_item[m_item[0].ucSubMenu];
-		(*gpsActualItem).ucItem_sel=1;
+	
+	if(error)	
+		{
+		//call errorhandler
+		menu_errorhandler(error,errorlocation);
+		}
+
 }
 
 void menu_show(void)
 {
+	//lcd_write_string( char *text_string, uint8_t row, uint8_t column ) ;
+	//lcd_write_var( char *text_string, uint16_t var, uint8_t row, uint8_t column );
+	
 	volatile unsigned char i=0, index=0, page=0, items_per_page=0;
 	static unsigned char last_menu_id=255;
 	static unsigned char last_page=255;
 	static unsigned char parameter_en=0;
-	char stringtemp[10];
+	char strtmp[21];
 	Parameter_t *pParam;
 
 	
-	if((*gpsActualItem).ucParam_en)//parameter edit-mode activ?
+	//if((*gpsActualItem).ucParam_en)//parameter edit-mode activ?
+	
+	//get page (1page = ITEMSCOUNT_PAGE menuitems)
+	page = ((*gpsActualItem).ucItem_nr-1)/ITEMSCOUNT_PAGE;	//page 0 to...
+	//get items per page
+	if((*gpsActualItem).ucNr_grp_items/((page+1)*ITEMSCOUNT_PAGE))
 		{
-		//reset normal menue page and menu id
-		last_menu_id=255;
-		last_page=255;
-		//get parameter
-		pParam = m_item[get_index((*gpsActualItem).ucID)].pParamID;
-		//Show paramter name and limits
-		if(!parameter_en)
-			{
-			//parameter name
-		//	lcd_draw_filled_box(0, 155, 0, 0, 0, 320,40);
-			//fixme change function 2 lcd_print lcd_write_flash_text(m_item[get_index((*gpsActualItem).ucID)].strName, 0, 0, 0, 2, 20, 0);
-		//	lcd_draw_filled_box(0, 0, 0, 0, 41, 320,200);
-			//Write old parameter value and limits
-			itoa10( (*pParam).sParam, stringtemp);// i=Integer;s=Zielstring
-			//fixme change to lcd_print lcd_write_ram_text("Old value:", 255, 255, 255, 2, 20, 0*32+45);
-			//fixme change to lcd_print lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 200, 0*32+45);
-			itoa10( (*pParam).sLowerLimit, stringtemp);// i=Integer;s=Zielstring
-			//fixme change to lcd_print lcd_write_ram_text("Lower limit:", 255, 255, 255, 2, 20, 1*32+45);
-			//fixme change to lcd_print lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 200, 1*32+45);
-			itoa10( (*pParam).sUpperLimit, stringtemp);// i=Integer;s=Zielstring
-			//fixme change to lcd_print lcd_write_ram_text("Upper limit:", 255, 255, 255, 2, 20, 2*32+45);
-			//fixme change to lcd_print lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 200, 2*32+45);
-			//Draw box arround actual value
-	////		lcd_draw_box(0, 255, 0, 0, 4*32+50, 320,30);
-			}
-		//set marker parameter edit-mode active
-		parameter_en=1;
-		//clear old value
-	//	lcd_draw_filled_box(0, 0, 0, 180, 4*32+51, 100,28);
-		//write actual value
-		itoa10( (*pParam).sParam, stringtemp);// i=Integer;s=Zielstring
-		//fixme change to lcd_print lcd_write_ram_text("New value:", 255, 255, 255, 2, 20, 4*32+45);
-		//fixme change to lcd_print lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 200, 4*32+45);
+		items_per_page = ITEMSCOUNT_PAGE;
 		}
-	else
+	else{
+		items_per_page = (*gpsActualItem).ucNr_grp_items-(page*ITEMSCOUNT_PAGE);
+		}
+	//Page changed?
+	if(page!=last_page || last_menu_id!=(*gpsActualItem).ucTop)
 		{
-		//reset paramter edit-mode
-		parameter_en=0;
-		//get page (1page = 5menuitems)
-		page = ((*gpsActualItem).ucItem_nr-1)/5;
-		//get items per page
-		if((*gpsActualItem).ucNr_grp_items/((page+1)*5))
+		//Delete screen
+		lcd_clear();
+		//Reset menu id & page
+		last_menu_id = 255;
+		last_page=255;
+		} 	
+	//if menu-plane has changed draw new headline
+	if(last_menu_id!=(*gpsActualItem).ucTop)
+		{
+		//Write Menue header
+		strcpy_P(strtmp, m_item[(*gpsActualItem).ucTop].strName);
+		//lcd_write_string(strtmp,1,0) ;
+		lcd_print(WHITE, BLACK, 2, 0, 0, strtmp);
+		}
+	//Save new menu id and page
+	last_menu_id = (*gpsActualItem).ucTop;
+	last_page=page;
+	//List Menue items
+	//get index of first group item (ucItem_nr/ucNr_grp_items)
+	index = get_index((*gpsActualItem).ucID);
+	while(m_item[index].ucItem_nr!=page*ITEMSCOUNT_PAGE+1){index=m_item[index].ucPrev;}
+	//list menu items
+	for(i=0;i<items_per_page;i++)
+		{
+		if(m_item[index].ucItem_sel)
 			{
-			items_per_page = 5;
+			//draw selected item
+			strcpy_P(strtmp, m_item[index].strName);
+			//lcd_write_string(strtmp,i+2,2) ;
+			//lcd_write_string("*",i+2,19) ;
+			lcd_print(WHITE, BLACK, 1, 40, i*30+40, strtmp);
 			}
 		else
 			{
-			items_per_page = (*gpsActualItem).ucNr_grp_items-(page*5);
+			//draw unselected item
+			strcpy_P(strtmp, m_item[index].strName);
+			//lcd_write_string(strtmp,i+2,2) ;
+			//lcd_write_string(" ",i+2,19) ;
+			//lcd_print(WHITE, BLACK, 1, 40, i*30+40, strtmp);
 			}
-		//if menu-plane is changed or new page is reached draw new headline
-		if(last_menu_id!=(*gpsActualItem).ucTop)
-			{
-			//Write Menue header
-	//		lcd_draw_filled_box(0, 155, 0, 0, 0, 320,40);
-			//fixme change function 2 lcd_print lcd_write_flash_text(m_item[(*gpsActualItem).ucTop].strName, 0, 0, 0, 2, 20, 0);
-			}
-		//page changed?
-		if(page!=last_page || last_menu_id!=(*gpsActualItem).ucTop)
-			{
-	//		lcd_draw_filled_box(0, 0, 0, 0, 41, 320,200);
-			} 
-			//save new menu id and page
-			last_menu_id = (*gpsActualItem).ucTop;
-			last_page=page;
-		//List Menue items
-		//get index of first group item (ucItem_nr/ucNr_grp_items)
-		index = get_index((*gpsActualItem).ucID);
-		while(m_item[index].ucItem_nr!=page*5+1){index=m_item[index].ucPrev;}
-		//list menu items
-		for(i=0;i<items_per_page;i++)
-			{
-			if(m_item[index].ucItem_sel)
-				{
-	//			lcd_draw_box(0, 255, 0, 0, i*32+50, 300,30);
-				//fixme change function 2 lcd_print lcd_write_flash_text(m_item[index].strName, 255, 255, 255, 2, 20, i*32+45);
-				}
-			else
-				{
-	//			lcd_draw_box(0, 0, 0, 0, i*32+50, 300,30);
-				//fixme change function 2 lcd_print lcd_write_flash_text(m_item[index].strName, 255, 255, 255, 2, 20, i*32+45);
-				}
-			index=m_item[index].ucNext;
-			}
-		//Draw position marker
-	//	lcd_draw_filled_box(0, 0, 0, 308, 49, 12,180);
-	//	lcd_draw_filled_box(0, 255, 0, 313, 49, 2, 182);
-	//	lcd_draw_filled_box(0, 255, 0, 309, 51+(((*gpsActualItem).ucItem_nr-1)*170/((*gpsActualItem).ucNr_grp_items-1)), 10,8);
+		//get next item
+		index=m_item[index].ucNext;
 		}
-}
-
-void restore_menu(void)
-{
-	//Write Menue header
-//	lcd_draw_filled_box(0, 155, 0, 0, 0, 320,40);
-	//fixme change function 2 lcd_print lcd_write_flash_text(m_item[(*gpsActualItem).ucTop].strName, 0, 0, 0, 2, 20, 0);
-//	lcd_draw_filled_box(0, 0, 0, 0, 41, 320,200);
-	//Show menue-itmes
-	menu_show();
+	//Draw position marker
+		
 }
 
 void menu_next(unsigned char step)//down
@@ -276,16 +358,19 @@ void menu_next(unsigned char step)//down
 			}
 		else
 			{ 
-			//save top id
-			top_id = (*gpsActualItem).ucTop;
-			//Deselect item
-			(*gpsActualItem).ucItem_sel=0;
-			// switch to next item
-			gpsActualItem = &m_item[(*gpsActualItem).ucNext];
-			//Select next item
-			(*gpsActualItem).ucItem_sel=1;
-			//save top id
-			(*gpsActualItem).ucTop=top_id;
+			if((*gpsActualItem).ucNext) //next menu item value existend?
+				{
+				//save top id
+				top_id = (*gpsActualItem).ucTop;
+				//Deselect item
+				(*gpsActualItem).ucItem_sel=0;
+				// switch to next item
+				gpsActualItem = &m_item[(*gpsActualItem).ucNext];
+				//Select next item
+				(*gpsActualItem).ucItem_sel=1;
+				//save top id
+				(*gpsActualItem).ucTop=top_id;
+				}
 			}
 		//show changed menue
 		menu_show();
@@ -318,16 +403,19 @@ void menu_prev(unsigned char step)//up
 			}
 		else
 			{  
-			//save top id
-			top_id = (*gpsActualItem).ucTop;
-			//Deselect item
-			(*gpsActualItem).ucItem_sel=0;
-			// switch to next item
-			gpsActualItem = &m_item[(*gpsActualItem).ucPrev];
-			//Select next item
-			(*gpsActualItem).ucItem_sel=1;
-			//save top id
-			(*gpsActualItem).ucTop=top_id;
+			if((*gpsActualItem).ucPrev) //next menu item value existend?
+				{
+				//save top id
+				top_id = (*gpsActualItem).ucTop;
+				//Deselect item
+				(*gpsActualItem).ucItem_sel=0;
+				// switch to next item
+				gpsActualItem = &m_item[(*gpsActualItem).ucPrev];
+				//Select next item
+				(*gpsActualItem).ucItem_sel=1;
+				//save top id
+				(*gpsActualItem).ucTop=top_id;
+				}
 			}
 		//show changed menue
 		menu_show();
@@ -338,7 +426,7 @@ void menu_select(void)
 {	
 	unsigned char top_id;
 	
-	//if parameter available
+	//Activate parameter edit mode
 	if((*gpsActualItem).pParamID)
 		{
 		if((*gpsActualItem).ucParam_en)//parameter edit-mode activ?
@@ -350,26 +438,26 @@ void menu_select(void)
 			(*gpsActualItem).ucParam_en=0x1; //toggle enable
 			}
 		}
-	//if submenu available? then select sub menu
+	//Select submenu
 	else if((*gpsActualItem).ucSubMenu)
 		{
-		//save top id
+		//Save top id
 		top_id = get_index((*gpsActualItem).ucID);
 		//Deselect item
 		(*gpsActualItem).ucItem_sel=0;
-		// switch to next item
+		//Switch to next item
 		gpsActualItem = &m_item[(*gpsActualItem).ucSubMenu];
 		//Select next item
 		(*gpsActualItem).ucItem_sel=1;
-		//save top id
+		//Save top id 
 		(*gpsActualItem).ucTop=top_id;
 		}
-	//if function available
+	//Execute function
 	else if((*gpsActualItem).pAction)
 		{
 		(*gpsActualItem).pAction();
 		}
-	//go back to top level
+	//Select top level menu item
 	else if((*gpsActualItem).ucTop)
 		{
 		//Deselect item
@@ -384,53 +472,4 @@ void menu_select(void)
 	menu_show();
 }
 
-void system_info(void)
-{
-		char stringtemp[17];
-		uint32_t time =0;
-		uint32_t* pTime;
-		pTime = &time;	
-		//Funktion screen
-	while(1)
-		{
-			//lcd_draw_filled_box(0, 155, 0, 0, 0, 320,40);
-			//fixme change to lcd_print lcd_write_ram_text("System information", 0, 0, 0, 2, 20, 0);
-			//lcd_draw_filled_box(0, 0, 0, 0, 41, 320,200);
-			//fixme change to lcd_print lcd_write_ram_text("Stack Task1:", 255, 255, 255, 2, 20, 0*32+45);
-			//fixme change to lcd_print lcd_write_ram_text("Stack Task2:", 255, 255, 255, 2, 20, 1*32+45);
-			//fixme change to lcd_print lcd_write_ram_text("Stack Task3:", 255, 255, 255, 2, 20, 2*32+45);
-			//fixme change to lcd_print lcd_write_ram_text("Ticks:", 255, 255, 255, 2, 20, 3*32+45);
-		
-					//Show task stack usage
-			itoa10( OS_GetUnusedStack(1), stringtemp);// i=Integer;s=Zielstring
-			
-			//fixme change to lcd_print lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 220, 0*32+45);
-			itoa10( OS_GetUnusedStack(2), stringtemp);// i=Integer;s=Zielstring
-			
-			//fixme change to lcd_print lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 220, 1*32+45);
-			itoa10( OS_GetUnusedStack(3), stringtemp);// i=Integer;s=Zielstring
-			
-			//fixme change to lcd_print lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 220, 2*32+45);
-			OS_GetTicks(pTime);
-			itoa10( time, stringtemp);// i=Integer;s=Zielstring
-			
-			//fixme change to lcd_print lcd_write_ram_text(stringtemp, 255, 255, 255, 2, 100, 3*32+45);
-		}	
 
-		//back
-		restore_menu();
-}
-
-uint16_t gsCommerrcnt; // fixme remove!
-
-void commError(uint8_t errno)
-{
-
-	//char stringtemp[17];
-	//uint16_t ret;
-
-	lcd_clear();
-	lcd_draw_line(0xf00,0,0,320,240);
-	lcd_draw_line(0xf00,320,0,0,240);
-	lcd_print(WHITE, BLACK, 1,30, 220,"Comm Error:%i #%i",errno ,gsCommerrcnt);
-}
