@@ -94,6 +94,8 @@ void TaskDisplay(void)
 
 	touch_init();
 
+	menu_init();
+
 	lcd_clear();//lcd clear needed here because a new screen is shown
 	lcd_show_init_screen();
 	OS_WaitTicks(OSALMWaitDisp,333);
@@ -110,6 +112,11 @@ static int32_t value =0;; // DER Wert
 
 		if(1)//!glCommError) fixme
 		{
+			menu_show();	
+			OS_WaitTicks(OSALMWaitDisp,5000);
+
+
+
 			//the lcd_print function overwrites old text-> no lcd_clear needed!
 			//lcd_clear();
 		/*	lcd_print(YELLOW, BLACK, 2, 0, ypos,"vBatt  /t%i mV    ",g_tBattery_Info.sActVoltage_mV);
@@ -119,7 +126,7 @@ static int32_t value =0;; // DER Wert
 			lcd_print(WHITE, BLACK, FONTSIZE, 230, 200,"Batt. %i Cells ",g_tBattery_Info.ucNumberOfCells);*/
 
 
-			ypos = 200;
+//			ypos = 200;
 
 
 
@@ -129,7 +136,7 @@ static int32_t value =0;; // DER Wert
 //				lcd_print(WHITE, BLACK, 1, 0, 16*i,"val/t%i/tIdx/t%i      " ,maxVal[i],maxIdx[i]);
 //			}
 //
-			static int16_t oypos;
+		/*	static int16_t oypos;
 			int16_t nypos1;
 			nypos1 = gttestfixme;
 
@@ -238,7 +245,7 @@ static uint16_t g;
 			cec++;
 			if(cec >= 3)
 			{
-				commError(glCommError);
+//				commError(glCommError);
 				cec =0;
 			}
 
@@ -267,7 +274,7 @@ uint8_t vWaitForResult(void)
 	else
 	{
 		commerror = 100;
-		gsCommerrcnt++;
+//		gsCommerrcnt++;
 	}
     g_ucRXLength = 0;
     g_tUCIRXFrame.len = UCIHEADERLEN;

@@ -103,7 +103,7 @@
 
 //some colours
 #define BLACK  0x000
-#define WHITE  0xfff
+#define WHITE  0xeee
 #define RED    0xf00
 #define GREEN  0x0f0
 #define BLUE   0x00f
