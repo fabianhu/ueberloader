@@ -10,7 +10,11 @@ uint16_t touchcalbytes[5] = TOUCHCALINIT;
 uint8_t touchGetPad(uint8_t pin)
 {
 	uint8_t cnt,i;
-	uint8_t mask = (1<<pin);
+	uint8_t mask;
+
+	if(pin == 0) mask = (1<<0);
+	if(pin == 1) mask = (1<<2);
+	if(pin == 2) mask = (1<<4);
 
 	cnt = 0;
 	OS_ENTERCRITICAL  // no interrupts allowed here!
@@ -42,7 +46,7 @@ void touch_init(void)
 {
 	TOUCHCONFIGPORT;
 }
-#define TOUCHCOUNT 5
+
 
 uint16_t touchpads[TOUCHCOUNT];
 
@@ -72,7 +76,7 @@ int16_t touchGetSchwerpunkt(void)
 		dings += (i+1) * 250 * touchpads[i];
 		sum += touchpads[i];
 	}
-	if (sum > 15) //fixme
+	if (sum > TOUCHMINSIGNAL) //fixme
 		return (dings/sum)-250;
 	else
 		return -1;
@@ -230,7 +234,7 @@ void touchSetValue(int16_t v, int16_t lower, int16_t upper) // Mutex?
 	touchValueUpper = upper*TOUCHREDUCEFACTOR;
 }
 
-void touchGetValue(int32_t* pValue, uint8_t Mutex) // read back the (changed) value Mutex?
+void touchGetValue(int32_t* pValue, uint8_t Mutex) // read txtback the (changed) value Mutex?
 {
 	//OS_MutexGet(Mutex); fixme
 	*pValue = touchValue/TOUCHREDUCEFACTOR;

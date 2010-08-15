@@ -10,8 +10,14 @@
 
 #include <avr/io.h>
 
+#define TOUCHCOUNT 3
+
+
 #define TOUCHCONFIGPORT PORTC.DIR = (1<<7);
-#define TOUCHREPCNT 1
+#define TOUCHREPCNT 5
+
+#define TOUCHMINSIGNAL 30
+
 #define TOUCHPORT PORTC
 
 #define TOUCHTOGGLEHIGH PORTC.OUTSET = (1<<7);

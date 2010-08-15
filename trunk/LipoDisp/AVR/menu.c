@@ -6,12 +6,9 @@
 
 #include "menu.h"
 
-//function prototypes
-void menu_init(void);
-
 //menue strings
 char txtmainmenu[] PROGMEM="Main Menu";
-char back[] PROGMEM="(back)";
+char txtback[] PROGMEM="(back)";
 
 char txtmenu1[] PROGMEM="Injection";
 	char txtsubmenu11[] PROGMEM="Single shoot";
@@ -41,7 +38,7 @@ MenuItem_t m_item[] = {//ucID	strName						pAction			pParam		ucSubMenu	ucPrev		u
 						{ 1 , 	txtmenu1, 					0, 				0, 			11, 		0, 			2},		//1
 							{ 11 , 	txtsubmenu11, 			0,				0, 			0, 			0, 			12},	//2
 							{ 12 , 	txtsubmenu12, 			0, 				0, 			0, 			11,			13},	//3
-							{ 13 , 	back,					0, 				0, 			0, 			12, 		0},		//4
+							{ 13 , 	txtback,				0, 				0, 			0, 			12, 		0},		//4
 						{ 2 , 	txtmenu2, 					0, 				0, 			21, 		1, 			0},		//5
 							{ 21 , 	txtsubmenu21, 			0, 				0,			0, 			0, 			22},	//6
 							{ 22 , 	txtsubmenu22, 			0, 				0,			0, 			21,			23},	//7
@@ -51,9 +48,9 @@ MenuItem_t m_item[] = {//ucID	strName						pAction			pParam		ucSubMenu	ucPrev		u
 								{ 233 ,	"Profile03", 		0, 				0,			0, 			232,		234},	//11
 								{ 234 ,	"Profile04", 		0, 				0,			0, 			233,		235},	//12
 								{ 235 ,	"Profile05", 		0, 				0,			0, 			234,		236},	//13
-								{ 236 ,	back, 				0, 				0,			0, 			235,		231},	//14
-							{ 24 , 	back,					0, 				0, 			0, 			23, 		0},		//15
-						//array termination
+								{ 236 ,	txtback, 			0, 				0,			0, 			235,		231},	//14
+							{ 24 , 	txtback,				0, 				0, 			0, 			23, 		0},		//15
+						//array termination fixme could we omit this? (using "for"?)
 						{ 0,0,0,0,0,0,0},
 						};
 
@@ -62,27 +59,22 @@ MenuItem_t* gpsActualItem = &m_item[0];
 
 unsigned char get_index(unsigned char ucID)
 {
-	
-	unsigned char index=0;
+	uint8_t index=0;
 	
 	if (ucID)
+	{
+		while(m_item[index].ucID) // fixme bitte for und sizeof() ??
 		{
-		while(m_item[index].ucID)
+			if(m_item[index].ucID==ucID) //ucID found
 			{
-				if(m_item[index].ucID==ucID) //ucID found
-					{
-					break; 
-					}
-				index++;
+				return index; // return result.
 			}
-		if(m_item[index].ucID==0) //ucID not found
-			{
-			index = 0; 
-			}
-		
+			index++;
 		}
+		// not found
+	}
+	return 0; // return error value
 
-	return(index);
 }
 
 void menu_errorhandler(uint8_t error, uint8_t array_index)
@@ -125,46 +117,48 @@ void menu_init(void)
 	volatile uint8_t start_index=0, act_index=0, item_nr=0;
 	volatile uint8_t ucID = 0, index=0, temp_index=0, error=0, errorlocation=0;
 
+	gpsActualItem = &m_item[0];
+
 	//get and check array inidices
-	while((*gpsActualItem).ucID)//(m_item[index].ucID)
+	while(gpsActualItem->ucID != 0)//(m_item[index].ucID)
 		{
 		//save menu arra index
-			errorlocation = (*gpsActualItem).ucID;															//save menu array index	
+			errorlocation = gpsActualItem->ucID;															//save menu array index	
 		//get sub menu item array position
 			ucID = m_item[index].ucSubMenu;																//get sub menu ucID
-			temp_index = get_index((*gpsActualItem).ucSubMenu);											//get array index of sub menu
-			if((temp_index == 0 && (*gpsActualItem).ucSubMenu) && ucID != 255)								//check return value of get_index
+			temp_index = get_index(gpsActualItem->ucSubMenu);											//get array index of sub menu
+			if((temp_index == 0 && gpsActualItem->ucSubMenu) && ucID != 255)								//check return value of get_index
 				{
 				error = WRONG_SUB_UCID;
 				break;
 				}
 			else
 				{		
-				(*gpsActualItem).ucSubMenu = temp_index;													//save array index of sub menu ucID
+				gpsActualItem->ucSubMenu = temp_index;													//save array index of sub menu ucID
 				}
 		//get previous menu item array position
-			ucID = (*gpsActualItem).ucPrev;																//get sub menu ucID
-			temp_index = get_index((*gpsActualItem).ucPrev);												//get array index of sub menu
-			if((temp_index == 0 && (*gpsActualItem).ucPrev) && ucID != 255)													//check return value of get_index
+			ucID = gpsActualItem->ucPrev;																//get sub menu ucID
+			temp_index = get_index(gpsActualItem->ucPrev);												//get array index of sub menu
+			if((temp_index == 0 && gpsActualItem->ucPrev) && ucID != 255)													//check return value of get_index
 				{
 				error = WRONG_PREV_UCID;
 				break;
 				}
 			else
 				{		
-				(*gpsActualItem).ucPrev = temp_index;														//save array index of prev menu ucID
+				gpsActualItem->ucPrev = temp_index;														//save array index of prev menu ucID
 				}
 		//get next menu item array position
 			ucID = m_item[index].ucNext;																//get sub menu ucID
-			temp_index = get_index((*gpsActualItem).ucNext);												//get array index of sub menu
-			if((temp_index == 0 && (*gpsActualItem).ucNext) && ucID != 255)									//check return value of get_index
+			temp_index = get_index(gpsActualItem->ucNext);												//get array index of sub menu
+			if((temp_index == 0 && gpsActualItem->ucNext) && ucID != 255)									//check return value of get_index
 				{
 				error = WRONG_NEXT_UCID;
 				break;
 				}
 			else
 				{		
-				(*gpsActualItem).ucNext = temp_index;														//save array index of next menu ucID
+				gpsActualItem->ucNext = temp_index;														//save array index of next menu ucID
 				}		
 		//next menu item
 			gpsActualItem++;
@@ -245,7 +239,7 @@ void menu_init(void)
 				while(m_item[index++].ucID) {m_item[index].ucItem_sel=0;}
 				//Select first menu
 				gpsActualItem = &m_item[m_item[0].ucSubMenu];
-				(*gpsActualItem).ucItem_sel=1;
+				gpsActualItem->ucItem_sel=1;
 				}
 		}
 	
@@ -270,20 +264,20 @@ void menu_show(void)
 	Parameter_t *pParam;
 
 	
-	//if((*gpsActualItem).ucParam_en)//parameter edit-mode activ?
+	//if(gpsActualItem->ucParam_en)//parameter edit-mode activ?
 	
 	//get page (1page = ITEMSCOUNT_PAGE menuitems)
-	page = ((*gpsActualItem).ucItem_nr-1)/ITEMSCOUNT_PAGE;	//page 0 to...
+	page = (gpsActualItem->ucItem_nr-1)/ITEMSCOUNT_PAGE;	//page 0 to...
 	//get items per page
-	if((*gpsActualItem).ucNr_grp_items/((page+1)*ITEMSCOUNT_PAGE))
+	if(gpsActualItem->ucNr_grp_items/((page+1)*ITEMSCOUNT_PAGE))
 		{
 		items_per_page = ITEMSCOUNT_PAGE;
 		}
 	else{
-		items_per_page = (*gpsActualItem).ucNr_grp_items-(page*ITEMSCOUNT_PAGE);
+		items_per_page = gpsActualItem->ucNr_grp_items-(page*ITEMSCOUNT_PAGE);
 		}
 	//Page changed?
-	if(page!=last_page || last_menu_id!=(*gpsActualItem).ucTop)
+	if(page!=last_page || last_menu_id!=gpsActualItem->ucTop)
 		{
 		//Delete screen
 		lcd_clear();
@@ -292,19 +286,19 @@ void menu_show(void)
 		last_page=255;
 		} 	
 	//if menu-plane has changed draw new headline
-	if(last_menu_id!=(*gpsActualItem).ucTop)
+	if(last_menu_id!=gpsActualItem->ucTop)
 		{
 		//Write Menue header
-		strcpy_P(strtmp, m_item[(*gpsActualItem).ucTop].strName);
+		strcpy_P(strtmp, m_item[gpsActualItem->ucTop].strName);
 		//lcd_write_string(strtmp,1,0) ;
 		lcd_print(WHITE, BLACK, 2, 0, 0, strtmp);
 		}
 	//Save new menu id and page
-	last_menu_id = (*gpsActualItem).ucTop;
+	last_menu_id = gpsActualItem->ucTop;
 	last_page=page;
 	//List Menue items
 	//get index of first group item (ucItem_nr/ucNr_grp_items)
-	index = get_index((*gpsActualItem).ucID);
+	index = get_index(gpsActualItem->ucID);
 	while(m_item[index].ucItem_nr!=page*ITEMSCOUNT_PAGE+1){index=m_item[index].ucPrev;}
 	//list menu items
 	for(i=0;i<items_per_page;i++)
@@ -339,10 +333,10 @@ void menu_next(unsigned char step)//down
 	
 	for(i=0;i<step;i++)
 		{
-		if((*gpsActualItem).ucParam_en)//parameter edit-mode activ?
+		if(gpsActualItem->ucParam_en)//parameter edit-mode activ?
 			{
 			//get parameter
-			pParam = m_item[get_index((*gpsActualItem).ucID)].pParamID;
+			pParam = m_item[get_index(gpsActualItem->ucID)].pParamID;
 			//get limit
 			lower_limit = (*pParam).sLowerLimit;
 			//set new value
@@ -358,18 +352,18 @@ void menu_next(unsigned char step)//down
 			}
 		else
 			{ 
-			if((*gpsActualItem).ucNext) //next menu item value existend?
+			if(gpsActualItem->ucNext) //next menu item value existend?
 				{
 				//save top id
-				top_id = (*gpsActualItem).ucTop;
+				top_id = gpsActualItem->ucTop;
 				//Deselect item
-				(*gpsActualItem).ucItem_sel=0;
+				gpsActualItem->ucItem_sel=0;
 				// switch to next item
-				gpsActualItem = &m_item[(*gpsActualItem).ucNext];
+				gpsActualItem = &m_item[gpsActualItem->ucNext];
 				//Select next item
-				(*gpsActualItem).ucItem_sel=1;
+				gpsActualItem->ucItem_sel=1;
 				//save top id
-				(*gpsActualItem).ucTop=top_id;
+				gpsActualItem->ucTop=top_id;
 				}
 			}
 		//show changed menue
@@ -384,10 +378,10 @@ void menu_prev(unsigned char step)//up
 	
 	for(i=0;i<step;i++)
 		{
-		if((*gpsActualItem).ucParam_en)//parameter edit-mode activ?
+		if(gpsActualItem->ucParam_en)//parameter edit-mode activ?
 			{
 			//get parameter
-			pParam = m_item[get_index((*gpsActualItem).ucID)].pParamID;
+			pParam = m_item[get_index(gpsActualItem->ucID)].pParamID;
 			//get limit
 			upper_limit = (*pParam).sUpperLimit;
 			//set new value
@@ -403,18 +397,18 @@ void menu_prev(unsigned char step)//up
 			}
 		else
 			{  
-			if((*gpsActualItem).ucPrev) //next menu item value existend?
+			if(gpsActualItem->ucPrev) //next menu item value existend?
 				{
 				//save top id
-				top_id = (*gpsActualItem).ucTop;
+				top_id = gpsActualItem->ucTop;
 				//Deselect item
-				(*gpsActualItem).ucItem_sel=0;
+				gpsActualItem->ucItem_sel=0;
 				// switch to next item
-				gpsActualItem = &m_item[(*gpsActualItem).ucPrev];
+				gpsActualItem = &m_item[gpsActualItem->ucPrev];
 				//Select next item
-				(*gpsActualItem).ucItem_sel=1;
+				gpsActualItem->ucItem_sel=1;
 				//save top id
-				(*gpsActualItem).ucTop=top_id;
+				gpsActualItem->ucTop=top_id;
 				}
 			}
 		//show changed menue
@@ -427,45 +421,45 @@ void menu_select(void)
 	unsigned char top_id;
 	
 	//Activate parameter edit mode
-	if((*gpsActualItem).pParamID)
+	if(gpsActualItem->pParamID)
 		{
-		if((*gpsActualItem).ucParam_en)//parameter edit-mode activ?
+		if(gpsActualItem->ucParam_en)//parameter edit-mode activ?
 			{
-			(*gpsActualItem).ucParam_en=0x0; //toggle enable
+			gpsActualItem->ucParam_en=0x0; //toggle enable
 			}
 		else
 			{
-			(*gpsActualItem).ucParam_en=0x1; //toggle enable
+			gpsActualItem->ucParam_en=0x1; //toggle enable
 			}
 		}
 	//Select submenu
-	else if((*gpsActualItem).ucSubMenu)
+	else if(gpsActualItem->ucSubMenu)
 		{
 		//Save top id
-		top_id = get_index((*gpsActualItem).ucID);
+		top_id = get_index(gpsActualItem->ucID);
 		//Deselect item
-		(*gpsActualItem).ucItem_sel=0;
+		gpsActualItem->ucItem_sel=0;
 		//Switch to next item
-		gpsActualItem = &m_item[(*gpsActualItem).ucSubMenu];
+		gpsActualItem = &m_item[gpsActualItem->ucSubMenu];
 		//Select next item
-		(*gpsActualItem).ucItem_sel=1;
+		gpsActualItem->ucItem_sel=1;
 		//Save top id 
-		(*gpsActualItem).ucTop=top_id;
+		gpsActualItem->ucTop=top_id;
 		}
 	//Execute function
-	else if((*gpsActualItem).pAction)
+	else if(gpsActualItem->pAction)
 		{
-		(*gpsActualItem).pAction();
+		gpsActualItem->pAction();
 		}
 	//Select top level menu item
-	else if((*gpsActualItem).ucTop)
+	else if(gpsActualItem->ucTop)
 		{
 		//Deselect item
-		(*gpsActualItem).ucItem_sel=0;
+		gpsActualItem->ucItem_sel=0;
 		// switch to next item
-		gpsActualItem = &m_item[(*gpsActualItem).ucTop];
+		gpsActualItem = &m_item[gpsActualItem->ucTop];
 		//Select next item
-		(*gpsActualItem).ucItem_sel=1;
+		gpsActualItem->ucItem_sel=1;
 		}
 	
 	//show changed menue
