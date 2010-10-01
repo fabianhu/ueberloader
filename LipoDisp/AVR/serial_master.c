@@ -13,6 +13,14 @@ Battery_Info_t g_tBattery_Info;
 Command_t g_tCommand;
 uint8_t glCommError=0;
 
+#if OS_TRACE_ON == 1
+	extern uint8_t OS_Tracebuffer[OS_TRACESIZE];
+	#if OS_TRACESIZE <= 0xff
+	extern uint8_t OS_TraceIdx;
+	#else
+	extern uint16_t OS_TraceIdx;
+	#endif
+#endif
 
 #define SLAVEDERIALID 55
 
@@ -21,6 +29,8 @@ uint8_t    g_ucRXLength;
 
 ISR(USARTE0_RXC_vect)
 {
+	OS_TRACE(101);
+	
 	uint8_t* p = (uint8_t*)&g_tUCIRXFrame;
 	if((USARTE0.STATUS & USART_FERR_bm) || (USARTE0.STATUS & USART_BUFOVF_bm))
 	{
@@ -46,6 +56,7 @@ ISR(USARTE0_RXC_vect)
 		g_ucRXLength = 0; // reset received data length
 		g_tUCIRXFrame.len = UCIHEADERLEN; // reset header length in recd. data
 	}
+	OS_TRACE(102);
 }
 
 void HandleSerial(UCIFrame_t *_RXFrame)

@@ -7,6 +7,7 @@
 
 #include "OS/FabOS.h"
 #include <avr/pgmspace.h>
+#include <avr/eeprom.h>
 #include <string.h>
 
 #include "usart.h"
@@ -70,49 +71,52 @@ int main(void)
 		
 		asm("nop"); //at least one instruction is required!!!
 
-		a = OS_GetUnusedStack(OSTSKCommand);
+	/*	a = OS_GetUnusedStack(OSTSKCommand);
 		b = OS_GetUnusedStack(OSTSKTouch);
-		c = OS_GetUnusedStack(OSTSKDisplay);
+		c = OS_GetUnusedStack(OSTSKDisplay);*/
 
 	}
 
 }
 
-int16_t gttestfixme;
+//int16_t gttestfixme;
+
+
+#define disp 1
 
 
 void TaskDisplay(void)
 {
 	uint16_t ypos=0;
 	uint32_t t1,t2;
-	uint8_t i;
-	static uint8_t cec=0;
+	static uint8_t cec=0,i;
 
 #define FONTSIZE 1
 #define LINEDIFF FONTSIZE*16
 
 	touch_init();
 
+#if menutest
+	menu_init();
+#endif
+
 	lcd_clear();//lcd clear needed here because a new screen is shown
 	lcd_show_init_screen();
 	OS_WaitTicks(OSALMWaitDisp,333);
 	lcd_clear();//lcd clear needed here because a new screen is shown
 
-	touchSetValue(0L,-100L,100L);
+	//touchSetValue(0L,-100L,100L);
 
 	while(1)
 	{
 		ypos = 0;
-static int32_t value =0;; // DER Wert
 
 		OS_GetTicks(&t1);
 
 		if(1)//!glCommError) fixme
 		{
-			menu_show();	
+			//menu_show();
 			OS_WaitTicks(OSALMWaitDisp,500);
-
-
 
 			//the lcd_print function overwrites old text-> no lcd_clear needed!
 			//lcd_clear();
@@ -125,6 +129,13 @@ static int32_t value =0;; // DER Wert
 
 
 //			ypos = 200;
+#endif
+
+#if menutest
+
+			menu_show();
+
+
 #endif
 
 
@@ -184,7 +195,7 @@ static uint16_t g;
 			ypos = 64;
 
 			for (i = 0; i < 6; ++i) {
-			lcd_print(WHITE, BLACK, FONTSIZE, 0,ypos,"Cell%i/t%i/tmV/t%i mAs     " ,i,g_tBattery_Info.Cells[i].sVoltage_mV, g_tBattery_Info.Cells[i].unDisCharge_mAs);
+			lcd_print(WHITE, BLACK, FONTSIZE, 0,ypos,"Cell%i/t%i/tmV/t%i uAh     " ,i,g_tBattery_Info.Cells[i].sVoltage_mV, g_tBattery_Info.Cells[i].unDisCharge_mAs/36);
 			ypos += LINEDIFF;
 			}
 
@@ -193,7 +204,7 @@ static uint16_t g;
 			ypos += LINEDIFF;
 			lcd_print(WHITE, BLACK, 1, 200, ypos,"ASYNC %i   ",g_tBattery_Info.usPWMStep);
 			ypos += LINEDIFF;
-			lcd_print(WHITE, BLACK, 1, 200, ypos,"Setp %i mA   ",g_tCommand.sCurrentSetpoint);
+			lcd_print(WHITE, BLACK, 1, 200, ypos,"Setp %i mA   ",g_tBattery_Info.sISetpoint);
 			ypos += LINEDIFF;
 			lcd_print(WHITE, BLACK, 1, 200, ypos,"diff %i mA   ",g_tBattery_Info.sDiff);
 			ypos += LINEDIFF;
@@ -320,22 +331,41 @@ void TaskCommand(void)
 	}
 }
 
+typedef struct eePars_tag
+{
+	uint16_t usMagic; // version number
+	int16_t sCurrentSetpoint;
+	uint16_t usMinBalanceVolt_mV;
+
+}eepars_t;
+
+eepars_t* ParMaster = (eepars_t*)0;
+eepars_t* ParMirror = (eepars_t*)64;
 
 void TaskTouch()
 {
-	uint8_t i;
-	uint8_t t[5];
 	OS_SetAlarm(OSALTouchRepeat,10);
 
 #define TOUCHSENSELEVEL 15
 
-		OS_ENTERCRITICAL;
+	static uint8_t firstrun = 1;
+	if(firstrun && (eeprom_read_word(&ParMaster->usMagic)== 12312))
+	{
+		firstrun = 0;
+		OS_PREVENTSCHEDULING;
 		g_tCommand.sCurrentSetpoint = 1000;
-		g_tCommand.usMinBalanceVolt_mV = 3000;
-		g_tCommand.usVoltageSetpoint_mV = 3850;//4150;
+		g_tCommand.usMinBalanceVolt_mV = eeprom_read_word(&(ParMaster->usMinBalanceVolt_mV));
+		g_tCommand.usVoltageSetpoint_mV = 3850; //4150;
 		g_tCommand.eChargerMode = eModeAuto;
 		g_tCommand.ucUserCellCount = 0;
-		OS_LEAVECRITICAL;
+		OS_ALLOWSCHEDULING;
+	}
+
+	if(firstrun)
+	{
+		eeprom_write_word(&(ParMaster->usMagic),12312);
+		eeprom_write_word(&(ParMaster->usMinBalanceVolt_mV),3000);
+	}
 
 
 
@@ -346,7 +376,9 @@ void TaskTouch()
 		OS_WaitAlarm(OSALTouchRepeat);
 		OS_SetAlarm(OSALTouchRepeat,3);
 
-		gttestfixme = touch();
+		g_NewComand = 1;
+
+//		gttestfixme = touch();
 
 	}
 }

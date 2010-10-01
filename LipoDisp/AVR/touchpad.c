@@ -6,6 +6,7 @@
 
 uint16_t touchcalbytes[5] = TOUCHCALINIT;
 
+uint16_t GetvalueFromUI(void);
 
 uint8_t touchGetPad(uint8_t pin)
 {
@@ -17,7 +18,7 @@ uint8_t touchGetPad(uint8_t pin)
 	if(pin == 2) mask = (1<<4);
 
 	cnt = 0;
-	OS_ENTERCRITICAL  // no interrupts allowed here!
+	OS_DISABLEALLINTERRUPTS  // no interrupts allowed here!
 	for(i=0;i<TOUCHREPCNT;i++)
 	{
 		TOUCHTOGGLEHIGH;
@@ -31,7 +32,7 @@ uint8_t touchGetPad(uint8_t pin)
 			cnt++;
 		}
 	}
-	OS_LEAVECRITICAL
+	OS_ENABLEALLINTERRUPTS
 
 	touchcalbytes[pin] = min(touchcalbytes[pin],cnt*100);
 
@@ -226,13 +227,19 @@ int16_t touch(void)
 
 #define TOUCHREDUCEFACTOR 32
 
-
-void touchSetValue(int16_t v, int16_t lower, int16_t upper) // Mutex?
+void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower)
 {
-	touchValue = v*TOUCHREDUCEFACTOR;
+	touchValue = value*TOUCHREDUCEFACTOR;
 	touchValueLower = lower*TOUCHREDUCEFACTOR;
 	touchValueUpper = upper*TOUCHREDUCEFACTOR;
 }
+
+
+uint16_t GetvalueFromUI(void)
+{
+	return touchValue/TOUCHREDUCEFACTOR;
+}
+
 
 void touchGetValue(int32_t* pValue, uint8_t Mutex) // read txtback the (changed) value Mutex?
 {

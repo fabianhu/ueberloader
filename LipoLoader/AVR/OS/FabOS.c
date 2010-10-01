@@ -14,6 +14,7 @@
 */
 
 #include "FabOS.h"
+#include "../FabOS_config.h"
 
 FabOS_t MyOS; // the global instance of the OS struct
 
@@ -53,6 +54,7 @@ ISR  (OS_ScheduleISR) //__attribute__ ((naked,signal)) // Timer isr
 
 	// task is to be run
 	MyOS.CurrTask = OS_GetNextTaskNumber() ;
+
 	SP = MyOS.Stacks[MyOS.CurrTask] ;
 	OS_Int_restoreCPUContext() ;
 	asm volatile("reti");  // at the XMEGA the I in SREG is statically ON before and after RETI.
@@ -81,24 +83,33 @@ void OS_Int_ProcessAlarms(void)
 	}
 }
 
+void leaveISR(void) __attribute__ ((naked));
+void leaveISR(void)
+{
+	asm("reti"); // used to quit the ISR without loosing the control flow.
+	// call into subroutine and "reti" from it, which resets the states of the interrupt engine.
+	// The additional reti at the end of the real ISR has no additional effect.
+}
+
 void OS_Reschedule(void) //with "__attribute__ ((naked))"
 {
-	OS_ENTERCRITICAL;
+	OS_PREVENTSCHEDULING;
+	
 	OS_Int_saveCPUContext() ; 
 	MyOS.Stacks[MyOS.CurrTask] = SP ; // catch the SP before we (possibly) do anything with it.
-
+	
 	OS_TRACE(7);
 
 	// task is to be run
 	MyOS.CurrTask = OS_GetNextTaskNumber();
 
-	SP = MyOS.Stacks[MyOS.CurrTask] ;// set Stack pointer
-
 	OS_TRACE(8);
-
+	
+	SP = MyOS.Stacks[MyOS.CurrTask] ;// set Stack pointer
 	OS_Int_restoreCPUContext() ;
-	OS_LEAVECRITICAL;
-	asm volatile("ret"); 
+	
+	OS_ALLOWSCHEDULING;
+	asm volatile("reti"); // return from interrupt, even if not in Interrupt. Just to ensure, that the ISR is left.
 }
 
 int8_t OS_GetNextTaskNumber() // which is the next task (ready and highest (= rightmost) prio)?
@@ -211,7 +222,8 @@ void OS_StartExecution()
 	//store THIS context for idling!!
 	MyOS.CurrTask = OS_NUMTASKS;
 	OS_Reschedule();
-	OS_LEAVECRITICAL; // the stored context has the interrupts OFF!
+	OS_ALLOWSCHEDULING; // the stored context has the interrupts OFF!
+	sei();
 }
 
 
@@ -227,21 +239,21 @@ void OS_MutexGet(int8_t mutexID)
 		return;
 	}
 #endif
-	OS_ENTERCRITICAL;
+	OS_PREVENTSCHEDULING;
 	OS_TRACE(17);
 	while( MyOS.MutexOwnedByTask[mutexID] != 0xff) // as long as anyone is the owner..
 	{
 		OS_TRACE(18);
 		MyOS.MutexTaskWaiting[MyOS.CurrTask] = mutexID; // set waiting info for priority inversion of scheduler
 		OS_Reschedule(); // also re-enables interrupts...
-		OS_ENTERCRITICAL;
+		OS_PREVENTSCHEDULING;
 		OS_TRACE(19);
 		// we only get here, if the other has released the mutex.
 		MyOS.MutexTaskWaiting[MyOS.CurrTask] = 0xff; // remove waiting info
 	}
 	OS_TRACE(20);
 	MyOS.MutexOwnedByTask[mutexID] = MyOS.CurrTask; // tell others, that I am the owner.
-	OS_LEAVECRITICAL;
+	OS_ALLOWSCHEDULING;
 }
 
 // release the occupied mutex
@@ -254,7 +266,7 @@ void OS_MutexRelease(int8_t mutexID)
 		return;
 	}
 #endif
-	OS_ENTERCRITICAL;
+	OS_PREVENTSCHEDULING;
 	OS_TRACE(21);
 	MyOS.MutexOwnedByTask[mutexID] = 0xff; // tell others, that no one is the owner.
 	OS_Reschedule() ; // re-schedule; will wake up waiting task, if higher prio.
@@ -264,7 +276,7 @@ void OS_MutexRelease(int8_t mutexID)
 
 void OS_SetEvent(uint8_t TaskID, uint8_t EventMask) // Set one or more events
 {
-	OS_ENTERCRITICAL;
+	OS_PREVENTSCHEDULING;
 	OS_TRACE(22);
 	MyOS.EventMask[TaskID] |= EventMask; // set the event mask, as there may be more events than waited for.
 
@@ -282,29 +294,8 @@ void OS_SetEvent(uint8_t TaskID, uint8_t EventMask) // Set one or more events
 	{
 		OS_TRACE(24);
 		// remember the event and task continues on its call of WaitEvent directly. 
-		OS_LEAVECRITICAL;
+		OS_ALLOWSCHEDULING;
 	}
-}
-
-void OS_SetEventfromISR(uint8_t TaskID, uint8_t EventMask) // Set one or more events from within ISR without re-scheduling!!
-//(The Problem may be, that global interrupts get enabled, but we are still IN "hi level" interrupt; -> The ISR gets prolonged by the recheduling. This is a speciality with the XMEGA controllers)
-{
-	OS_ENTERCRITICAL;
-	OS_TRACE(22);
-	MyOS.EventMask[TaskID] |= EventMask; // set the event mask, as there may be more events than waited for.
-
-	if(EventMask & MyOS.EventWaiting[TaskID]) // Targeted task is waiting for one of this events
-	{
-		OS_TRACE(23);
-		// wake up this task directly
-		MyOS.TaskReadyBits |= 1<<TaskID ;   // Make the task ready to run again.
-	}
-	else
-	{
-		OS_TRACE(24);
-		// remember the event and task continues on its call of WaitEvent directly.
-	}
-	OS_LEAVECRITICAL;
 }
 
 uint8_t OS_WaitEvent(uint8_t EventMask) //returns event(s), which lead to execution
@@ -318,7 +309,7 @@ uint8_t OS_WaitEvent(uint8_t EventMask) //returns event(s), which lead to execut
 #endif
 
 	uint8_t ret;
-	OS_ENTERCRITICAL;
+	OS_PREVENTSCHEDULING;
 	OS_TRACE(25);
 	
 	if(!(EventMask & MyOS.EventMask[MyOS.CurrTask])) // This task is Not having one of these events active
@@ -329,7 +320,7 @@ uint8_t OS_WaitEvent(uint8_t EventMask) //returns event(s), which lead to execut
 		MyOS.TaskReadyBits &= ~(1<<MyOS.CurrTask) ;     // indicate that this task is not ready to run.
 
 		OS_Reschedule() ; // re-schedule; will be waked up here by "SetEvent" or alarm
-		OS_ENTERCRITICAL;
+		OS_PREVENTSCHEDULING;
 		OS_TRACE(27);
 
 		MyOS.EventWaiting[MyOS.CurrTask] = 0; // no more waiting!
@@ -338,7 +329,7 @@ uint8_t OS_WaitEvent(uint8_t EventMask) //returns event(s), which lead to execut
 	// clear the events:
 	MyOS.EventMask[MyOS.CurrTask] &= ~EventMask; // the actual events minus the ones, which have been waited for 
 	OS_TRACE(28);
-	OS_LEAVECRITICAL;
+	OS_ALLOWSCHEDULING;
 	return ret;
 }
 
@@ -348,7 +339,7 @@ uint8_t OS_WaitEvent(uint8_t EventMask) //returns event(s), which lead to execut
 
 void OS_SetAlarm(uint8_t AlarmID, OS_TypeAlarmTick_t numTicks ) // set Alarm for the future and continue // set alarm to 0 disable an alarm.
 {
-	OS_ENTERCRITICAL;
+	OS_PREVENTSCHEDULING;
 	OS_TRACE(29);
 #if OS_USEEXTCHECKS == 1
 	if(AlarmID >= OS_NUMALARMS)// check for ID out of range
@@ -358,7 +349,7 @@ void OS_SetAlarm(uint8_t AlarmID, OS_TypeAlarmTick_t numTicks ) // set Alarm for
 	}
 #endif	
 	MyOS.Alarms[AlarmID].AlarmTicks = numTicks ;
-	OS_LEAVECRITICAL;
+	OS_ALLOWSCHEDULING;
 }
 
 void OS_WaitAlarm(uint8_t AlarmID) // Wait for any Alarm set by OS_SetAlarm
@@ -382,14 +373,14 @@ void OS_WaitAlarm(uint8_t AlarmID) // Wait for any Alarm set by OS_SetAlarm
 	}
 #endif
 
-	OS_ENTERCRITICAL; // re-enabled by OS_Schedule()
+	OS_PREVENTSCHEDULING; // re-enabled by OS_Schedule()
 	OS_TRACE(31);
 	if(MyOS.Alarms[AlarmID].AlarmTicks == 0 ) // notice: this "if" could be possibly omitted.
 	{
 #if OS_USEEXTCHECKS == 1
 		OS_ErrorHook(8); // OS_WaitAlarm: Alarm was not active
 #endif
-		OS_LEAVECRITICAL; // just continue
+		OS_ALLOWSCHEDULING; // just continue
 		return;  
 	}
 	else
@@ -414,12 +405,12 @@ typedef struct OS_Queue_tag {
 uint8_t OS_QueueIn(OS_Queue_t* pQueue , uint8_t* pByte)
 {
 	uint8_t i;
-	OS_ENTERCRITICAL;
+	OS_PREVENTSCHEDULING;
 	OS_TRACE(33);
 	if (pQueue->write + pQueue->chunk == pQueue->read || (pQueue->read == 0 && pQueue->write + pQueue->chunk == pQueue->size))
 	{
 		OS_TRACE(34);
-		OS_LEAVECRITICAL;
+		OS_ALLOWSCHEDULING;
 		return 1;  // queue full
 	}
 
@@ -431,19 +422,19 @@ uint8_t OS_QueueIn(OS_Queue_t* pQueue , uint8_t* pByte)
 			pQueue->write = 0;
 	}
 	OS_TRACE(35);
-	OS_LEAVECRITICAL;
+	OS_ALLOWSCHEDULING;
 	return 0;
 }
  
 uint8_t OS_QueueOut(OS_Queue_t* pQueue , uint8_t* pByte)
 {
 	uint8_t i;
-	OS_ENTERCRITICAL;
+	OS_PREVENTSCHEDULING;
 	OS_TRACE(36);
 	if (pQueue->read == pQueue->write)
 	{
 		OS_TRACE(37);
-		OS_LEAVECRITICAL;
+		OS_ALLOWSCHEDULING;
 		return 1; // queue empty
 	}
 
@@ -455,7 +446,7 @@ uint8_t OS_QueueOut(OS_Queue_t* pQueue , uint8_t* pByte)
 			pQueue->read = 0;
 	}
 	OS_TRACE(38);
-	OS_LEAVECRITICAL;
+	OS_ALLOWSCHEDULING;
 	return 0;
 }
 
@@ -495,9 +486,9 @@ uint16_t OS_GetUnusedStack (uint8_t TaskID)
 // fills given variable with the OS ticks since start.
 void OS_GetTicks(uint32_t* pTime) 
 {
-	OS_ENTERCRITICAL;
+	OS_PREVENTSCHEDULING;
 		*pTime = MyOS.OSTicks;
-	OS_LEAVECRITICAL;
+	OS_ALLOWSCHEDULING;
 }
 #endif
 
