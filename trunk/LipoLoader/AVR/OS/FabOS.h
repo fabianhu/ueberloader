@@ -12,6 +12,10 @@
 	If you have to change something, please let the author know via FabOS@huslik-elektronik.de.
 
 */
+#ifndef FABOS_H
+#define FABOS_H
+
+
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -67,15 +71,6 @@ typedef struct OS_Queue_tag {
 
 extern FabOS_t MyOS;
 
-#if OS_TRACE_ON == 1
-	extern uint8_t OS_Tracebuffer[OS_TRACESIZE];
-	#if OS_TRACESIZE <= 0xff
-		extern uint8_t OS_TraceIdx;
-	#else
-		extern uint16_t OS_TraceIdx;
-	#endif
-#endif
-
 // *********  Macros to simplify the API
 
 #define OS_DeclareQueue(NAME,COUNT,CHUNK) uint8_t OSQD##NAME[(COUNT+1)*CHUNK]; OS_Queue_t NAME = {0,0,CHUNK,(COUNT+1)*CHUNK,OSQD##NAME}
@@ -101,7 +96,6 @@ void 	OS_CustomISRCode(); // do not call; just fill in your code.
 void 	OS_StartExecution(); // Start the operating system
 
 void 	OS_SetEvent(uint8_t TaskID, uint8_t EventMask); // Set one or more events
-void 	OS_SetEventfromISR(uint8_t TaskID, uint8_t EventMask); // Set one or more events out of ISR
 
 uint8_t OS_WaitEvent(uint8_t EventMask); //returns event(s) in a mask, which lead to execution
 
@@ -163,9 +157,8 @@ void OS_Int_ProcessAlarms(void);
 
 // *********  CPU related assembler stuff
 
-#define OS_ENTERCRITICAL cli();
-#define OS_LEAVECRITICAL sei();
-
+#define OS_DISABLEALLINTERRUPTS cli();
+#define OS_ENABLEALLINTERRUPTS sei();
 
 // Save all CPU registers on the AVR chip.
 // The last two lines save the status register.
@@ -204,7 +197,7 @@ asm volatile( \
 	push r30\n\t\
 	push r31\n\t\
 	in r0,0x3f\n\t\
-	push r0");
+	push r0\n\t");
 
 // Restore all AVR CPU Registers. The first two lines
 // restore the status register.
@@ -243,7 +236,7 @@ asm volatile( \
 	pop r3\n\t\
 	pop r2\n\t\
 	pop r1\n\t\
-	pop r0");
+	pop r0\n\t");
 
 
 
@@ -306,3 +299,5 @@ asm volatile( \
 #if OS_UNUSEDMASK+OS_NUMTASKS > 0xff
 	#error please redefine OS_UNUSEDMASK to a smaller number!
 #endif
+
+#endif // FABOS_H
