@@ -187,7 +187,7 @@ void OS_ErrorHook(uint8_t ErrNo)
 }
 #endif
 
-void emstop(uint8_t e)
+void emstop(uint8_t e) // fixme emstop reason speichern!
 {
 	cli(); // stop OS
 
