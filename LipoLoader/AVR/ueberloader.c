@@ -73,7 +73,7 @@ void TaskGovernor(void)
 	g_tCalibration.sADCOffset = ADCinit();
 
 	int16_t sU_in_act,sU_out_act;
-	int16_t sU_in_act_flt,sU_out_act_flt;
+	int16_t /*sU_in_act_flt,*/sU_out_act_flt;
 	int16_t sI_out_act,sI_out_act_flt; // mV / mA
 
 	vPWM_Init();
@@ -146,9 +146,9 @@ void TaskGovernor(void)
 			emstop(1);
 		if (sU_in_act > 22000)
 			emstop(2);
-		if (sI_out_act > 10000)
+		if (sI_out_act > 10000 && abs(sI_out_act_flt)>100)
 			emstop(3);
-		if (sU_out_act > 4250*6)
+		if (sU_out_act > 4250*6 && abs(sI_out_act_flt)>100)
 			emstop(4);
 
 		OS_ENTERCRITICAL;
@@ -314,7 +314,11 @@ void TaskBalance(void)
 		}
 
 		// balancing allowed
-		if(bBalance == 1 && g_tBattery_Info.eState == eBattCharging)
+		static uint8_t onlyEveryTwoCycles = 0;
+
+		onlyEveryTwoCycles++;
+
+		if(bBalance == 1 && g_tBattery_Info.eState == eBattCharging )
 		{
 			mean /= g_tBattery_Info.ucNumberOfCells;
 			mean +=3; // add some difference to prevent swinging
@@ -322,11 +326,12 @@ void TaskBalance(void)
 			// Balancer logic
 			for(i=0;i<6;i++)
 			{
-				if(sBalanceCells[i] > mean /*|| i >= g_tBattery_Info.ucNumberOfCells*/)
+				if(sBalanceCells[i] > mean /*|| i >= g_tBattery_Info.ucNumberOfCells*/&& onlyEveryTwoCycles >= 2)
 				{
 					// switch on Balancer for this cell
 					PORTC.OUTSET = (1<<(2+i));
 					ucBalanceBits |= (1<<i);
+					onlyEveryTwoCycles = 0;
 				}
 				else
 				{
@@ -342,18 +347,9 @@ void TaskBalance(void)
 			// balancer off
 			for(i=0;i<6;i++)
 			{
-				/*if( i >= g_tBattery_Info.ucNumberOfCells)
-				{
-					// switch on Balancer for this cell
-					PORTC.OUTSET = (1<<(2+i));
-					ucBalanceBits |= (1<<i);
-				}
-				else
-				{*/
 					// switch off Balancer for this cell
 					PORTC.OUTCLR = (1<<(2+i));
 					ucBalanceBits &= ~(1<<i);
-				//}
 			}
 
 			//PORTC.OUTCLR = (0b111111<<2);
@@ -550,7 +546,7 @@ void TaskState(void)
 				break;
 
 			case eBattUnknown:
-					OS_WaitTicks(OSALMStateWait,2000);
+					OS_WaitTicks(OSALMStateWait,7000);
 					g_tBattery_Info.eState = eBattWaiting;
 				break;
 
