@@ -151,10 +151,10 @@ void TaskGovernor(void)
 		if (sU_out_act > 4250*6 && abs(sI_out_act_flt)>100)
 			emstop(4);
 
-		OS_ENTERCRITICAL;
+		OS_DISABLEALLINTERRUPTS;
 		int16_t myISetpoint = g_tCommand.sCurrentSetpoint;
 		int16_t myUSetpoint = g_tCommand.usVoltageSetpoint_mV*g_tBattery_Info.ucNumberOfCells;
-		OS_LEAVECRITICAL;
+		OS_ENABLEALLINTERRUPTS;
 
 		// calculate Current setpoint
 		static int16_t I_Set_mA_Ramped = 0;
@@ -247,36 +247,36 @@ void TaskBalance(void)
 		ADC_StartConvCh3Pin(11); // temperature external2
 		OS_WaitTicks(OSALMBalWait,ADCWAITTIME);
 		sTemp = ADCA.CH3.RES;
-		OS_ENTERCRITICAL;
+		OS_DISABLEALLINTERRUPTS;
 		g_tADCValues.TempInt = sTemp ; // fixme scaling!
-		OS_LEAVECRITICAL;
+		OS_ENABLEALLINTERRUPTS;
 
 		ADC_StartConvInt(0); // CPU temperature
 		OS_WaitTicks(OSALMBalWait,ADCWAITTIME);
 		sTemp = ADCA.CH3.RES*10 /33; // what would be measured, if it was done at 1V ref (/ 3.3).
 		sTemp = ( sTemp * (273ul+85ul) / g_tCalibration.usCPUTemp85C) ;
-		OS_ENTERCRITICAL;
+		OS_DISABLEALLINTERRUPTS;
 		g_tADCValues.TempCPU = sTemp ; // fixme scaling!
-		OS_LEAVECRITICAL;
+		OS_ENABLEALLINTERRUPTS;
 
 		ADC_StartConvInt(1); // Bandgap reference
 		OS_WaitTicks(OSALMBalWait,ADCWAITTIME);
-		OS_ENTERCRITICAL;
+		OS_DISABLEALLINTERRUPTS;
 		g_tADCValues.Bandgap = ADCA.CH3.RES; // bit value for 1.10V ! at ref = Usupp/1.6
-		OS_LEAVECRITICAL;
+		OS_ENABLEALLINTERRUPTS;
 		sTemp = (2048ul*1088ul)/g_tADCValues.Bandgap; // by knowing, that the voltage is 1.088V, we calculate the ADCRef voltage. // fixme !!!! Temperature test!!
-		OS_ENTERCRITICAL;
+		OS_DISABLEALLINTERRUPTS;
 		g_tCalibration.sADCRef_mV = sTemp;
-		OS_LEAVECRITICAL;
+		OS_ENABLEALLINTERRUPTS;
 
 
 		ADC_StartConvInt(2); // VCC_mVolt measurement
 		OS_WaitTicks(OSALMBalWait,ADCWAITTIME);
 		sTemp = ADCA.CH3.RES * 10ul;
 		sTemp = sTemp * g_tCalibration.sADCRef_mV / 2048ul ;
-		OS_ENTERCRITICAL;
+		OS_DISABLEALLINTERRUPTS;
 		g_tADCValues.VCC_mVolt = sTemp;
-		OS_LEAVECRITICAL;
+		OS_ENABLEALLINTERRUPTS;
 
 		// mean Cell Voltage
 		int16_t mean = 0;
