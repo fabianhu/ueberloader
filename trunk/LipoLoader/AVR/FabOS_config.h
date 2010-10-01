@@ -11,10 +11,21 @@
 #define OS_NUMALARMS 8 // Number of Alarms
 
 #if defined (__AVR_ATmega32__)
-	#define OS_ScheduleISR TIMER1_COMPA_vect // Interrupt Vector used for OS-tick generation (check out CustomOS_ISRCode if you want to add isr code)
+	#define OS_ScheduleISR 			TIMER1_COMPA_vect // Interrupt Vector used for OS-tick generation (check out CustomOS_ISRCode if you want to add isr code)
+	#define OS_ALLOWSCHEDULING 		TIMSK |= (1<<OCIE1A);	// turn Timer Interrupt ON
+	#define OS_PREVENTSCHEDULING 	TIMSK &= ~(1<<OCIE1A); // turn Timer Interrupt OFF
+#elif defined (__AVR_ATmega644P__)
+	#define OS_ScheduleISR 			TIMER1_COMPA_vect
+	#define OS_ALLOWSCHEDULING 		TIMSK1 |= (1<<OCIE1A);	// turn Timer Interrupt ON
+	#define OS_PREVENTSCHEDULING 	TIMSK1 &= ~(1<<OCIE1A); // turn Timer Interrupt OFF
 #elif defined (__AVR_ATxmega32A4__)
-	#define OS_ScheduleISR TCC1_CCA_vect
+	#define OS_ScheduleISR 			TCC1_CCA_vect
+	#define OS_ALLOWSCHEDULING 		TCC1.INTCTRLB |= 3 ;//;	// turn Timer Interrupt ON
+	#define OS_PREVENTSCHEDULING 	TCC1.INTCTRLB &= ~3 ; // turn Timer Interrupt OFF
+#else
+	#error "MCU Timer ISR not defined. Set correct ISR vector in FabOS_config.h"
 #endif
+
 
 #define OS_USECLOCK 1 		// Use "OS_GetTicks()" which returns a 32bit timer tick
 #define OS_USECOMBINED 1 	// Use "OS_WaitEventTimeout()" which is easier to use, than combining alarms and events to get the functionality.
