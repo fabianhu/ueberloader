@@ -28,6 +28,8 @@ extern uint8_t test;
 extern uint16_t touchpads[TOUCHCOUNT];
 extern void process_touch(void);//change value
 		
+// Defines for this file
+#define DISPLAYTEST 1
 
 // *********  Task definitions
 OS_DeclareTask(TaskCommand,300);
@@ -42,15 +44,15 @@ void emstop(uint8_t e);
 
 
 // Global variables
-uint8_t g_bMenuActive = 0; // 1 = the menue is active
+uint8_t g_bMenuActive = DISPLAYTEST; // 1 = the menue is active
 static volatile uint16_t a,b,c;
+
+
 
 // *********  THE main()
 int main(void)
 {
 	CPU_init();
-
-	//lcd_init(BPP24, ORIENTATION_0);	
 
     OS_CreateTask(TaskCommand, OSTSKCommand);
 	OS_CreateTask(TaskTouch, OSTSKTouch);
@@ -76,10 +78,7 @@ int main(void)
 		c = OS_GetUnusedStack(OSTSKDisplay);*/
 
 	}
-
 }
-
-#define DISPLAYTEST 0
 
 
 void TaskDisplay(void)
@@ -92,6 +91,7 @@ void TaskDisplay(void)
 #define FONTSIZE 1
 #define LINEDIFF FONTSIZE*16
 
+	lcd_init(BPP24, ORIENTATION_0);
 	touch_init();
 	menu_init();
 
