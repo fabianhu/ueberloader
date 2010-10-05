@@ -26,6 +26,8 @@ extern UCIFrame_t g_tUCIRXFrame;
 extern uint8_t    g_ucRXLength;
 extern uint8_t test;
 extern uint16_t touchpads[TOUCHCOUNT];
+extern void process_touch(void);//change value
+		
 
 // *********  Task definitions
 OS_DeclareTask(TaskCommand,300);
@@ -36,7 +38,6 @@ OS_DeclareTask(TaskDisplay,700);
 
 // *********  Prototypes
 void CPU_init(void);
-
 void emstop(uint8_t e);
 
 
@@ -48,9 +49,7 @@ int main(void)
 {
 	CPU_init();
 
-	lcd_init();
-
-	menu_init();
+	//lcd_init(BPP24, ORIENTATION_0);	
 
     OS_CreateTask(TaskCommand, OSTSKCommand);
 	OS_CreateTask(TaskTouch, OSTSKTouch);
@@ -79,10 +78,26 @@ int main(void)
 
 }
 
+void TaskDisplay(void)
+{
+
+	touch_init();
+	menu_init();
+	lcd_init(BPP24, ORIENTATION_0);	
+
+	while(1)
+	{
+		menu_show();
+		OS_WaitTicks(OSALMWaitDisp,20);
+	}
+
+}
+
 //int16_t gttestfixme;
 
 
-#define disp 1
+/*
+#define disp 0
 
 
 void TaskDisplay(void)
@@ -101,7 +116,6 @@ void TaskDisplay(void)
 #endif
 
 	lcd_clear();//lcd clear needed here because a new screen is shown
-	lcd_show_init_screen();
 	OS_WaitTicks(OSALMWaitDisp,333);
 	lcd_clear();//lcd clear needed here because a new screen is shown
 
@@ -266,7 +280,7 @@ static uint16_t g;
 	}
 
 }
-
+*/
 extern UCIFrame_t g_tUCIRXFrame;
 extern uint8_t    g_ucRXLength;
 extern uint16_t gsCommerrcnt; // fixme remove!
@@ -379,6 +393,8 @@ void TaskTouch()
 		g_NewComand = 1;
 
 //		gttestfixme = touch();
+		process_touch();//change value
+		_delay_ms(100);
 
 	}
 }

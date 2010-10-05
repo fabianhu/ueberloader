@@ -1,21 +1,19 @@
 /* definitions for menu */
-#define F_CPU 16000000UL  // 16 MHz
 
 #include <avr/io.h>
 #include <avr/pgmspace.h>
-#include "menu_variant.h"
 #include <util/delay.h>
-//#include "display.h"	//injektortester
+#include "menu_variant.h"
 #include "lcd.h"		//nokia
-#include "OS/FabOS.h"
+
 
 
 typedef struct Parameter_tag
 {
-	int16_t		sParam;
-	int16_t		sLowerLimit;
-	int16_t		sUpperLimit;
-	char		sUnit[4];
+	int16_t		sParam;			//Parameter value
+	int16_t		sLowerLimit;	//Parameter Lower Limit
+	int16_t		sUpperLimit;	//Parameter Upper Limit
+	uint8_t		sParType;		//Parameter type (Voltage, Current...)	
 }Parameter_t;
 
 
@@ -40,6 +38,16 @@ typedef struct MenuItem_tag
 									//		 |____  a	paramter edit mode active (maybe a== b ?)
 }
 MenuItem_t;
+
+//Parameter types			examples
+#define MENUITEM		0   //...just incr/decr. with 1
+#define BOOSTVOLTAGE	1	//guintUBoost=800;	//80,0V
+#define BOOSTCURRENT	2	//guintIBoost=30;	//3,0A
+#define BOOSTTIME		3	//guintTBoost=5000;	//5,0ms
+#define BOOSTFREQUENCY	4	//guintFBoost=20;	//20us
+#define HOLDCURRENT		5	//guintIHold =15;	//1,5A
+#define HOLDTIME		6	//guintTHold =10000;//10,0ms
+#define HOLDFREQUENCY	7	//guintFHold =20;	//20us
 
 //Errorcode
 #define INFINITE_LOOP 	1			//A infinite loop exists in the menu structure
