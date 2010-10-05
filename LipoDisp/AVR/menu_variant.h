@@ -3,12 +3,12 @@
 
 #include <avr/io.h>
 #include <avr/pgmspace.h>
-//#include "display.h"	//injektortester
+//#include "lcd.h"		//nokia
 
-#include "lcd.h"		//nokia
-#include "touchpad.h"
-
-#define MENUESIZE 			3
+#define MENUESIZE 			92
+#define NROFPROFILES 		6
+#define INJECTIONMENUID 	4
+#define CURRENTPROFILESID 	17
 
 //Errorcode
 #define INFINITE_LOOP 			1			//A infinite loop exists in the menu structure
@@ -17,7 +17,7 @@
 #define WRONG_NEXT_UCID			4			//The ID of the next menu item is wrong
 
 //Menusettings
-#define ITEMS_PER_PAGE 			3				//nr of items per menu page
+#define ITEMS_PER_PAGE 			6				//nr of items per menu page
 #define MAX_ITEM_NAME_CHARLENGTH 	20	//max nr of chars for item names
 #define MAX_SRAM_ITEM_NAME_LENGHT 	16	//max nr of chars for SRAM item names
 #define SCROLL_LINE_DISTANCE		2			
@@ -30,7 +30,7 @@
 //extern Prototypes
 extern void menu_draw_header(char *menu_header);
 extern void menu_del_menuitems(void);
-extern void menu_draw_unselected_items(char *item_name, uint16_t par_exists, int16_t parameter, char *unit, uint8_t lcd_pos);
-extern void menu_draw_selected_item(char *item_name, uint16_t par_exists, int16_t parameter, char *unit, uint8_t lcd_pos);
-extern void menu_draw_selected_parameter(char *item_name, int16_t parameter, char *unit, uint8_t lcd_pos);
+extern void menu_draw_unselected_items(char *item_name, uint16_t par_exists, int16_t parameter, uint8_t type, uint8_t lcd_pos);
+extern void menu_draw_selected_item(char *item_name, uint16_t par_exists, int16_t parameter, uint8_t type, uint8_t lcd_pos);
+extern void menu_draw_selected_parameter(char *item_name, int16_t parameter, uint8_t type, uint8_t lcd_pos);
 extern void menu_draw_groupposition(uint8_t itemnr, uint8_t groupitems);

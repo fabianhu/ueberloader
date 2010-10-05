@@ -28,7 +28,7 @@ void touch_init(void);
 //int16_t touchGetSchwerpunkt(void);
 int16_t touch(void);
 void touchGetValue(int32_t* pValue, uint8_t Mutex);
-void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower);
+//void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower);
 
 #define TOUCHCALINIT {0xffff,0xffff,0xffff,0xffff,0xffff}
 

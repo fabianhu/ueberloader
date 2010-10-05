@@ -8,7 +8,26 @@ uint16_t touchcalbytes[5] = TOUCHCALINIT;
 
 uint16_t GetvalueFromUI(void);
 
-uint8_t touchGetPad(uint8_t pin)
+uint16_t guivalue, guiupper, guilower;
+uint8_t guctype;
+extern void menu_select(void);
+
+uint16_t GetvalueFromUI(void)
+{	
+	return guivalue;
+
+	 
+}
+
+void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower, uint8_t type)
+{
+	guivalue = value;
+	guiupper = upper;
+	guilower = lower;
+	guctype = type;
+}
+
+/*uint8_t touchGetPad(uint8_t pin)
 {
 	uint8_t cnt,i;
 	uint8_t mask;
@@ -40,8 +59,71 @@ uint8_t touchGetPad(uint8_t pin)
 
 
 	return cnt - (touchcalbytes[pin]/100);
+}*/
+
+uint8_t touchGetPad(uint8_t pin)
+{
+	uint8_t cnt,i;
+	uint8_t mask = (1<<pin);
+
+	cnt = 0;
+	//OS_ENTERCRITICAL  fixme// no interrupts allowed here!
+	for(i=0;i<TOUCHREPCNT;i++)
+	{
+		TOUCHTOGGLEHIGH;
+		while (!(TOUCHPORT.IN & mask))
+		{
+			cnt++;
+		}
+		TOUCHTOGGLELOW;
+		while (TOUCHPORT.IN & mask)
+		{
+			cnt++;
+		}
+	}
+	//OS_LEAVECRITICAL fixme
+
+	touchcalbytes[pin] = min(touchcalbytes[pin],cnt*100);
+
+	touchcalbytes[pin]++; // every some time, correct the calibration bytes.. even, if a touch is recognized... -> provides self healing..
+
+
+	return cnt - (touchcalbytes[pin]/100);
 }
 
+void process_touch(void)
+{
+	uint8_t i,t[5];
+
+	for (i = 0; i < 5; ++i)
+	{
+		t[i] = touchGetPad(i);
+		//OS_WaitTicks(OSALTouchPause,1);
+	}
+
+
+	if(t[0]>20)
+	{
+		if(guivalue<guiupper)
+		{
+			guivalue++;	
+		}
+	}
+
+	if(t[4]>20)
+	{
+		if(guivalue>guilower)
+		{
+			guivalue--;	
+		}
+	}
+
+	if(t[2]>20)
+	{
+		menu_select();
+	}
+
+}
 
 void touch_init(void)
 {
@@ -227,18 +309,18 @@ int16_t touch(void)
 
 #define TOUCHREDUCEFACTOR 32
 
-void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower)
-{
-	touchValue = value*TOUCHREDUCEFACTOR;
-	touchValueLower = lower*TOUCHREDUCEFACTOR;
-	touchValueUpper = upper*TOUCHREDUCEFACTOR;
-}
+//void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower)
+//{
+//	touchValue = value*TOUCHREDUCEFACTOR;
+//	touchValueLower = lower*TOUCHREDUCEFACTOR;
+//	touchValueUpper = upper*TOUCHREDUCEFACTOR;
+//}
 
 
-uint16_t GetvalueFromUI(void)
-{
-	return touchValue/TOUCHREDUCEFACTOR;
-}
+//uint16_t GetvalueFromUI(void)
+//{
+//	return touchValue/TOUCHREDUCEFACTOR;
+//}
 
 
 void touchGetValue(int32_t* pValue, uint8_t Mutex) // read txtback the (changed) value Mutex?
