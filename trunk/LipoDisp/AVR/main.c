@@ -42,6 +42,7 @@ void emstop(uint8_t e);
 
 
 // Global variables
+uint8_t g_bMenuActive = 0; // 1 = the menue is active
 static volatile uint16_t a,b,c;
 
 // *********  THE main()
@@ -78,42 +79,21 @@ int main(void)
 
 }
 
-void TaskDisplay(void)
-{
-
-	touch_init();
-	menu_init();
-	lcd_init(BPP24, ORIENTATION_0);	
-
-	while(1)
-	{
-		menu_show();
-		OS_WaitTicks(OSALMWaitDisp,20);
-	}
-
-}
-
-//int16_t gttestfixme;
-
-
-/*
-#define disp 0
+#define DISPLAYTEST 0
 
 
 void TaskDisplay(void)
 {
+
 	uint16_t ypos=0;
 	uint32_t t1,t2;
-	static uint8_t cec=0,i;
+	uint8_t i;
 
 #define FONTSIZE 1
 #define LINEDIFF FONTSIZE*16
 
 	touch_init();
-
-#if menutest
 	menu_init();
-#endif
 
 	lcd_clear();//lcd clear needed here because a new screen is shown
 	OS_WaitTicks(OSALMWaitDisp,333);
@@ -127,163 +107,151 @@ void TaskDisplay(void)
 
 		OS_GetTicks(&t1);
 
-		if(1)//!glCommError) fixme
+		if(!glCommError || DISPLAYTEST == 1)
 		{
-			//menu_show();
-			OS_WaitTicks(OSALMWaitDisp,500);
 
-			//the lcd_print function overwrites old text-> no lcd_clear needed!
-			//lcd_clear();
-#if disp
-			lcd_print(YELLOW, BLACK, 2, 0, ypos,"vBatt  /t%i mV    ",g_tBattery_Info.sActVoltage_mV);
-			ypos += LINEDIFF*2;
-			lcd_print(YELLOW, BLACK, 2, 0, ypos,"Current/t%i mA   ",g_tBattery_Info.sActCurrent_mA);
-			ypos += LINEDIFF*2;
-			lcd_print(WHITE, BLACK, FONTSIZE, 230, 200,"Batt. %i Cells ",g_tBattery_Info.ucNumberOfCells);
-
-
-//			ypos = 200;
-#endif
-
-#if menutest
-
-			menu_show();
-
-
-#endif
-
-
-#if touchtest
-//			for (i = 0; i < 3; i++)
-//			{
-//				lcd_print(WHITE, BLACK, 1, 0, 16*i,"val/t%i/tIdx/t%i      " ,maxVal[i],maxIdx[i]);
-//			}
-
-			static int16_t oypos;
-			int16_t nypos1;
-			nypos1 = gttestfixme;
-
-			touchGetValue(&value,0);
-
-			lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"VAL/t%i/tt      " ,value);
-
-
-
-
-
-			lcd_draw_box( 0,315,oypos,5,5);
-			if(nypos1 >0)
+			if (g_bMenuActive)
 			{
-
-				lcd_draw_box(0,315,nypos1/4,5,5);
-				oypos = nypos1/4;
+				menu_show();
 			}
-
-static uint16_t g;
-
-
-			g++;
-			//lcd_draw_pixel(RED,g,filtered+128);
-			lcd_draw_pixel(GREEN,g,128-value);
-			lcd_draw_pixel(YELLOW,g,nypos1/2);
-			if (g == 320)
+			else
 			{
-				lcd_clear();
-				g =0;
+				// show the overview page
+
+				//the lcd_print function overwrites old text-> no lcd_clear needed!
+				//lcd_clear();
+
+				// touchtest();
+
+				lcd_print(YELLOW, BLACK, 2, 0, ypos,"vBatt  /t%i mV    ",g_tBattery_Info.sActVoltage_mV);
+				ypos += LINEDIFF*2;
+				lcd_print(YELLOW, BLACK, 2, 0, ypos,"Current/t%i mA   ",g_tBattery_Info.sActCurrent_mA);
+				ypos += LINEDIFF*2;
+				lcd_print(WHITE, BLACK, FONTSIZE, 230, 200,"Batt. %i Cells ",g_tBattery_Info.ucNumberOfCells);
+
+				ypos = 64;
+
+				for (i = 0; i < 6; ++i) {
+				lcd_print(WHITE, BLACK, FONTSIZE, 0,ypos,"Cell%i/t%i/tmV/t%i uAh     " ,i,g_tBattery_Info.Cells[i].sVoltage_mV, g_tBattery_Info.Cells[i].unDisCharge_mAs/36);
+				ypos += LINEDIFF;
+				}
+
+				ypos = 64;
+				lcd_print(WHITE, BLACK, 1, 200, ypos,"PWM %i   ",g_tBattery_Info.usPWM);
+				ypos += LINEDIFF;
+				lcd_print(WHITE, BLACK, 1, 200, ypos,"ASYNC %i   ",g_tBattery_Info.usPWMStep);
+				ypos += LINEDIFF;
+				lcd_print(WHITE, BLACK, 1, 200, ypos,"Setp %i mA   ",g_tBattery_Info.sISetpoint);
+				ypos += LINEDIFF;
+				lcd_print(WHITE, BLACK, 1, 200, ypos,"diff %i mA   ",g_tBattery_Info.sDiff);
+				ypos += LINEDIFF;
+				lcd_print(WHITE, BLACK, 1, 200, ypos,"Time %i s   ",(uint16_t)g_tBattery_Info.unTimeCharging_s);
+				ypos += LINEDIFF;
+				lcd_print(WHITE, BLACK, 1, 200, ypos,"ErrCnt %i   ",g_tBattery_Info.ErrCnt); //g_tBattery_Info.usConverterPower_W);
+				ypos += LINEDIFF;
+				lcd_print(WHITE, BLACK, 1, 160, ypos,"Charge %i mAh   ",(g_tBattery_Info.unCharge_mAs/3600));
+				ypos += LINEDIFF;
+				lcd_print(WHITE, BLACK, 1, 160, ypos,"SlaveErr %i    ",(g_tBattery_Info.LastErr));
+				ypos += LINEDIFF;
+
+				char buf[10];
+				switch (g_tBattery_Info.eState)
+				{
+					case eBattCharging:
+						strcpy(buf,"Charging  ");
+						break;
+					case eBattFull:
+						strcpy(buf,"Full      ");
+						break;
+					case eBattWaiting:
+						strcpy(buf,"Waiting   ");
+						break;
+					case eBattUnknown:
+						strcpy(buf,"Unknown   ");
+						break;
+					case eBattError:
+						strcpy(buf,"Batt.Error");
+						break;
+					default:
+						strcpy(buf,"Waaargh!!!");
+						break;
+				}
+				lcd_print(GREEN,BLACK,2,0,180,buf);
+
+
+				OS_GetTicks(&t2);
+
+				t2=t2-t1;
+				lcd_print(GREY, BLACK, FONTSIZE, 0, 220,"Time: %i ms     " ,(uint16_t)t2);
 			}
-
-
-
-
-
-			ypos =32;
-			lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"P1/t%i      " ,touchpads[0]);
-			ypos += LINEDIFF;
-			lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"P2/t%i      " ,touchpads[1]);
-			ypos += LINEDIFF;
-			lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"P3/t%i      " ,touchpads[2]);
-
-#endif
-
-#if disp
-			ypos = 64;
-
-			for (i = 0; i < 6; ++i) {
-			lcd_print(WHITE, BLACK, FONTSIZE, 0,ypos,"Cell%i/t%i/tmV/t%i uAh     " ,i,g_tBattery_Info.Cells[i].sVoltage_mV, g_tBattery_Info.Cells[i].unDisCharge_mAs/36);
-			ypos += LINEDIFF;
-			}
-
-			ypos = 64;
-			lcd_print(WHITE, BLACK, 1, 200, ypos,"PWM %i   ",g_tBattery_Info.usPWM);
-			ypos += LINEDIFF;
-			lcd_print(WHITE, BLACK, 1, 200, ypos,"ASYNC %i   ",g_tBattery_Info.usPWMStep);
-			ypos += LINEDIFF;
-			lcd_print(WHITE, BLACK, 1, 200, ypos,"Setp %i mA   ",g_tBattery_Info.sISetpoint);
-			ypos += LINEDIFF;
-			lcd_print(WHITE, BLACK, 1, 200, ypos,"diff %i mA   ",g_tBattery_Info.sDiff);
-			ypos += LINEDIFF;
-			lcd_print(WHITE, BLACK, 1, 200, ypos,"Time %i s   ",(uint16_t)g_tBattery_Info.unTimeCharging_s);
-			ypos += LINEDIFF;
-			lcd_print(WHITE, BLACK, 1, 200, ypos,"ErrCnt %i   ",g_tBattery_Info.ErrCnt); //g_tBattery_Info.usConverterPower_W);
-			ypos += LINEDIFF;
-			lcd_print(WHITE, BLACK, 1, 160, ypos,"Charge %i mAh   ",(g_tBattery_Info.unCharge_mAs/3600));
-			ypos += LINEDIFF;
-			lcd_print(WHITE, BLACK, 1, 160, ypos,"SlaveErr %i    ",(g_tBattery_Info.LastErr));
-			ypos += LINEDIFF;
-
-			char buf[10];
-			switch (g_tBattery_Info.eState)
-			{
-				case eBattCharging:
-					strcpy(buf,"Charging  ");
-					break;
-				case eBattFull:
-					strcpy(buf,"Full      ");
-					break;
-				case eBattWaiting:
-					strcpy(buf,"Waiting   ");
-					break;
-				case eBattUnknown:
-					strcpy(buf,"Unknown   ");
-					break;
-				case eBattError:
-					strcpy(buf,"Batt.Error");
-					break;
-				default:
-					strcpy(buf,"Waaargh!!!");
-					break;
-			}
-			lcd_print(GREEN,BLACK,2,0,180,buf);
-#endif
-
-			OS_GetTicks(&t2);
-
-			t2=t2-t1;
-			lcd_print(GREY, BLACK, FONTSIZE, 0, 220,"Time: %i ms     " ,(uint16_t)t2);	
-
-			if (cec>0) cec--;
 		}
 		else
 		{
-
-			cec++;
-			if(cec >= 3)
-			{
-//				commError(glCommError);
-				cec =0;
-			}
-
+				//commError(glCommError);
 		}
+
+
 
 
 		OS_WaitTicks(OSALMWaitDisp,20);
 	}
 
 }
-*/
+
+void touchtest(void)
+{
+	//			for (i = 0; i < 3; i++)
+	//			{
+	//				lcd_print(WHITE, BLACK, 1, 0, 16*i,"val/t%i/tIdx/t%i      " ,maxVal[i],maxIdx[i]);
+	//			}
+
+				/*static int16_t oypos;
+				int16_t nypos1;
+				nypos1 = gttestfixme;
+
+				touchGetValue(&value,0);
+
+				lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"VAL/t%i/tt      " ,value);
+
+
+
+
+
+				lcd_draw_box( 0,315,oypos,5,5);
+				if(nypos1 >0)
+				{
+
+					lcd_draw_box(0,315,nypos1/4,5,5);
+					oypos = nypos1/4;
+				}
+
+	static uint16_t g;
+
+
+				g++;
+				//lcd_draw_pixel(RED,g,filtered+128);
+				lcd_draw_pixel(GREEN,g,128-value);
+				lcd_draw_pixel(YELLOW,g,nypos1/2);
+				if (g == 320)
+				{
+					lcd_clear();
+					g =0;
+				}
+
+
+
+
+
+				ypos =32;
+				lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"P1/t%i      " ,touchpads[0]);
+				ypos += LINEDIFF;
+				lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"P2/t%i      " ,touchpads[1]);
+				ypos += LINEDIFF;
+				lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"P3/t%i      " ,touchpads[2]);*/
+}
+
 extern UCIFrame_t g_tUCIRXFrame;
 extern uint8_t    g_ucRXLength;
-extern uint16_t gsCommerrcnt; // fixme remove!
 
 uint8_t vWaitForResult(void)
 {
@@ -298,7 +266,6 @@ uint8_t vWaitForResult(void)
 	else
 	{
 		commerror = 100;
-//		gsCommerrcnt++;
 	}
     g_ucRXLength = 0;
     g_tUCIRXFrame.len = UCIHEADERLEN;
@@ -363,37 +330,41 @@ void TaskTouch()
 #define TOUCHSENSELEVEL 15
 
 	static uint8_t firstrun = 1;
-	if(firstrun && (eeprom_read_word(&ParMaster->usMagic)== 12312))
-	{
-		firstrun = 0;
-		OS_PREVENTSCHEDULING;
-		g_tCommand.sCurrentSetpoint = 1000;
-		g_tCommand.usMinBalanceVolt_mV = eeprom_read_word(&(ParMaster->usMinBalanceVolt_mV));
-		g_tCommand.usVoltageSetpoint_mV = 3850; //4150;
-		g_tCommand.eChargerMode = eModeAuto;
-		g_tCommand.ucUserCellCount = 0;
-		OS_ALLOWSCHEDULING;
-	}
-
-	if(firstrun)
-	{
-		eeprom_write_word(&(ParMaster->usMagic),12312);
-		eeprom_write_word(&(ParMaster->usMinBalanceVolt_mV),3000);
-	}
-
-
-
 	while(1)
-	{
+	{	
+	
+		if(firstrun && (eeprom_read_word(&ParMaster->usMagic)== 12312))
+		{
+			firstrun = 0;
+			OS_PREVENTSCHEDULING;
+			g_tCommand.sCurrentSetpoint = 800;
+			g_tCommand.usMinBalanceVolt_mV = 2400;//eeprom_read_word(&(ParMaster->usMinBalanceVolt_mV));
+			g_tCommand.usVoltageSetpoint_mV = 4150; //4150;
+			g_tCommand.eChargerMode = eModeAuto;
+			g_tCommand.ucUserCellCount = 0;
+			OS_ALLOWSCHEDULING;
+		}
 
+		if(firstrun)
+		{
+			eeprom_write_word(&(ParMaster->usMagic),12312);
+			eeprom_write_word(&(ParMaster->usMinBalanceVolt_mV),3000);
+		}
 
 		OS_WaitAlarm(OSALTouchRepeat);
 		OS_SetAlarm(OSALTouchRepeat,3);
 
 		g_NewComand = 1;
 
-//		gttestfixme = touch();
-		process_touch();//change value
+		if (g_bMenuActive)
+		{
+			process_touch();//change value
+		}
+		else
+		{
+			// check, if the menu is to be activated.
+			// fixme do it
+		}
 		_delay_ms(100);
 
 	}

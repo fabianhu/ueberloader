@@ -34,7 +34,7 @@ uint16_t ScreenHeight = 0;	//Heigth of the screen (240 or 320)
 
 void lcd_write_cmd(uint8_t cmd)
 {
-	LCD_DC_C;	//write cmd // this could eventually be done once instead of every time ? fixme
+	LCD_DC_C;	//write cmd // this could eventually be done once instead of every time ? todo
 	LCD_DATA_PORT = cmd;		//set cmd
 	LCD_WR_C;	//Toggle WR
 	LCD_WR_S;	//Toggle WR		
@@ -856,7 +856,8 @@ void lcd_print(uint8_t font_red, uint8_t font_green, uint8_t font_blue, uint8_t 
 						break;
 					case 'd': // fixed point; next char is: comma shift to !left! (%d1 = ####.# %d2= ###.## etc.)
 						;
-						//fixme uint8_t shift = (*ptr_string++)-48; // get shift amount
+						//fixme das hier funzt noch gar nicht!
+						//uint8_t shift = (*ptr_string++)-48; // get shift amount
 											//convert uint16_t
 						itoa10(va_arg(specifier,uint16_t),buf);
 						//lcd_print value

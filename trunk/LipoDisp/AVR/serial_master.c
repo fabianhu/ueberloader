@@ -47,7 +47,7 @@ ISR(USARTE0_RXC_vect)
 		//OS_SetAlarm(OSALMCommandTimeout,5); // reset Alarm, if stuff arrives
 		if(g_tUCIRXFrame.len == g_ucRXLength)
 		{
-			OS_SetEvent/*fromISR fixme*/(OSTSKCommand,OSEVTDataRecvd);
+			OS_SetEvent(OSTSKCommand,OSEVTDataRecvd);
 		}
 	}
 	else
@@ -82,7 +82,7 @@ void HandleSerial(UCIFrame_t *_RXFrame)
 			OS_MutexRelease(OSMTXBattInfo);
 			break;
 		case UCI_SET_CMDs:
-			// not likely to be answered by the slave ;-) yet // fixme
+			// fixme not likely to be answered by the slave ;-) yet
 			break;
 		default:
 			break;

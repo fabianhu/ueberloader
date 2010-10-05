@@ -67,7 +67,7 @@ uint8_t touchGetPad(uint8_t pin)
 	uint8_t mask = (1<<pin);
 
 	cnt = 0;
-	//OS_ENTERCRITICAL  fixme// no interrupts allowed here!
+	OS_DISABLEALLINTERRUPTS;// absolutely no interrupts allowed here!
 	for(i=0;i<TOUCHREPCNT;i++)
 	{
 		TOUCHTOGGLEHIGH;
@@ -81,7 +81,7 @@ uint8_t touchGetPad(uint8_t pin)
 			cnt++;
 		}
 	}
-	//OS_LEAVECRITICAL fixme
+	OS_ENABLEALLINTERRUPTS;
 
 	touchcalbytes[pin] = min(touchcalbytes[pin],cnt*100);
 
@@ -149,7 +149,7 @@ int16_t touchGetSchwerpunkt(void)
 	uint16_t sum;
 	uint16_t dings;
 
-	touchGetPads(); // fixme ?
+	touchGetPads(); // fixme measure here?
 	
 	dings = 0;
 	sum = 0;
@@ -159,7 +159,7 @@ int16_t touchGetSchwerpunkt(void)
 		dings += (i+1) * 250 * touchpads[i];
 		sum += touchpads[i];
 	}
-	if (sum > TOUCHMINSIGNAL) //fixme
+	if (sum > TOUCHMINSIGNAL) //fixme make self learning
 		return (dings/sum)-250;
 	else
 		return -1;
@@ -287,7 +287,7 @@ int16_t touch(void)
 
 
 	// calculate changed value
-		// TAP blocks the value change until cleared by "customer" fixme
+		// TAP blocks the value change until cleared by "customer" fixme ist das so?
 	if(posRaw >= 0)
 	{
 		gradient = posFlt - gradientOldPos;
@@ -325,9 +325,9 @@ int16_t touch(void)
 
 void touchGetValue(int32_t* pValue, uint8_t Mutex) // read txtback the (changed) value Mutex?
 {
-	//OS_MutexGet(Mutex); fixme
+	OS_PREVENTSCHEDULING;
 	*pValue = touchValue/TOUCHREDUCEFACTOR;
-	//OS_MutexRelease(Mutex);
+	OS_ALLOWSCHEDULING;
 }
 
 uint8_t touchGetTap(void) // get tap "event" and clear it 1== normal tap, 2 = double tap
