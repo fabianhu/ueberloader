@@ -5,6 +5,7 @@
 
 
 #include "menu.h"
+#include "OS/FabOS.h"
 
 extern uint16_t GetvalueFromUI(void);
 extern MenuItem_t m_items[MENUESIZE];
@@ -88,7 +89,7 @@ void menu_show(void)
 	static uint16_t NewParameterValue=255;
 	
 	//get new value from UI
-	//cli();fixme // for MenuMode AND gucSelectedItem
+	OS_PREVENTSCHEDULING // for MenuMode AND gucSelectedItem
 	if(MenuMode)	//if parameter edit mode is active
 	{
 		GetSubMenuCount(&SubMenuGroupSize, &StartIndex);
@@ -119,7 +120,7 @@ void menu_show(void)
 		}
 
 	}
-	//sei();fixme
+	OS_ALLOWSCHEDULING
 
 	if(LastMenuIndex!=gucSelectedItem || ShowMenu)//new menu item is selected
 	{
@@ -197,7 +198,8 @@ void menu_show(void)
 
 void menu_select(void)
 {
-uint8_t SubMenuGroupSize=0, StartIndex=0;
+	uint8_t SubMenuGroupSize=0, StartIndex=0;
+	OS_PREVENTSCHEDULING // for MenuMode AND gucSelectedItem / Parameter
 	
 	if(m_items[gucSelectedItem].ucJumpTrg)//jump to target menu item
 	{
@@ -210,7 +212,6 @@ uint8_t SubMenuGroupSize=0, StartIndex=0;
 	}	
 	else if(m_items[gucSelectedItem].pParamID)//toggle parameter edit mode
 	{
-		//cli(); fixme// for MenuMode AND gucSelectedItem / Parameter
 		if(!MenuMode)
 		{	
 			//save parameter
@@ -234,11 +235,9 @@ uint8_t SubMenuGroupSize=0, StartIndex=0;
 
 			ShowParameter = 1; //init parameter view
 		}
-		//sei();fixme
 	}
 	else if(m_items[gucSelectedItem].pAction)//execute function
 	{	
-		//sei();fixme//activate interrupts so UIchanges can be handled
 		//execute function
 		m_items[gucSelectedItem].pAction();
 		//get array start index of the submenu items
@@ -251,6 +250,8 @@ uint8_t SubMenuGroupSize=0, StartIndex=0;
 	{
 //		asm("break");
 	}
+	OS_ALLOWSCHEDULING
+
 	_delay_ms(100);
 }
 

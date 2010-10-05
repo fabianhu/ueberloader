@@ -9,8 +9,7 @@
 #define EEPROM_H_
 
 #define EEPROM_PAGESIZE 32
-#define EEPROM_START 0x1000
-#define EEPROM_END   0x13ff
+
 #define EEPROM_LEN   EEPROM_END-EEPROM_START
 
 
