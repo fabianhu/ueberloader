@@ -8,6 +8,8 @@ using System.Text;
 using System.Windows.Forms;
 using System.IO;
 using System.Xml;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Collections;
 
 namespace Treebuilder
 {
@@ -16,6 +18,8 @@ namespace Treebuilder
         public Form1()
         {
             InitializeComponent();
+            treeView1.SelectedNode = treeView1.Nodes[0];
+            CheckTagPresenceOfSelectedNode();
         }
 
         // Xml tag for node, e.g. 'node' in case of <node></node>
@@ -27,8 +31,28 @@ namespace Treebuilder
         // imageindex="1"></node>
 
         private const string XmlNodeTextAtt = "text";
-        private const string XmlNodeTagAtt = "tag";
+        private const string XmlNodeTagTypeAtt = "tagType";
+        private const string XmlNodeTagIDAtt = "tagID";
+        private const string XmlNodeTagInfoAtt = "tagInfo";
         private const string XmlNodeImageIndexAtt = "imageindex";
+
+        enum MenueElementType
+        {
+            normal = 0,  // do not change numbers, as the combo box relies on this
+            back = 1,
+            main = 2,
+            parameter = 3,
+            action = 4,
+        }
+
+        struct NodeTagInfo
+        {
+            public MenueElementType type;
+            public int ID;
+            public string info;
+        }
+
+
 
         public void DeserializeTreeView(TreeView treeView, string fileName)
         {
@@ -121,6 +145,17 @@ namespace Treebuilder
         private void SetAttributeValue(TreeNode node,
                            string propertyName, string value)
         {
+            NodeTagInfo nti;
+
+            if (node.Tag == null)
+            {
+                nti = new NodeTagInfo();
+                nti.type = MenueElementType.normal;
+                nti.info = "";
+                nti.ID = -1;
+                node.Tag = nti;
+            }
+
             if (propertyName == XmlNodeTextAtt)
             {
                 node.Text = value;
@@ -129,9 +164,24 @@ namespace Treebuilder
             {
                 node.ImageIndex = int.Parse(value);
             }
-            else if (propertyName == XmlNodeTagAtt)
+            else if (propertyName == XmlNodeTagIDAtt)
             {
-                node.Tag = value;
+                nti = (NodeTagInfo)node.Tag;
+                nti.ID = int.Parse(value);
+                node.Tag = nti;
+            }
+            else if (propertyName == XmlNodeTagTypeAtt)
+            {
+                nti = (NodeTagInfo)node.Tag;
+                EnumConverter ec = new EnumConverter(typeof(MenueElementType));
+                nti.type = (MenueElementType)ec.ConvertFromString(value);
+                node.Tag = nti;
+            }
+            else if (propertyName == XmlNodeTagInfoAtt)
+            {
+                nti = (NodeTagInfo)node.Tag;
+                nti.info = value;
+                node.Tag = nti;
             }
         }
 
@@ -168,8 +218,14 @@ namespace Treebuilder
                 textWriter.WriteAttributeString(
                     XmlNodeImageIndexAtt, node.ImageIndex.ToString());
                 if (node.Tag != null)
-                    textWriter.WriteAttributeString(XmlNodeTagAtt,
-                                                node.Tag.ToString());
+                {
+                    textWriter.WriteAttributeString(XmlNodeTagTypeAtt, ((NodeTagInfo)node.Tag).type.ToString());
+                    textWriter.WriteAttributeString(XmlNodeTagIDAtt, ((NodeTagInfo)node.Tag).ID.ToString());
+                    if (((NodeTagInfo)node.Tag).info != null)
+                        textWriter.WriteAttributeString(XmlNodeTagInfoAtt, ((NodeTagInfo)node.Tag).info.ToString());
+                    else
+                        textWriter.WriteAttributeString(XmlNodeTagInfoAtt, "");
+                }
                 // add other node properties to serialize here  
 
                 if (node.Nodes.Count > 0)
@@ -180,25 +236,6 @@ namespace Treebuilder
             }
         }
 
-
-        private void buttonAdd_Click(object sender, EventArgs e)
-        {
-            // TreeNode tn = new TreeNode(
-
-            treeView1.SelectedNode.Nodes.Add(textBox2.Text);
-            treeView1.SelectedNode.Expand();
-
-            textBox2.SelectAll();
-
-            // treeView1.Nodes.Add("bla");
-
-        }
-
-        private void buttonRemove_Click(object sender, EventArgs e)
-        {
-            if (treeView1.SelectedNode.Name != "root")
-                treeView1.SelectedNode.Remove();
-        }
 
         private void buttonSave_Click(object sender, EventArgs e)
         {
@@ -231,24 +268,15 @@ namespace Treebuilder
             treeView1.ExpandAll();
         }
 
-        private void buttonRename_Click(object sender, EventArgs e)
-        {
-            //rename
-            treeView1.SelectedNode.Text = textBox2.Text;
-        }
 
-        private void textBox2_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
+
+        private void textBoxNodeName_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
         {
-            if (e.KeyCode == Keys.Return)
+            if (e.KeyCode == Keys.Return && false) // fixme
             {
                 buttonAdd_Click(this, EventArgs.Empty);
-                textBox2.SelectAll();
+                textBoxNodeName.SelectAll();
             }
-        }
-
-        private void textBox2_Enter(object sender, EventArgs e)
-        {
-            textBox2.SelectAll();
         }
 
         int number; // zählt die Zeile mit, um den parent index zu finden = ID in der Ausgabe.
@@ -266,11 +294,11 @@ namespace Treebuilder
 
             number = 0;
 
-            NodeTagInfo nt = new NodeTagInfo();
-
+            NodeTagInfo nt;
+            nt = (NodeTagInfo)tn.Tag;
             nt.ID = number++;
             tn.Tag = nt;
-            
+
             processTextDefinitions(tn);
             textBoxResult.AppendText(Environment.NewLine);
 
@@ -278,12 +306,6 @@ namespace Treebuilder
             processMenuList(tn);
 
 
-        }
-
-
-        struct NodeTagInfo
-        {
-            public int ID;
         }
 
         string makename(TreeNode tn)
@@ -297,8 +319,8 @@ namespace Treebuilder
 
             foreach (TreeNode tn in ano.Nodes)
             {
-                NodeTagInfo nt = new NodeTagInfo();
-
+                NodeTagInfo nt;
+                nt = (NodeTagInfo)tn.Tag;
                 nt.ID = number++;
                 tn.Tag = nt;
                 textBoxResult.AppendText(ProcessNode(tbdef1.Text, tn) + Environment.NewLine);
@@ -389,15 +411,45 @@ namespace Treebuilder
                                 else
                                     sb.Append(((NodeTagInfo)tn.Parent.Tag).ID);
                                 break;
+                            case 'A':
+                                if (((NodeTagInfo)tn.Tag).type == MenueElementType.action)
+                                    sb.Append(((NodeTagInfo)tn.Tag).info);
+                                else
+                                    sb.Append("0");
+                                break;
+                            case 'P':
+                                if (((NodeTagInfo)tn.Tag).type == MenueElementType.parameter)
+                                    sb.Append(((NodeTagInfo)tn.Tag).info);
+                                else
+                                    sb.Append("0");
+                                break;
                             case 'j':
                                 NodeTagInfo nti;
                                 if (tn.Nodes.Count > 0)
                                 {
+                                    // sub-nodes
                                     nti = (NodeTagInfo)tn.Nodes[0].Tag;
                                     sb.Append(nti.ID);
                                 }
+                                else if (((NodeTagInfo)tn.Tag).type == MenueElementType.main)
+                                {
+                                    // main menu (first one inside menu)
+                                    sb.Append("1");
+                                }
+                                else if (((NodeTagInfo)tn.Tag).type == MenueElementType.back)
+                                {
+                                    // back: we need the first node in the nodes collection, where our parent is. 
+                                    if (tn.Parent == null)
+                                        sb.Append(" **ERROR_NO_PARENT** ");
+                                    else
+                                    {
+                                        nti = (NodeTagInfo)tn.Parent.FirstNode.Tag;
+                                        sb.Append(nti.ID);
+                                    }
+                                }
                                 else
                                 {
+                                    // no action
                                     sb.Append("0");
                                 }
                                 break;
@@ -419,8 +471,154 @@ namespace Treebuilder
             return s;
         }
 
+        private void treeView1_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
+        {
+            textBoxNodeName.Text = e.Node.Text;
+            textBoxInfo.Text = ((NodeTagInfo)(e.Node.Tag)).info;
+            comboBox1.SelectedIndex = (int)((NodeTagInfo)(e.Node.Tag)).type;
+        }
+
+        private void textBoxNodeName_TextChanged(object sender, EventArgs e)
+        {
+            /*if (treeView1.SelectedNode !=null)
+            treeView1.SelectedNode.Text = textBoxNodeName.Text;*/
+        }
+
+        private void textBoxInfo_TextChanged(object sender, EventArgs e)
+        {
+            /*NodeTagInfo nti;
+
+            if (treeView1.SelectedNode != null)
+            {
+               CheckTagPresenceOfSelectedNode();
+
+                nti = (NodeTagInfo)(treeView1.SelectedNode.Tag);
+                nti.Action = textBoxAction.Text;
+                treeView1.SelectedNode.Tag = nti;
+            }*/
+        }
+
+        private void buttonAdd_Click(object sender, EventArgs e)
+        {
+            NodeTagInfo nti;
+
+            if (treeView1.SelectedNode != null)
+            {
+
+                TreeNode tn = treeView1.SelectedNode.Nodes.Add(textBoxNodeName.Text);
+                treeView1.SelectedNode.Expand();
 
 
+
+                if (tn.Tag == null)
+                {
+                    nti = new NodeTagInfo();
+                    tn.Tag = nti;
+                }
+
+
+                nti = (NodeTagInfo)(tn.Tag);
+                if (textBoxInfo.Text == null)
+                    nti.info = "";
+                else
+                    nti.info = textBoxInfo.Text;
+                nti.type = (MenueElementType)comboBox1.SelectedIndex;
+                nti.type = MenueElementType.normal;
+                treeView1.SelectedNode.Tag = nti;
+
+
+                textBoxNodeName.SelectAll();
+
+                //treeView1.SelectedNode = tn;
+            }
+
+        }
+
+        private void CheckTagPresenceOfSelectedNode()
+        {
+            NodeTagInfo nti;
+            if (treeView1.SelectedNode.Tag == null)
+            {
+                nti = new NodeTagInfo();
+                nti.ID = -1;
+                nti.info = "";
+                nti.type = MenueElementType.normal;
+                treeView1.SelectedNode.Tag = nti;
+            }
+        }
+
+        private void buttonRemove_Click(object sender, EventArgs e)
+        {
+            if (treeView1.SelectedNode.Name != "root")
+                treeView1.SelectedNode.Remove();
+        }
+
+        private void buttonRename_Click(object sender, EventArgs e)
+        {
+            NodeTagInfo nti;
+
+            //rename
+            if (treeView1.SelectedNode != null)
+            {
+                CheckTagPresenceOfSelectedNode();
+                treeView1.SelectedNode.Text = textBoxNodeName.Text;
+                nti = (NodeTagInfo)(treeView1.SelectedNode.Tag);
+                nti.info = textBoxInfo.Text;
+                nti.type = (MenueElementType)comboBox1.SelectedIndex;
+                treeView1.SelectedNode.Tag = nti;
+            }
+        }
+
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (comboBox1.SelectedIndex == 3 || comboBox1.SelectedIndex == 4)
+            {
+                textBoxInfo.Visible = true;
+            }
+            else
+            {
+                textBoxInfo.Visible = false;
+            }
+        }
+
+        TreeNode sourceNode;
+
+        private void treeView1_ItemDrag(object sender, ItemDragEventArgs e)
+        {
+            sourceNode = (TreeNode)e.Item;
+            DoDragDrop(e.Item, DragDropEffects.Move);
+        }
+
+        private void treeView1_DragEnter(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent("System.Windows.Forms.TreeNode", false))
+                e.Effect = DragDropEffects.Move;
+            else
+                e.Effect = DragDropEffects.None;
+        }
+
+        private void treeView1_DragDrop(object sender, DragEventArgs e)
+        {
+            TreeNode NewNode;
+
+            if (e.Data.GetDataPresent("System.Windows.Forms.TreeNode", false))
+            {
+                Point pt = ((TreeView)sender).PointToClient(new Point(e.X, e.Y));
+                TreeNode DestinationNode = ((TreeView)sender).GetNodeAt(pt);
+                NewNode = (TreeNode)e.Data.GetData("System.Windows.Forms.TreeNode");
+                if (DestinationNode.TreeView == NewNode.TreeView)
+                {
+                    //DestinationNode.Nodes.Add((TreeNode)NewNode.Clone());
+                    DestinationNode.Parent.Nodes.Insert(DestinationNode.Index + 1, (TreeNode)NewNode.Clone());
+                    DestinationNode.ExpandAll();
+                    //Remove Original Node
+                    NewNode.Remove();
+                }
+            }
+
+        }
+
+  
     }
 }
 
@@ -430,10 +628,7 @@ namespace Treebuilder
  Menüpunkt als Parameter deklarieren
   Parameter Struct definieren, oder nur Standard? (name,vlaue,min,max,type/unit)
   und natürlich ;-) zuweisen &Ladestrom etc...
-- Reihenfolge der Menüpunkte verschieben
-- Jumptargets für "normale" Menü-Navigation (durch einzelnen Menüebenen)
-- Function Prototypes anlegen für Menüpunkte die Funktionen ausführen, z.B. void StartInjection(void)
-  und auf diese dann gleich referenzieren z.B. &StartInjection
+
 - Standard "Back" (eine Ebene hoch) oder "Home" (ganz an den Anfang) Menüpunkte anlegen
 - Menüsimulator :-)
 - Kommentare einfügen
