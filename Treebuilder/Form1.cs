@@ -1,15 +1,15 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Windows.Forms;
-using System.IO;
 using System.Xml;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Collections;
 
 namespace Treebuilder
 {
@@ -18,8 +18,8 @@ namespace Treebuilder
         public Form1()
         {
             InitializeComponent();
-            treeView1.SelectedNode = treeView1.Nodes[0];
-            CheckTagPresenceOfSelectedNode();
+
+            CheckTagPresenceOfNode(treeView1.Nodes[0]);
         }
 
         // Xml tag for node, e.g. 'node' in case of <node></node>
@@ -35,6 +35,11 @@ namespace Treebuilder
         private const string XmlNodeTagIDAtt = "tagID";
         private const string XmlNodeTagInfoAtt = "tagInfo";
         private const string XmlNodeImageIndexAtt = "imageindex";
+        private const string XmlNodeTagParUpper = "tagParUpper";
+        private const string XmlNodeTagParLower = "tagParLower";
+        private const string XmlNodeTagParDefault = "tagParDefault";
+        private const string XmlNodeTagParType = "tagParType";
+
 
         enum MenueElementType
         {
@@ -50,6 +55,10 @@ namespace Treebuilder
             public MenueElementType type;
             public int ID;
             public string info;
+            public int ParUpper;
+            public int ParLower;
+            public int ParDefault;
+            public string ParType;
         }
 
 
@@ -183,6 +192,30 @@ namespace Treebuilder
                 nti.info = value;
                 node.Tag = nti;
             }
+            else if (propertyName == XmlNodeTagParUpper)
+            {
+                nti = (NodeTagInfo)node.Tag;
+                nti.ParUpper = int.Parse(value);
+                node.Tag = nti;
+            }
+            else if (propertyName == XmlNodeTagParLower)
+            {
+                nti = (NodeTagInfo)node.Tag;
+                nti.ParLower = int.Parse(value);
+                node.Tag = nti;
+            }
+            else if (propertyName == XmlNodeTagParDefault)
+            {
+                nti = (NodeTagInfo)node.Tag;
+                nti.ParDefault = int.Parse(value);
+                node.Tag = nti;
+            }
+            else if (propertyName == XmlNodeTagParType)
+            {
+                nti = (NodeTagInfo)node.Tag;
+                nti.ParType = value;
+                node.Tag = nti;
+            }
         }
 
         public void SerializeTreeView(TreeView treeView, string fileName)
@@ -225,6 +258,13 @@ namespace Treebuilder
                         textWriter.WriteAttributeString(XmlNodeTagInfoAtt, ((NodeTagInfo)node.Tag).info.ToString());
                     else
                         textWriter.WriteAttributeString(XmlNodeTagInfoAtt, "");
+                    textWriter.WriteAttributeString(XmlNodeTagParDefault, ((NodeTagInfo)node.Tag).ParDefault.ToString());
+                    textWriter.WriteAttributeString(XmlNodeTagParUpper, ((NodeTagInfo)node.Tag).ParUpper.ToString());
+                    textWriter.WriteAttributeString(XmlNodeTagParLower, ((NodeTagInfo)node.Tag).ParLower.ToString());
+                    if (((NodeTagInfo)node.Tag).ParType != null)
+                        textWriter.WriteAttributeString(XmlNodeTagParType, ((NodeTagInfo)node.Tag).ParType.ToString());
+                    else
+                        textWriter.WriteAttributeString(XmlNodeTagParType, "");
                 }
                 // add other node properties to serialize here  
 
@@ -299,18 +339,86 @@ namespace Treebuilder
             nt.ID = number++;
             tn.Tag = nt;
 
+            // Process the text definitions
+
             processTextDefinitions(tn);
             textBoxResult.AppendText(Environment.NewLine);
 
+            // Parameter enum
+            if (checkBoxCreateEnum.Checked)
+            {
+                textBoxResult.AppendText(
+                    "typedef enum" + Environment.NewLine +
+                    "{" + Environment.NewLine);
+                UpdateParComboBox(treeView1.Nodes[0]);
+                foreach (string s in comboBoxParType.Items)
+                {
+                    textBoxResult.AppendText("\t" + s + "," + Environment.NewLine);
+                }
+                textBoxResult.AppendText(
+                   "} eParameterType_t;" + Environment.NewLine);
+            }
+            textBoxResult.AppendText(Environment.NewLine);
+
+            // Parameter list
+            	
+            ProcessParameters(treeView1.Nodes[0]);
+            textBoxResult.AppendText(Environment.NewLine);
+
+            // Process the MENUE LIST
+            textBoxResult.AppendText("MenuItem_t m_items[MENUESIZE] = {" + Environment.NewLine);	
             textBoxResult.AppendText(ProcessNode(tbmen1.Text, tn) + Environment.NewLine);
             processMenuList(tn);
+            textBoxResult.AppendText("}" + Environment.NewLine);
 
 
+            // some Defines
+            textBoxResult.AppendText(Environment.NewLine + " #define\tMENUESIZE\t" + treeView1.GetNodeCount(true) + "\t// number of menu itmes (array size)" + Environment.NewLine);
+            textBoxResult.AppendText(Environment.NewLine + " #define\tMAX_ITEM_NAME_CHARLENGTH\t" + GetSubNodeMaxNameLength(treeView1.Nodes[0]) + "\t// number of menu itmes (array size)" + Environment.NewLine);
         }
+
+        void ProcessParameters(TreeNode tn)
+        {
+            if (((NodeTagInfo)tn.Tag).type == MenueElementType.parameter)
+            {
+                textBoxResult.AppendText("Parameter_t "+((NodeTagInfo)tn.Tag).info+" = {" );
+                textBoxResult.AppendText("\t" + ((NodeTagInfo)tn.Tag).ParDefault + ", " + ((NodeTagInfo)tn.Tag).ParLower + ", " + ((NodeTagInfo)tn.Tag).ParUpper + ", " + ((NodeTagInfo)tn.Tag).ParType);
+                textBoxResult.AppendText("}" + Environment.NewLine);
+            }
+            foreach(TreeNode tn2 in tn.Nodes)
+            {
+                ProcessParameters(tn2);
+            }
+        }
+
+        int GetSubNodeMaxNameLength(TreeNode tn)
+        {
+            int mitl = 0;
+            mitl = Math.Max(tn.Text.Length, mitl);
+
+            foreach (TreeNode tn2 in tn.Nodes)
+            {
+                mitl = Math.Max(GetSubNodeMaxNameLength(tn2), mitl);
+            }
+
+            return mitl;
+        }
+
+        void UpdateParComboBox(TreeNode tn)
+        {
+            foreach (TreeNode tn2 in tn.Nodes)
+            {
+                if (!comboBoxParType.Items.Contains(((NodeTagInfo)tn2.Tag).ParType) && ((NodeTagInfo)tn2.Tag).ParType != "")
+                    comboBoxParType.Items.Add(((NodeTagInfo)tn2.Tag).ParType);
+
+                UpdateParComboBox(tn2);
+            }
+        }
+
 
         string makename(TreeNode tn)
         {
-            return textBoxtxtPrefix.Text + CleanString(tn.Text) + tn.Level.ToString() + "_" + tn.Index.ToString();
+            return (textBoxtxtPrefix.Text + CleanString(tn.Text) + tn.Level.ToString() + "_" + tn.Index.ToString());
         }
 
         private void processTextDefinitions(TreeNode ano)
@@ -353,7 +461,7 @@ namespace Treebuilder
                 foreach (char c in s)
                 {
                     if (Char.IsLetter(c))
-                        sb.Append(c);
+                        sb.Append(Char.ToUpper(c));
                 }
                 s = sb.ToString();
             }
@@ -419,7 +527,7 @@ namespace Treebuilder
                                 break;
                             case 'P':
                                 if (((NodeTagInfo)tn.Tag).type == MenueElementType.parameter)
-                                    sb.Append(((NodeTagInfo)tn.Tag).info);
+                                    sb.Append("&"+((NodeTagInfo)tn.Tag).info);
                                 else
                                     sb.Append("0");
                                 break;
@@ -476,6 +584,10 @@ namespace Treebuilder
             textBoxNodeName.Text = e.Node.Text;
             textBoxInfo.Text = ((NodeTagInfo)(e.Node.Tag)).info;
             comboBox1.SelectedIndex = (int)((NodeTagInfo)(e.Node.Tag)).type;
+            comboBoxParType.Text = ((NodeTagInfo)(e.Node.Tag)).ParType;
+            textBoxParValUpper.Text = ((NodeTagInfo)(e.Node.Tag)).ParUpper.ToString();
+            textBoxParValLower.Text = ((NodeTagInfo)(e.Node.Tag)).ParLower.ToString();
+            textBoxParValDefault.Text = ((NodeTagInfo)(e.Node.Tag)).ParDefault.ToString();
         }
 
         private void textBoxNodeName_TextChanged(object sender, EventArgs e)
@@ -493,7 +605,7 @@ namespace Treebuilder
                CheckTagPresenceOfSelectedNode();
 
                 nti = (NodeTagInfo)(treeView1.SelectedNode.Tag);
-                nti.Action = textBoxAction.Text;
+                nti.info = textBoxInfo.Text;
                 treeView1.SelectedNode.Tag = nti;
             }*/
         }
@@ -508,24 +620,7 @@ namespace Treebuilder
                 TreeNode tn = treeView1.SelectedNode.Nodes.Add(textBoxNodeName.Text);
                 treeView1.SelectedNode.Expand();
 
-
-
-                if (tn.Tag == null)
-                {
-                    nti = new NodeTagInfo();
-                    tn.Tag = nti;
-                }
-
-
-                nti = (NodeTagInfo)(tn.Tag);
-                if (textBoxInfo.Text == null)
-                    nti.info = "";
-                else
-                    nti.info = textBoxInfo.Text;
-                nti.type = (MenueElementType)comboBox1.SelectedIndex;
-                nti.type = MenueElementType.normal;
-                treeView1.SelectedNode.Tag = nti;
-
+                UpdateNodeValuesFromFields(tn);
 
                 textBoxNodeName.SelectAll();
 
@@ -534,16 +629,20 @@ namespace Treebuilder
 
         }
 
-        private void CheckTagPresenceOfSelectedNode()
+        private void CheckTagPresenceOfNode(TreeNode tn)
         {
             NodeTagInfo nti;
-            if (treeView1.SelectedNode.Tag == null)
+            if (tn.Tag == null)
             {
                 nti = new NodeTagInfo();
                 nti.ID = -1;
                 nti.info = "";
+                nti.ParLower = 0;
+                nti.ParUpper = 0;
+                nti.ParType = "";
+                nti.ParDefault = 0;
                 nti.type = MenueElementType.normal;
-                treeView1.SelectedNode.Tag = nti;
+                tn.Tag = nti;
             }
         }
 
@@ -553,31 +652,96 @@ namespace Treebuilder
                 treeView1.SelectedNode.Remove();
         }
 
-        private void buttonRename_Click(object sender, EventArgs e)
+        private void buttonChange_Click(object sender, EventArgs e)
+        {
+            //rename
+
+            UpdateNodeValuesFromFields(treeView1.SelectedNode);
+        }
+
+        private void UpdateNodeValuesFromFields(TreeNode tn)
         {
             NodeTagInfo nti;
 
-            //rename
-            if (treeView1.SelectedNode != null)
+            if (tn != null)
             {
-                CheckTagPresenceOfSelectedNode();
-                treeView1.SelectedNode.Text = textBoxNodeName.Text;
-                nti = (NodeTagInfo)(treeView1.SelectedNode.Tag);
+                CheckTagPresenceOfNode(tn);
+                tn.Text = textBoxNodeName.Text;
+                nti = (NodeTagInfo)(tn.Tag);
                 nti.info = textBoxInfo.Text;
+
+                try
+                {
+                    nti.ParUpper = Convert.ToInt32(textBoxParValUpper.Text);
+                }
+                catch (Exception)
+                {
+                    nti.ParUpper = 0;
+                }
+                try
+                {
+                    nti.ParLower = Convert.ToInt32(textBoxParValLower.Text);
+                }
+                catch (Exception)
+                {
+                    nti.ParLower = 0;
+                }
+                try
+                {
+                    nti.ParDefault = Convert.ToInt32(textBoxParValDefault.Text);
+                }
+                catch (Exception)
+                {
+                    nti.ParDefault = 0;
+                }
+                nti.ParType = comboBoxParType.Text;
+
                 nti.type = (MenueElementType)comboBox1.SelectedIndex;
-                treeView1.SelectedNode.Tag = nti;
+                tn.Tag = nti;
             }
+
+            comboBoxParType.Items.Clear();
+            UpdateParComboBox(treeView1.Nodes[0]);
         }
+
 
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
+            /*NodeTagInfo nti;
+
+            //change value
+            if (treeView1.SelectedNode != null)
+            {
+                CheckTagPresenceOfSelectedNode();
+                nti = (NodeTagInfo)(treeView1.SelectedNode.Tag);
+                
+                nti.type = (MenueElementType)comboBox1.SelectedIndex;
+                treeView1.SelectedNode.Tag = nti;
+            }*/
+
+
             if (comboBox1.SelectedIndex == 3 || comboBox1.SelectedIndex == 4)
             {
-                textBoxInfo.Visible = true;
+                textBoxInfo.Enabled = true;
             }
             else
             {
-                textBoxInfo.Visible = false;
+                textBoxInfo.Enabled = false;
+            }
+
+            if (comboBox1.SelectedIndex == 3)
+            {
+                textBoxParValDefault.Enabled = true;
+                textBoxParValLower.Enabled = true;
+                textBoxParValUpper.Enabled = true;
+                comboBoxParType.Enabled = true;
+            }
+            else
+            {
+                textBoxParValDefault.Enabled = false;
+                textBoxParValLower.Enabled = false;
+                textBoxParValUpper.Enabled = false;
+                comboBoxParType.Enabled = false;
             }
         }
 
@@ -618,24 +782,15 @@ namespace Treebuilder
 
         }
 
-  
+
+
+
+
+
+
+
+
+
     }
 }
 
-
-/*
- 
- Menüpunkt als Parameter deklarieren
-  Parameter Struct definieren, oder nur Standard? (name,vlaue,min,max,type/unit)
-  und natürlich ;-) zuweisen &Ladestrom etc...
-
-- Standard "Back" (eine Ebene hoch) oder "Home" (ganz an den Anfang) Menüpunkte anlegen
-- Menüsimulator :-)
-- Kommentare einfügen
-- Menü - Defines
-  #define MENUESIZE 			94      //nr of menu itmes (array size)
-  #define ITEMS_PER_PAGE 		3	//nr of items per menu page 
-  #define MAX_ITEM_NAME_CHARLENGTH 	20	//max nr of chars for item names
-  #define MAX_SRAM_ITEM_NAME_LENGHT 	16	//max nr of chars for SRAM item names
- 
- */
