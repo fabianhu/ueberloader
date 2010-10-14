@@ -219,7 +219,7 @@ void menu_select(void)
 			//get array start index of the submenu items
 			GetSubMenuCount(&SubMenuGroupSize,&StartIndex);
 			//send values to UI
-				HandOverValueToUI(SubMenuGroupSize-(gucSelectedItem-StartIndex), SubMenuGroupSize, 1,0);
+			HandOverValueToUI(SubMenuGroupSize-(gucSelectedItem-StartIndex), SubMenuGroupSize, 1,0);
 			//parameter deactivate
 			MenuMode = 1;
 			ShowMenu = 1; //init menu view
@@ -243,7 +243,7 @@ void menu_select(void)
 		//get array start index of the submenu items
 		GetSubMenuCount(&SubMenuGroupSize, &StartIndex);
 		//send values to UI
-		HandOverValueToUI(SubMenuGroupSize, SubMenuGroupSize, 1,0);
+		HandOverValueToUI(SubMenuGroupSize-(gucSelectedItem-StartIndex), SubMenuGroupSize, 1,0);
 		ShowMenu = 1; //init menu view
 	}
 	else
