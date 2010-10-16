@@ -28,8 +28,6 @@ namespace Treebuilder
 
         // Xml attributes for node e.g. <node text="Asia" tag="" 
 
-        // imageindex="1"></node>
-
         private const string XmlNodeTextAtt = "text";
         private const string XmlNodeTagTypeAtt = "tagType";
         private const string XmlNodeTagIDAtt = "tagID";
@@ -172,6 +170,7 @@ namespace Treebuilder
             else if (propertyName == XmlNodeImageIndexAtt)
             {
                 node.ImageIndex = int.Parse(value);
+                node.SelectedImageIndex = int.Parse(value);
             }
             else if (propertyName == XmlNodeTagIDAtt)
             {
@@ -215,6 +214,9 @@ namespace Treebuilder
                 nti = (NodeTagInfo)node.Tag;
                 nti.ParType = value;
                 node.Tag = nti;
+                
+                node.ImageIndex = (int)((NodeTagInfo)node.Tag).type; // this is duplicated somehow..., but if node info is missing in XML, it is restored here.
+                node.SelectedImageIndex = (int)((NodeTagInfo)node.Tag).type;
             }
         }
 
@@ -698,6 +700,9 @@ namespace Treebuilder
 
                 nti.type = (MenueElementType)comboBox1.SelectedIndex;
                 tn.Tag = nti;
+
+                tn.ImageIndex = (int)((NodeTagInfo)tn.Tag).type;
+                tn.SelectedImageIndex = (int)((NodeTagInfo)tn.Tag).type;
             }
 
             comboBoxParType.Items.Clear();
@@ -781,6 +786,10 @@ namespace Treebuilder
             }
 
         }
+
+
+
+
 
 
 
