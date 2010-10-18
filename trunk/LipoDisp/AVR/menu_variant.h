@@ -3,12 +3,20 @@
 
 #include <avr/io.h>
 #include <avr/pgmspace.h>
-//#include "lcd.h"		//nokia
+#include "menu.h"
 
-#define MENUESIZE 			92
-#define NROFPROFILES 		6
-#define INJECTIONMENUID 	4
-#define CURRENTPROFILESID 	17
+ #define	MENUESIZE	24	// number of menu itmes (array size)
+ #define	MAX_ITEM_NAME_CHARLENGTH	18	// number of menu itmes (array size)
+// Enum definitions
+typedef enum
+{
+	kHz,
+	mAh,
+	min,
+	ms,
+	V,
+} eParameterType_t;
+
 
 //Errorcode
 #define INFINITE_LOOP 			1			//A infinite loop exists in the menu structure
@@ -18,7 +26,6 @@
 
 //Menusettings
 #define ITEMS_PER_PAGE 			6				//nr of items per menu page
-#define MAX_ITEM_NAME_CHARLENGTH 	20	//max nr of chars for item names
 #define MAX_SRAM_ITEM_NAME_LENGHT 	16	//max nr of chars for SRAM item names
 #define SCROLL_LINE_DISTANCE		2			
 

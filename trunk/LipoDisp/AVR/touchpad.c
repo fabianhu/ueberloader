@@ -21,6 +21,7 @@ uint16_t GetvalueFromUI(void)
 
 void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower, uint8_t type)
 {
+	// fixme mutex?
 	guivalue = value;
 	guiupper = upper;
 	guilower = lower;
@@ -121,6 +122,7 @@ void process_touch(void)
 	if(t[2]>20)
 	{
 		menu_select();
+		OS_WaitTicks(OSALTouchPause,100);
 	}
 
 }

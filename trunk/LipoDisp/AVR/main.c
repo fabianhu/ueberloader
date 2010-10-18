@@ -352,7 +352,7 @@ void TaskTouch()
 		}
 
 		OS_WaitAlarm(OSALTouchRepeat);
-		OS_SetAlarm(OSALTouchRepeat,3);
+		OS_SetAlarm(OSALTouchRepeat,100);
 
 		g_NewComand = 1;
 
@@ -365,7 +365,6 @@ void TaskTouch()
 			// check, if the menu is to be activated.
 			// fixme do it
 		}
-		_delay_ms(100);
 
 	}
 }
