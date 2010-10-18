@@ -2,8 +2,7 @@
 
 #include <avr/io.h>
 #include <avr/pgmspace.h>
-#include <util/delay.h>
-#include "menu_variant.h"
+//#include "menu_variant.h"
 #include "lcd.h"		//nokia
 
 

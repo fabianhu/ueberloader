@@ -4,7 +4,7 @@
  * */
 
 
-#include "menu.h"
+#include "menu_variant.h"
 #include "OS/FabOS.h"
 
 extern uint16_t GetvalueFromUI(void);
@@ -251,8 +251,6 @@ void menu_select(void)
 //		asm("break");
 	}
 	OS_ALLOWSCHEDULING
-
-	_delay_ms(100);
 }
 
 
