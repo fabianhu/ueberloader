@@ -38,6 +38,7 @@ namespace Treebuilder
         private const string XmlNodeTagParDefault = "tagParDefault";
         private const string XmlNodeTagParType = "tagParType";
 
+        ArrayList alRememberNodeNames = new ArrayList();
 
         enum MenueElementType
         {
@@ -214,7 +215,7 @@ namespace Treebuilder
                 nti = (NodeTagInfo)node.Tag;
                 nti.ParType = value;
                 node.Tag = nti;
-                
+
                 node.ImageIndex = (int)((NodeTagInfo)node.Tag).type; // this is duplicated somehow..., but if node info is missing in XML, it is restored here.
                 node.SelectedImageIndex = (int)((NodeTagInfo)node.Tag).type;
             }
@@ -326,29 +327,23 @@ namespace Treebuilder
 
         private void buttonGenerate_Click_1(object sender, EventArgs e)
         {
+            alRememberNodeNames.Clear();
 
             textBoxResult.Clear();
 
             TreeNode tn = treeView1.Nodes[0];
 
-            textBoxResult.AppendText(ProcessNode(tbdef1.Text, tn) + Environment.NewLine);
+            textBoxResult.AppendText("******** START OF AUTO-GENERATED CODE DO NOT EDIT!!! *********" + Environment.NewLine + Environment.NewLine);
 
 
-            number = 0;
+            // some Defines
+            textBoxResult.AppendText(" #define\tMENUESIZE\t" + treeView1.GetNodeCount(true) + "\t// number of menu itmes (array size)" + Environment.NewLine);
+            textBoxResult.AppendText(" #define\tMAX_ITEM_NAME_CHARLENGTH\t" + GetSubNodeMaxNameLength(treeView1.Nodes[0]) + "\t// number of menu itmes (array size)" + Environment.NewLine);
 
-            NodeTagInfo nt;
-            nt = (NodeTagInfo)tn.Tag;
-            nt.ID = number++;
-            tn.Tag = nt;
-
-            // Process the text definitions
-
-            processTextDefinitions(tn);
-            textBoxResult.AppendText(Environment.NewLine);
-
-            // Parameter enum
+    // Parameter enum
             if (checkBoxCreateEnum.Checked)
             {
+                textBoxResult.AppendText("// Enum definitions" + Environment.NewLine);
                 textBoxResult.AppendText(
                     "typedef enum" + Environment.NewLine +
                     "{" + Environment.NewLine);
@@ -360,34 +355,55 @@ namespace Treebuilder
                 textBoxResult.AppendText(
                    "} eParameterType_t;" + Environment.NewLine);
             }
+            
             textBoxResult.AppendText(Environment.NewLine);
 
+            textBoxResult.AppendText("******** MOVE the upper lines to the menu_variant.h header file. *********" + Environment.NewLine + Environment.NewLine);
+            
+            // Process the text definitions
+            textBoxResult.AppendText("// Text definitions" + Environment.NewLine);
+            textBoxResult.AppendText("" + ProcessNode(tbdef1.Text, tn) + Environment.NewLine);
+            number = 0; // fixme rename
+            NodeTagInfo nt;
+            nt = (NodeTagInfo)tn.Tag;
+            nt.ID = number++;
+            tn.Tag = nt;
+            processTextDefinitions(tn);
+            textBoxResult.AppendText(Environment.NewLine);
+
+        
             // Parameter list
-            	
+            textBoxResult.AppendText("// Parameter definitions" + Environment.NewLine);
             ProcessParameters(treeView1.Nodes[0]);
             textBoxResult.AppendText(Environment.NewLine);
 
+
             // Process the MENUE LIST
-            textBoxResult.AppendText("MenuItem_t m_items[MENUESIZE] = {" + Environment.NewLine);	
-            textBoxResult.AppendText(ProcessNode(tbmen1.Text, tn) + Environment.NewLine);
+            textBoxResult.AppendText("\t\t\t//Name\tAct\tPar\tJmp\tParent\tMemory" + Environment.NewLine);
+            textBoxResult.AppendText("MenuItem_t m_items[MENUESIZE] = { " + Environment.NewLine);
+            //            textBoxResult.AppendText("MenuItem_t m_items[MENUESIZE] = {" + Environment.NewLine);	
+            textBoxResult.AppendText("\t" + ProcessNode(tbmen1.Text, tn) + " " + Environment.NewLine);
             processMenuList(tn);
             textBoxResult.AppendText("}" + Environment.NewLine);
 
+            textBoxResult.AppendText(Environment.NewLine +"******** END OF AUTO-GENERATED CODE DO NOT EDIT!!! *********" + Environment.NewLine);
 
-            // some Defines
-            textBoxResult.AppendText(Environment.NewLine + " #define\tMENUESIZE\t" + treeView1.GetNodeCount(true) + "\t// number of menu itmes (array size)" + Environment.NewLine);
-            textBoxResult.AppendText(Environment.NewLine + " #define\tMAX_ITEM_NAME_CHARLENGTH\t" + GetSubNodeMaxNameLength(treeView1.Nodes[0]) + "\t// number of menu itmes (array size)" + Environment.NewLine);
+
+            // copy to clipboard
+            Clipboard.SetData(DataFormats.Text, textBoxResult.Text);
+            //textBoxResult.Text.
+
         }
 
         void ProcessParameters(TreeNode tn)
         {
             if (((NodeTagInfo)tn.Tag).type == MenueElementType.parameter)
             {
-                textBoxResult.AppendText("Parameter_t "+((NodeTagInfo)tn.Tag).info+" = {" );
+                textBoxResult.AppendText("Parameter_t " + ((NodeTagInfo)tn.Tag).info + " = {");
                 textBoxResult.AppendText("\t" + ((NodeTagInfo)tn.Tag).ParDefault + ", " + ((NodeTagInfo)tn.Tag).ParLower + ", " + ((NodeTagInfo)tn.Tag).ParUpper + ", " + ((NodeTagInfo)tn.Tag).ParType);
-                textBoxResult.AppendText("}" + Environment.NewLine);
+                textBoxResult.AppendText("}; " + Environment.NewLine);
             }
-            foreach(TreeNode tn2 in tn.Nodes)
+            foreach (TreeNode tn2 in tn.Nodes)
             {
                 ProcessParameters(tn2);
             }
@@ -410,8 +426,17 @@ namespace Treebuilder
         {
             foreach (TreeNode tn2 in tn.Nodes)
             {
+                try
+                {
                 if (!comboBoxParType.Items.Contains(((NodeTagInfo)tn2.Tag).ParType) && ((NodeTagInfo)tn2.Tag).ParType != "")
                     comboBoxParType.Items.Add(((NodeTagInfo)tn2.Tag).ParType);
+
+                }
+                catch (Exception)
+                {
+                    
+                    //throw;
+                }
 
                 UpdateParComboBox(tn2);
             }
@@ -420,21 +445,35 @@ namespace Treebuilder
 
         string makename(TreeNode tn)
         {
-            return (textBoxtxtPrefix.Text + CleanString(tn.Text) + tn.Level.ToString() + "_" + tn.Index.ToString());
+            return (textBoxtxtPrefix.Text + CleanString(tn.Text));//+ tn.Level.ToString() + "_" + tn.Index.ToString());
         }
+
+
 
         private void processTextDefinitions(TreeNode ano)
         {
 
-
+            // process all nodes here
             foreach (TreeNode tn in ano.Nodes)
             {
-                NodeTagInfo nt;
-                nt = (NodeTagInfo)tn.Tag;
-                nt.ID = number++;
-                tn.Tag = nt;
-                textBoxResult.AppendText(ProcessNode(tbdef1.Text, tn) + Environment.NewLine);
+                if (alRememberNodeNames.Contains(tn.Text))
+                {
+                    // already present
+                }
+                else
+                {
+                    // new
+                    alRememberNodeNames.Add(tn.Text);
+
+                    NodeTagInfo tag;
+                    tag = (NodeTagInfo)tn.Tag;
+                    tag.ID = number++;
+                    tn.Tag = tag;
+                    textBoxResult.AppendText("" + ProcessNode(tbdef1.Text, tn) + " " + Environment.NewLine);
+                }
             }
+
+            // get all nodes nodes processed
             foreach (TreeNode tn in ano.Nodes)
             {
                 processTextDefinitions(tn);
@@ -447,7 +486,7 @@ namespace Treebuilder
         {
             foreach (TreeNode tn in ano.Nodes)
             {
-                textBoxResult.AppendText(ProcessNode(tbmen1.Text, tn) + Environment.NewLine);
+                textBoxResult.AppendText("\t" +ProcessNode(tbmen1.Text, tn) + " " + Environment.NewLine);
             }
             foreach (TreeNode tn in ano.Nodes)
             {
@@ -529,7 +568,7 @@ namespace Treebuilder
                                 break;
                             case 'P':
                                 if (((NodeTagInfo)tn.Tag).type == MenueElementType.parameter)
-                                    sb.Append("&"+((NodeTagInfo)tn.Tag).info);
+                                    sb.Append("&" + ((NodeTagInfo)tn.Tag).info);
                                 else
                                     sb.Append("0");
                                 break;
@@ -614,8 +653,6 @@ namespace Treebuilder
 
         private void buttonAdd_Click(object sender, EventArgs e)
         {
-            NodeTagInfo nti;
-
             if (treeView1.SelectedNode != null)
             {
 
@@ -625,10 +662,7 @@ namespace Treebuilder
                 UpdateNodeValuesFromFields(tn);
 
                 textBoxNodeName.SelectAll();
-
-                //treeView1.SelectedNode = tn;
             }
-
         }
 
         private void CheckTagPresenceOfNode(TreeNode tn)
