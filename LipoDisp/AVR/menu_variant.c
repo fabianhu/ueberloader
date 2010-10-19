@@ -27,12 +27,9 @@ char *ProfileName;
 //global vars
 					
 
+
+
 //******** START OF AUTO-GENERATED CODE DO NOT EDIT!!! *********
-
-
-
-//******** MOVE the upper lines to the menu_variant.h header file. *********
-
 // Text definitions
 char	txtMAINMENU[] 	PROGMEM="Main Menu";
 char	txtCHARGE[] 	PROGMEM="Charge";
@@ -67,15 +64,15 @@ MenuItem_t m_items[MENUESIZE] = {
 	/* 1*/	{txtCHARGE,	 0,	 0,	5,	0,	FLASH},
 	/* 2*/	{txtDISCHARGE,	 0,	 0,	0,	0,	FLASH},
 	/* 3*/	{txtSETUP,	 0,	 0,	14,	0,	FLASH},
-	/* 4*/	{txtBACK,	 0,	 0,	0,	0,	FLASH},
+	/* 4*/	{txtBACK,	 leavenmenu,	 0,	0,	0,	FLASH},
 	/* 5*/	{txtMODE,	 0,	 0,	8,	1,	FLASH},
 	/* 6*/	{txtCHARGEMETHOD,	 0,	 0,	10,	1,	FLASH},
 	/* 7*/	{txtCHARGELIMIT,	 0,	 0,	12,	1,	FLASH},
-	/* 8*/	{txtAUTO,	 0,	 0,	0,	5,	FLASH},
-	/* 9*/	{txtMANUAL,	 0,	 0,	0,	5,	FLASH},
-	/* 10*/	{txtFULL,	 0,	 0,	0,	6,	FLASH},
-	/* 11*/	{txtSTORAGE,	 0,	 0,	0,	6,	FLASH},
-	/* 12*/	{txtMANUAL,	 0,	 0,	0,	6,	FLASH},
+	/* 8*/	{txtAUTO,	 ActionChargeModeAuto,	 0,	0,	5,	FLASH},
+	/* 9*/	{txtMANUAL,	 ActionChargeModeMaual,	 0,	0,	5,	FLASH},
+	/* 10*/	{txtFULL,	 ActionChargeMethodFull,	 0,	0,	6,	FLASH},
+	/* 11*/	{txtSTORAGE,	 ActionChargeMethodStorage,	 0,	0,	6,	FLASH},
+	/* 12*/	{txtMANUAL,	 ActionChargeMethodManual,	 0,	0,	6,	FLASH},
 	/* 13*/	{txtBACK,	 0,	 0,	10,	6,	FLASH},
 	/* 12*/	{txtCAPACITY,	 0,	 &maxcap,	0,	7,	FLASH},
 	/* 13*/	{txtTIME,	 0,	 &maxtime,	0,	7,	FLASH},
@@ -93,7 +90,6 @@ MenuItem_t m_items[MENUESIZE] = {
 
 
 
-
 //SRAM
 //user defined names
 uint8_t eeNames[3][MAX_SRAM_ITEM_NAME_LENGHT+1];
@@ -104,8 +100,8 @@ char ud_name[][MAX_SRAM_ITEM_NAME_LENGHT+1]	={//Menu item name
 											};
 
 //Variables in EEPROM
-uint16_t eeParameter[(100*8*4)+2] EEMEM;	//variable in eeprom for storing the parameters
-uint8_t eeVarsValid EEMEM;							//Marker if a valid dataset is stored in eeprom
+//uint16_t eeParameter[(100*8*4)+2] EEMEM;	//variable in eeprom for storing the parameters
+//uint8_t eeVarsValid EEMEM;							//Marker if a valid dataset is stored in eeprom
 
 void menu_draw_header(char *menu_header)
 {

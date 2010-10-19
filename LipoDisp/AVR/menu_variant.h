@@ -5,6 +5,8 @@
 #include <avr/pgmspace.h>
 #include "menu.h"
 
+//******** START OF AUTO-GENERATED HEADER DO NOT EDIT!!! *********
+
  #define	MENUESIZE	24	// number of menu itmes (array size)
  #define	MAX_ITEM_NAME_CHARLENGTH	18	// number of menu itmes (array size)
 // Enum definitions
@@ -17,6 +19,15 @@ typedef enum
 	V,
 } eParameterType_t;
 
+// Action Prototypes
+void ActionChargeModeAuto (void);
+void ActionChargeModeMaual (void);
+void ActionChargeMethodFull (void);
+void ActionChargeMethodStorage (void);
+void ActionChargeMethodManual (void);
+void leavenmenu (void);
+
+//******** END OF AUTO-GENERATED HEADER DO NOT EDIT!!! *********
 
 //Errorcode
 #define INFINITE_LOOP 			1			//A infinite loop exists in the menu structure
