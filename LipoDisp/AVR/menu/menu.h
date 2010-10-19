@@ -3,7 +3,7 @@
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 //#include "menu_variant.h"
-#include "lcd.h"		//nokia
+#include "../lcd/lcd.h"		//nokia
 
 
 

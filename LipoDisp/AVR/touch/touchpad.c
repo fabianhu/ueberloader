@@ -1,8 +1,8 @@
 
 
 #include "touchpad.h"
-#include "OS/FabOS.h"
-#include "lcd.h" // fixme remove
+#include "../OS/FabOS.h"
+#include "../lcd/lcd.h" // fixme remove
 
 uint16_t touchcalbytes[5] = TOUCHCALINIT;
 

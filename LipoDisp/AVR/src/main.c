@@ -5,16 +5,16 @@
 
 */
 
-#include "OS/FabOS.h"
+#include "../OS/FabOS.h"
 #include <avr/pgmspace.h>
 #include <avr/eeprom.h>
 #include <string.h>
 
-#include "usart.h"
-#include "serial.h"
-#include "lcd.h"
-#include "menu.h"
-#include "touchpad.h"
+#include "../comm/usart.h"
+#include "../comm/serial.h"
+#include "../lcd/lcd.h"
+#include "../menu/menu.h"
+#include "../touch/touchpad.h"
 
 
 extern Battery_Info_t g_tBattery_Info;
