@@ -333,7 +333,7 @@ namespace Treebuilder
 
             TreeNode tn = treeView1.Nodes[0];
 
-            textBoxResult.AppendText("******** START OF AUTO-GENERATED CODE DO NOT EDIT!!! *********" + Environment.NewLine + Environment.NewLine);
+            textBoxResult.AppendText("******** START OF AUTO-GENERATED HEADER DO NOT EDIT!!! *********" + Environment.NewLine + Environment.NewLine);
 
 
             // some Defines
@@ -358,8 +358,17 @@ namespace Treebuilder
             
             textBoxResult.AppendText(Environment.NewLine);
 
+            textBoxResult.AppendText("// Action Prototypes" + Environment.NewLine);
+            ProcessActionPrototypes(treeView1.Nodes[0]);
+            textBoxResult.AppendText(Environment.NewLine);
+
+            textBoxResult.AppendText("******** END OF AUTO-GENERATED HEADER DO NOT EDIT!!! *********" + Environment.NewLine + Environment.NewLine);
+
+
             textBoxResult.AppendText("******** MOVE the upper lines to the menu_variant.h header file. *********" + Environment.NewLine + Environment.NewLine);
-            
+
+            textBoxResult.AppendText("******** START OF AUTO-GENERATED CODE DO NOT EDIT!!! *********" + Environment.NewLine);
+
             // Process the text definitions
             textBoxResult.AppendText("// Text definitions" + Environment.NewLine);
             textBoxResult.AppendText("" + ProcessNode(tbdef1.Text, tn) + Environment.NewLine);
@@ -406,6 +415,18 @@ namespace Treebuilder
             foreach (TreeNode tn2 in tn.Nodes)
             {
                 ProcessParameters(tn2);
+            }
+        }
+
+        void ProcessActionPrototypes(TreeNode tn)
+        {
+            if (((NodeTagInfo)tn.Tag).type == MenueElementType.action)
+            {
+                textBoxResult.AppendText("void " + ((NodeTagInfo)tn.Tag).info + " (void);" + Environment.NewLine);
+            }
+            foreach (TreeNode tn2 in tn.Nodes)
+            {
+                ProcessActionPrototypes(tn2);
             }
         }
 
