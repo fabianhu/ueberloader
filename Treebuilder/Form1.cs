@@ -333,7 +333,7 @@ namespace Treebuilder
 
             TreeNode tn = treeView1.Nodes[0];
 
-            textBoxResult.AppendText("******** START OF AUTO-GENERATED HEADER DO NOT EDIT!!! *********" + Environment.NewLine + Environment.NewLine);
+            textBoxResult.AppendText("//******** START OF AUTO-GENERATED HEADER DO NOT EDIT!!! *********" + Environment.NewLine + Environment.NewLine);
 
 
             // some Defines
@@ -362,12 +362,12 @@ namespace Treebuilder
             ProcessActionPrototypes(treeView1.Nodes[0]);
             textBoxResult.AppendText(Environment.NewLine);
 
-            textBoxResult.AppendText("******** END OF AUTO-GENERATED HEADER DO NOT EDIT!!! *********" + Environment.NewLine + Environment.NewLine);
+            textBoxResult.AppendText("//******** END OF AUTO-GENERATED HEADER DO NOT EDIT!!! *********" + Environment.NewLine + Environment.NewLine);
 
 
-            textBoxResult.AppendText("******** MOVE the upper lines to the menu_variant.h header file. *********" + Environment.NewLine + Environment.NewLine);
+            textBoxResult.AppendText("//******** MOVE the upper lines to the menu_variant.h header file. *********" + Environment.NewLine + Environment.NewLine);
 
-            textBoxResult.AppendText("******** START OF AUTO-GENERATED CODE DO NOT EDIT!!! *********" + Environment.NewLine);
+            textBoxResult.AppendText("//******** START OF AUTO-GENERATED CODE DO NOT EDIT!!! *********" + Environment.NewLine);
 
             // Process the text definitions
             textBoxResult.AppendText("// Text definitions" + Environment.NewLine);
@@ -393,9 +393,9 @@ namespace Treebuilder
             //            textBoxResult.AppendText("MenuItem_t m_items[MENUESIZE] = {" + Environment.NewLine);	
             textBoxResult.AppendText("\t" + ProcessNode(tbmen1.Text, tn) + " " + Environment.NewLine);
             processMenuList(tn);
-            textBoxResult.AppendText("}" + Environment.NewLine);
+            textBoxResult.AppendText("};" + Environment.NewLine);
 
-            textBoxResult.AppendText(Environment.NewLine +"******** END OF AUTO-GENERATED CODE DO NOT EDIT!!! *********" + Environment.NewLine);
+            textBoxResult.AppendText(Environment.NewLine +"//******** END OF AUTO-GENERATED CODE DO NOT EDIT!!! *********" + Environment.NewLine);
 
 
             // copy to clipboard
