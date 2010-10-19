@@ -613,7 +613,7 @@ namespace Treebuilder
                                         sb.Append(" **ERROR_NO_PARENT** ");
                                     else
                                     {
-                                        nti = (NodeTagInfo)tn.Parent.FirstNode.Tag;
+                                        nti = (NodeTagInfo)tn.Parent./*FirstNode.*/Tag;
                                         sb.Append(nti.ID);
                                     }
                                 }
