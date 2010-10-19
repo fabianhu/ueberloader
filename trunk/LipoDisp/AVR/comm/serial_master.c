@@ -4,7 +4,7 @@
  *  Created on: 25.05.2010
  *      Author: Fabian
  */
-#include "OS/FabOS.h"
+#include "../OS/FabOS.h"
 #include "serial.h"
 #include "usart.h"
 #include "string.h"
