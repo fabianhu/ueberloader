@@ -7,7 +7,7 @@
 
 //******** START OF AUTO-GENERATED HEADER DO NOT EDIT!!! *********
 
- #define	MENUESIZE	25	// number of menu itmes (array size)
+ #define	MENUESIZE	26	// number of menu itmes (array size)
  #define	MAX_ITEM_NAME_CHARLENGTH	18	// number of menu itmes (array size)
 // Enum definitions
 typedef enum
