@@ -13,9 +13,6 @@ extern void GetSubMenuCount(uint8_t *Size, uint8_t *StartIndex);
 
 
 
-
-//******** MOVE the upper lines to the menu_variant.h header file. *********
-
 //******** START OF AUTO-GENERATED CODE DO NOT EDIT!!! *********
 // Text definitions
 char	txtMAINMENU[] 	PROGMEM="Main Menu";
@@ -45,36 +42,38 @@ Parameter_t balactvolt = {	3600, 2000, 4100, V};
 Parameter_t PWMfrequency = {	50, 10, 100, kHz};
 Parameter_t RefreshPeriod = {	10, 1, 10000, ms};
 
-			//Name					Act							Par				Jmp		Parent	Memory
+			//Name	Act	Par	Jmp	Parent	Memory
 MenuItem_t m_items[MENUESIZE] = {
-	/* 0*/	{txtMAINMENU,	 		0,	 						0,				1,		0,		FLASH},
-	/* 1*/	{txtCHARGE,	 			0,	 						0,				5,		0,		FLASH},
-	/* 2*/	{txtDISCHARGE,	 		0,	 						0,				0,		0,		FLASH},
-	/* 3*/	{txtSETUP,	 			0,	 						0,			    18,		0,		FLASH},
-	/* 4*/	{txtBACK,	 			leavenmenu,					0,				0,		0,		FLASH},
-	/* 5*/	{txtMODE,	 			0,	 						0,			    9,		1,		FLASH},
-	/* 6*/	{txtCHARGEMETHOD,		0,	 						0,			    11,		1,		FLASH},
-	/* 7*/	{txtCHARGELIMIT,		0,	 						0,			    15,		1,		FLASH},
-	/* 8*/	{txtBACK,	 			0,	 						0,				1,		1,		FLASH},
-	/* 9*/	{txtAUTO,	 			ActionChargeModeAuto,	 	0,				0,		5,		FLASH},
-	/* 10*/	{txtMANUAL,	 			ActionChargeModeMaual,	 	0,				0,		5,		FLASH},
-	/* 11*/	{txtFULL,	 			ActionChargeMethodFull,	 	0,				0,		6,		FLASH},
-	/* 12*/	{txtSTORAGE,	 		ActionChargeMethodStorage,	0,				0,		6,		FLASH},
-	/* 13*/	{txtMANUAL,	 			ActionChargeMethodManual,	0,				0,		6,		FLASH},
-	/* 14*/	{txtBACK,	 			0,	 						0,				6,		6,		FLASH},
-	/* 15*/	{txtCAPACITY,			0,	 						&maxcap,		0,		7,		FLASH},
-	/* 16*/	{txtTIME,	 			0,	 						&maxtime,		0,		7,		FLASH},
-	/* 17*/	{txtBACK,	 			0,	 						0,				7,		7,		FLASH},
-	/* 18*/	{txtBALANCER,	 		0,	 						0,			    20,		3,		FLASH},
-	/* 19*/	{txtPWM,	 			0,	 						0,			    22,		3,		FLASH},
-	/* 20*/	{txtACTIVATIONVOLTAGE,	 0,	 						&balactvolt,	0,	   18,  	FLASH},
-	/* 21*/	{txtBACK,	 			0,	 						0,			    18,    18,	    FLASH},
-	/* 22*/	{txtFEQUENCY,	 		0,	 						&PWMfrequency,	0,	   19,		FLASH},
-	/* 23*/	{txtREFRESHPERIOD,	 	0,	 						&RefreshPeriod,	0,	   19,  	FLASH},
-	/* 24*/	{txtBACK,	 			0,	 						0,			    19,    19,		FLASH},
+	/* 0*/	{txtMAINMENU,	 0,	 0,	1,	0,	FLASH},
+	/* 1*/	{txtCHARGE,	 0,	 0,	5,	0,	FLASH},
+	/* 2*/	{txtDISCHARGE,	 0,	 0,	0,	0,	FLASH},
+	/* 3*/	{txtSETUP,	 0,	 0,	18,	0,	FLASH},
+	/* 4*/	{txtBACK,	 leavenmenu,	 0,	0,	0,	FLASH},
+	/* 5*/	{txtMODE,	 0,	 0,	9,	1,	FLASH},
+	/* 6*/	{txtCHARGEMETHOD,	 0,	 0,	11,	1,	FLASH},
+	/* 7*/	{txtCHARGELIMIT,	 0,	 0,	15,	1,	FLASH},
+	/* 8*/	{txtBACK,	 0,	 0,	1,	1,	FLASH},
+	/* 9*/	{txtAUTO,	 ActionChargeModeAuto,	 0,	0,	5,	FLASH},
+	/* 10*/	{txtMANUAL,	 ActionChargeModeMaual,	 0,	0,	5,	FLASH},
+	/* 11*/	{txtFULL,	 ActionChargeMethodFull,	 0,	0,	6,	FLASH},
+	/* 12*/	{txtSTORAGE,	 ActionChargeMethodStorage,	 0,	0,	6,	FLASH},
+	/* 13*/	{txtMANUAL,	 ActionChargeMethodManual,	 0,	0,	6,	FLASH},
+	/* 14*/	{txtBACK,	 0,	 0,	6,	6,	FLASH},
+	/* 15*/	{txtCAPACITY,	 0,	 &maxcap,	0,	7,	FLASH},
+	/* 16*/	{txtTIME,	 0,	 &maxtime,	0,	7,	FLASH},
+	/* 17*/	{txtBACK,	 0,	 0,	7,	7,	FLASH},
+	/* 18*/	{txtBALANCER,	 0,	 0,	21,	3,	FLASH},
+	/* 19*/	{txtPWM,	 0,	 0,	23,	3,	FLASH},
+	/* 20*/	{txtBACK,	 0,	 0,	3,	3,	FLASH},
+	/* 21*/	{txtACTIVATIONVOLTAGE,	 0,	 &balactvolt,	0,	18,	FLASH},
+	/* 22*/	{txtBACK,	 0,	 0,	18,	18,	FLASH},
+	/* 23*/	{txtFEQUENCY,	 0,	 &PWMfrequency,	0,	19,	FLASH},
+	/* 24*/	{txtREFRESHPERIOD,	 0,	 &RefreshPeriod,	0,	19,	FLASH},
+	/* 25*/	{txtBACK,	 0,	 0,	19,	19,	FLASH},
 };
 
 //******** END OF AUTO-GENERATED CODE DO NOT EDIT!!! *********
+
 
 
 
