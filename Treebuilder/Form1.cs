@@ -26,7 +26,7 @@ namespace Treebuilder
 
         private const string XmlNodeTag = "node";
 
-        // Xml attributes for node e.g. <node text="Asia" tag="" 
+        // Xml attributes for node e.g. 
 
         private const string XmlNodeTextAtt = "text";
         private const string XmlNodeTagTypeAtt = "tagType";
@@ -38,9 +38,14 @@ namespace Treebuilder
         private const string XmlNodeTagParDefault = "tagParDefault";
         private const string XmlNodeTagParType = "tagParType";
 
-        ArrayList alRememberNodeNames = new ArrayList();
+        ArrayList m_alRememberNodeNames = new ArrayList();
 
-        enum MenueElementType
+
+        int m_NodeCounterForID; // zählt die Zeile mit, um den parent index zu finden = ID in der Ausgabe.
+
+        TreeNode m_DragDropSourceNode;
+
+        enum eMenueElementType
         {
             normal = 0,  // do not change numbers, as the combo box relies on this
             back = 1,
@@ -49,9 +54,9 @@ namespace Treebuilder
             action = 4,
         }
 
-        struct NodeTagInfo
+        struct tNodeTagInfo
         {
-            public MenueElementType type;
+            public eMenueElementType type;
             public int ID;
             public string info;
             public int ParUpper;
@@ -62,15 +67,15 @@ namespace Treebuilder
 
 
 
-        public void DeserializeTreeView(TreeView treeView, string fileName)
+        public void vDeserializeTreeView(TreeView _treeView, string _fileName)
         {
             XmlTextReader reader = null;
             try
             {
                 // disabling re-drawing of treeview till all nodes are added
 
-                treeView.BeginUpdate();
-                reader = new XmlTextReader(fileName);
+                _treeView.BeginUpdate();
+                reader = new XmlTextReader(_fileName);
                 TreeNode parentNode = null;
                 while (reader.Read())
                 {
@@ -89,7 +94,7 @@ namespace Treebuilder
                                 for (int i = 0; i < attributeCount; i++)
                                 {
                                     reader.MoveToAttribute(i);
-                                    SetAttributeValue(newNode,
+                                    vSetAttributeValue(newNode,
                                                  reader.Name, reader.Value);
                                 }
                             }
@@ -98,7 +103,7 @@ namespace Treebuilder
                             if (parentNode != null)
                                 parentNode.Nodes.Add(newNode);
                             else
-                                treeView.Nodes.Add(newNode);
+                                _treeView.Nodes.Add(newNode);
 
                             // making current node 'ParentNode' if its not empty
 
@@ -137,7 +142,7 @@ namespace Treebuilder
             {
                 // enabling redrawing of treeview after all nodes are added
 
-                treeView.EndUpdate();
+                _treeView.EndUpdate();
                 reader.Close();
             }
         }
@@ -150,80 +155,80 @@ namespace Treebuilder
 
         /// </summary>
 
-        private void SetAttributeValue(TreeNode node,
-                           string propertyName, string value)
+        private void vSetAttributeValue(TreeNode _node,
+                           string _propertyName, string _value)
         {
-            NodeTagInfo nti;
+            tNodeTagInfo nti;
 
-            if (node.Tag == null)
+            if (_node.Tag == null)
             {
-                nti = new NodeTagInfo();
-                nti.type = MenueElementType.normal;
+                nti = new tNodeTagInfo();
+                nti.type = eMenueElementType.normal;
                 nti.info = "";
                 nti.ID = -1;
-                node.Tag = nti;
+                _node.Tag = nti;
             }
 
-            if (propertyName == XmlNodeTextAtt)
+            if (_propertyName == XmlNodeTextAtt)
             {
-                node.Text = value;
+                _node.Text = _value;
             }
-            else if (propertyName == XmlNodeImageIndexAtt)
+            else if (_propertyName == XmlNodeImageIndexAtt)
             {
-                node.ImageIndex = int.Parse(value);
-                node.SelectedImageIndex = int.Parse(value);
+                _node.ImageIndex = int.Parse(_value);
+                _node.SelectedImageIndex = int.Parse(_value);
             }
-            else if (propertyName == XmlNodeTagIDAtt)
+            else if (_propertyName == XmlNodeTagIDAtt)
             {
-                nti = (NodeTagInfo)node.Tag;
-                nti.ID = int.Parse(value);
-                node.Tag = nti;
+                nti = (tNodeTagInfo)_node.Tag;
+                nti.ID = -1;//int.Parse(value); // fixme
+                _node.Tag = nti;
             }
-            else if (propertyName == XmlNodeTagTypeAtt)
+            else if (_propertyName == XmlNodeTagTypeAtt)
             {
-                nti = (NodeTagInfo)node.Tag;
-                EnumConverter ec = new EnumConverter(typeof(MenueElementType));
-                nti.type = (MenueElementType)ec.ConvertFromString(value);
-                node.Tag = nti;
+                nti = (tNodeTagInfo)_node.Tag;
+                EnumConverter ec = new EnumConverter(typeof(eMenueElementType));
+                nti.type = (eMenueElementType)ec.ConvertFromString(_value);
+                _node.Tag = nti;
             }
-            else if (propertyName == XmlNodeTagInfoAtt)
+            else if (_propertyName == XmlNodeTagInfoAtt)
             {
-                nti = (NodeTagInfo)node.Tag;
-                nti.info = value;
-                node.Tag = nti;
+                nti = (tNodeTagInfo)_node.Tag;
+                nti.info = _value;
+                _node.Tag = nti;
             }
-            else if (propertyName == XmlNodeTagParUpper)
+            else if (_propertyName == XmlNodeTagParUpper)
             {
-                nti = (NodeTagInfo)node.Tag;
-                nti.ParUpper = int.Parse(value);
-                node.Tag = nti;
+                nti = (tNodeTagInfo)_node.Tag;
+                nti.ParUpper = int.Parse(_value);
+                _node.Tag = nti;
             }
-            else if (propertyName == XmlNodeTagParLower)
+            else if (_propertyName == XmlNodeTagParLower)
             {
-                nti = (NodeTagInfo)node.Tag;
-                nti.ParLower = int.Parse(value);
-                node.Tag = nti;
+                nti = (tNodeTagInfo)_node.Tag;
+                nti.ParLower = int.Parse(_value);
+                _node.Tag = nti;
             }
-            else if (propertyName == XmlNodeTagParDefault)
+            else if (_propertyName == XmlNodeTagParDefault)
             {
-                nti = (NodeTagInfo)node.Tag;
-                nti.ParDefault = int.Parse(value);
-                node.Tag = nti;
+                nti = (tNodeTagInfo)_node.Tag;
+                nti.ParDefault = int.Parse(_value);
+                _node.Tag = nti;
             }
-            else if (propertyName == XmlNodeTagParType)
+            else if (_propertyName == XmlNodeTagParType)
             {
-                nti = (NodeTagInfo)node.Tag;
-                nti.ParType = value;
-                node.Tag = nti;
+                nti = (tNodeTagInfo)_node.Tag;
+                nti.ParType = _value;
+                _node.Tag = nti;
 
-                node.ImageIndex = (int)((NodeTagInfo)node.Tag).type; // this is duplicated somehow..., but if node info is missing in XML, it is restored here.
-                node.SelectedImageIndex = (int)((NodeTagInfo)node.Tag).type;
+                _node.ImageIndex = (int)((tNodeTagInfo)_node.Tag).type; // this is duplicated somehow..., but if node info is missing in XML, it is restored here.
+                _node.SelectedImageIndex = (int)((tNodeTagInfo)_node.Tag).type;
             }
         }
 
-        public void SerializeTreeView(TreeView treeView, string fileName)
+        public void vSerializeTreeView(TreeView _treeView, string _fileName)
         {
-            XmlTextWriter textWriter = new XmlTextWriter(fileName,
+            XmlTextWriter textWriter = new XmlTextWriter(_fileName,
                                           System.Text.Encoding.ASCII);
             // writing the xml declaration tag
 
@@ -236,46 +241,46 @@ namespace Treebuilder
 
             // save the nodes, recursive method
 
-            SaveNodes(treeView.Nodes, textWriter);
+            vSaveNodesToXML(_treeView.Nodes, textWriter);
 
             textWriter.WriteEndElement();
 
             textWriter.Close();
         }
 
-        private void SaveNodes(TreeNodeCollection nodesCollection, XmlTextWriter textWriter)
+        private void vSaveNodesToXML(TreeNodeCollection _nodesCollection, XmlTextWriter _textWriter)
         {
-            for (int i = 0; i < nodesCollection.Count; i++)
+            for (int i = 0; i < _nodesCollection.Count; i++)
             {
-                TreeNode node = nodesCollection[i];
-                textWriter.WriteStartElement(XmlNodeTag);
-                textWriter.WriteAttributeString(XmlNodeTextAtt,
+                TreeNode node = _nodesCollection[i];
+                _textWriter.WriteStartElement(XmlNodeTag);
+                _textWriter.WriteAttributeString(XmlNodeTextAtt,
                                                            node.Text);
-                textWriter.WriteAttributeString(
+                _textWriter.WriteAttributeString(
                     XmlNodeImageIndexAtt, node.ImageIndex.ToString());
                 if (node.Tag != null)
                 {
-                    textWriter.WriteAttributeString(XmlNodeTagTypeAtt, ((NodeTagInfo)node.Tag).type.ToString());
-                    textWriter.WriteAttributeString(XmlNodeTagIDAtt, ((NodeTagInfo)node.Tag).ID.ToString());
-                    if (((NodeTagInfo)node.Tag).info != null)
-                        textWriter.WriteAttributeString(XmlNodeTagInfoAtt, ((NodeTagInfo)node.Tag).info.ToString());
+                    _textWriter.WriteAttributeString(XmlNodeTagTypeAtt, ((tNodeTagInfo)node.Tag).type.ToString());
+                    _textWriter.WriteAttributeString(XmlNodeTagIDAtt, ((tNodeTagInfo)node.Tag).ID.ToString());
+                    if (((tNodeTagInfo)node.Tag).info != null)
+                        _textWriter.WriteAttributeString(XmlNodeTagInfoAtt, ((tNodeTagInfo)node.Tag).info.ToString());
                     else
-                        textWriter.WriteAttributeString(XmlNodeTagInfoAtt, "");
-                    textWriter.WriteAttributeString(XmlNodeTagParDefault, ((NodeTagInfo)node.Tag).ParDefault.ToString());
-                    textWriter.WriteAttributeString(XmlNodeTagParUpper, ((NodeTagInfo)node.Tag).ParUpper.ToString());
-                    textWriter.WriteAttributeString(XmlNodeTagParLower, ((NodeTagInfo)node.Tag).ParLower.ToString());
-                    if (((NodeTagInfo)node.Tag).ParType != null)
-                        textWriter.WriteAttributeString(XmlNodeTagParType, ((NodeTagInfo)node.Tag).ParType.ToString());
+                        _textWriter.WriteAttributeString(XmlNodeTagInfoAtt, "");
+                    _textWriter.WriteAttributeString(XmlNodeTagParDefault, ((tNodeTagInfo)node.Tag).ParDefault.ToString());
+                    _textWriter.WriteAttributeString(XmlNodeTagParUpper, ((tNodeTagInfo)node.Tag).ParUpper.ToString());
+                    _textWriter.WriteAttributeString(XmlNodeTagParLower, ((tNodeTagInfo)node.Tag).ParLower.ToString());
+                    if (((tNodeTagInfo)node.Tag).ParType != null)
+                        _textWriter.WriteAttributeString(XmlNodeTagParType, ((tNodeTagInfo)node.Tag).ParType.ToString());
                     else
-                        textWriter.WriteAttributeString(XmlNodeTagParType, "");
+                        _textWriter.WriteAttributeString(XmlNodeTagParType, "");
                 }
                 // add other node properties to serialize here  
 
                 if (node.Nodes.Count > 0)
                 {
-                    SaveNodes(node.Nodes, textWriter);
+                    vSaveNodesToXML(node.Nodes, _textWriter);
                 }
-                textWriter.WriteEndElement();
+                _textWriter.WriteEndElement();
             }
         }
 
@@ -291,7 +296,7 @@ namespace Treebuilder
             DialogResult res = sfd.ShowDialog();
             if (res == DialogResult.OK && sfd.FileName != "")
             {
-                SerializeTreeView(treeView1, sfd.FileName);
+                vSerializeTreeView(treeView1, sfd.FileName);
             }
         }
 
@@ -306,7 +311,7 @@ namespace Treebuilder
             if (res == DialogResult.OK && ofd.FileName != "")
             {
                 treeView1.Nodes.Clear();
-                DeserializeTreeView(treeView1, ofd.FileName);
+                vDeserializeTreeView(treeView1, ofd.FileName);
             }
             treeView1.ExpandAll();
         }
@@ -322,12 +327,9 @@ namespace Treebuilder
             }
         }
 
-        int number; // zählt die Zeile mit, um den parent index zu finden = ID in der Ausgabe.
-
-
         private void buttonGenerate_Click_1(object sender, EventArgs e)
         {
-            alRememberNodeNames.Clear();
+            m_alRememberNodeNames.Clear();
 
             textBoxResult.Clear();
 
@@ -365,17 +367,17 @@ namespace Treebuilder
             textBoxResult.AppendText("//******** END OF AUTO-GENERATED HEADER DO NOT EDIT!!! *********" + Environment.NewLine + Environment.NewLine);
 
 
-            textBoxResult.AppendText("//******** MOVE the upper lines to the menu_variant.h header file. *********" + Environment.NewLine + Environment.NewLine);
+            textBoxResult.AppendText( Environment.NewLine + Environment.NewLine);
 
             textBoxResult.AppendText("//******** START OF AUTO-GENERATED CODE DO NOT EDIT!!! *********" + Environment.NewLine);
 
             // Process the text definitions
             textBoxResult.AppendText("// Text definitions" + Environment.NewLine);
             textBoxResult.AppendText("" + ProcessNode(tbdef1.Text, tn) + Environment.NewLine);
-            number = 0; // fixme rename
-            NodeTagInfo nt;
-            nt = (NodeTagInfo)tn.Tag;
-            nt.ID = number++;
+            m_NodeCounterForID = 0; // fixme rename
+            tNodeTagInfo nt;
+            nt = (tNodeTagInfo)tn.Tag;
+            nt.ID = m_NodeCounterForID++;
             tn.Tag = nt;
             processTextDefinitions(tn);
             textBoxResult.AppendText(Environment.NewLine);
@@ -398,18 +400,18 @@ namespace Treebuilder
             textBoxResult.AppendText(Environment.NewLine +"//******** END OF AUTO-GENERATED CODE DO NOT EDIT!!! *********" + Environment.NewLine);
 
 
-            // copy to clipboard
+            // copy all to clipboard
             Clipboard.SetData(DataFormats.Text, textBoxResult.Text);
-            //textBoxResult.Text.
+            
 
         }
 
         void ProcessParameters(TreeNode tn)
         {
-            if (((NodeTagInfo)tn.Tag).type == MenueElementType.parameter)
+            if (((tNodeTagInfo)tn.Tag).type == eMenueElementType.parameter)
             {
-                textBoxResult.AppendText("Parameter_t " + ((NodeTagInfo)tn.Tag).info + " = {");
-                textBoxResult.AppendText("\t" + ((NodeTagInfo)tn.Tag).ParDefault + ", " + ((NodeTagInfo)tn.Tag).ParLower + ", " + ((NodeTagInfo)tn.Tag).ParUpper + ", " + ((NodeTagInfo)tn.Tag).ParType);
+                textBoxResult.AppendText("Parameter_t " + ((tNodeTagInfo)tn.Tag).info + " = {");
+                textBoxResult.AppendText("\t" + ((tNodeTagInfo)tn.Tag).ParDefault + ", " + ((tNodeTagInfo)tn.Tag).ParLower + ", " + ((tNodeTagInfo)tn.Tag).ParUpper + ", " + ((tNodeTagInfo)tn.Tag).ParType);
                 textBoxResult.AppendText("}; " + Environment.NewLine);
             }
             foreach (TreeNode tn2 in tn.Nodes)
@@ -420,9 +422,9 @@ namespace Treebuilder
 
         void ProcessActionPrototypes(TreeNode tn)
         {
-            if (((NodeTagInfo)tn.Tag).type == MenueElementType.action)
+            if (((tNodeTagInfo)tn.Tag).type == eMenueElementType.action)
             {
-                textBoxResult.AppendText("void " + ((NodeTagInfo)tn.Tag).info + " (void);" + Environment.NewLine);
+                textBoxResult.AppendText("void " + ((tNodeTagInfo)tn.Tag).info + " (void);" + Environment.NewLine);
             }
             foreach (TreeNode tn2 in tn.Nodes)
             {
@@ -449,8 +451,8 @@ namespace Treebuilder
             {
                 try
                 {
-                if (!comboBoxParType.Items.Contains(((NodeTagInfo)tn2.Tag).ParType) && ((NodeTagInfo)tn2.Tag).ParType != "")
-                    comboBoxParType.Items.Add(((NodeTagInfo)tn2.Tag).ParType);
+                if (!comboBoxParType.Items.Contains(((tNodeTagInfo)tn2.Tag).ParType) && ((tNodeTagInfo)tn2.Tag).ParType != "")
+                    comboBoxParType.Items.Add(((tNodeTagInfo)tn2.Tag).ParType);
 
                 }
                 catch (Exception)
@@ -477,21 +479,22 @@ namespace Treebuilder
             // process all nodes here
             foreach (TreeNode tn in ano.Nodes)
             {
-                if (alRememberNodeNames.Contains(tn.Text))
+                if (m_alRememberNodeNames.Contains(tn.Text))
                 {
                     // already present
                 }
                 else
                 {
                     // new
-                    alRememberNodeNames.Add(tn.Text);
+                    m_alRememberNodeNames.Add(tn.Text);
 
-                    NodeTagInfo tag;
-                    tag = (NodeTagInfo)tn.Tag;
-                    tag.ID = number++;
-                    tn.Tag = tag;
+
                     textBoxResult.AppendText("" + ProcessNode(tbdef1.Text, tn) + " " + Environment.NewLine);
                 }
+                    tNodeTagInfo tag;
+                    tag = (tNodeTagInfo)tn.Tag;
+                    tag.ID = m_NodeCounterForID++;
+                    tn.Tag = tag;           
             }
 
             // get all nodes nodes processed
@@ -567,7 +570,7 @@ namespace Treebuilder
                                 sb.Append(Environment.NewLine);
                                 break;
                             case '#':
-                                sb.Append(((NodeTagInfo)tn.Tag).ID);
+                                sb.Append(((tNodeTagInfo)tn.Tag).ID);
                                 break;
                             case 's':
                                 sb.Append(tn.Text);
@@ -579,41 +582,41 @@ namespace Treebuilder
                                 if (tn.Parent == null)
                                 { sb.Append("0"); }
                                 else
-                                    sb.Append(((NodeTagInfo)tn.Parent.Tag).ID);
+                                    sb.Append(((tNodeTagInfo)tn.Parent.Tag).ID);
                                 break;
                             case 'A':
-                                if (((NodeTagInfo)tn.Tag).type == MenueElementType.action)
-                                    sb.Append(((NodeTagInfo)tn.Tag).info);
+                                if (((tNodeTagInfo)tn.Tag).type == eMenueElementType.action)
+                                    sb.Append(((tNodeTagInfo)tn.Tag).info);
                                 else
                                     sb.Append("0");
                                 break;
                             case 'P':
-                                if (((NodeTagInfo)tn.Tag).type == MenueElementType.parameter)
-                                    sb.Append("&" + ((NodeTagInfo)tn.Tag).info);
+                                if (((tNodeTagInfo)tn.Tag).type == eMenueElementType.parameter)
+                                    sb.Append("&" + ((tNodeTagInfo)tn.Tag).info);
                                 else
                                     sb.Append("0");
                                 break;
                             case 'j':
-                                NodeTagInfo nti;
+                                tNodeTagInfo nti;
                                 if (tn.Nodes.Count > 0)
                                 {
                                     // sub-nodes
-                                    nti = (NodeTagInfo)tn.Nodes[0].Tag;
+                                    nti = (tNodeTagInfo)tn.Nodes[0].Tag;
                                     sb.Append(nti.ID);
                                 }
-                                else if (((NodeTagInfo)tn.Tag).type == MenueElementType.main)
+                                else if (((tNodeTagInfo)tn.Tag).type == eMenueElementType.main)
                                 {
                                     // main menu (first one inside menu)
                                     sb.Append("1");
                                 }
-                                else if (((NodeTagInfo)tn.Tag).type == MenueElementType.back)
+                                else if (((tNodeTagInfo)tn.Tag).type == eMenueElementType.back)
                                 {
                                     // back: we need the first node in the nodes collection, where our parent is. 
                                     if (tn.Parent == null)
                                         sb.Append(" **ERROR_NO_PARENT** ");
                                     else
                                     {
-                                        nti = (NodeTagInfo)tn.Parent./*FirstNode.*/Tag;
+                                        nti = (tNodeTagInfo)tn.Parent./*FirstNode.*/Tag;
                                         sb.Append(nti.ID);
                                     }
                                 }
@@ -644,12 +647,12 @@ namespace Treebuilder
         private void treeView1_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
         {
             textBoxNodeName.Text = e.Node.Text;
-            textBoxInfo.Text = ((NodeTagInfo)(e.Node.Tag)).info;
-            comboBox1.SelectedIndex = (int)((NodeTagInfo)(e.Node.Tag)).type;
-            comboBoxParType.Text = ((NodeTagInfo)(e.Node.Tag)).ParType;
-            textBoxParValUpper.Text = ((NodeTagInfo)(e.Node.Tag)).ParUpper.ToString();
-            textBoxParValLower.Text = ((NodeTagInfo)(e.Node.Tag)).ParLower.ToString();
-            textBoxParValDefault.Text = ((NodeTagInfo)(e.Node.Tag)).ParDefault.ToString();
+            textBoxInfo.Text = ((tNodeTagInfo)(e.Node.Tag)).info;
+            comboBox1.SelectedIndex = (int)((tNodeTagInfo)(e.Node.Tag)).type;
+            comboBoxParType.Text = ((tNodeTagInfo)(e.Node.Tag)).ParType;
+            textBoxParValUpper.Text = ((tNodeTagInfo)(e.Node.Tag)).ParUpper.ToString();
+            textBoxParValLower.Text = ((tNodeTagInfo)(e.Node.Tag)).ParLower.ToString();
+            textBoxParValDefault.Text = ((tNodeTagInfo)(e.Node.Tag)).ParDefault.ToString();
         }
 
         private void textBoxNodeName_TextChanged(object sender, EventArgs e)
@@ -688,17 +691,17 @@ namespace Treebuilder
 
         private void CheckTagPresenceOfNode(TreeNode tn)
         {
-            NodeTagInfo nti;
+            tNodeTagInfo nti;
             if (tn.Tag == null)
             {
-                nti = new NodeTagInfo();
+                nti = new tNodeTagInfo();
                 nti.ID = -1;
                 nti.info = "";
                 nti.ParLower = 0;
                 nti.ParUpper = 0;
                 nti.ParType = "";
                 nti.ParDefault = 0;
-                nti.type = MenueElementType.normal;
+                nti.type = eMenueElementType.normal;
                 tn.Tag = nti;
             }
         }
@@ -718,13 +721,13 @@ namespace Treebuilder
 
         private void UpdateNodeValuesFromFields(TreeNode tn)
         {
-            NodeTagInfo nti;
+            tNodeTagInfo nti;
 
             if (tn != null)
             {
                 CheckTagPresenceOfNode(tn);
                 tn.Text = textBoxNodeName.Text;
-                nti = (NodeTagInfo)(tn.Tag);
+                nti = (tNodeTagInfo)(tn.Tag);
                 nti.info = textBoxInfo.Text;
 
                 try
@@ -753,11 +756,11 @@ namespace Treebuilder
                 }
                 nti.ParType = comboBoxParType.Text;
 
-                nti.type = (MenueElementType)comboBox1.SelectedIndex;
+                nti.type = (eMenueElementType)comboBox1.SelectedIndex;
                 tn.Tag = nti;
 
-                tn.ImageIndex = (int)((NodeTagInfo)tn.Tag).type;
-                tn.SelectedImageIndex = (int)((NodeTagInfo)tn.Tag).type;
+                tn.ImageIndex = (int)((tNodeTagInfo)tn.Tag).type;
+                tn.SelectedImageIndex = (int)((tNodeTagInfo)tn.Tag).type;
             }
 
             comboBoxParType.Items.Clear();
@@ -805,11 +808,9 @@ namespace Treebuilder
             }
         }
 
-        TreeNode sourceNode;
-
         private void treeView1_ItemDrag(object sender, ItemDragEventArgs e)
         {
-            sourceNode = (TreeNode)e.Item;
+            m_DragDropSourceNode = (TreeNode)e.Item;
             DoDragDrop(e.Item, DragDropEffects.Move);
         }
 
