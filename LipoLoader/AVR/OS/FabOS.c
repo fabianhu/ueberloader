@@ -37,6 +37,7 @@ extern unsigned char __heap_start;
 // Or use "register unsigned char counter asm("r3")";  Typically, it should be safe to use r2 through r7 that way.
 ISR  (OS_ScheduleISR) //__attribute__ ((naked,signal)) // Timer isr
 {
+	OS_DISABLEALLINTERRUPTS
 	OS_Int_saveCPUContext() ; 
 	MyOS.Stacks[MyOS.CurrTask] = SP ; // catch the SP before we (possibly) do anything with it.
 
@@ -57,6 +58,7 @@ ISR  (OS_ScheduleISR) //__attribute__ ((naked,signal)) // Timer isr
 
 	SP = MyOS.Stacks[MyOS.CurrTask] ;
 	OS_Int_restoreCPUContext() ;
+	OS_ENABLEALLINTERRUPTS
 	asm volatile("reti");  // at the XMEGA the I in SREG is statically ON before and after RETI.
 }
 
@@ -93,7 +95,7 @@ void leaveISR(void)
 
 void OS_Reschedule(void) //with "__attribute__ ((naked))"
 {
-	OS_PREVENTSCHEDULING;
+	OS_DISABLEALLINTERRUPTS;
 	
 	OS_Int_saveCPUContext() ; 
 	MyOS.Stacks[MyOS.CurrTask] = SP ; // catch the SP before we (possibly) do anything with it.
@@ -108,6 +110,7 @@ void OS_Reschedule(void) //with "__attribute__ ((naked))"
 	SP = MyOS.Stacks[MyOS.CurrTask] ;// set Stack pointer
 	OS_Int_restoreCPUContext() ;
 	
+	OS_ENABLEALLINTERRUPTS;
 	OS_ALLOWSCHEDULING;
 	asm volatile("reti"); // return from interrupt, even if not in Interrupt. Just to ensure, that the ISR is left.
 }

@@ -31,7 +31,7 @@
 #define OS_USEEXTCHECKS 1	// prevent false use of API -> does not work, but no damage to OS stability.
 #define OS_USEMEMCHECKS 0 	// Enable "OS_get_unused_Stack()" and "OS_GetQueueSpace()"
 #define OS_UNUSEDMASK 0xAA  // unused Stack RAM will be filled with this byte, if OS_USEMEMCHECKS == 1.
-#define OS_TRACE_ON  0 		// enable trace to OS_Tracebuffer[]
+#define OS_TRACE_ON  1 		// enable trace to OS_Tracebuffer[]
 #define OS_TRACESIZE 1000	// size of OS_Tracebuffer[] (depending on memory left ;-)
 
 #define OS_TypeAlarmTick_t uint16_t // change this type to uint32_t, if you need longer wait time than 65535 OS ticks.

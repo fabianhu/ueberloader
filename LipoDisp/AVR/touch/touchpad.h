@@ -27,7 +27,7 @@ void touch_init(void);
 //uint8_t touchGetPad(uint8_t pin);
 //int16_t touchGetSchwerpunkt(void);
 int16_t touch(void);
-void touchGetValue(int32_t* pValue, uint8_t Mutex);
+void touchGetValue(int32_t* pValue);
 //void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower);
 
 #define TOUCHCALINIT {0xffff,0xffff,0xffff,0xffff,0xffff}
@@ -36,6 +36,15 @@ void touchGetValue(int32_t* pValue, uint8_t Mutex);
 #define min(x,y) (((x)<(y))?(x):(y))
 #define max(x,y) (((x)>(y))?(x):(y))
 #define limit(v,l,u) (((v)<(l))?(l):(((v)>(u))?(u):(v)))
+
+
+typedef struct paticle_tag
+{
+	int32_t velocity;
+	int32_t position;
+	int32_t force;
+	int32_t friction; //(factor)
+}particle_t;
 
 
 #endif /* TOUCHPAD_H_ */
