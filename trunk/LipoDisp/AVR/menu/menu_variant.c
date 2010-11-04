@@ -93,7 +93,7 @@ char ud_name[][MAX_SRAM_ITEM_NAME_LENGHT+1]	={//Menu item name
 
 
 
-// Action Prototypes
+// Action functions
 void ActionChargeModeAuto (void){;}
 void ActionChargeModeMaual (void){;}
 void ActionChargeMethodFull (void){;}

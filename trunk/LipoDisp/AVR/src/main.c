@@ -26,10 +26,12 @@ extern UCIFrame_t g_tUCIRXFrame;
 extern uint8_t    g_ucRXLength;
 extern uint8_t test;
 extern uint16_t touchpads[TOUCHCOUNT];
-extern void process_touch(void);//change value
+extern particle_t myP;
+
 		
 // Defines for this file
-#define DISPLAYTEST 1
+#define DISPLAYTEST 0
+#define TOUCHTEST 1
 
 // *********  Task definitions
 OS_DeclareTask(TaskCommand,300);
@@ -41,6 +43,10 @@ OS_DeclareTask(TaskDisplay,700);
 // *********  Prototypes
 void CPU_init(void);
 void emstop(uint8_t e);
+void touchtest(void);
+extern void DoParticle(void);
+extern void process_touch(void);//change value
+int16_t touchGetSchwerpunkt(void);
 
 
 // Global variables
@@ -92,7 +98,7 @@ void TaskDisplay(void)
 #define LINEDIFF FONTSIZE*16
 
 	lcd_init(BPP24, ORIENTATION_0);
-	touch_init();
+
 	menu_init();
 
 	lcd_clear();//lcd clear needed here because a new screen is shown
@@ -106,6 +112,14 @@ void TaskDisplay(void)
 		ypos = 0;
 
 		OS_GetTicks(&t1);
+
+#if TOUCHTEST == 1
+		// the touch is tested here!
+
+		touchtest();
+#else
+
+
 
 		if(!glCommError || DISPLAYTEST == 1)
 		{
@@ -190,7 +204,7 @@ void TaskDisplay(void)
 				//commError(glCommError);
 		}
 
-
+#endif
 
 
 		OS_WaitTicks(OSALMWaitDisp,20);
@@ -205,33 +219,38 @@ void touchtest(void)
 	//				lcd_print(WHITE, BLACK, 1, 0, 16*i,"val/t%i/tIdx/t%i      " ,maxVal[i],maxIdx[i]);
 	//			}
 
-				/*static int16_t oypos;
-				int16_t nypos1;
-				nypos1 = gttestfixme;
-
-				touchGetValue(&value,0);
-
-				lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"VAL/t%i/tt      " ,value);
-
-
-
+//				static int16_t oypos;
+//				int16_t nypos1;
+//
+//
+//				//touchGetValue(&nypos1);
+//
+//
+//				lcd_print(WHITE, BLACK, FONTSIZE, 0, 16,"VAL/t%i/tt      " ,nypos1);
 
 
-				lcd_draw_box( 0,315,oypos,5,5);
-				if(nypos1 >0)
-				{
 
-					lcd_draw_box(0,315,nypos1/4,5,5);
-					oypos = nypos1/4;
-				}
+
+
+//				lcd_draw_box( 255,255,255,315,nypos1,5,5);
+//				if(nypos1 >0)
+//				{
+//
+//					lcd_draw_box(255,255,255,315,nypos1/4,5,5);
+//					oypos = nypos1/4;
+//				}
 
 	static uint16_t g;
 
 
 				g++;
-				//lcd_draw_pixel(RED,g,filtered+128);
-				lcd_draw_pixel(GREEN,g,128-value);
-				lcd_draw_pixel(YELLOW,g,nypos1/2);
+
+				uint16_t sp = touchGetSchwerpunkt();
+				//lcd_draw_pixel(GREEN,g,sp/2);
+
+				lcd_draw_pixel(RED,g,(myP.position/0xff)+160);
+				lcd_draw_pixel(GREEN,g,myP.velocity+128);
+				lcd_draw_pixel(YELLOW,g,myP.force+160);
 				if (g == 320)
 				{
 					lcd_clear();
@@ -242,7 +261,7 @@ void touchtest(void)
 
 
 
-				ypos =32;
+				/*ypos =32;
 				lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"P1/t%i      " ,touchpads[0]);
 				ypos += LINEDIFF;
 				lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"P2/t%i      " ,touchpads[1]);
@@ -330,6 +349,8 @@ void TaskTouch()
 #define TOUCHSENSELEVEL 15
 
 	static uint8_t firstrun = 1;
+
+	touch_init();
 	while(1)
 	{	
 	
@@ -352,19 +373,23 @@ void TaskTouch()
 		}
 
 		OS_WaitAlarm(OSALTouchRepeat);
-		OS_SetAlarm(OSALTouchRepeat,100);
+		OS_SetAlarm(OSALTouchRepeat,10); // every 10ms
 
 		g_NewComand = 1;
 
-		if (g_bMenuActive)
-		{
-			process_touch();//change value
-		}
-		else
-		{
-			// check, if the menu is to be activated.
-			// fixme do it
-		}
+
+		DoParticle();
+
+//		if (g_bMenuActive)
+//		{
+//			touch();//change value
+//		}
+//		else
+//		{
+//			// check, if the menu is to be activated.
+//			// fixme do it
+//			touch(); // fixme do not change values here, but only look if menu is to be activated.
+//		}
 
 	}
 }

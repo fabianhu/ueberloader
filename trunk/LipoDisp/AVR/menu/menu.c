@@ -89,7 +89,7 @@ void menu_show(void)
 	static uint16_t NewParameterValue=255;
 	
 	//get new value from UI
-	OS_PREVENTSCHEDULING // for MenuMode AND gucSelectedItem
+	OS_PREVENTSCHEDULING; // for MenuMode AND gucSelectedItem
 	if(MenuMode)	//if parameter edit mode is active
 	{
 		GetSubMenuCount(&SubMenuGroupSize, &StartIndex);
@@ -120,7 +120,7 @@ void menu_show(void)
 		}
 
 	}
-	OS_ALLOWSCHEDULING
+	OS_ALLOWSCHEDULING;
 
 	if(LastMenuIndex!=gucSelectedItem || ShowMenu)//new menu item is selected
 	{
@@ -199,7 +199,7 @@ void menu_show(void)
 void menu_select(void)
 {
 	uint8_t SubMenuGroupSize=0, StartIndex=0;
-	OS_PREVENTSCHEDULING // for MenuMode AND gucSelectedItem / Parameter
+	OS_PREVENTSCHEDULING; // for MenuMode AND gucSelectedItem / Parameter
 	
 	if(m_items[gucSelectedItem].ucJumpTrg)//jump to target menu item
 	{
@@ -250,7 +250,7 @@ void menu_select(void)
 	{
 //		asm("break");
 	}
-	OS_ALLOWSCHEDULING
+	OS_ALLOWSCHEDULING;
 }
 
 
