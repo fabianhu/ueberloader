@@ -20,7 +20,7 @@ void USARTinit(void)
 	USARTE0.BAUDCTRLA = BSEL & 0xFF; // BSEL 7:0
 	USARTE0.BAUDCTRLB = BSCALE << 4 | (BSEL & 0xF00)>>8; // BSCALE, BSEL 11:8
 	//	4. Set mode of operation.
-	USARTE0.CTRLA = USART_RXCINTLVL_HI_gc; // RX isr low prio
+	USARTE0.CTRLA = USART_RXCINTLVL_LO_gc; // RX isr low prio, because the Scheduler must never be interrupted.
 	USARTE0.CTRLC = 0b011; // asyncronous, no parity, one stop bit, 8 bits
 	//	5. Enable the Transmitter or the Receiver depending on the usage.
 	USARTE0.CTRLB =  USART_RXEN_bm |USART_TXEN_bm; //
@@ -29,7 +29,7 @@ void USARTinit(void)
 	DMA.CH1.DESTADDR1 = ((int)(&USARTE0.DATA) & 0xff00)>>8;
 	DMA.CH1.DESTADDR2 = ((int)(&USARTE0.DATA) & 0xff0000)>>16;
 	DMA.CH1.CTRLA = DMA_CH_BURSTLEN_1BYTE_gc | DMA_CH_SINGLE_bm;
-	DMA.CH1.CTRLB = 0;//DMA_CH_TRNINTLVL_HI_gc; // Hi isr for complete
+	DMA.CH1.CTRLB = 0;//DMA_CH_TRNINTLVL_LO_gc; // Lo isr for complete
 	DMA.CH1.ADDRCTRL = DMA_CH_SRCRELOAD_TRANSACTION_gc | DMA_CH_SRCDIR_INC_gc | DMA_CH_DESTRELOAD_NONE_gc | DMA_CH_DESTDIR_FIXED_gc;
 	DMA.CH1.TRIGSRC = DMA_CH_TRIGSRC_USARTE0_DRE_gc; // Channel 2 triggers DMA. (attention: channel 4 does not exist!!!)
 	//DMA.CH1.REPCNT = 1;

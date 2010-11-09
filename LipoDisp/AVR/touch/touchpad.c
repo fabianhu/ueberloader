@@ -163,7 +163,7 @@ uint8_t touchGetPad3(uint8_t pin)
 		mask = 1<<4;
 
 	cnt = 0;
-	OS_DISABLEALLINTERRUPTS;// absolutely no interrupts allowed here!
+	 OS_DISABLEALLINTERRUPTS;// absolutely no interrupts allowed here!
 	for(i=0;i<TOUCHREPCNT;i++)
 	{
 		TOUCHTOGGLEHIGH;
@@ -429,9 +429,11 @@ uint16_t GetvalueFromUI(void)
 
 void touchGetValue(int32_t* pValue) // read txtback the (changed) value Mutex?
 {
+	//OS_ENTERCRITICAL
 	OS_PREVENTSCHEDULING;
 	*pValue = touchValue/TOUCHREDUCEFACTOR;
 	OS_ALLOWSCHEDULING;
+	//OS_LEAVECRITICAL
 }
 
 
