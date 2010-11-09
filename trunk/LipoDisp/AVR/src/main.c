@@ -79,9 +79,11 @@ int main(void)
 		
 		asm("nop"); //at least one instruction is required!!!
 
-	/*	a = OS_GetUnusedStack(OSTSKCommand);
+#if OS_USEMEMCHECKS == 1
+		a = OS_GetUnusedStack(OSTSKCommand);
 		b = OS_GetUnusedStack(OSTSKTouch);
-		c = OS_GetUnusedStack(OSTSKDisplay);*/
+		c = OS_GetUnusedStack(OSTSKDisplay);
+#endif
 
 	}
 }
@@ -442,7 +444,7 @@ void CPU_init(void)
 	TCC1.CTRLD = 0;
 	TCC1.CTRLE = 0;
 	TCC1.INTCTRLA = 0;
-	TCC1.INTCTRLB = TC_CCAINTLVL_HI_gc; // enable compare match A
+	TCC1.INTCTRLB = TC_CCAINTLVL_HI_gc; // enable compare match A // highest prio, NO other ISR using OS-API must interrupt this one!
 	TCC1.CCA = 16000;//  gives 1ms clock @ 16 MHz
 
 	//Enable Interrupts in INT CTRL
