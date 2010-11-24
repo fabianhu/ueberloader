@@ -16,6 +16,11 @@
 #include "FabOS.h"
 #include "../FabOS_config.h"
 
+// Prototypes only used internally:
+int8_t OS_GetNextTaskNumber(); // internal: get the next task to be run// which is the next task (ready and highest (= rightmost); prio);?
+void OS_Int_ProcessAlarms(void);
+extern void leaveISR(void);
+
 FabOS_t MyOS; // the global instance of the OS struct
 
 #if OS_TRACE_ON == 1
@@ -35,9 +40,9 @@ extern unsigned char __heap_start;
 // It just compiles the code inside the braces.
 // *** No direct use of stack space inside a naked function, except embedding it into a function, as this creates a valid stack frame.
 // Or use "register unsigned char counter asm("r3")";  Typically, it should be safe to use r2 through r7 that way.
-ISR(OS_ScheduleISR) //__attribute__ ((naked,signal)) // Timer isr
+ISR  (OS_ScheduleISR) //__attribute__ ((naked,signal)) // Timer isr
 {
-	OS_DISABLEALLINTERRUPTS
+	//OS_DISABLEALLINTERRUPTS
 	OS_Int_saveCPUContext() ; 
 	MyOS.Stacks[MyOS.CurrTask] = SP ; // catch the SP before we (possibly) do anything with it.
 
@@ -58,7 +63,8 @@ ISR(OS_ScheduleISR) //__attribute__ ((naked,signal)) // Timer isr
 
 	SP = MyOS.Stacks[MyOS.CurrTask] ;
 	OS_Int_restoreCPUContext() ;
-	OS_ENABLEALLINTERRUPTS
+	//leaveISR();
+	//OS_ENABLEALLINTERRUPTS
 	asm volatile("reti");  // at the XMEGA the I in SREG is statically ON before and after RETI.
 }
 
@@ -87,9 +93,11 @@ void OS_Int_ProcessAlarms(void)
 
 void OS_Reschedule(void) //with "__attribute__ ((naked))"
 {
-	OS_DISABLEALLINTERRUPTS;
-//	OS_PREVENTSCHEDULING;
-	
+	OS_DISABLEALLINTERRUPTS
+	if(PMIC.STATUS & 4 || !(PMIC.CTRL &4))
+	{
+		asm("break");
+	}
 	OS_Int_saveCPUContext() ; 
 	MyOS.Stacks[MyOS.CurrTask] = SP ; // catch the SP before we (possibly) do anything with it.
 	
@@ -102,10 +110,14 @@ void OS_Reschedule(void) //with "__attribute__ ((naked))"
 	
 	SP = MyOS.Stacks[MyOS.CurrTask] ;// set Stack pointer
 	OS_Int_restoreCPUContext() ;
-	
+	//leaveISR();
 	OS_ENABLEALLINTERRUPTS;
-	OS_ALLOWSCHEDULING; // ALWAYS, because could be disabled by other API!!
-	asm volatile("reti"); // return from interrupt, even if not in Interrupt. Just to ensure, that the ISR is left.
+	if(PMIC.STATUS & 4 || !(PMIC.CTRL &4))
+	{
+		asm("break");
+	}
+	//OS_ALLOWSCHEDULING; // ALWAYS, because could be disabled by other API!!
+	asm volatile("ret"); // return from interrupt, even if not in Interrupt. Just to ensure, that the ISR is left.
 }
 
 int8_t OS_GetNextTaskNumber() // which is the next task (ready and highest (= rightmost) prio)?
@@ -180,19 +192,10 @@ void OS_TaskCreateInt( void (*t)(), uint8_t TaskID, uint8_t *stack, uint16_t sta
 
 	MyOS.Stacks[TaskID] = (uint16_t)stack + stackSize - 1 ; // Point the task's SP to the top address of the array that represents its stack.
 
-#ifdef OS_XMEGA_OPT // fixme test at larger devices !!!
-	*(uint8_t*)(MyOS.Stacks[TaskID]-1) = 0; // Put the address of the function that implements the task on its stack
 	*(uint8_t*)(MyOS.Stacks[TaskID]-1) = ((uint16_t)(t)) >> 8; // Put the address of the function that implements the task on its stack
 	*(uint8_t*)(MyOS.Stacks[TaskID]) = ((uint16_t)(t)) & 0x00ff;
-	MyOS.Stacks[TaskID] -= 36;   // Create a stack frame with placeholders for all the user registers as well as the SR.
 
-	#else
-
-	*(uint8_t*)(MyOS.Stacks[TaskID]-1) = ((uint16_t)(t)) >> 8; // Put the address of the function that implements the task on its stack
-	*(uint8_t*)(MyOS.Stacks[TaskID]) = ((uint16_t)(t)) & 0x00ff;
 	MyOS.Stacks[TaskID] -= 35;   // Create a stack frame with placeholders for all the user registers as well as the SR.
-#endif
-
 }
 
 
@@ -227,8 +230,8 @@ void OS_StartExecution()
 	//store THIS context for idling!!
 	MyOS.CurrTask = OS_NUMTASKS;
 	OS_Reschedule(); // Here every task is executed at least once.
-	OS_ALLOWSCHEDULING; // the stored context has the interrupts OFF! fixme check, if reschedule already allows it
-	sei();
+	OS_ALLOWSCHEDULING; // the stored context has the interrupts OFF!
+	OS_ENABLEALLINTERRUPTS;
 }
 
 
@@ -282,6 +285,7 @@ void OS_MutexRelease(int8_t mutexID)
 void OS_SetEvent(uint8_t TaskID, uint8_t EventMask) // Set one or more events
 {
 	OS_PREVENTSCHEDULING;
+
 	OS_TRACE(22);
 	MyOS.EventMask[TaskID] |= EventMask; // set the event mask, as there may be more events than waited for.
 
@@ -301,6 +305,31 @@ void OS_SetEvent(uint8_t TaskID, uint8_t EventMask) // Set one or more events
 		// remember the event and task continues on its call of WaitEvent directly. 
 		OS_ALLOWSCHEDULING;
 	}
+}
+
+void OS_SetEventfromISR(uint8_t TaskID, uint8_t EventMask) // Set one or more events
+{
+	OS_PREVENTSCHEDULING;
+
+	OS_TRACE(222);
+	MyOS.EventMask[TaskID] |= EventMask; // set the event mask, as there may be more events than waited for.
+
+	if(EventMask & MyOS.EventWaiting[TaskID]) // Targeted task is waiting for one of this events
+	{
+		OS_TRACE(223);
+		// wake up this task directly
+		MyOS.TaskReadyBits |= 1<<TaskID ;   // Make the task ready to run again.
+
+		// the waked up task will then clean up all entries to the event
+
+		//OS_Reschedule() ; // re-schedule; will wake up the sleeper directly, if higher prio.
+	}
+	else
+	{
+		OS_TRACE(224);
+		// remember the event and task continues on its call of WaitEvent directly.
+	}
+	OS_ALLOWSCHEDULING;
 }
 
 uint8_t OS_WaitEvent(uint8_t EventMask) //returns event(s), which lead to execution
@@ -473,7 +502,7 @@ uint8_t OS_GetQueueSpace(OS_Queue_t* pQueue)
 uint16_t OS_GetUnusedStack (uint8_t TaskID)
 {
    uint16_t unused = 0;
-   uint8_t *p = MyOS.StackStart[TaskID]; 
+   volatile uint8_t *p = MyOS.StackStart[TaskID];
 
    do
    {

@@ -55,9 +55,9 @@ MenuItem_t;
 #define WRONG_NEXT_UCID	4			//The ID of the next menu item is wrong
 
 //bitmasks
-#define BMSK_SELECTED 		(1<<2)
+//#define BMSK_SELECTED 		(1<<2)
 //#define BMSK_PAR_ED_MODE 	(1<<3)
-#define BMSK_NAME_LOCATION	ucSettings&0x03
+//#define BMSK_NAME_LOCATION	 // fixme versteh i ned
 	
 
 //extern Prototypes

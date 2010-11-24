@@ -15,20 +15,18 @@
 #ifndef FABOS_H
 #define FABOS_H
 
-
-
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include "../FabOS_config.h"
 
 // variable types for more tasks
-#if OS_NUMTASKS < 8
+#if OS_NUMTASKS <= 8
 #define OS_TypeTaskBits_t  uint8_t
-#elif OS_NUMTASKS < 16
+#elif OS_NUMTASKS <= 16
 #define OS_TypeTaskBits_t  uint16_t
-#elif OS_NUMTASKS < 32
+#elif OS_NUMTASKS <= 32
 #define OS_TypeTaskBits_t  uint32_t
-#elif OS_NUMTASKS < 64
+#elif OS_NUMTASKS <= 64
 #define OS_TypeTaskBits_t  uint64_t
 #else
 	#error reduce OS_NUMTASKS
@@ -82,8 +80,8 @@ extern FabOS_t MyOS;
 #define OS_CreateAlarm(ALARMID, TASKID) MyOS.Alarms[ALARMID].TaskID = TASKID; MyOS.Alarms[ALARMID].AlarmTicks = 0;
 
 #if OS_TRACE_ON == 1
-	#define OS_TRACE(X)\
-				OS_Tracebuffer[OS_TraceIdx++] = X ; \
+	#define OS_TRACE(X) \
+				OS_Tracebuffer[OS_TraceIdx++] = (X) ; \
 				if(OS_TraceIdx >= sizeof(OS_Tracebuffer)) OS_TraceIdx = 0;
 #else
 	#define OS_TRACE(X) ;
@@ -96,6 +94,7 @@ void 	OS_CustomISRCode(); // do not call; just fill in your code.
 void 	OS_StartExecution(); // Start the operating system
 
 void 	OS_SetEvent(uint8_t TaskID, uint8_t EventMask); // Set one or more events
+void 	OS_SetEventfromISR(uint8_t TaskID, uint8_t EventMask); // Set one or more events from inside of a ISR
 
 uint8_t OS_WaitEvent(uint8_t EventMask); //returns event(s) in a mask, which lead to execution
 
@@ -137,11 +136,9 @@ uint8_t OS_WaitEventTimeout(uint8_t EventMask, uint8_t AlarmID, OS_TypeAlarmTick
 #endif
 
 #define OS_WaitTicks(AlarmID,numTicks) do{\
-		OS_SetAlarm(AlarmID,numTicks);\
+		OS_SetAlarm(AlarmID,(numTicks));\
 		OS_WaitAlarm(AlarmID);\
 		}while(0)
-
-
 
 // *********  internal OS functions, not to be called by the user.
 ISR (OS_ScheduleISR)__attribute__ ((naked,signal)); // OS tick interrupt ISR (vector #defined in FabOS_config.h)
@@ -153,6 +150,7 @@ void OS_Reschedule(void)__attribute__ ((naked)); // internal: Trigger re-schedul
 int8_t OS_GetNextTaskNumber(); // internal: get the next task to be run// which is the next task (ready and highest (= rightmost); prio);?
 
 void OS_Int_ProcessAlarms(void);
+
 
 
 // *********  CPU related assembler stuff
@@ -278,19 +276,18 @@ asm volatile( \
 
 
 #if NUMMUTEX > NUMTASKS 
-	#warning "more mutexes than tasks? are you serious with that concept?"
+	#warning more mutexes than tasks? are you serious with that concept?
 #endif
 
 #if (OS_DO_TESTSUITE == 1) && (\
-		(	OS_NUMTASKS 	!=5	) ||\
+		(	OS_NUMTASKS 	!=3	) ||\
 		(	OS_NUMMUTEX 	!=3	) ||\
-		(   OS_NUMALARMS    !=6 ) ||\
 		(	OS_USEEXTCHECKS !=1 ) ||\
 		(	OS_USECLOCK 	!=1	) ||\
 		(	OS_USEMEMCHECKS !=1	) ||\
 		(	OS_USECOMBINED 	!=1	) \
 		) 
-		#error "please configure the defines for the testsuite as stated above!"
+		#error please configure the defines for the testsuite as stated above!
 #endif
 
 #if OS_USEMEMCHECKS == 0

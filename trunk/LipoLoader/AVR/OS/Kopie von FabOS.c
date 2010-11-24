@@ -14,7 +14,6 @@
 */
 
 #include "FabOS.h"
-#include "../FabOS_config.h"
 
 FabOS_t MyOS; // the global instance of the OS struct
 
@@ -35,9 +34,8 @@ extern unsigned char __heap_start;
 // It just compiles the code inside the braces.
 // *** No direct use of stack space inside a naked function, except embedding it into a function, as this creates a valid stack frame.
 // Or use "register unsigned char counter asm("r3")";  Typically, it should be safe to use r2 through r7 that way.
-ISR(OS_ScheduleISR) //__attribute__ ((naked,signal)) // Timer isr
+ISR  (OS_ScheduleISR) //__attribute__ ((naked,signal)) // Timer isr
 {
-	OS_DISABLEALLINTERRUPTS
 	OS_Int_saveCPUContext() ; 
 	MyOS.Stacks[MyOS.CurrTask] = SP ; // catch the SP before we (possibly) do anything with it.
 
@@ -55,10 +53,8 @@ ISR(OS_ScheduleISR) //__attribute__ ((naked,signal)) // Timer isr
 
 	// task is to be run
 	MyOS.CurrTask = OS_GetNextTaskNumber() ;
-
 	SP = MyOS.Stacks[MyOS.CurrTask] ;
 	OS_Int_restoreCPUContext() ;
-	OS_ENABLEALLINTERRUPTS
 	asm volatile("reti");  // at the XMEGA the I in SREG is statically ON before and after RETI.
 }
 
@@ -87,25 +83,22 @@ void OS_Int_ProcessAlarms(void)
 
 void OS_Reschedule(void) //with "__attribute__ ((naked))"
 {
-	OS_DISABLEALLINTERRUPTS;
-//	OS_PREVENTSCHEDULING;
-	
+	OS_ENTERCRITICAL;
 	OS_Int_saveCPUContext() ; 
 	MyOS.Stacks[MyOS.CurrTask] = SP ; // catch the SP before we (possibly) do anything with it.
-	
+
 	OS_TRACE(7);
 
 	// task is to be run
 	MyOS.CurrTask = OS_GetNextTaskNumber();
 
-	OS_TRACE(8);
-	
 	SP = MyOS.Stacks[MyOS.CurrTask] ;// set Stack pointer
+
+	OS_TRACE(8);
+
 	OS_Int_restoreCPUContext() ;
-	
-	OS_ENABLEALLINTERRUPTS;
-	OS_ALLOWSCHEDULING; // ALWAYS, because could be disabled by other API!!
-	asm volatile("reti"); // return from interrupt, even if not in Interrupt. Just to ensure, that the ISR is left.
+	OS_LEAVECRITICAL;
+	asm volatile("ret"); 
 }
 
 int8_t OS_GetNextTaskNumber() // which is the next task (ready and highest (= rightmost) prio)?
@@ -145,7 +138,7 @@ int8_t OS_GetNextTaskNumber() // which is the next task (ready and highest (= ri
 			next = MyOS.MutexOwnedByTask[MyOS.MutexTaskWaiting[next]]; 
 			// the blocker gets the run.
 			// this is also a priority inversion.
-			if(((1<<next)&MyOS.TaskReadyBits) == 0)  // special case, where the blocker is not ready to run (somehow illegal waiting inside mutex)
+			if(((1<<next)&MyOS.TaskReadyBits) == 0)  // special case, where the blocker is not ready to run (waiting inside mutex)
 			{
 				OS_TRACE(14);
 				next = OS_NUMTASKS; // the idle task gets the run...
@@ -180,19 +173,10 @@ void OS_TaskCreateInt( void (*t)(), uint8_t TaskID, uint8_t *stack, uint16_t sta
 
 	MyOS.Stacks[TaskID] = (uint16_t)stack + stackSize - 1 ; // Point the task's SP to the top address of the array that represents its stack.
 
-#ifdef OS_XMEGA_OPT // fixme test at larger devices !!!
-	*(uint8_t*)(MyOS.Stacks[TaskID]-1) = 0; // Put the address of the function that implements the task on its stack
 	*(uint8_t*)(MyOS.Stacks[TaskID]-1) = ((uint16_t)(t)) >> 8; // Put the address of the function that implements the task on its stack
 	*(uint8_t*)(MyOS.Stacks[TaskID]) = ((uint16_t)(t)) & 0x00ff;
-	MyOS.Stacks[TaskID] -= 36;   // Create a stack frame with placeholders for all the user registers as well as the SR.
 
-	#else
-
-	*(uint8_t*)(MyOS.Stacks[TaskID]-1) = ((uint16_t)(t)) >> 8; // Put the address of the function that implements the task on its stack
-	*(uint8_t*)(MyOS.Stacks[TaskID]) = ((uint16_t)(t)) & 0x00ff;
 	MyOS.Stacks[TaskID] -= 35;   // Create a stack frame with placeholders for all the user registers as well as the SR.
-#endif
-
 }
 
 
@@ -226,9 +210,8 @@ void OS_StartExecution()
 
 	//store THIS context for idling!!
 	MyOS.CurrTask = OS_NUMTASKS;
-	OS_Reschedule(); // Here every task is executed at least once.
-	OS_ALLOWSCHEDULING; // the stored context has the interrupts OFF! fixme check, if reschedule already allows it
-	sei();
+	OS_Reschedule();
+	OS_LEAVECRITICAL; // the stored context has the interrupts OFF!
 }
 
 
@@ -244,21 +227,21 @@ void OS_MutexGet(int8_t mutexID)
 		return;
 	}
 #endif
-	OS_PREVENTSCHEDULING;
+	OS_ENTERCRITICAL;
 	OS_TRACE(17);
 	while( MyOS.MutexOwnedByTask[mutexID] != 0xff) // as long as anyone is the owner..
 	{
 		OS_TRACE(18);
 		MyOS.MutexTaskWaiting[MyOS.CurrTask] = mutexID; // set waiting info for priority inversion of scheduler
 		OS_Reschedule(); // also re-enables interrupts...
-		OS_PREVENTSCHEDULING;
+		OS_ENTERCRITICAL;
 		OS_TRACE(19);
 		// we only get here, if the other has released the mutex.
 		MyOS.MutexTaskWaiting[MyOS.CurrTask] = 0xff; // remove waiting info
 	}
 	OS_TRACE(20);
 	MyOS.MutexOwnedByTask[mutexID] = MyOS.CurrTask; // tell others, that I am the owner.
-	OS_ALLOWSCHEDULING;
+	OS_LEAVECRITICAL;
 }
 
 // release the occupied mutex
@@ -271,7 +254,7 @@ void OS_MutexRelease(int8_t mutexID)
 		return;
 	}
 #endif
-	OS_PREVENTSCHEDULING;
+	OS_ENTERCRITICAL;
 	OS_TRACE(21);
 	MyOS.MutexOwnedByTask[mutexID] = 0xff; // tell others, that no one is the owner.
 	OS_Reschedule() ; // re-schedule; will wake up waiting task, if higher prio.
@@ -281,7 +264,7 @@ void OS_MutexRelease(int8_t mutexID)
 
 void OS_SetEvent(uint8_t TaskID, uint8_t EventMask) // Set one or more events
 {
-	OS_PREVENTSCHEDULING;
+	OS_ENTERCRITICAL;
 	OS_TRACE(22);
 	MyOS.EventMask[TaskID] |= EventMask; // set the event mask, as there may be more events than waited for.
 
@@ -299,7 +282,7 @@ void OS_SetEvent(uint8_t TaskID, uint8_t EventMask) // Set one or more events
 	{
 		OS_TRACE(24);
 		// remember the event and task continues on its call of WaitEvent directly. 
-		OS_ALLOWSCHEDULING;
+		OS_LEAVECRITICAL;
 	}
 }
 
@@ -314,7 +297,7 @@ uint8_t OS_WaitEvent(uint8_t EventMask) //returns event(s), which lead to execut
 #endif
 
 	uint8_t ret;
-	OS_PREVENTSCHEDULING;
+	OS_ENTERCRITICAL;
 	OS_TRACE(25);
 	
 	if(!(EventMask & MyOS.EventMask[MyOS.CurrTask])) // This task is Not having one of these events active
@@ -325,7 +308,7 @@ uint8_t OS_WaitEvent(uint8_t EventMask) //returns event(s), which lead to execut
 		MyOS.TaskReadyBits &= ~(1<<MyOS.CurrTask) ;     // indicate that this task is not ready to run.
 
 		OS_Reschedule() ; // re-schedule; will be waked up here by "SetEvent" or alarm
-		OS_PREVENTSCHEDULING;
+		OS_ENTERCRITICAL;
 		OS_TRACE(27);
 
 		MyOS.EventWaiting[MyOS.CurrTask] = 0; // no more waiting!
@@ -334,7 +317,7 @@ uint8_t OS_WaitEvent(uint8_t EventMask) //returns event(s), which lead to execut
 	// clear the events:
 	MyOS.EventMask[MyOS.CurrTask] &= ~EventMask; // the actual events minus the ones, which have been waited for 
 	OS_TRACE(28);
-	OS_ALLOWSCHEDULING;
+	OS_LEAVECRITICAL;
 	return ret;
 }
 
@@ -344,6 +327,8 @@ uint8_t OS_WaitEvent(uint8_t EventMask) //returns event(s), which lead to execut
 
 void OS_SetAlarm(uint8_t AlarmID, OS_TypeAlarmTick_t numTicks ) // set Alarm for the future and continue // set alarm to 0 disable an alarm.
 {
+	OS_ENTERCRITICAL;
+	OS_TRACE(29);
 #if OS_USEEXTCHECKS == 1
 	if(AlarmID >= OS_NUMALARMS)// check for ID out of range
 	{
@@ -351,10 +336,8 @@ void OS_SetAlarm(uint8_t AlarmID, OS_TypeAlarmTick_t numTicks ) // set Alarm for
 		return;
 	}
 #endif	
-	OS_PREVENTSCHEDULING;
-	OS_TRACE(29);
 	MyOS.Alarms[AlarmID].AlarmTicks = numTicks ;
-	OS_ALLOWSCHEDULING;
+	OS_LEAVECRITICAL;
 }
 
 void OS_WaitAlarm(uint8_t AlarmID) // Wait for any Alarm set by OS_SetAlarm
@@ -378,14 +361,14 @@ void OS_WaitAlarm(uint8_t AlarmID) // Wait for any Alarm set by OS_SetAlarm
 	}
 #endif
 
-	OS_PREVENTSCHEDULING; // re-enabled by OS_Schedule()
+	OS_ENTERCRITICAL; // re-enabled by OS_Schedule()
 	OS_TRACE(31);
 	if(MyOS.Alarms[AlarmID].AlarmTicks == 0 ) // notice: this "if" could be possibly omitted.
 	{
 #if OS_USEEXTCHECKS == 1
 		OS_ErrorHook(8); // OS_WaitAlarm: Alarm was not active
 #endif
-		OS_ALLOWSCHEDULING; // just continue
+		OS_LEAVECRITICAL; // just continue
 		return;  
 	}
 	else
@@ -410,12 +393,12 @@ typedef struct OS_Queue_tag {
 uint8_t OS_QueueIn(OS_Queue_t* pQueue , uint8_t* pByte)
 {
 	uint8_t i;
-	OS_PREVENTSCHEDULING;
+	OS_ENTERCRITICAL;
 	OS_TRACE(33);
 	if (pQueue->write + pQueue->chunk == pQueue->read || (pQueue->read == 0 && pQueue->write + pQueue->chunk == pQueue->size))
 	{
 		OS_TRACE(34);
-		OS_ALLOWSCHEDULING;
+		OS_LEAVECRITICAL;
 		return 1;  // queue full
 	}
 
@@ -427,19 +410,19 @@ uint8_t OS_QueueIn(OS_Queue_t* pQueue , uint8_t* pByte)
 			pQueue->write = 0;
 	}
 	OS_TRACE(35);
-	OS_ALLOWSCHEDULING;
+	OS_LEAVECRITICAL;
 	return 0;
 }
  
 uint8_t OS_QueueOut(OS_Queue_t* pQueue , uint8_t* pByte)
 {
 	uint8_t i;
-	OS_PREVENTSCHEDULING;
+	OS_ENTERCRITICAL;
 	OS_TRACE(36);
 	if (pQueue->read == pQueue->write)
 	{
 		OS_TRACE(37);
-		OS_ALLOWSCHEDULING;
+		OS_LEAVECRITICAL;
 		return 1; // queue empty
 	}
 
@@ -451,7 +434,7 @@ uint8_t OS_QueueOut(OS_Queue_t* pQueue , uint8_t* pByte)
 			pQueue->read = 0;
 	}
 	OS_TRACE(38);
-	OS_ALLOWSCHEDULING;
+	OS_LEAVECRITICAL;
 	return 0;
 }
 
@@ -491,9 +474,9 @@ uint16_t OS_GetUnusedStack (uint8_t TaskID)
 // fills given variable with the OS ticks since start.
 void OS_GetTicks(uint32_t* pTime) 
 {
-	OS_PREVENTSCHEDULING;
+	OS_ENTERCRITICAL;
 		*pTime = MyOS.OSTicks;
-	OS_ALLOWSCHEDULING;
+	OS_LEAVECRITICAL;
 }
 #endif
 

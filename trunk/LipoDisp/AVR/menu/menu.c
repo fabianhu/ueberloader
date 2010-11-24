@@ -106,7 +106,7 @@ void menu_show(void)
 				//save value
 			OldParameterValue=NewParameterValue;		
 			//draw selected item
-			if((m_items[gucSelectedItem].BMSK_NAME_LOCATION) == SRAM)
+			if((m_items[gucSelectedItem].ucSettings & 0x03) == SRAM)
 			{
 				menu_draw_selected_parameter(m_items[gucSelectedItem].strName, OldParameterValue, m_items[gucSelectedItem].pParamID->sParType, SelParLCDPos);
 			}
@@ -142,7 +142,7 @@ void menu_show(void)
 		if(OldParentID!=m_items[gucSelectedItem].ucParent || ShowMenu)
 		{
 			OldParentID=m_items[gucSelectedItem].ucParent;
-			if((m_items[m_items[gucSelectedItem].ucParent].BMSK_NAME_LOCATION) == SRAM)
+			if((m_items[m_items[gucSelectedItem].ucParent].ucSettings&0x03) == SRAM)
 			{
 				menu_draw_header(m_items[m_items[gucSelectedItem].ucParent].strName);
 			}
@@ -169,7 +169,7 @@ void menu_show(void)
 				//save pos
 				SelParLCDPos = LCDPos;
 				//draw selected item
-				if((m_items[i].BMSK_NAME_LOCATION) == SRAM)
+				if((m_items[i].ucSettings&0x03) == SRAM)
 				{
 					menu_draw_selected_item(m_items[i].strName, (uint16_t)m_items[i].pParamID, m_items[i].pParamID->sParam, m_items[i].pParamID->sParType, LCDPos);
 				}
@@ -181,7 +181,7 @@ void menu_show(void)
 			}
 			else
 			{
-				if((m_items[i].BMSK_NAME_LOCATION) == SRAM)
+				if((m_items[i].ucSettings&0x03) == SRAM)
 				{
 					menu_draw_unselected_items(m_items[i].strName, (uint16_t)m_items[i].pParamID, m_items[i].pParamID->sParam, m_items[i].pParamID->sParType, LCDPos);
 				}

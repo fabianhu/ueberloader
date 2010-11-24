@@ -34,9 +34,9 @@ extern particle_t myP;
 #define TOUCHTEST 1
 
 // *********  Task definitions
-OS_DeclareTask(TaskCommand,300);
 OS_DeclareTask(TaskTouch,200);
 OS_DeclareTask(TaskDisplay,700);
+OS_DeclareTask(TaskCommand,300);
 
 //OS_DeclareQueue(DemoQ,10,4);
 
@@ -51,8 +51,7 @@ int16_t touchGetSchwerpunkt(void);
 
 // Global variables
 uint8_t g_bMenuActive = DISPLAYTEST; // 1 = the menue is active
-static volatile uint16_t a,b,c;
-
+static volatile uint16_t a,b,c,d;
 
 
 // *********  THE main()
@@ -60,9 +59,9 @@ int main(void)
 {
 	CPU_init();
 
-    OS_CreateTask(TaskCommand, OSTSKCommand);
 	OS_CreateTask(TaskTouch, OSTSKTouch);
     OS_CreateTask(TaskDisplay, OSTSKDisplay);
+    OS_CreateTask(TaskCommand, OSTSKCommand);
 
 	OS_CreateAlarm(OSALMWaitDisp,OSTSKDisplay);
 	OS_CreateAlarm(OSALMCommandWait,OSTSKCommand);
@@ -79,10 +78,16 @@ int main(void)
 		
 		asm("nop"); //at least one instruction is required!!!
 
+		if(PMIC.STATUS & 4 || !(PMIC.CTRL &4))
+		{
+			asm("break"); // just for finding error fixme
+		}
+
 #if OS_USEMEMCHECKS == 1
 		a = OS_GetUnusedStack(OSTSKCommand);
 		b = OS_GetUnusedStack(OSTSKTouch);
 		c = OS_GetUnusedStack(OSTSKDisplay);
+		d = OS_GetUnusedStack(OS_NUMTASKS);
 #endif
 
 	}
@@ -94,7 +99,7 @@ void TaskDisplay(void)
 
 	uint16_t ypos=0;
 	uint32_t t1,t2;
-	uint8_t i;
+	//uint8_t i;
 
 #define FONTSIZE 1
 #define LINEDIFF FONTSIZE*16
@@ -108,17 +113,25 @@ void TaskDisplay(void)
 	lcd_clear();//lcd clear needed here because a new screen is shown
 
 	//touchSetValue(0L,-100L,100L);
-
+OS_GetTicks(&t1); // just for finding error fixme
 	while(1)
 	{
+
+
 		ypos = 0;
 
-		OS_GetTicks(&t1);
+		
 
 #if TOUCHTEST == 1
 		// the touch is tested here!
 
-		touchtest();
+		touchtest(); 
+
+		
+				OS_GetTicks(&t2);
+
+				t2=t2-t1;
+				lcd_print(GREY, BLACK, FONTSIZE, 0, 220,"Time: %i ms     " ,(uint16_t)t2);
 #else
 
 
@@ -209,7 +222,11 @@ void TaskDisplay(void)
 #endif
 
 
-		OS_WaitTicks(OSALMWaitDisp,20);
+		OS_WaitTicks(OSALMWaitDisp,10);
+		if(PMIC.STATUS & 4 || !(PMIC.CTRL &4))
+		{
+			asm("break"); // just for finding error fixme
+		}
 	}
 
 }
@@ -247,7 +264,7 @@ void touchtest(void)
 
 				g++;
 
-				uint16_t sp = touchGetSchwerpunkt();
+				//uint16_t sp = touchGetSchwerpunkt();
 				//lcd_draw_pixel(GREEN,g,sp/2);
 
 				lcd_draw_pixel(RED,g,(myP.position/0xff)+160);
@@ -301,6 +318,10 @@ void TaskCommand(void)
 	while(1)
 	{
 		OS_WaitAlarm(OSALMCommandRepeat);
+		if(PMIC.STATUS & 4 || !(PMIC.CTRL &4))
+		{
+			asm("break");// just for finding error fixme
+		}
 		OS_SetAlarm(OSALMCommandRepeat,200);
 
 		UCIFrame_t myU;
@@ -356,7 +377,7 @@ void TaskTouch()
 	while(1)
 	{	
 	
-		if(firstrun && (eeprom_read_word(&ParMaster->usMagic)== 12312))
+	if(firstrun && (eeprom_read_word(&ParMaster->usMagic)== 12312))
 		{
 			firstrun = 0;
 			OS_PREVENTSCHEDULING;
@@ -366,15 +387,19 @@ void TaskTouch()
 			g_tCommand.eChargerMode = eModeAuto;
 			g_tCommand.ucUserCellCount = 0;
 			OS_ALLOWSCHEDULING;
-		}
+			}
 
-		if(firstrun)
+	if(firstrun)
 		{
 			eeprom_write_word(&(ParMaster->usMagic),12312);
 			eeprom_write_word(&(ParMaster->usMinBalanceVolt_mV),3000);
 		}
 
 		OS_WaitAlarm(OSALTouchRepeat);
+		if(PMIC.STATUS & 4 || !(PMIC.CTRL &4))
+		{
+			asm("break"); // just for finding error fixme
+		}
 		OS_SetAlarm(OSALTouchRepeat,10); // every 10ms
 
 		g_NewComand = 1;
@@ -452,16 +477,14 @@ void CPU_init(void)
 
 	USARTinit();
 
-
 	// *** NO global interrupts enabled at this point!!!
-
-
-
 }
 
 ISR(OSC_XOSCF_vect)
 {
-	// oscillator failure	emstop(99);// emergency stop here!
+	//oscillator failure
+	asm("break");// just for finding error fixme
+	emstop(99);// emergency stop here!
 	CCP = CCP_IOREG_gc; // unlock
 	RST.CTRL = 1; // SW reset
 
