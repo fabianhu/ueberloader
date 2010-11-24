@@ -30,6 +30,8 @@ FabOS_t MyOS; // the global instance of the OS struct
 // From linker script
 extern unsigned char __heap_start;
 
+volatile uint8_t a=0;
+
 // *********  Timer Interrupt
 // The naked attribute tells the compiler not to add code to push the registers it uses onto the stack or even add a RETI instruction at the end. 
 // It just compiles the code inside the braces.
@@ -38,6 +40,7 @@ extern unsigned char __heap_start;
 ISR(OS_ScheduleISR) //__attribute__ ((naked,signal)) // Timer isr
 {
 	OS_DISABLEALLINTERRUPTS
+	a++;
 	OS_Int_saveCPUContext() ; 
 	MyOS.Stacks[MyOS.CurrTask] = SP ; // catch the SP before we (possibly) do anything with it.
 
@@ -49,6 +52,13 @@ ISR(OS_ScheduleISR) //__attribute__ ((naked,signal)) // Timer isr
 #if OS_USECLOCK == 1
 	MyOS.OSTicks++; 	// tick the RT-clock...
 #endif
+
+	static uint32_t ot;
+	if (MyOS.OSTicks-ot > 1)
+	{
+		asm("break");
+	}
+	ot = MyOS.OSTicks;
 	
 	OS_Int_ProcessAlarms(); // Calculate alarms; function uses stack
 	OS_TRACE(3);
@@ -58,7 +68,13 @@ ISR(OS_ScheduleISR) //__attribute__ ((naked,signal)) // Timer isr
 
 	SP = MyOS.Stacks[MyOS.CurrTask] ;
 	OS_Int_restoreCPUContext() ;
+
 	OS_ENABLEALLINTERRUPTS
+
+	a--;
+	if(a!=0)
+		asm("break");
+
 	asm volatile("reti");  // at the XMEGA the I in SREG is statically ON before and after RETI.
 }
 
@@ -88,7 +104,6 @@ void OS_Int_ProcessAlarms(void)
 void OS_Reschedule(void) //with "__attribute__ ((naked))"
 {
 	OS_DISABLEALLINTERRUPTS;
-//	OS_PREVENTSCHEDULING;
 	
 	OS_Int_saveCPUContext() ; 
 	MyOS.Stacks[MyOS.CurrTask] = SP ; // catch the SP before we (possibly) do anything with it.
@@ -104,7 +119,7 @@ void OS_Reschedule(void) //with "__attribute__ ((naked))"
 	OS_Int_restoreCPUContext() ;
 	
 	OS_ENABLEALLINTERRUPTS;
-	OS_ALLOWSCHEDULING; // ALWAYS, because could be disabled by other API!!
+	OS_ALLOWSCHEDULING;
 	asm volatile("reti"); // return from interrupt, even if not in Interrupt. Just to ensure, that the ISR is left.
 }
 
@@ -145,7 +160,7 @@ int8_t OS_GetNextTaskNumber() // which is the next task (ready and highest (= ri
 			next = MyOS.MutexOwnedByTask[MyOS.MutexTaskWaiting[next]]; 
 			// the blocker gets the run.
 			// this is also a priority inversion.
-			if(((1<<next)&MyOS.TaskReadyBits) == 0)  // special case, where the blocker is not ready to run (somehow illegal waiting inside mutex)
+			if(((1<<next)&MyOS.TaskReadyBits) == 0)  // special case, where the blocker is not ready to run (waiting inside mutex)
 			{
 				OS_TRACE(14);
 				next = OS_NUMTASKS; // the idle task gets the run...
@@ -180,7 +195,7 @@ void OS_TaskCreateInt( void (*t)(), uint8_t TaskID, uint8_t *stack, uint16_t sta
 
 	MyOS.Stacks[TaskID] = (uint16_t)stack + stackSize - 1 ; // Point the task's SP to the top address of the array that represents its stack.
 
-#ifdef OS_XMEGA_OPT // fixme test at larger devices !!!
+#ifdef OS_XMEGA_OPT
 	*(uint8_t*)(MyOS.Stacks[TaskID]-1) = 0; // Put the address of the function that implements the task on its stack
 	*(uint8_t*)(MyOS.Stacks[TaskID]-1) = ((uint16_t)(t)) >> 8; // Put the address of the function that implements the task on its stack
 	*(uint8_t*)(MyOS.Stacks[TaskID]) = ((uint16_t)(t)) & 0x00ff;
@@ -226,8 +241,8 @@ void OS_StartExecution()
 
 	//store THIS context for idling!!
 	MyOS.CurrTask = OS_NUMTASKS;
-	OS_Reschedule(); // Here every task is executed at least once.
-	OS_ALLOWSCHEDULING; // the stored context has the interrupts OFF! fixme check, if reschedule already allows it
+	OS_Reschedule();
+	OS_ALLOWSCHEDULING; // the stored context has the interrupts OFF!
 	sei();
 }
 
@@ -344,6 +359,8 @@ uint8_t OS_WaitEvent(uint8_t EventMask) //returns event(s), which lead to execut
 
 void OS_SetAlarm(uint8_t AlarmID, OS_TypeAlarmTick_t numTicks ) // set Alarm for the future and continue // set alarm to 0 disable an alarm.
 {
+	OS_PREVENTSCHEDULING;
+	OS_TRACE(29);
 #if OS_USEEXTCHECKS == 1
 	if(AlarmID >= OS_NUMALARMS)// check for ID out of range
 	{
@@ -351,8 +368,6 @@ void OS_SetAlarm(uint8_t AlarmID, OS_TypeAlarmTick_t numTicks ) // set Alarm for
 		return;
 	}
 #endif	
-	OS_PREVENTSCHEDULING;
-	OS_TRACE(29);
 	MyOS.Alarms[AlarmID].AlarmTicks = numTicks ;
 	OS_ALLOWSCHEDULING;
 }

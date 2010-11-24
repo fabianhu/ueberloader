@@ -12,23 +12,19 @@
 	If you have to change something, please let the author know via FabOS@huslik-elektronik.de.
 
 */
-#ifndef FABOS_H
-#define FABOS_H
-
-
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include "../FabOS_config.h"
 
 // variable types for more tasks
-#if OS_NUMTASKS < 8
+#if OS_NUMTASKS <= 8
 #define OS_TypeTaskBits_t  uint8_t
-#elif OS_NUMTASKS < 16
+#elif OS_NUMTASKS <= 16
 #define OS_TypeTaskBits_t  uint16_t
-#elif OS_NUMTASKS < 32
+#elif OS_NUMTASKS <= 32
 #define OS_TypeTaskBits_t  uint32_t
-#elif OS_NUMTASKS < 64
+#elif OS_NUMTASKS <= 64
 #define OS_TypeTaskBits_t  uint64_t
 #else
 	#error reduce OS_NUMTASKS
@@ -157,8 +153,9 @@ void OS_Int_ProcessAlarms(void);
 
 // *********  CPU related assembler stuff
 
-#define OS_DISABLEALLINTERRUPTS cli();
-#define OS_ENABLEALLINTERRUPTS sei();
+#define OS_ENTERCRITICAL cli();
+#define OS_LEAVECRITICAL sei();
+
 
 // Save all CPU registers on the AVR chip.
 // The last two lines save the status register.
@@ -197,7 +194,7 @@ asm volatile( \
 	push r30\n\t\
 	push r31\n\t\
 	in r0,0x3f\n\t\
-	push r0\n\t");
+	push r0");
 
 // Restore all AVR CPU Registers. The first two lines
 // restore the status register.
@@ -236,7 +233,7 @@ asm volatile( \
 	pop r3\n\t\
 	pop r2\n\t\
 	pop r1\n\t\
-	pop r0\n\t");
+	pop r0");
 
 
 
@@ -278,19 +275,18 @@ asm volatile( \
 
 
 #if NUMMUTEX > NUMTASKS 
-	#warning "more mutexes than tasks? are you serious with that concept?"
+	#warning more mutexes than tasks? are you serious with that concept?
 #endif
 
 #if (OS_DO_TESTSUITE == 1) && (\
-		(	OS_NUMTASKS 	!=5	) ||\
+		(	OS_NUMTASKS 	!=3	) ||\
 		(	OS_NUMMUTEX 	!=3	) ||\
-		(   OS_NUMALARMS    !=6 ) ||\
 		(	OS_USEEXTCHECKS !=1 ) ||\
 		(	OS_USECLOCK 	!=1	) ||\
 		(	OS_USEMEMCHECKS !=1	) ||\
 		(	OS_USECOMBINED 	!=1	) \
 		) 
-		#error "please configure the defines for the testsuite as stated above!"
+		#error please configure the defines for the testsuite as stated above!
 #endif
 
 #if OS_USEMEMCHECKS == 0
@@ -300,5 +296,3 @@ asm volatile( \
 #if OS_UNUSEDMASK+OS_NUMTASKS > 0xff
 	#error please redefine OS_UNUSEDMASK to a smaller number!
 #endif
-
-#endif // FABOS_H
