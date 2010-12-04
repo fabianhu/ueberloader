@@ -146,6 +146,7 @@ void HandleSerial(UCIFrame_t *_RXFrame)
 	}
 }
 
+// Attention, the pointer content is CHANGED!!!
 void UCISendBlockCrc( UCIFrame_t* pU)
 {
 	// prepare RX for answer BEFORE sending, as we could be interrupted afterwards.
