@@ -52,6 +52,7 @@ int16_t touchGetSchwerpunkt(void);
 
 
 // Global variables
+UCIFrame_t g_tUCITXBlock; // used in DMA
 uint8_t g_bMenuActive = DISPLAYTEST; // 1 = the menue is active
 static volatile uint16_t a,b,c,d;
 
@@ -305,7 +306,7 @@ uint8_t vWaitForResult(void)
 
 uint8_t g_NewComand =0; // indicates new command to be sent
 
-volatile UCIFrame_t myU; // used in DMA
+
 
 void TaskCommand(void)
 {
@@ -317,31 +318,31 @@ void TaskCommand(void)
 
 
 
-		myU.ID = 55;
-		myU.UCI = UCI_GET_OPVs;
-		myU.len = UCIHEADERLEN;
-		UCISendBlockCrc(&myU);
+		g_tUCITXBlock.ID = 55;
+		g_tUCITXBlock.UCI = UCI_GET_OPVs;
+		g_tUCITXBlock.len = UCIHEADERLEN;
+		UCISendBlockCrc(&g_tUCITXBlock);
 	    glCommError = vWaitForResult();
 
 	    if(g_NewComand)
 	    {
-	    	myU.ID = 55;
-			myU.UCI = UCI_SET_CMDs;
-			myU.len = UCIHEADERLEN+sizeof(Command_t);
+	    	g_tUCITXBlock.ID = 55;
+			g_tUCITXBlock.UCI = UCI_SET_CMDs;
+			g_tUCITXBlock.len = UCIHEADERLEN+sizeof(Command_t);
 	    	OS_MutexGet(OSMTXCommand);
-				memcpy(myU.values,&g_tCommand,sizeof(Command_t));
+				memcpy(g_tUCITXBlock.values,&g_tCommand,sizeof(Command_t));
 	    	OS_MutexRelease(OSMTXCommand);
-	    	UCISendBlockCrc(&myU);
+	    	UCISendBlockCrc(&g_tUCITXBlock);
 
 	    	//OS_WaitTicks(OSALMCommandWait,20);
 			//glCommError = vWaitForResult();
 	    	g_NewComand = 0;
 	    }
 
-	    /*myU.ID = 55;
-	    myU.UCI = UCI_GET_CMDs;
-	    myU.len = UCIHEADERLEN;
-	    UCISendBlockCrc(&myU);
+	    /*g_tUCITXBlock.ID = 55;
+	    g_tUCITXBlock.UCI = UCI_GET_CMDs;
+	    g_tUCITXBlock.len = UCIHEADERLEN;
+	    UCISendBlockCrc(&g_tUCITXBlock);
 	    glCommError = vWaitForResult();*/
 	}
 }
