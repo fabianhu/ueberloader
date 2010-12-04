@@ -33,7 +33,7 @@ extern particle_t myP;
 		
 // Defines for this file
 #define DISPLAYTEST 0
-#define TOUCHTEST 1
+#define TOUCHTEST 0
 
 // *********  Task definitions
 OS_DeclareTask(TaskTouch,200);
@@ -97,7 +97,7 @@ void TaskDisplay(void)
 
 	uint16_t ypos=0;
 	uint32_t t1,t2;
-	//uint8_t i;
+	uint8_t i;
 
 #define FONTSIZE 1
 #define LINEDIFF FONTSIZE*16
