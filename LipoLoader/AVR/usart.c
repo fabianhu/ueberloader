@@ -19,10 +19,13 @@ void USARTinit(void)
 	USARTE0_BAUDCTRLA = BSEL & 0xFF; // BSEL 7:0
 	USARTE0_BAUDCTRLB = BSCALE << 4 | (BSEL & 0xF00)>>8; // BSCALE, BSEL 11:8
 	//	4. Set mode of operation.
-	USARTE0_CTRLA = 0;//USART_RXCINTLVL_LO_gc; // RX isr low prio, because the Scheduler must never be interrupted.
+	USARTE0_CTRLA = USART_RXCINTLVL_LO_gc; // RX isr low prio, because the Scheduler must never be interrupted.
 	USARTE0_CTRLC = 0b011; // asyncronous, no parity, one stop bit, 8 bits
 	//	5. Enable the Transmitter or the Receiver depending on the usage.
 	USARTE0_CTRLB =  USART_RXEN_bm |USART_TXEN_bm; //
+
+	// generally enable low level ISR
+	PMIC_CTRL |= PMIC_LOLVLEN_bm;
 
 	DMA_CH1_DESTADDR0 = (int)(&USARTE0.DATA) & 0xff;
 	DMA_CH1_DESTADDR1 = ((int)(&USARTE0.DATA) & 0xff00)>>8;
@@ -45,7 +48,7 @@ void USARTinit(void)
 	// enable TX pin
 	PORTE_DIRSET = (1<<3); // PE3
 
-	// fixme re-enable !DMA_CTRL |= DMA_ENABLE_bm;
+	DMA_CTRL |= DMA_ENABLE_bm;
 }
 
 //ISR(DMA_CH2_vect)
