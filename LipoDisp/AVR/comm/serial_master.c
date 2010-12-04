@@ -97,13 +97,14 @@ void HandleSerial(UCIFrame_t *_RXFrame)
 
 }
 
+// ATTENTION, the data given with the Pointer IS MODIFIED HERE!!!!!
 void UCISendBlockCrc( UCIFrame_t* pU) // if the master sends a block, it is to be assumed, that the RX data is useless, therefore it is discarded here.
 {
 	// prepare RX for answer BEFORE sending, as we could be interrupted afterwards.
 
 	g_ucRXLength = 0; // reset received data length
 	g_tUCIRXFrame.len = UCIHEADERLEN; // reset header length in recd. data
-	pU->crc = 0;
+	pU->crc = 0; 
 	pU->crc = CRC8x((uint8_t*)pU ,pU->len);
 	if(USARTSendBlockDMA(&DMA.CH1,(uint8_t*)pU ,pU->len)) glCommError = 4;
 }
