@@ -7,7 +7,6 @@
 
 #include "usart.h"
 #include "usart_variant.h"
-#include "../OS/FabOS.h"
 
 void USARTinit(void)
 {
