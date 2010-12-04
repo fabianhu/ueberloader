@@ -20,11 +20,11 @@
 	#define OS_PREVENTSCHEDULING 	TIMSK1 &= ~(1<<OCIE1A); // turn Timer Interrupt OFF
 #elif defined (__AVR_ATxmega32A4__)
 	#define OS_ScheduleISR 			TCC1_CCA_vect
-//	#define OS_ALLOWSCHEDULING 		TCC1.INTCTRLB |= 3 ;//;	// turn Timer Interrupt ON
-//	#define OS_PREVENTSCHEDULING 	TCC1.INTCTRLB &= ~3 ; // turn Timer Interrupt OFF
+//	#define OS_ALLOWSCHEDULING 		TCC1_INTCTRLB |= 3 ;//;	// turn Timer Interrupt ON
+//	#define OS_PREVENTSCHEDULING 	TCC1_INTCTRLB &= ~3 ; // turn Timer Interrupt OFF
 	#define OS_ALLOWSCHEDULING 		sei();//glTest = 0; TCC1.INTCTRLB |= 3 ;//;	// turn Timer Interrupt ON
 	#define OS_PREVENTSCHEDULING 	cli();//glTest = 1; TCC1.INTCTRLB &= ~3 ; // turn Timer Interrupt OFF
-	// #define OS_XMEGA_OPT // only for larger (>128k parts)
+	#define OS_XMEGA_OPT 0// only for larger (>128k parts)
 #else
 	#error "MCU Timer ISR not defined. Set correct ISR vector in FabOS_config.h"
 #endif

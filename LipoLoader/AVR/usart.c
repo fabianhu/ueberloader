@@ -12,48 +12,48 @@
 void USARTinit(void)
 {
 	//	1. Set the TxD pin value high.
-	PORTE.OUTSET = (1<<3);
+	PORTE_OUTSET = (1<<3);
 	//	2. Set the TxD pin as output.
-	PORTE.DIRSET = (1<<3);
+	PORTE_DIRSET = (1<<3);
 	//	3. Set the baud rate and frame format.
 
-	USARTE0.BAUDCTRLA = BSEL & 0xFF; // BSEL 7:0
-	USARTE0.BAUDCTRLB = BSCALE << 4 | (BSEL & 0xF00)>>8; // BSCALE, BSEL 11:8
+	USARTE0_BAUDCTRLA = BSEL & 0xFF; // BSEL 7:0
+	USARTE0_BAUDCTRLB = BSCALE << 4 | (BSEL & 0xF00)>>8; // BSCALE, BSEL 11:8
 	//	4. Set mode of operation.
-	USARTE0.CTRLA = USART_RXCINTLVL_LO_gc; // RX isr low prio, because the Scheduler must never be interrupted.
-	USARTE0.CTRLC = 0b011; // asyncronous, no parity, one stop bit, 8 bits
+	USARTE0_CTRLA = 0;//USART_RXCINTLVL_LO_gc; // RX isr low prio, because the Scheduler must never be interrupted.
+	USARTE0_CTRLC = 0b011; // asyncronous, no parity, one stop bit, 8 bits
 	//	5. Enable the Transmitter or the Receiver depending on the usage.
-	USARTE0.CTRLB =  USART_RXEN_bm |USART_TXEN_bm; //
+	USARTE0_CTRLB =  USART_RXEN_bm |USART_TXEN_bm; //
 
-	DMA.CH1.DESTADDR0 = (int)(&USARTE0.DATA) & 0xff;
-	DMA.CH1.DESTADDR1 = ((int)(&USARTE0.DATA) & 0xff00)>>8;
-	DMA.CH1.DESTADDR2 = ((int)(&USARTE0.DATA) & 0xff0000)>>16;
-	DMA.CH1.CTRLA = DMA_CH_BURSTLEN_1BYTE_gc | DMA_CH_SINGLE_bm;
-	DMA.CH1.CTRLB = 0;//DMA_CH_TRNINTLVL_LO_gc; // Lo isr for complete
-	DMA.CH1.ADDRCTRL = DMA_CH_SRCRELOAD_TRANSACTION_gc | DMA_CH_SRCDIR_INC_gc | DMA_CH_DESTRELOAD_NONE_gc | DMA_CH_DESTDIR_FIXED_gc;
-	DMA.CH1.TRIGSRC = DMA_CH_TRIGSRC_USARTE0_DRE_gc; // Channel 2 triggers DMA. (attention: channel 4 does not exist!!!)
-	//DMA.CH1.REPCNT = 1;
+	DMA_CH1_DESTADDR0 = (int)(&USARTE0.DATA) & 0xff;
+	DMA_CH1_DESTADDR1 = ((int)(&USARTE0.DATA) & 0xff00)>>8;
+	DMA_CH1_DESTADDR2 = ((int)(&USARTE0.DATA) & 0xff0000)>>16;
+	DMA_CH1_CTRLA = DMA_CH_BURSTLEN_1BYTE_gc | DMA_CH_SINGLE_bm;
+	DMA_CH1_CTRLB = 0;//DMA_CH_TRNINTLVL_LO_gc; // Lo isr for complete
+	DMA_CH1_ADDRCTRL = DMA_CH_SRCRELOAD_TRANSACTION_gc | DMA_CH_SRCDIR_INC_gc | DMA_CH_DESTRELOAD_NONE_gc | DMA_CH_DESTDIR_FIXED_gc;
+	DMA_CH1_TRIGSRC = DMA_CH_TRIGSRC_USARTE0_DRE_gc; // Channel 2 triggers DMA. (attention: channel 4 does not exist!!!)
+	//DMA_CH1.REPCNT = 1;
 //
-//	DMA.CH2.SRCADDR0 = (int)(&USARTE0.DATA) & 0xff;
-//	DMA.CH2.SRCADDR1 = ((int)(&USARTE0.DATA) & 0xff00)>>8;
-//	DMA.CH2.SRCADDR2 = ((int)(&USARTE0.DATA) & 0xff0000)>>16;
-//	DMA.CH2.CTRLA = DMA_CH_BURSTLEN_1BYTE_gc | DMA_CH_SINGLE_bm;//0b00000001;
-//	DMA.CH2.CTRLB = DMA_CH_TRNINTLVL_HI_gc; // Hi isr for complete
-//	DMA.CH2.ADDRCTRL = DMA_CH_SRCRELOAD_NONE_gc | DMA_CH_SRCDIR_FIXED_gc | DMA_CH_DESTRELOAD_TRANSACTION_gc | DMA_CH_DESTDIR_INC_gc;
-//	DMA.CH2.TRIGSRC = DMA_CH_TRIGSRC_USARTE0_RXC_gc;
-//	DMA.CH2.REPCNT = 1;
+//	DMA_CH2.SRCADDR0 = (int)(&USARTE0.DATA) & 0xff;
+//	DMA_CH2.SRCADDR1 = ((int)(&USARTE0.DATA) & 0xff00)>>8;
+//	DMA_CH2.SRCADDR2 = ((int)(&USARTE0.DATA) & 0xff0000)>>16;
+//	DMA_CH2.CTRLA = DMA_CH_BURSTLEN_1BYTE_gc | DMA_CH_SINGLE_bm;//0b00000001;
+//	DMA_CH2.CTRLB = DMA_CH_TRNINTLVL_HI_gc; // Hi isr for complete
+//	DMA_CH2.ADDRCTRL = DMA_CH_SRCRELOAD_NONE_gc | DMA_CH_SRCDIR_FIXED_gc | DMA_CH_DESTRELOAD_TRANSACTION_gc | DMA_CH_DESTDIR_INC_gc;
+//	DMA_CH2.TRIGSRC = DMA_CH_TRIGSRC_USARTE0_RXC_gc;
+//	DMA_CH2.REPCNT = 1;
 
 	// enable TX pin
-	PORTE.DIRSET = (1<<3); // PE3
+	PORTE_DIRSET = (1<<3); // PE3
 
-	DMA.CTRL |= DMA_ENABLE_bm;
+	// fixme re-enable !DMA_CTRL |= DMA_ENABLE_bm;
 }
 
 //ISR(DMA_CH2_vect)
 //{
 //	uint16_t i;
 //
-//	i= GetRecvdBytes(&DMA.CH2);
+//	i= GetRecvdBytes(&DMA_CH2);
 //}
 
 

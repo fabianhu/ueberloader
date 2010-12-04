@@ -66,8 +66,8 @@ void lcd_init(uint8_t ColorMode, uint8_t Orientation)
 	//lcd data port as output
 	LCD_DATA_DDR = 0xff;
 	//lcd cmd port as output except TE
-    PORTB.DIRSET = (1<<1);
-	PORTD.DIRSET = 0x0f;
+    PORTB_DIRSET = (1<<1);
+	PORTD_DIRSET = 0x0f;
 	//init values
 	LCD_WR_S;
 	LCD_CS_C;
@@ -812,7 +812,6 @@ void lcd_print(uint8_t font_red, uint8_t font_green, uint8_t font_blue, uint8_t 
 	//get position
 	new_x_pos=x_pos;
 	new_y_pos=y_pos;
-
 			
     	while (*ptr_string)
     	{

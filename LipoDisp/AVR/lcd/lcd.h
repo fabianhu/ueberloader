@@ -32,7 +32,7 @@
 #define HIGHBYTE(val)	(val & 0xFF00) >> 8		*/
 
 #define LOW(Data) (*((uint8_t *)(&(Data))))
-#define HIGH(Data) (*(((uint8_t *)&(Data))+1))  // obacht! Klammersetzung!
+#define HIGH(Data) (*(((uint8_t *)&(Data))+1))  // obacht! Klammersetzung! // fixme anders?
 
 // LCD commands
 //		command		 	value	description						
@@ -75,26 +75,26 @@
 
 //LCD Signal/Data-port
 //#define TE  	         		x		//TE effect is ON when input is 0
-#define LCD_DATA_PIN            PORTA.IN
-#define LCD_DATA_DDR            PORTA.DIR
-#define LCD_DATA_PORT           PORTA.OUT
+#define LCD_DATA_PIN            PORTA_IN
+#define LCD_DATA_DDR            PORTA_DIR
+#define LCD_DATA_PORT           PORTA_OUT
 
 
-#define LCD_WR_S  PORTD.OUTSET = (1<<0)//write at positive edge
-#define LCD_WR_C  PORTD.OUTCLR = (1<<0)
-#define LCD_CS_S  PORTD.OUTSET = (1<<2)//chip select active low
-#define LCD_CS_C  PORTD.OUTCLR = (1<<2)
-#define LCD_RE_S  PORTD.OUTSET = (1<<3)//reset active low
-#define LCD_RE_C  PORTD.OUTCLR = (1<<3)
-#define LCD_DC_S  PORTB.OUTSET = (1<<1)//Data=1/Command=0
-#define LCD_DC_C  PORTB.OUTCLR = (1<<1)
-#define LCD_RD_S  PORTD.OUTSET = (1<<1)//read the ID or frame memory bytes at rising edge
-#define LCD_RD_C  PORTD.OUTCLR = (1<<1)
+#define LCD_WR_S  PORTD_OUTSET = (1<<0)//write at positive edge
+#define LCD_WR_C  PORTD_OUTCLR = (1<<0)
+#define LCD_CS_S  PORTD_OUTSET = (1<<2)//chip select active low
+#define LCD_CS_C  PORTD_OUTCLR = (1<<2)
+#define LCD_RE_S  PORTD_OUTSET = (1<<3)//reset active low
+#define LCD_RE_C  PORTD_OUTCLR = (1<<3)
+#define LCD_DC_S  PORTB_OUTSET = (1<<1)//Data=1/Command=0
+#define LCD_DC_C  PORTB_OUTCLR = (1<<1)
+#define LCD_RD_S  PORTD_OUTSET = (1<<1)//read the ID or frame memory bytes at rising edge
+#define LCD_RD_C  PORTD_OUTCLR = (1<<1)
 
-#define LCD_LIGHT_DIR PORTB.DIRSET = (1<<2)
-#define LCD_LIGHT_ON PORTB.OUTSET = (1<<2)
-#define LCD_LIGHT_OFF PORTB.OUTCLR = (1<<2)
-#define LCD_LIGHT_TGL PORTB.OUTTGL = (1<<2)
+#define LCD_LIGHT_DIR PORTB_DIRSET = (1<<2)
+#define LCD_LIGHT_ON PORTB_OUTSET = (1<<2)
+#define LCD_LIGHT_OFF PORTB_OUTCLR = (1<<2)
+#define LCD_LIGHT_TGL PORTB_OUTTGL = (1<<2)
 
 //other defines
 #define CHARSPACE 2 		//space between 2 letter in pixel (function lcd_print)
