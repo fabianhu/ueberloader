@@ -3,6 +3,8 @@
 
 	(c) 2010 Fabian Huslik
 
+	BUILD WITH avr-toolchain-installer-3.0.0.240-win32.win32.x86.exe 
+
 */
 
 #include "../OS/FabOS.h"
@@ -78,11 +80,6 @@ int main(void)
 		
 		asm("nop"); //at least one instruction is required!!!
 
-		if(PMIC.STATUS & 4 || !(PMIC.CTRL &4))
-		{
-			asm("break"); // just for finding error fixme
-		}
-
 #if OS_USEMEMCHECKS == 1
 		a = OS_GetUnusedStack(OSTSKCommand);
 		b = OS_GetUnusedStack(OSTSKTouch);
@@ -125,13 +122,13 @@ OS_GetTicks(&t1); // just for finding error fixme
 #if TOUCHTEST == 1
 		// the touch is tested here!
 
-		touchtest(); 
+		touchtest();
 
 		
-				OS_GetTicks(&t2);
+		OS_GetTicks(&t2);
 
-				t2=t2-t1;
-				lcd_print(GREY, BLACK, FONTSIZE, 0, 220,"Time: %i ms     " ,(uint16_t)t2);
+		t2=t2-t1;
+		lcd_print(GREY, BLACK, FONTSIZE, 0, 220,"Time: %i ms     " ,(uint16_t)t2);
 #else
 
 
@@ -223,10 +220,6 @@ OS_GetTicks(&t1); // just for finding error fixme
 
 
 		OS_WaitTicks(OSALMWaitDisp,10);
-		if(PMIC.STATUS & 4 || !(PMIC.CTRL &4))
-		{
-			asm("break"); // just for finding error fixme
-		}
 	}
 
 }
@@ -312,19 +305,17 @@ uint8_t vWaitForResult(void)
 
 uint8_t g_NewComand =0; // indicates new command to be sent
 
+volatile UCIFrame_t myU; // used in DMA
+
 void TaskCommand(void)
 {
 	OS_SetAlarm(OSALMCommandRepeat,1000);
 	while(1)
 	{
 		OS_WaitAlarm(OSALMCommandRepeat);
-		if(PMIC.STATUS & 4 || !(PMIC.CTRL &4))
-		{
-			asm("break");// just for finding error fixme
-		}
 		OS_SetAlarm(OSALMCommandRepeat,200);
 
-		UCIFrame_t myU;
+
 
 		myU.ID = 55;
 		myU.UCI = UCI_GET_OPVs;
@@ -341,6 +332,7 @@ void TaskCommand(void)
 				memcpy(myU.values,&g_tCommand,sizeof(Command_t));
 	    	OS_MutexRelease(OSMTXCommand);
 	    	UCISendBlockCrc(&myU);
+
 	    	//OS_WaitTicks(OSALMCommandWait,20);
 			//glCommError = vWaitForResult();
 	    	g_NewComand = 0;
@@ -396,10 +388,6 @@ void TaskTouch()
 		}
 
 		OS_WaitAlarm(OSALTouchRepeat);
-		if(PMIC.STATUS & 4 || !(PMIC.CTRL &4))
-		{
-			asm("break"); // just for finding error fixme
-		}
 		OS_SetAlarm(OSALTouchRepeat,10); // every 10ms
 
 		g_NewComand = 1;
@@ -424,7 +412,7 @@ void TaskTouch()
 // *********  Code to be executed inside Timer ISR used for the OS, defined in FabOS_config.h
 void OS_CustomISRCode(void)
 {
-	TCC1.CNT=0;
+	TCC1_CNT=0;
 	//TCC1.INTFLAGS = 0xff;
 
 }
@@ -437,43 +425,47 @@ void CPU_init(void)
 
 
 	CCP = CCP_IOREG_gc; // unlock
-	OSC.XOSCFAIL = OSC_XOSCFDEN_bm; // enable NMI for oscillator failure.
+	OSC_XOSCFAIL = OSC_XOSCFDEN_bm; // enable NMI for oscillator failure.
 
-	// xtal = 16 MHz,
-	// PLL (128 MHz) -> peripheral x4
-	// Presc. B (64MHz) -> peripheral x2
-	// Presc. C (32MHz) -> CPU
-	OSC.XOSCCTRL = 0;
-	OSC.CTRL |= OSC_RC2MEN_bm; // enable XTAL
-	OSC.PLLCTRL = 0 | 8; // configure pll x 8;
-	while (!(OSC.STATUS & OSC_RC2MRDY_bm))
+	// Desired Clock : 16MHz,
+	// PLL (16 MHz) -> peripheral x1
+	// Presc. B (16MHz) -> peripheral x1
+	// Presc. C (16MHz) -> CPU
+	//OSC_XOSCCTRL = 0;
+	OSC_CTRL = OSC_RC2MEN_bm; // enable XTAL
+	OSC_PLLCTRL = OSC_PLLSRC_RC2M_gc | 8; // configure pll x 8; (min 10MHz!)
+	while (!(OSC_STATUS & OSC_RC2MRDY_bm))
 	{
 		asm("nop"); // wait for the bit to become set
 	}
-	OSC.CTRL |= OSC_PLLEN_bm; // enable PLL
+	OSC_DFLLCTRL = OSC_RC2MCREF_bm; // enable auto calib.
+	DFLLRC2M_CTRL = DFLL_ENABLE_bm;
+
+	OSC_CTRL |= OSC_PLLEN_bm; // enable PLL
 
 	CCP = CCP_IOREG_gc; // unlock
-	CLK.PSCTRL = CLK_PSADIV_1_gc|CLK_PSBCDIV_1_1_gc; 
-	while (!(OSC.STATUS & OSC_PLLRDY_bm))
+	CLK_PSCTRL = CLK_PSADIV_1_gc|CLK_PSBCDIV_1_1_gc;
+	while (!(OSC_STATUS & OSC_PLLRDY_bm))
 	{
 		asm("nop"); // wait for the bit to become set
 	}
 	 
 	CCP = CCP_IOREG_gc; // unlock
-	CLK.CTRL = CLK_SCLKSEL_PLL_gc; // select PLL to run with
+	CLK_CTRL = CLK_SCLKSEL_PLL_gc; // select PLL to run with
  
+
 	// setup Timer for OS
-	TCC1.CTRLA = TC_CLKSEL_DIV1_gc; // select clk for clock source
-	TCC1.CTRLB = TC0_CCAEN_bm;
-	TCC1.CTRLC = 0;
-	TCC1.CTRLD = 0;
-	TCC1.CTRLE = 0;
-	TCC1.INTCTRLA = 0;
-	TCC1.INTCTRLB = TC_CCAINTLVL_HI_gc; // enable compare match A // highest prio, NO other ISR using OS-API must interrupt this one!
-	TCC1.CCA = 16000;//  gives 1ms clock @ 16 MHz
+	TCC1_CTRLA = TC_CLKSEL_DIV1_gc; // select clk for clock source
+	TCC1_CTRLB = TC0_CCAEN_bm;
+	TCC1_CTRLC = 0;
+	TCC1_CTRLD = 0;
+	TCC1_CTRLE = 0;
+	TCC1_INTCTRLA = 0;
+	TCC1_INTCTRLB = TC_CCAINTLVL_HI_gc; // enable compare match A // highest prio, NO other ISR using OS-API must interrupt this one!
+	TCC1_CCA = 16000;//  gives 1ms clock @ 16 MHz
 
 	//Enable Interrupts in INT CTRL
-	PMIC.CTRL = PMIC_HILVLEN_bm|PMIC_MEDLVLEN_bm|PMIC_LOLVLEN_bm;
+	PMIC_CTRL = PMIC_HILVLEN_bm; //|PMIC_MEDLVLEN_bm|PMIC_LOLVLEN_bm;
 
 	USARTinit();
 
@@ -483,10 +475,9 @@ void CPU_init(void)
 ISR(OSC_XOSCF_vect)
 {
 	//oscillator failure
-	asm("break");// just for finding error fixme
 	emstop(99);// emergency stop here!
 	CCP = CCP_IOREG_gc; // unlock
-	RST.CTRL = 1; // SW reset
+	RST_CTRL = 1; // SW reset
 
 }
 
@@ -536,18 +527,18 @@ void emstop(uint8_t e)
 	cli(); // stop OS
 
 	// Disable timer and Pins Port C
-	TCC0.CTRLA = 0;
-	TCC0.CTRLB = 0;
-	PORTC.OUTCLR = 0b11111111;
+	TCC0_CTRLA = 0;
+	TCC0_CTRLB = 0;
+	PORTC_OUTCLR = 0b11111111;
 
 	// Disable timer and Pins Port D
-	TCD0.CTRLA = 0;
-	TCD0.CTRLB = 0;
-	PORTD.OUTCLR = 0b00000011;
+	TCD0_CTRLA = 0;
+	TCD0_CTRLB = 0;
+	PORTD_OUTCLR = 0b00000011;
 
 	// Switch on LED BL
-	PORTB.DIRSET = 0b0100;
-	PORTB.OUTSET = 0b0100;
+	PORTB_DIRSET = 0b0100;
+	PORTB_OUTSET = 0b0100;
 
 	while(1)
 	{
@@ -555,6 +546,6 @@ void emstop(uint8_t e)
 	}
 
 	CCP = CCP_IOREG_gc; // unlock
-	RST.CTRL = 1; // SW reset
+	RST_CTRL = 1; // SW reset
 
 }

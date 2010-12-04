@@ -49,7 +49,7 @@
 </toolChain>
 </folderInfo>
 <sourceEntries>
-<entry excluding="OS/FabOS neu .c|OS/FabOS alt.c|OS/Kopie von FabOS.c|OS/FabOS.S" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+<entry excluding="OS/bla.c|src/bla.c|OS/FabOS neu .c|OS/FabOS alt.c|OS/Kopie von FabOS.c|OS/FabOS.S" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 </sourceEntries>
 </configuration>
 </storageModule>

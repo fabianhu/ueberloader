@@ -32,7 +32,7 @@ ISR(USARTE0_RXC_vect)
 	OS_TRACE(101);
 	
 	uint8_t* p = (uint8_t*)&g_tUCIRXFrame;
-	if((USARTE0.STATUS & USART_FERR_bm) || (USARTE0.STATUS & USART_BUFOVF_bm))
+	if((USARTE0_STATUS & USART_FERR_bm) || (USARTE0_STATUS & USART_BUFOVF_bm))
 	{
 		glCommError = 45;
 		g_ucRXLength = 0; // reset received data length
@@ -41,7 +41,7 @@ ISR(USARTE0_RXC_vect)
 
 	if(g_ucRXLength < sizeof(UCIFrame_t)) // avoid over-write of the frame (too long)
 	{
-		p[g_ucRXLength] = USARTE0.DATA;
+		p[g_ucRXLength] = USARTE0_DATA;
 		g_ucRXLength++;
 
 		//OS_SetAlarm(OSALMCommandTimeout,5); // reset Alarm, if stuff arrives
