@@ -376,7 +376,7 @@ void TaskTouch()
 			OS_PREVENTSCHEDULING;
 			g_tCommand.sCurrentSetpoint = 800;
 			g_tCommand.usMinBalanceVolt_mV = 2400;//eeprom_read_word(&(ParMaster->usMinBalanceVolt_mV));
-			g_tCommand.usVoltageSetpoint_mV = 4150; //4150;
+			g_tCommand.usVoltageSetpoint_mV = 3850; //4150;
 			g_tCommand.eChargerMode = eModeAuto;
 			g_tCommand.ucUserCellCount = 0;
 			OS_ALLOWSCHEDULING;
