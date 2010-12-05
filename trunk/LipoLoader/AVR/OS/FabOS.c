@@ -85,7 +85,7 @@ void OS_Int_ProcessAlarms(void)
 
 void OS_Reschedule(void) //with "__attribute__ ((naked))"
 {
-	OS_PREVENTSCHEDULING;
+	OS_DISABLEALLINTERRUPTS;
 	
 	OS_Int_saveCPUContext() ; 
 	MyOS.Stacks[MyOS.CurrTask] = SP ; // catch the SP before we (possibly) do anything with it.
@@ -98,9 +98,9 @@ void OS_Reschedule(void) //with "__attribute__ ((naked))"
 	OS_TRACE(8);
 
 	SP = MyOS.Stacks[MyOS.CurrTask] ;// set Stack pointer
-	OS_Int_restoreCPUContext() ;
+	OS_Int_restoreCPUContext() ; // do NEVER ANYTHING, what changes register content after this instruction!
 	
-	OS_ALLOWSCHEDULING;
+	OS_ENABLEALLINTERRUPTS;
 	asm volatile("ret"); // return from interrupt, even if not in Interrupt. Just to ensure, that the ISR is left.
 }
 
@@ -213,9 +213,10 @@ void OS_StartExecution()
 
 	//store THIS context for idling!!
 	MyOS.CurrTask = OS_NUMTASKS;
-	OS_Reschedule(); // Here every task is executed at least once.
 	OS_ALLOWSCHEDULING; // the stored context has the interrupts OFF!
 	sei();
+	OS_Reschedule(); // Here every task is executed at least once.
+	
 }
 
 

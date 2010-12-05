@@ -28,8 +28,8 @@ eChargerMode = eModeAuto
 ADC_Values_t g_tADCValues;
 Battery_Info_t g_tBattery_Info;
 
-uint8_t gucDisChTicks[6];
-uint8_t bBalancerOverload; // True, if one cell has reached Voltage limit.
+uint8_t g_aucDisChTicks[6];
+uint8_t g_bBalancerOverload; // True, if one cell has reached Voltage limit.
 
 //uint16_t usStartstep =STARTMAX;
 //uint16_t I_Max_ABS = 25000;
@@ -165,9 +165,13 @@ void TaskGovernor(void)
 		{
 			ccc++;
 			if (ccc == 20) ccc=0;
-			if(sU_out_act_flt < myUSetpoint /*&& sConverterPower < MAXCONVERTERPOWER_W*/ && sU_in_act > 8000 && I_Set_mA_Ramped <= myISetpoint)
+			if	(	sU_out_act_flt < myUSetpoint /*&& sConverterPower < MAXCONVERTERPOWER_W*/ &&
+					sU_in_act > g_tBattery_Info.ucNumberOfCells*2300 && // fixme
+					I_Set_mA_Ramped <= myISetpoint &&
+					g_bBalancerOverload == 0
+				)
 			{
-				if (I_Set_mA_Ramped < myISetpoint && ccc==0 && bBalancerOverload == 0)
+				if (I_Set_mA_Ramped < myISetpoint && ccc==0 )
 				{
 					I_Set_mA_Ramped++;
 				}
@@ -306,11 +310,11 @@ void TaskBalance(void)
 		}
 		if(j)
 		{
-			bBalancerOverload = 1;
+			g_bBalancerOverload = 1;
 		}
 		else
 		{
-			bBalancerOverload = 0;
+			g_bBalancerOverload = 0;
 		}
 
 		// balancing allowed
@@ -363,7 +367,7 @@ void TaskBalance(void)
 			g_tBattery_Info.Cells[i].sVoltage_mV = sBalanceCells[i];
 			if(ucBalanceBits & (1<<i))
 			{
-				gucDisChTicks[i]++;
+				g_aucDisChTicks[i]++;
 			}
 		}
 		OS_MutexRelease(OSMTXBattInfo);
@@ -403,9 +407,9 @@ void TaskMonitor(void)
 		for(i=0;i<6;i++)
 		{
 			curr_mA = g_tBattery_Info.Cells[i].sVoltage_mV/10;
-			charge_mAs = (int32_t)curr_mA * (int32_t)gucDisChTicks[i] * BALANCEREPEATTIME /1000L; // max one tick per run
+			charge_mAs = (int32_t)curr_mA * (int32_t)g_aucDisChTicks[i] * BALANCEREPEATTIME /1000L; // max one tick per run
 			g_tBattery_Info.Cells[i].unDisCharge_mAs += charge_mAs;
-			gucDisChTicks[i]=0;
+			g_aucDisChTicks[i]=0;
 		}
 		OS_MutexRelease(OSMTXBattInfo);
 
