@@ -53,7 +53,7 @@ int16_t touchGetSchwerpunkt(void);
 
 // Global variables
 UCIFrame_t g_tUCITXBlock; // used in DMA
-uint8_t g_bMenuActive = DISPLAYTEST; // 1 = the menue is active
+uint8_t g_bMenuActive = 0;//DISPLAYTEST; // 1 = the menue is active
 static volatile uint16_t a,b,c,d;
 
 
@@ -107,13 +107,13 @@ void TaskDisplay(void)
 	menu_init();
 
 	lcd_clear();//lcd clear needed here because a new screen is shown
-	OS_WaitTicks(OSALMWaitDisp,333);
-	lcd_clear();//lcd clear needed here because a new screen is shown
+	OS_SetAlarm(OSALMWaitDisp,1000);
 
-	//touchSetValue(0L,-100L,100L);
-OS_GetTicks(&t1); // just for finding error fixme
+	OS_GetTicks(&t1); // just for finding error fixme
 	while(1)
 	{
+		OS_WaitAlarm(OSALMWaitDisp);
+		OS_SetAlarm(OSALMWaitDisp,1000);
 
 
 		ypos = 0;
@@ -220,7 +220,7 @@ OS_GetTicks(&t1); // just for finding error fixme
 #endif
 
 
-		OS_WaitTicks(OSALMWaitDisp,10);
+		
 	}
 
 }
