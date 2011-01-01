@@ -33,7 +33,7 @@ extern particle_t myP;
 		
 // Defines for this file
 #define DISPLAYTEST 0
-#define TOUCHTEST 0
+#define TOUCHTEST 1
 
 // *********  Task definitions
 OS_DeclareTask(TaskTouch,200);
@@ -49,13 +49,14 @@ void touchtest(void);
 extern void DoParticle(void);
 extern void process_touch(void);//change value
 int16_t touchGetSchwerpunkt(void);
-
+extern void ProcessTouch(void);
 
 // Global variables
 UCIFrame_t g_tUCITXBlock; // used in DMA
 uint8_t g_bMenuActive = 0;//DISPLAYTEST; // 1 = the menue is active
 static volatile uint16_t a,b,c,d;
 
+uint8_t debug,debug2;
 
 // *********  THE main()
 int main(void)
@@ -271,7 +272,8 @@ void touchtest(void)
 				}
 
 
-
+				lcd_print(WHITE, BLACK, 2, 0, 100,"State: %i  " ,(uint16_t)debug);
+				lcd_print(WHITE, BLACK, 2, 0, 140,"Gesture: %i  " ,(uint16_t)debug2);
 
 
 				/*ypos =32;
@@ -394,18 +396,18 @@ void TaskTouch()
 		g_NewComand = 1;
 
 
-		DoParticle();
+		// fixme DoParticle();
 
-//		if (g_bMenuActive)
-//		{
-//			touch();//change value
-//		}
-//		else
-//		{
-//			// check, if the menu is to be activated.
-//			// fixme do it
-//			touch(); // fixme do not change values here, but only look if menu is to be activated.
-//		}
+		if (g_bMenuActive)
+		{
+			ProcessTouch();//change value
+		}
+		else
+		{
+			// check, if the menu is to be activated.
+			// fixme do it
+			ProcessTouch(); // fixme do not change values here, but only look if menu is to be activated.
+		}
 
 	}
 }
