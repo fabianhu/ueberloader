@@ -27,7 +27,7 @@ extern uint16_t glTestMutexBlocked;
 extern UCIFrame_t g_tUCIRXFrame;
 extern uint8_t    g_ucRXLength;
 extern uint8_t test;
-extern uint16_t touchpads[TOUCHCOUNT];
+extern uint16_t g_aucTouchpads[TOUCHCOUNT];
 extern particle_t myP;
 
 		
@@ -56,7 +56,7 @@ UCIFrame_t g_tUCITXBlock; // used in DMA
 uint8_t g_bMenuActive = 0;//DISPLAYTEST; // 1 = the menue is active
 static volatile uint16_t a,b,c,d;
 
-uint8_t debug,debug2;
+uint8_t g_debug,g_debug2;
 
 // *********  THE main()
 int main(void)
@@ -272,16 +272,16 @@ void touchtest(void)
 				}
 
 
-				lcd_print(WHITE, BLACK, 2, 0, 100,"State: %i  " ,(uint16_t)debug);
-				lcd_print(WHITE, BLACK, 2, 0, 140,"Gesture: %i  " ,(uint16_t)debug2);
+				lcd_print(WHITE, BLACK, 2, 0, 100,"State: %i  " ,(uint16_t)g_debug);
+				lcd_print(WHITE, BLACK, 2, 0, 140,"Gesture: %i  " ,(uint16_t)g_debug2);
 
 
 				/*ypos =32;
-				lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"P1/t%i      " ,touchpads[0]);
+				lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"P1/t%i      " ,g_aucTouchpads[0]);
 				ypos += LINEDIFF;
-				lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"P2/t%i      " ,touchpads[1]);
+				lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"P2/t%i      " ,g_aucTouchpads[1]);
 				ypos += LINEDIFF;
-				lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"P3/t%i      " ,touchpads[2]);*/
+				lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"P3/t%i      " ,g_aucTouchpads[2]);*/
 }
 
 extern UCIFrame_t g_tUCIRXFrame;

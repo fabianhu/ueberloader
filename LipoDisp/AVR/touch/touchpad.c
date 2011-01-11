@@ -6,29 +6,28 @@
 uint16_t GetvalueFromUI(void);
 uint8_t touchGetSpeed(int16_t* speed);
 extern void menu_select(void);
-int16_t touchGetSchwerpunkt(void);
+int32_t touchGetSchwerpunkt(void);
 void sFilter(int16_t* o, int16_t* n);
 void svFilter(int16_t* o, int16_t* n, uint8_t x);
 eGestures_t getGesture(void);
 uint8_t bitcount3(uint8_t b);
 
 
-uint8_t touchcalbytes[5] =
+uint16_t g_ausTouchCalValues[5] =
 TOUCHCALINIT;
 
-uint8_t touchpads[TOUCHCOUNT];
+uint16_t g_aucTouchpads[TOUCHCOUNT];
+uint16_t g_ausTouchpadsRAW[TOUCHCOUNT];
+
 
 int32_t touchValue;
 int32_t touchValueUpper;
 int32_t touchValueLower;
-//uint16_t touchPosition;
-
-uint8_t guctype;
 
 particle_t myP =
 	{ 0, 0, 0, 99 };
 
-extern uint8_t debug,debug2;
+extern uint8_t g_debug,g_debug2;
 
 
 /*
@@ -76,12 +75,12 @@ extern uint8_t debug,debug2;
  }
  OS_ENABLEALLINTERRUPTS
 
- touchcalbytes[pin] = min(touchcalbytes[pin],cnt*100);
+ g_ausTouchCalValues[pin] = min(g_ausTouchCalValues[pin],cnt*100);
 
- touchcalbytes[pin]++; // every some time, correct the calibration bytes.. even, if a touch is recognized... -> provides self healing..
+ g_ausTouchCalValues[pin]++; // every some time, correct the calibration bytes.. even, if a touch is recognized... -> provides self healing..
 
 
- return cnt - (touchcalbytes[pin]/100);
+ return cnt - (g_ausTouchCalValues[pin]/100);
  }*/
 
 uint8_t touchGetPad5(uint8_t pin)
@@ -106,17 +105,17 @@ uint8_t touchGetPad5(uint8_t pin)
 	}
 	OS_ENABLEALLINTERRUPTS;
 
-	touchcalbytes[pin] = min(touchcalbytes[pin],cnt*100);
+	g_ausTouchCalValues[pin] = min(g_ausTouchCalValues[pin],cnt*100);
 
-	touchcalbytes[pin]++; // every some time, correct the calibration bytes.. even, if a touch is recognized... -> provides self healing..
+	g_ausTouchCalValues[pin]++; // every some time, correct the calibration bytes.. even, if a touch is recognized... -> provides self healing..
 
 
-	return cnt - (touchcalbytes[pin] / 100);
+	return cnt - (g_ausTouchCalValues[pin] / 100);
 }
 
 uint8_t touchGetPad3(uint8_t pin)
 {
-	uint8_t cnt, i;
+	uint8_t value, i;
 	uint8_t mask;
 
 	if (pin == 0)
@@ -127,29 +126,44 @@ uint8_t touchGetPad3(uint8_t pin)
 		else
 			mask = 1 << 4;
 
-	cnt = 0;
+	value = 0;
 	OS_DISABLEALLINTERRUPTS;// absolutely no interrupts allowed here!
 	for (i = 0; i < TOUCHREPCNT; i++)
 	{
 		TOUCHTOGGLEHIGH;
 		while (!(TOUCHPORT.IN & mask))
 		{
-			cnt++;
+			value++;
 		}
 		TOUCHTOGGLELOW;
 		while (TOUCHPORT.IN & mask)
 		{
-			cnt++;
+			value++;
 		}
 	}
 	OS_ENABLEALLINTERRUPTS;
 
-	touchcalbytes[pin] = min(touchcalbytes[pin],cnt*100);
 
-	touchcalbytes[pin]++; // every some time, correct the calibration bytes.. even, if a touch is recognized... -> provides self healing..
+	// limit re-calibration
+	if(value*100 < g_ausTouchCalValues[pin]) // wenns denn schneller war
+	{
+		if(value*100 < g_ausTouchCalValues[pin] - 100) //ups das war aber zu flott
+		{
+			// lassen wie's war
+			g_ausTouchCalValues[pin] -= 100;
+		}
+		else
+		{
+			// mitnehmen
+			g_ausTouchCalValues[pin] = value*100;
+		}
+	}
 
+	g_ausTouchCalValues[pin]++; // every some time, correct the calibration bytes.. even, if a touch is recognized... -> provides self healing..
 
-	return cnt - (touchcalbytes[pin] / 100);
+	g_ausTouchpadsRAW[pin] = value;
+
+	return value - (g_ausTouchCalValues[pin] / 100);
 }
 
 void process_touch_digital(void) // Notlösung f. 3 Tasten
@@ -192,18 +206,18 @@ void touch_init(void)
 }
 
 
-uint16_t sum; // fixme local!
-uint32_t Moment;// fixme local!
-int16_t ret; // fixme brauchts net
+int32_t sum; // fixme local!
+int32_t Moment;// fixme local!
+int32_t ret; // fixme brauchts net
 
-int16_t touchGetSchwerpunkt(void)
+int32_t touchGetSchwerpunkt(void)
 {
 
 	uint8_t i;
 
 	for (i = 0; i < TOUCHCOUNT; ++i)
 	{
-		touchpads[i] = touchGetPad3(i);
+		g_aucTouchpads[i] = touchGetPad3(i);
 	}
 
 	Moment = 0;
@@ -211,14 +225,14 @@ int16_t touchGetSchwerpunkt(void)
 	for (i = 0; i < TOUCHCOUNT; ++i)
 	{
 
-		Moment += (i + 1) * 250 * touchpads[i];
-		sum += touchpads[i];
+		Moment += (i + 1) * 250ULL * g_aucTouchpads[i];
+		sum += g_aucTouchpads[i];
 	}
 	if (sum > (TOUCHMINSIGNAL*TOUCHCOUNT)) //fixme make self learning
 	{
-		ret = (Moment / sum) - 250;
+		ret = (Moment / sum) - 250ULL;
 			asm("cli");
-		// fixme debug:
+		// fixme g_debug:
 		if(ret < 0)
 		{
 			asm("break");
@@ -512,18 +526,18 @@ void ProcessTouch(void)
 					if(s_ucOldGesture == eGPlus)
 					{
 						// fixme DO tap up
-						debug2 = eGPlus;
+						g_debug2 = eGPlus;
 					}
 					else if(s_ucOldGesture == eGMinus)
 					{
 						// fixme DO tap down
-						debug2 = eGMinus;
+						g_debug2 = eGMinus;
 					}
 					else if(s_ucOldGesture == eGMitte)
 					{
 						menu_select();
 						// fixme DO tap mid
-						debug2 = eGMitte;
+						g_debug2 = eGMitte;
 					}
 
 					eTouchstate = eTSIdle;
@@ -567,17 +581,17 @@ void ProcessTouch(void)
 						// never used
 						break;
 					case eGMittePlus:
-						debug2 = eGMittePlus;
+						g_debug2 = eGMittePlus;
 						break;
 					case eGMinus:
 						// never used
 						break;
 					case eGSplit:
 						// fixme lock / unlock
-						debug2 = eGSplit;
+						g_debug2 = eGSplit;
 						break;
 					case eGMitteMinus:
-						debug2 = eGMitteMinus;
+						g_debug2 = eGMitteMinus;
 						break;
 					case eGFullHouse:
 						// never used
@@ -593,7 +607,7 @@ void ProcessTouch(void)
 				if(getGesture()== eGFullHouse)
 				{
 					// fixme do here the full house emergency stuff
-					debug2 = eGFullHouse;
+					g_debug2 = eGFullHouse;
 
 					eTouchstate = eTSBlocked;
 				}
@@ -622,7 +636,7 @@ void ProcessTouch(void)
 
 	myP.position = myP.position + myP.velocity;
 
-	debug = eTouchstate;
+	g_debug = eTouchstate;
 
 }
 
@@ -634,7 +648,7 @@ eGestures_t getGesture(void)
 
 	for (i = 0; i < TOUCHCOUNT; i++)
 	{
-		if (touchpads[i] > TOUCHMINSIGNAL)
+		if (g_aucTouchpads[i] > TOUCHMINSIGNAL)
 			ret |= (1 << i);
 	}
 

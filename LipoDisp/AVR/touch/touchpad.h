@@ -30,7 +30,7 @@ int16_t touch(void);
 void touchGetValue(int32_t* pValue);
 //void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower);
 
-#define TOUCHCALINIT {0xff,0xff,0xff,0xff,0xff}
+#define TOUCHCALINIT {0xffff,0xffff,0xffff,0xffff,0xffff}
 
 #define abs(X) ((X)<0?-(X):(X))
 #define min(x,y) (((x)<(y))?(x):(y))
