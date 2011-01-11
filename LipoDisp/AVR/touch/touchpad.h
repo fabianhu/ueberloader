@@ -18,9 +18,11 @@
 #define TOUCHTOGGLELOW  PORTC.OUTCLR = (1<<7);
 
 #define TOUCHREPCNT 5
-#define TOUCHMINSIGNAL 20
 
-#define MINSLIDESPEED 5
+#define TOUCHMINSIGNAL 22
+#define MINSLIDESPEED 8
+
+#define MINGESTURETIME 6
 
 
 void touch_init(void);
@@ -63,8 +65,8 @@ typedef enum eTouchstate_tag
 {
 	eTSIdle 		= 0,
 	eTSTouched 		= 1,
-	eTSMoved 		= 2,
-	eTSDoubleTouch 	= 3,
+	eTSMoving 		= 2,
+	eTSGesture	 	= 3,
 	eTSBlocked 		= 4
 } eTouchstate_t;
 

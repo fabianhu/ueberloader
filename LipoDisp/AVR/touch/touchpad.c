@@ -451,14 +451,25 @@ uint8_t touchGetSpeed(int16_t* speed)
 	{
 		// invalid (no touch)
 		opos = fpos;
+		//fpos = -1;
 		*speed = 0;
 		return 0; // speed!
 	}
 	else
 	{
-		*speed = fpos - opos;
-		opos = fpos;
-		return 0;
+		if(abs(fpos - opos) > 100)
+		{
+			opos = fpos;
+			fpos = -1;
+			*speed = 0;
+			return 0;
+		}
+		else
+		{
+			*speed = fpos - opos;
+			opos = fpos;
+			return 0;
+		}
 	}
 
 }
@@ -469,13 +480,22 @@ eTouchstate_t eTouchstate = eTSIdle;
 void ProcessTouch(void)
 {
 	int16_t sSpeed;
-//	uint8_t ucPos;
+	uint8_t ucActualGesture;
 	static int16_t s_sSpeedFiltered = 0;
 	static uint8_t s_ucOldGesture;
 	uint8_t ret;
 
-	ret = touchGetSpeed(&sSpeed);
+
+
+	ret = touchGetSpeed(&sSpeed/*, &TouchBitfield*/); // fixme  beim integrieren den Schwerpunkt / speed  nur rechnen, wenn nur ein bzw. zwei benachbarte gedrückt.
+	ucActualGesture = getGesture();
+
 	svFilter(&s_sSpeedFiltered, &sSpeed, 4);
+
+	static uint16_t TimeDiff=0;
+
+	TimeDiff++;
+
 
 	switch (eTouchstate)
 	{
@@ -489,134 +509,109 @@ void ProcessTouch(void)
 			}
 			else
 			{
-				if (myP.velocity == 0)
-				{
-					eTouchstate = eTSTouched;
-				}
-				else
-				{
-					eTouchstate = eTSMoved;
-					break;
-				}
+				TimeDiff =0;
+				eTouchstate = eTSTouched;
 			}
 			// no break;
 		case eTSTouched:
-			if (ret == 0)
+			if (ret == 0) // Touch occurred
 			{
 				if(abs(s_sSpeedFiltered) > MINSLIDESPEED)
 				{
-					eTouchstate = eTSMoved;
+					eTouchstate = eTSMoving;  // fixme evtl. blockieren anhand Menü-status
 				}
 				else
 				{
-					// merken, wo
-					s_ucOldGesture = getGesture();
-					if(bitcount3(s_ucOldGesture) > 1)
+					if(	ucActualGesture == s_ucOldGesture)
 					{
-						eTouchstate = eTSDoubleTouch;
+						if(TimeDiff > MINGESTURETIME)
+						{
+							// gesture erkannt
+							eTouchstate = eTSGesture;
+						}
+					}
+					else
+					{
+						TimeDiff = 0;
 					}
 					break;
 				}
 				// no break, drop through to moved
 			}
-			else
-				if (ret == 1)
-				{
-					// hier gemerkten single t auswerten.
-					if(s_ucOldGesture == eGPlus)
-					{
-						// fixme DO tap up
-						g_debug2 = eGPlus;
-					}
-					else if(s_ucOldGesture == eGMinus)
-					{
-						// fixme DO tap down
-						g_debug2 = eGMinus;
-					}
-					else if(s_ucOldGesture == eGMitte)
-					{
-						menu_select();
-						// fixme DO tap mid
-						g_debug2 = eGMitte;
-					}
-
-					eTouchstate = eTSIdle;
-					OS_WaitTicks(OSALTouchPause,10);
-					break;
-
-				}
-				// no break!!
-
-		case eTSMoved:
-			if (ret == 1)
+			else // no touch
 			{
 				eTouchstate = eTSIdle;
 				break;
 			}
-			if (abs(s_sSpeedFiltered) < MINSLIDESPEED)
-			{
-				myP.force = 0;
-				myP.velocity = 0;// myP.velocity*9 /10;
-			}
-			else
-			{
-				myP.force = s_sSpeedFiltered;
-			}
+				// no break!!
 
-			myP.velocity = myP.velocity + myP.force;
-			break;
-
-		case eTSDoubleTouch:
-			if (ret == 1)
+		case eTSMoving:
+			if(ret == 0) // touched / moved
 			{
-				switch (s_ucOldGesture)
+				// adapt speed
+				if (abs(s_sSpeedFiltered) < MINSLIDESPEED)
 				{
-					case eGNothing:
-						// never used
-						break;
-					case eGPlus:
-						// never used
-						break;
-					case eGMitte:
-						// never used
-						break;
-					case eGMittePlus:
-						g_debug2 = eGMittePlus;
-						break;
-					case eGMinus:
-						// never used
-						break;
-					case eGSplit:
-						// fixme lock / unlock
-						g_debug2 = eGSplit;
-						break;
-					case eGMitteMinus:
-						g_debug2 = eGMitteMinus;
-						break;
-					case eGFullHouse:
-						// never used
-						break;
-					default:
-						break;
+					myP.force = 0;
+					myP.velocity = 0;
 				}
+				else
+				{
+					myP.force = s_sSpeedFiltered;
+				}
+
+				myP.velocity = myP.velocity + myP.force;
+			}
+			else if (myP.velocity == 0)
+			{
 				eTouchstate = eTSIdle;
 			}
 			else
 			{
-				// nicht losgelassen,
-				if(getGesture()== eGFullHouse)
-				{
-					// fixme do here the full house emergency stuff
-					g_debug2 = eGFullHouse;
-
-					eTouchstate = eTSBlocked;
-				}
+				// do nothing and let particle move on
 			}
+			break;
 
+		case eTSGesture:
+			switch (s_ucOldGesture) // können wir nehmen, weil lag lange genug an.
+			{
+				case eGNothing:
+
+					break;
+				case eGPlus:
+
+					break;
+				case eGMitte:
+
+					break;
+				case eGMittePlus:
+
+					break;
+				case eGMinus:
+
+					break;
+				case eGSplit:
+					// fixme lock / unlock
+
+					break;
+				case eGMitteMinus:
+
+					break;
+				case eGFullHouse:
+
+					break;
+				default:
+					break;
+			}
+			g_debug2 = s_ucOldGesture;
+
+			eTouchstate = eTSBlocked;
+			TimeDiff =0;
+
+			//OS_WaitTicks(OSALTouchPause,10);
 			break;
 
 		case eTSBlocked:
-			if (ret == 1) // warte bis komplett losgelassen
+			if (ret == 1 && TimeDiff > 10) // warte bis komplett losgelassen
 			{
 				eTouchstate = eTSIdle;
 			}
@@ -634,7 +629,9 @@ void ProcessTouch(void)
 		myP.velocity = (myP.velocity * myP.friction) / 100;
 	}
 
-	myP.position = myP.position + myP.velocity;
+	myP.position = myP.position + myP.velocity;  // fixme anschläge erreicht??
+
+	s_ucOldGesture = ucActualGesture;
 
 	g_debug = eTouchstate;
 
