@@ -98,7 +98,7 @@ void TaskDisplay(void)
 
 	uint16_t ypos=0;
 	uint32_t t1,t2;
-	uint8_t i;
+//	uint8_t i;
 
 #define FONTSIZE 1
 #define LINEDIFF FONTSIZE*16
@@ -114,7 +114,7 @@ void TaskDisplay(void)
 	while(1)
 	{
 		OS_WaitAlarm(OSALMWaitDisp);
-		OS_SetAlarm(OSALMWaitDisp,1000);
+		OS_SetAlarm(OSALMWaitDisp,250);
 
 
 		ypos = 0;
@@ -130,7 +130,7 @@ void TaskDisplay(void)
 		OS_GetTicks(&t2);
 
 		t2=t2-t1;
-		lcd_print(GREY, BLACK, FONTSIZE, 0, 220,"Time: %i ms     " ,(uint16_t)t2);
+		lcd_print(GREY, BLACK, FONTSIZE, 0, 220,"Time: %i ms     " ,(uint16_t)t2/100);
 #else
 
 

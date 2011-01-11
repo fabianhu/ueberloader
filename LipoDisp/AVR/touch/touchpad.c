@@ -3,19 +3,6 @@
 #include "../lcd/lcd.h" // fixme remove
 
 
-typedef enum eGestures_tag
-{
-	eGNothing = 0b000,
-	eGPlus = 0b001,
-	eGMitte = 0b010,
-	eGMittePlus = 0b011,
-	eGMinus = 0b100,
-	eGSplit = 0b101,
-	eGMitteMinus = 0b110,
-	eGFullHouse = 0b111
-} eGestures_t;
-
-
 uint16_t GetvalueFromUI(void);
 uint8_t touchGetSpeed(int16_t* speed);
 extern void menu_select(void);
@@ -26,8 +13,11 @@ eGestures_t getGesture(void);
 uint8_t bitcount3(uint8_t b);
 
 
-uint16_t touchcalbytes[5] =
+uint8_t touchcalbytes[5] =
 TOUCHCALINIT;
+
+uint8_t touchpads[TOUCHCOUNT];
+
 int32_t touchValue;
 int32_t touchValueUpper;
 int32_t touchValueLower;
@@ -201,25 +191,20 @@ void touch_init(void)
 	TOUCHCONFIGPORT;
 }
 
-uint16_t touchpads[TOUCHCOUNT];
 
-void touchGetPads(void)
-{
-	uint8_t i;
-	for (i = 0; i < TOUCHCOUNT; ++i)
-	{
-		touchpads[i] = touchGetPad3(i);
-	}
-}
+uint16_t sum; // fixme local!
+uint32_t Moment;// fixme local!
+int16_t ret; // fixme brauchts net
 
 int16_t touchGetSchwerpunkt(void)
 {
 
 	uint8_t i;
-	uint16_t sum;
-	uint16_t Moment;
 
-	touchGetPads(); // fixme measure here?
+	for (i = 0; i < TOUCHCOUNT; ++i)
+	{
+		touchpads[i] = touchGetPad3(i);
+	}
 
 	Moment = 0;
 	sum = 0;
@@ -229,8 +214,18 @@ int16_t touchGetSchwerpunkt(void)
 		Moment += (i + 1) * 250 * touchpads[i];
 		sum += touchpads[i];
 	}
-	if (sum > TOUCHMINSIGNAL) //fixme make self learning
-		return (Moment / sum) - 250;
+	if (sum > (TOUCHMINSIGNAL*TOUCHCOUNT)) //fixme make self learning
+	{
+		ret = (Moment / sum) - 250;
+			asm("cli");
+		// fixme debug:
+		if(ret < 0)
+		{
+			asm("break");
+		}
+			asm("sei");
+		return ret ;
+	}
 	else
 		return -1;
 
@@ -417,11 +412,11 @@ int16_t touchGetPosition(void) // read the pos
 {
 	return 0;
 }
-
+	int16_t pos; // fixme local!
 uint8_t touchGetSpeed(int16_t* speed)
 {
 	static int16_t opos=-1, fpos=-1;
-	int16_t pos;
+
 	pos = touchGetSchwerpunkt();
 	if (pos != -1)
 	{
@@ -454,19 +449,13 @@ uint8_t touchGetSpeed(int16_t* speed)
 
 }
 
-typedef enum eTouchstate_tag
-{
-	eTSIdle = 0, eTSTouched = 1, eTSMoved = 2, eTSDoubleTouch = 3, eTSBlocked = 4
-} eTouchstate_t;
-
-#define MINSLIDESPEED 5
 
 eTouchstate_t eTouchstate = eTSIdle;
 
 void ProcessTouch(void)
 {
 	int16_t sSpeed;
-	uint8_t ucPos;
+//	uint8_t ucPos;
 	static int16_t s_sSpeedFiltered = 0;
 	static uint8_t s_ucOldGesture;
 	uint8_t ret;
@@ -479,19 +468,24 @@ void ProcessTouch(void)
 		case eTSIdle:
 			s_sSpeedFiltered = 0;
 			myP.force = 0;
-			if (ret == 0)
+			if (ret != 0)
 			{
-			/*	if (myP.velocity == 0)
-				{*/
+				// not touched
+				break;
+			}
+			else
+			{
+				if (myP.velocity == 0)
+				{
 					eTouchstate = eTSTouched;
-				/*}
+				}
 				else
 				{
 					eTouchstate = eTSMoved;
-				}'*/
+					break;
+				}
 			}
-			break;
-
+			// no break;
 		case eTSTouched:
 			if (ret == 0)
 			{
