@@ -3,7 +3,7 @@
 #include "../lcd/lcd.h" // fixme remove
 
 
-uint16_t GetvalueFromUI(void);
+int32_t GetvalueFromUI(void);
 uint8_t touchGetSpeed(int16_t* speed);
 extern void menu_select(void);
 int32_t touchGetSchwerpunkt(void);
@@ -20,12 +20,8 @@ uint16_t g_aucTouchpads[TOUCHCOUNT];
 uint16_t g_ausTouchpadsRAW[TOUCHCOUNT];
 
 
-int32_t touchValue;
-int32_t touchValueUpper;
-int32_t touchValueLower;
-
 particle_t myP =
-	{ 0, 0, 0, 99 };
+	{ 0, 0, 0, 99 ,-1000,1000};
 
 extern uint8_t g_debug,g_debug2;
 
@@ -166,6 +162,7 @@ uint8_t touchGetPad3(uint8_t pin)
 	return value - (g_ausTouchCalValues[pin] / 100);
 }
 
+/*
 void process_touch_digital(void) // Notlösung f. 3 Tasten
 {
 	uint8_t i, t[5];
@@ -198,7 +195,7 @@ void process_touch_digital(void) // Notlösung f. 3 Tasten
 		OS_WaitTicks(OSALTouchPause,100);
 	}
 
-}
+}*/
 
 void touch_init(void)
 {
@@ -206,13 +203,13 @@ void touch_init(void)
 }
 
 
-int32_t sum; // fixme local!
-int32_t Moment;// fixme local!
-int32_t ret; // fixme brauchts net
+
 
 int32_t touchGetSchwerpunkt(void)
 {
-
+int32_t sum;
+int32_t Moment;
+int32_t ret;
 	uint8_t i;
 
 	for (i = 0; i < TOUCHCOUNT; ++i)
@@ -398,21 +395,21 @@ void svFilter(int16_t* o, int16_t* n, uint8_t x)
 
 void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower) // fixme umziehen ins menu_variant
 {
-	touchValue = value * TOUCHREDUCEFACTOR; // fixme particle rein
-	touchValueLower = lower * TOUCHREDUCEFACTOR;
-	touchValueUpper = upper * TOUCHREDUCEFACTOR;
+	myP.position = value * TOUCHREDUCEFACTOR; // fixme particle rein
+	myP.min = lower * TOUCHREDUCEFACTOR;
+	myP.max = upper * TOUCHREDUCEFACTOR;
 }
 
-uint16_t GetvalueFromUI(void)
+int32_t GetvalueFromUI(void)
 {
-	return touchValue / TOUCHREDUCEFACTOR;
+	return myP.position / TOUCHREDUCEFACTOR; // fixme return type?
 }
 
 void touchGetValue(int32_t* pValue) // read txtback the (changed) value Mutex?
 {
 	//OS_ENTERCRITICAL
 	OS_PREVENTSCHEDULING;
-	*pValue = touchValue / TOUCHREDUCEFACTOR;
+	*pValue = myP.position / TOUCHREDUCEFACTOR;
 	OS_ALLOWSCHEDULING;
 	//OS_LEAVECRITICAL
 }
@@ -578,6 +575,8 @@ void ProcessTouch(void)
 
 					break;
 				case eGPlus:
+					if(myP.position < myP.max)
+						myP.position++;
 
 					break;
 				case eGMitte:
@@ -587,7 +586,8 @@ void ProcessTouch(void)
 
 					break;
 				case eGMinus:
-
+					if(myP.position > myP.min)
+						myP.position--;
 					break;
 				case eGSplit:
 					// fixme lock / unlock
@@ -629,7 +629,7 @@ void ProcessTouch(void)
 		myP.velocity = (myP.velocity * myP.friction) / 100;
 	}
 
-	myP.position = myP.position + myP.velocity;  // fixme anschläge erreicht??
+	myP.position = limit(myP.position + myP.velocity,myP.min,myP.max);
 
 	s_ucOldGesture = ucActualGesture;
 

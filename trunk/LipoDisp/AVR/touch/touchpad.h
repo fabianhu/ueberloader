@@ -46,6 +46,8 @@ typedef struct paticle_tag
 	int32_t position;
 	int32_t force;
 	int32_t friction; //(factor)
+	int32_t min;
+	int32_t max
 }particle_t;
 
 typedef enum eGestures_tag
