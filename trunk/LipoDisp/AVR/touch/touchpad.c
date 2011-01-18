@@ -13,17 +13,17 @@ eGestures_t getGesture(void);
 uint8_t bitcount3(uint8_t b);
 
 
-uint16_t g_ausTouchCalValues[5] =
+int16_t g_ausTouchCalValues[5] =
 TOUCHCALINIT;
 
-uint16_t g_aucTouchpads[TOUCHCOUNT];
-uint16_t g_ausTouchpadsRAW[TOUCHCOUNT];
+int16_t g_aucTouchpads[TOUCHCOUNT];
+int16_t g_ausTouchpadsRAW[TOUCHCOUNT];
 
 
 particle_t myP =
 	{ 0, 0, 0, 99 ,-1000,1000};
 
-extern uint8_t g_debug,g_debug2;
+extern uint8_t g_debug, g_debug2, g_debug3;
 
 
 /*
@@ -45,82 +45,10 @@ extern uint8_t g_debug,g_debug2;
 
  */
 
-/*uint8_t touchGetPad(uint8_t pin)
- {
- uint8_t cnt,i;
- uint8_t mask;
-
- if(pin == 0) mask = (1<<0);
- if(pin == 1) mask = (1<<2);
- if(pin == 2) mask = (1<<4);
-
- cnt = 0;
- OS_DISABLEALLINTERRUPTS  // no interrupts allowed here!
- for(i=0;i<TOUCHREPCNT;i++)
- {
- TOUCHTOGGLEHIGH;
- while (!(TOUCHPORT.IN & mask))
- {
- cnt++;
- }
- TOUCHTOGGLELOW;
- while (TOUCHPORT.IN & mask)
- {
- cnt++;
- }
- }
- OS_ENABLEALLINTERRUPTS
-
- g_ausTouchCalValues[pin] = min(g_ausTouchCalValues[pin],cnt*100);
-
- g_ausTouchCalValues[pin]++; // every some time, correct the calibration bytes.. even, if a touch is recognized... -> provides self healing..
-
-
- return cnt - (g_ausTouchCalValues[pin]/100);
- }*/
-
 uint8_t touchGetPad5(uint8_t pin)
 {
-	uint8_t cnt, i;
-	uint8_t mask = (1 << pin);
-
-	cnt = 0;
-	OS_DISABLEALLINTERRUPTS;// absolutely no interrupts allowed here!
-	for (i = 0; i < TOUCHREPCNT; i++)
-	{
-		TOUCHTOGGLEHIGH;
-		while (!(TOUCHPORT.IN & mask))
-		{
-			cnt++;
-		}
-		TOUCHTOGGLELOW;
-		while (TOUCHPORT.IN & mask)
-		{
-			cnt++;
-		}
-	}
-	OS_ENABLEALLINTERRUPTS;
-
-	g_ausTouchCalValues[pin] = min(g_ausTouchCalValues[pin],cnt*100);
-
-	g_ausTouchCalValues[pin]++; // every some time, correct the calibration bytes.. even, if a touch is recognized... -> provides self healing..
-
-
-	return cnt - (g_ausTouchCalValues[pin] / 100);
-}
-
-uint8_t touchGetPad3(uint8_t pin)
-{
 	uint8_t value, i;
-	uint8_t mask;
-
-	if (pin == 0)
-		mask = 1;
-	else
-		if (pin == 1)
-			mask = 1 << 2;
-		else
-			mask = 1 << 4;
+	uint8_t mask = (1 << pin);
 
 	value = 0;
 	OS_DISABLEALLINTERRUPTS;// absolutely no interrupts allowed here!
@@ -139,13 +67,14 @@ uint8_t touchGetPad3(uint8_t pin)
 	}
 	OS_ENABLEALLINTERRUPTS;
 
+	g_ausTouchpadsRAW[pin] = value;
 
 	// limit re-calibration
 	if(value*100 < g_ausTouchCalValues[pin]) // wenns denn schneller war
 	{
-		if(value*100 < g_ausTouchCalValues[pin] - 100) //ups das war aber zu flott
+		if(value*100 < g_ausTouchCalValues[pin] - 500) //ups das war aber zu flott
 		{
-			// lassen wie's war
+			// lassen wie's war bzw. nur leicht weniger
 			g_ausTouchCalValues[pin] -= 100;
 		}
 		else
@@ -157,51 +86,16 @@ uint8_t touchGetPad3(uint8_t pin)
 
 	g_ausTouchCalValues[pin]++; // every some time, correct the calibration bytes.. even, if a touch is recognized... -> provides self healing..
 
-	g_ausTouchpadsRAW[pin] = value;
+
 
 	return value - (g_ausTouchCalValues[pin] / 100);
 }
 
-/*
-void process_touch_digital(void) // Notlösung f. 3 Tasten
-{
-	uint8_t i, t[5];
-
-	for (i = 0; i < 5; ++i)
-	{
-		t[i] = touchGetPad5(i);
-		//OS_WaitTicks(OSALTouchPause,1);
-	}
-
-	if (t[0] > 20)
-	{
-		if (touchValue < touchValueUpper)
-		{
-			touchValue++;
-		}
-	}
-
-	if (t[4] > 20)
-	{
-		if (touchValue > touchValueLower)
-		{
-			touchValue--;
-		}
-	}
-
-	if (t[2] > 20)
-	{
-		menu_select();
-		OS_WaitTicks(OSALTouchPause,100);
-	}
-
-}*/
 
 void touch_init(void)
 {
 	TOUCHCONFIGPORT;
 }
-
 
 
 
@@ -214,7 +108,7 @@ int32_t ret;
 
 	for (i = 0; i < TOUCHCOUNT; ++i)
 	{
-		g_aucTouchpads[i] = touchGetPad3(i);
+		g_aucTouchpads[i] = touchGetPad5(i);
 	}
 
 	Moment = 0;
@@ -266,133 +160,6 @@ void svFilter(int16_t* o, int16_t* n, uint8_t x)
 	}
 }
 
-//int16_t touch(void)
-//{
-//	static uint8_t bwasInvalid;
-//	static uint16_t gradientOldPos;
-//	static int16_t gradient = 0;
-//	static int16_t gradientFlt = 0;
-//	int16_t posRaw;
-//	static int16_t posFlt;
-//
-//	// here do all touch processing
-//
-//	// get values
-//	posRaw = touchGetSchwerpunkt();
-//
-//	if (posRaw >= 0)
-//	{
-//		sFilter(&posFlt, &posRaw);
-//	}
-//	else
-//	{
-//		bwasInvalid = 1;
-//	}
-//
-//	// override filter, if new touch
-//	if (posRaw >= 0 && bwasInvalid)
-//	{
-//		// first touch
-//		bwasInvalid = 0;
-//		gradient = 0;
-//		gradientFlt = 0;
-//		gradientOldPos = posRaw;
-//		posFlt = posRaw;
-//	}
-//
-//	// calculate position
-//
-//	// calculate derivative
-//
-//	// check for tap(s)
-//	// "Tap"
-//
-//	// 1. Schwerpunkt muss -1 sein.
-//	// Schwerpunkt muss f. gewisses Intervall( min / max) mittig BLEIBEN + Gradient nahe 0 sein
-//
-//
-//	static uint8_t TapState = 0;
-//	static uint8_t TapTime = 0;
-//
-//#define TAPMINPOS 400
-//#define TAPMAXPOS 600
-//#define TAPMINTIME 1
-//#define TAPMAXTIME 6
-//
-//	switch (TapState)
-//	{
-//		case 0:
-//			TapTime = 0;
-//			if (posRaw == -1)
-//			{
-//				TapState = 1;
-//			}
-//			break;
-//		case 1:
-//			if (posRaw == -1)
-//			{
-//				// nix
-//			}
-//			else
-//			{
-//				TapTime = 0;
-//				if (posRaw > TAPMINPOS && posRaw < TAPMAXPOS)
-//					TapState = 2;
-//			}
-//			break;
-//		case 2:
-//			if (posRaw > TAPMINPOS && posRaw < TAPMAXPOS)
-//			{
-//				TapTime++;
-//
-//			}
-//			else
-//				if (posRaw == -1)
-//				{
-//					if (TapTime > TAPMINTIME && TapTime < TAPMAXTIME)
-//					{
-//						// yeah!
-//						//fixme LCD_LIGHT_TGL; <- doesn't work with my hardware, best regards Joe
-//						TapState = 0;
-//					}
-//				}
-//				else
-//				{
-//					TapState = 0;
-//				}
-//
-//			break;
-//
-//		default:
-//			TapState = 0;
-//			break;
-//	}
-//
-//	// calculate changed value
-//	// TAP blocks the value change until cleared by "customer" fixme ist das so?
-//	if (posRaw >= 0)
-//	{
-//		gradient = posFlt - gradientOldPos;
-//		gradientOldPos = posFlt;
-//		sFilter(&gradientFlt, &gradient);
-//		touchValue
-//				= limit((touchValue-gradientFlt), touchValueLower, touchValueUpper);
-//
-//	}
-//	else
-//	{
-//		if (abs(gradientFlt) > 30) // let run...
-//		{
-//			touchValue
-//					= limit((touchValue-gradientFlt), touchValueLower, touchValueUpper);
-//		}
-//	}
-//
-//	return posFlt;//gradientFlt+500;
-//}
-
-#define TOUCHREDUCEFACTOR 8
-
 void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower) // fixme umziehen ins menu_variant
 {
 	myP.position = value * TOUCHREDUCEFACTOR; // fixme particle rein
@@ -423,10 +190,12 @@ int16_t touchGetPosition(void) // read the pos
 {
 	return 0;
 }
-	int16_t pos; // fixme local!
+
+// returns 1 if speed is OK
 uint8_t touchGetSpeed(int16_t* speed)
 {
 	static int16_t opos=-1, fpos=-1;
+	int16_t pos;
 
 	pos = touchGetSchwerpunkt();
 	if (pos != -1)
@@ -441,7 +210,7 @@ uint8_t touchGetSpeed(int16_t* speed)
 		// invalid (no touch)
 		fpos = -1;
 		opos = -1;
-		return 1; // no speed!
+		return 0; // no speed!
 	}
 
 	if (opos == -1)
@@ -450,22 +219,22 @@ uint8_t touchGetSpeed(int16_t* speed)
 		opos = fpos;
 		//fpos = -1;
 		*speed = 0;
-		return 0; // speed!
+		return 1; // speed!
 	}
 	else
 	{
-		if(abs(fpos - opos) > 100)
+		if(abs(fpos - opos) > MAXSLIDESPEED)
 		{
 			opos = fpos;
 			fpos = -1;
 			*speed = 0;
-			return 0;
+			return 1;
 		}
 		else
 		{
 			*speed = fpos - opos;
 			opos = fpos;
-			return 0;
+			return 1;
 		}
 	}
 
@@ -480,11 +249,11 @@ void ProcessTouch(void)
 	uint8_t ucActualGesture;
 	static int16_t s_sSpeedFiltered = 0;
 	static uint8_t s_ucOldGesture;
-	uint8_t ret;
+	uint8_t bMoved;
 
 
 
-	ret = touchGetSpeed(&sSpeed/*, &TouchBitfield*/); // fixme  beim integrieren den Schwerpunkt / speed  nur rechnen, wenn nur ein bzw. zwei benachbarte gedrückt.
+	bMoved = touchGetSpeed(&sSpeed/*, &TouchBitfield*/); // fixme  beim integrieren den Schwerpunkt / speed  nur rechnen, wenn nur ein bzw. zwei benachbarte gedrückt.
 	ucActualGesture = getGesture();
 
 	svFilter(&s_sSpeedFiltered, &sSpeed, 4);
@@ -499,7 +268,7 @@ void ProcessTouch(void)
 		case eTSIdle:
 			s_sSpeedFiltered = 0;
 			myP.force = 0;
-			if (ret != 0)
+			if (bMoved == 0 && ucActualGesture == 0)
 			{
 				// not touched
 				break;
@@ -511,17 +280,16 @@ void ProcessTouch(void)
 			}
 			// no break;
 		case eTSTouched:
-			if (ret == 0) // Touch occurred
+			if (bMoved == 1 && abs(s_sSpeedFiltered) > MINSLIDESPEED)
 			{
-				if(abs(s_sSpeedFiltered) > MINSLIDESPEED)
+				eTouchstate = eTSMoving; // fixme evtl. blockieren anhand Menü-status
+			}
+			else
+				if (ucActualGesture)
 				{
-					eTouchstate = eTSMoving;  // fixme evtl. blockieren anhand Menü-status
-				}
-				else
-				{
-					if(	ucActualGesture == s_ucOldGesture)
+					if (ucActualGesture == s_ucOldGesture)
 					{
-						if(TimeDiff > MINGESTURETIME)
+						if (TimeDiff > MINGESTURETIME)
 						{
 							// gesture erkannt
 							eTouchstate = eTSGesture;
@@ -534,16 +302,16 @@ void ProcessTouch(void)
 					break;
 				}
 				// no break, drop through to moved
-			}
-			else // no touch
-			{
-				eTouchstate = eTSIdle;
-				break;
-			}
-				// no break!!
+
+				else // no touch
+				{
+					eTouchstate = eTSIdle;
+					break;
+				}
+			// no break!!
 
 		case eTSMoving:
-			if(ret == 0) // touched / moved
+			if (bMoved == 1) // touched / moved
 			{
 				// adapt speed
 				if (abs(s_sSpeedFiltered) < MINSLIDESPEED)
@@ -558,14 +326,15 @@ void ProcessTouch(void)
 
 				myP.velocity = myP.velocity + myP.force;
 			}
-			else if (myP.velocity == 0)
-			{
-				eTouchstate = eTSIdle;
-			}
 			else
-			{
-				// do nothing and let particle move on
-			}
+				if (myP.velocity == 0)
+				{
+					eTouchstate = eTSIdle;
+				}
+				else
+				{
+					// do nothing and let particle move on
+				}
 			break;
 
 		case eTSGesture:
@@ -611,7 +380,7 @@ void ProcessTouch(void)
 			break;
 
 		case eTSBlocked:
-			if (ret == 1 && TimeDiff > 10) // warte bis komplett losgelassen
+			if (bMoved == 0 && TimeDiff > 20 && ucActualGesture == 0) // warte bis komplett losgelassen
 			{
 				eTouchstate = eTSIdle;
 			}
@@ -635,18 +404,20 @@ void ProcessTouch(void)
 
 	g_debug = eTouchstate;
 
+	g_debug3 = ucActualGesture;
+
 }
 
 eGestures_t getGesture(void)
 {
 	uint8_t ret = 0;
 
-	uint8_t i;
+	uint8_t i,j;
 
-	for (i = 0; i < TOUCHCOUNT; i++)
+	for (i=0, j=0; i < TOUCHCOUNT; i+=2,j++)
 	{
 		if (g_aucTouchpads[i] > TOUCHMINSIGNAL)
-			ret |= (1 << i);
+			ret |= (1 << j);
 	}
 
 	return ret; // scho feddisch
