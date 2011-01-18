@@ -10,7 +10,7 @@
 
 #include <avr/io.h>
 
-#define TOUCHCOUNT 3
+#define TOUCHCOUNT 5
 
 #define TOUCHCONFIGPORT PORTC.DIR = (1<<7);
 #define TOUCHPORT PORTC
@@ -19,11 +19,15 @@
 
 #define TOUCHREPCNT 5
 
-#define TOUCHMINSIGNAL 22
+#define TOUCHMINSIGNAL 35
 #define MINSLIDESPEED 8
 
 #define MINGESTURETIME 6
 
+
+#define TOUCHREDUCEFACTOR 8 // fixme kommentare ?
+
+#define MAXSLIDESPEED 10
 
 void touch_init(void);
 //uint8_t touchGetPad(uint8_t pin);
@@ -32,7 +36,7 @@ int16_t touch(void);
 void touchGetValue(int32_t* pValue);
 //void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower);
 
-#define TOUCHCALINIT {0xffff,0xffff,0xffff,0xffff,0xffff}
+#define TOUCHCALINIT {15800,15600,11300,11300,12900} //
 
 #define abs(X) ((X)<0?-(X):(X))
 #define min(x,y) (((x)<(y))?(x):(y))
@@ -47,7 +51,7 @@ typedef struct paticle_tag
 	int32_t force;
 	int32_t friction; //(factor)
 	int32_t min;
-	int32_t max
+	int32_t max;
 }particle_t;
 
 typedef enum eGestures_tag
