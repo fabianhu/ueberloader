@@ -57,6 +57,7 @@ uint8_t g_bMenuActive = 0;//DISPLAYTEST; // 1 = the menue is active
 static volatile uint16_t a,b,c,d;
 
 uint8_t g_debug,g_debug2,g_debug3;
+int16_t g_debug4;
 
 // *********  THE main()
 int main(void)
@@ -274,7 +275,7 @@ void touchtest(void)
 
 				lcd_print(WHITE, BLACK, 1, 0, 32,"State: %i  " ,(uint16_t)g_debug);
 				lcd_print(WHITE, BLACK, 1, 0, 64,"Gesture: %i  " ,(uint16_t)g_debug2);
-				lcd_print(WHITE, BLACK, 1, 0, 96,"Act G: %i  " ,(uint16_t)g_debug3);
+				lcd_print(WHITE, BLACK, 1, 0, 96,"Speed: %i  " ,(uint16_t)g_debug4);
 
 				/*ypos =32;
 				lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"P1/t%i      " ,g_aucTouchpads[0]);

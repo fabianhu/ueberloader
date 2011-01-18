@@ -24,6 +24,7 @@ particle_t myP =
 	{ 0, 0, 0, 99 ,-1000,1000};
 
 extern uint8_t g_debug, g_debug2, g_debug3;
+extern int16_t g_debug4;
 
 
 /*
@@ -119,16 +120,15 @@ int32_t ret;
 		Moment += (i + 1) * 250ULL * g_aucTouchpads[i];
 		sum += g_aucTouchpads[i];
 	}
-	if (sum > (TOUCHMINSIGNAL*TOUCHCOUNT)) //fixme make self learning
+	if (sum > (SLIDEMINSIGNAL)) //fixme make self learning
 	{
 		ret = (Moment / sum) - 250ULL;
-			asm("cli");
-		// fixme g_debug:
+
+		// fixme debug:
 		if(ret < 0)
 		{
 			asm("break");
 		}
-			asm("sei");
 		return ret ;
 	}
 	else
@@ -196,6 +196,7 @@ uint8_t touchGetSpeed(int16_t* speed)
 {
 	static int16_t opos=-1, fpos=-1;
 	int16_t pos;
+	int16_t speed_raw;
 
 	pos = touchGetSchwerpunkt();
 	if (pos != -1)
@@ -210,29 +211,30 @@ uint8_t touchGetSpeed(int16_t* speed)
 		// invalid (no touch)
 		fpos = -1;
 		opos = -1;
+		*speed = 0;
 		return 0; // no speed!
 	}
 
-	if (opos == -1)
+	if (opos == -1) // gerade gültig geworden?
 	{
-		// invalid (no touch)
+		
 		opos = fpos;
-		//fpos = -1;
 		*speed = 0;
-		return 1; // speed!
+		return 0; // no speed, neue Messung.
 	}
 	else
 	{
 		if(abs(fpos - opos) > MAXSLIDESPEED)
 		{
-			opos = fpos;
+			opos = -1;
 			fpos = -1;
 			*speed = 0;
-			return 1;
+			return 0;
 		}
 		else
 		{
-			*speed = fpos - opos;
+			speed_raw = fpos - opos;
+			svFilter(speed, &speed_raw, 4);
 			opos = fpos;
 			return 1;
 		}
@@ -245,7 +247,7 @@ eTouchstate_t eTouchstate = eTSIdle;
 
 void ProcessTouch(void)
 {
-	int16_t sSpeed;
+//	int16_t sSpeed;
 	uint8_t ucActualGesture;
 	static int16_t s_sSpeedFiltered = 0;
 	static uint8_t s_ucOldGesture;
@@ -253,10 +255,10 @@ void ProcessTouch(void)
 
 
 
-	bMoved = touchGetSpeed(&sSpeed/*, &TouchBitfield*/); // fixme  beim integrieren den Schwerpunkt / speed  nur rechnen, wenn nur ein bzw. zwei benachbarte gedrückt.
+	bMoved = touchGetSpeed(&s_sSpeedFiltered/*, &TouchBitfield*/); // fixme  beim integrieren den Schwerpunkt / speed  nur rechnen, wenn nur ein bzw. zwei benachbarte gedrückt.
 	ucActualGesture = getGesture();
 
-	svFilter(&s_sSpeedFiltered, &sSpeed, 4);
+	g_debug4 = s_sSpeedFiltered;
 
 	static uint16_t TimeDiff=0;
 
@@ -266,7 +268,7 @@ void ProcessTouch(void)
 	switch (eTouchstate)
 	{
 		case eTSIdle:
-			s_sSpeedFiltered = 0;
+			//s_sSpeedFiltered = 0;
 			myP.force = 0;
 			if (bMoved == 0 && ucActualGesture == 0)
 			{
@@ -284,30 +286,27 @@ void ProcessTouch(void)
 			{
 				eTouchstate = eTSMoving; // fixme evtl. blockieren anhand Menü-status
 			}
-			else
-				if (ucActualGesture)
+			else if (ucActualGesture )
+			{
+				if (ucActualGesture == s_ucOldGesture)
 				{
-					if (ucActualGesture == s_ucOldGesture)
+					if (TimeDiff > MINGESTURETIME)
 					{
-						if (TimeDiff > MINGESTURETIME)
-						{
-							// gesture erkannt
-							eTouchstate = eTSGesture;
-						}
+						// gesture erkannt
+						eTouchstate = eTSGesture;
 					}
-					else
-					{
-						TimeDiff = 0;
-					}
-					break;
 				}
-				// no break, drop through to moved
-
-				else // no touch
+				else
 				{
-					eTouchstate = eTSIdle;
-					break;
+					TimeDiff = 0;
 				}
+				break;
+			}
+			else // no touch
+			{
+				eTouchstate = eTSIdle;
+				break;
+			}
 			// no break!!
 
 		case eTSMoving:
@@ -408,12 +407,11 @@ void ProcessTouch(void)
 
 }
 
-eGestures_t getGesture(void)
+eGestures_t getGesture(void) // delayed by one cycle
 {
 	uint8_t ret = 0;
-
 	uint8_t i,j;
-
+	
 	for (i=0, j=0; i < TOUCHCOUNT; i+=2,j++)
 	{
 		if (g_aucTouchpads[i] > TOUCHMINSIGNAL)
@@ -446,35 +444,3 @@ uint8_t bitcount3(uint8_t b)
 	}
 	return r;
 }
-
-/*
-switch (getGesture())
-{
-	case eGNothing:
-
-		break;
-	case eGPlus:
-
-		break;
-	case eGMitte:
-
-		break;
-	case eGMittePlus:
-
-		break;
-	case eGMinus:
-
-		break;
-	case eGSplit:
-
-		break;
-	case eGMitteMinus:
-
-		break;
-	case eGFullHouse:
-
-		break;
-	default:
-		break;
-}
-*/
