@@ -4,7 +4,7 @@
 
 
 int32_t GetvalueFromUI(void);
-uint8_t touchGetSpeed(int16_t* speed);
+uint8_t touchGetSpeed(int16_t* speed, int32_t *Schwerpunkt);
 extern void menu_select(void);
 int32_t touchGetSchwerpunkt(void);
 void sFilter(int16_t* o, int16_t* n);
@@ -192,13 +192,13 @@ int16_t touchGetPosition(void) // read the pos
 }
 
 // returns 1 if speed is OK
-uint8_t touchGetSpeed(int16_t* speed)
+uint8_t touchGetSpeed(int16_t* speed, int32_t *Schwerpunkt)
 {
 	static int16_t opos=-1, fpos=-1;
 	int16_t pos;
 	int16_t speed_raw;
 
-	pos = touchGetSchwerpunkt();
+	*Schwerpunkt = pos = touchGetSchwerpunkt();
 	if (pos != -1)
 	{
 		if (fpos == -1)
@@ -245,6 +245,9 @@ uint8_t touchGetSpeed(int16_t* speed)
 
 eTouchstate_t eTouchstate = eTSIdle;
 
+#define MINDIST 200
+
+
 void ProcessTouch(void)
 {
 //	int16_t sSpeed;
@@ -253,9 +256,11 @@ void ProcessTouch(void)
 	static uint8_t s_ucOldGesture;
 	uint8_t bMoved;
 
+	int32_t Schwerpunkt;
+	static int32_t OldSchwerpunkt;
 
 
-	bMoved = touchGetSpeed(&s_sSpeedFiltered/*, &TouchBitfield*/); // fixme  beim integrieren den Schwerpunkt / speed  nur rechnen, wenn nur ein bzw. zwei benachbarte gedrückt.
+	bMoved = touchGetSpeed(&s_sSpeedFiltered, &Schwerpunkt/*, &TouchBitfield*/); // fixme  beim integrieren den Schwerpunkt / speed  nur rechnen, wenn nur ein bzw. zwei benachbarte gedrückt.
 	ucActualGesture = getGesture();
 
 	g_debug4 = s_sSpeedFiltered;
@@ -264,6 +269,7 @@ void ProcessTouch(void)
 
 	TimeDiff++;
 
+	static uint8_t magic;
 
 	switch (eTouchstate)
 	{
@@ -282,36 +288,14 @@ void ProcessTouch(void)
 			}
 			// no break;
 		case eTSTouched:
-			if (bMoved == 1 && abs(s_sSpeedFiltered) > MINSLIDERECOGNIZESPEED)
-			{
-				eTouchstate = eTSMoving; // fixme evtl. blockieren anhand Menü-status
-			}
-			else if (ucActualGesture )
-			{
-				if (ucActualGesture == s_ucOldGesture)
-				{
-					if (TimeDiff > MINGESTURETIME)
-					{
-						// gesture erkannt
-						eTouchstate = eTSGesture;
-					}
-				}
-				else
-				{
-					TimeDiff = 0;
-				}
-				break;
-			}
-			else // no touch
-			{
-				eTouchstate = eTSIdle;
-				break;
-			}
+			OldSchwerpunkt = Schwerpunkt;
+			eTouchstate = eTSMoving;
 			// no break!!
 
 		case eTSMoving:
 			if (bMoved == 1) // touched / moved
 			{
+				magic = 10;
 				// adapt speed
 				if (abs(s_sSpeedFiltered) < MINSLIDESPEED)
 				{
@@ -333,14 +317,20 @@ void ProcessTouch(void)
 				myP.velocity = myP.velocity + myP.force;
 			}
 			else
-				if (myP.velocity == 0)
+				if (myP.velocity == 0 && --magic > 0)
 				{
+					if(abs(OldSchwerpunkt-Schwerpunkt)< MINDIST)
+					eTouchstate = eTSGesture;
+					else
 					eTouchstate = eTSIdle;
 				}
 				else
 				{
 					// do nothing and let particle move on // evtl bremsen fixme?
 				}
+
+
+
 
 			myP.position = limit(myP.position + myP.velocity,myP.min,myP.max);
 			break;
@@ -381,7 +371,7 @@ void ProcessTouch(void)
 			}
 			g_debug2 = s_ucOldGesture;
 
-			eTouchstate = eTSBlocked;
+			eTouchstate = eTSIdle;
 			TimeDiff =0;
 
 			//OS_WaitTicks(OSALTouchPause,10);

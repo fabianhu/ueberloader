@@ -263,7 +263,7 @@ void touchtest(void)
 				//uint16_t sp = touchGetSchwerpunkt();
 				//lcd_draw_pixel(GREEN,g,sp/2);
 
-				lcd_draw_pixel(RED,g,(myP.position/0xff)+160);
+				lcd_draw_pixel(RED,g,(-myP.position/0xff)+160);
 				lcd_draw_pixel(GREEN,g,myP.velocity/0xff+128);
 				lcd_draw_pixel(YELLOW,g,myP.force/0xff+160);
 				if (g == 320)
@@ -275,7 +275,7 @@ void touchtest(void)
 
 				lcd_print(WHITE, BLACK, 1, 0, 32,"State: %i  " ,(uint16_t)g_debug);
 				lcd_print(WHITE, BLACK, 1, 0, 64,"Gesture: %i  " ,(uint16_t)g_debug2);
-				lcd_print(WHITE, BLACK, 1, 0, 96,"Particle: %i , %i   " ,(uint16_t)myP.position/320,(uint16_t)myP.velocity);
+				lcd_print(WHITE, BLACK, 1, 0, 96,"Particle: %i , %i   " ,(uint16_t)myP.position,(uint16_t)myP.velocity);
 
 				/*ypos =32;
 				lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"P1/t%i      " ,g_aucTouchpads[0]);
