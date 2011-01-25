@@ -73,7 +73,7 @@ void menu_init(void)
 	}
 	//set actual limits for UI
 	GetSubMenuCount(&SubMenuGroupSize, &StartIndex);
-	HandOverValueToUI(SubMenuGroupSize, SubMenuGroupSize, 1, 0);
+// fixme später mal.	HandOverValueToUI(SubMenuGroupSize, SubMenuGroupSize, 1, 0);
 
 }
 
