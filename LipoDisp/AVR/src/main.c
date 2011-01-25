@@ -275,7 +275,7 @@ void touchtest(void)
 
 				lcd_print(WHITE, BLACK, 1, 0, 32,"State: %i  " ,(uint16_t)g_debug);
 				lcd_print(WHITE, BLACK, 1, 0, 64,"Gesture: %i  " ,(uint16_t)g_debug2);
-				lcd_print(WHITE, BLACK, 1, 0, 96,"Speed: %i  " ,(uint16_t)g_debug4);
+				lcd_print(WHITE, BLACK, 1, 0, 96,"Particle: %i , %i   " ,(uint16_t)myP.position/320,(uint16_t)myP.velocity);
 
 				/*ypos =32;
 				lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"P1/t%i      " ,g_aucTouchpads[0]);

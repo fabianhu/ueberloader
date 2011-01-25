@@ -22,14 +22,15 @@
 #define TOUCHMINSIGNAL 35
 #define SLIDEMINSIGNAL 45
 
-#define MINSLIDESPEED 8
+#define MINSLIDESPEED 5
+#define MINSLIDERECOGNIZESPEED 10
 
-#define MINGESTURETIME 20
+#define MINGESTURETIME 10
 
 
 #define TOUCHREDUCEFACTOR 8 // fixme kommentare ?
 
-#define MAXSLIDESPEED 100
+#define MAXSLIDESPEED 70
 
 void touch_init(void);
 //uint8_t touchGetPad(uint8_t pin);

@@ -21,7 +21,7 @@ int16_t g_ausTouchpadsRAW[TOUCHCOUNT];
 
 
 particle_t myP =
-	{ 0, 0, 0, 99 ,-1000,1000};
+	{ 0, 0, 0, 99 ,0,32000};
 
 extern uint8_t g_debug, g_debug2, g_debug3;
 extern int16_t g_debug4;
@@ -98,7 +98,7 @@ void touch_init(void)
 	TOUCHCONFIGPORT;
 }
 
-
+#define MOMENTMULTIPLIER 100ULL
 
 int32_t touchGetSchwerpunkt(void)
 {
@@ -117,12 +117,12 @@ int32_t ret;
 	for (i = 0; i < TOUCHCOUNT; ++i)
 	{
 
-		Moment += (i + 1) * 250ULL * g_aucTouchpads[i];
+		Moment += (i + 1) * MOMENTMULTIPLIER * g_aucTouchpads[i];
 		sum += g_aucTouchpads[i];
 	}
 	if (sum > (SLIDEMINSIGNAL)) //fixme make self learning
 	{
-		ret = (Moment / sum) - 250ULL;
+		ret = (Moment / sum) - MOMENTMULTIPLIER;
 
 		// fixme debug:
 		if(ret < 0)
@@ -160,7 +160,7 @@ void svFilter(int16_t* o, int16_t* n, uint8_t x)
 	}
 }
 
-void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower) // fixme umziehen ins menu_variant
+void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower,uint8_t type) // fixme umziehen ins menu_variant
 {
 	myP.position = value * TOUCHREDUCEFACTOR; // fixme particle rein
 	myP.min = lower * TOUCHREDUCEFACTOR;
@@ -204,7 +204,7 @@ uint8_t touchGetSpeed(int16_t* speed)
 		if (fpos == -1)
 			fpos = pos; // filter überschreiben, wenn gerade gültig geworden.
 		else
-			svFilter(&fpos, &pos, 10); // sonst filtern
+			svFilter(&fpos, &pos, 8); // sonst filtern
 	}
 	else
 	{
@@ -282,7 +282,7 @@ void ProcessTouch(void)
 			}
 			// no break;
 		case eTSTouched:
-			if (bMoved == 1 && abs(s_sSpeedFiltered) > MINSLIDESPEED)
+			if (bMoved == 1 && abs(s_sSpeedFiltered) > MINSLIDERECOGNIZESPEED)
 			{
 				eTouchstate = eTSMoving; // fixme evtl. blockieren anhand Menü-status
 			}
@@ -320,8 +320,15 @@ void ProcessTouch(void)
 				}
 				else
 				{
-					myP.force = s_sSpeedFiltered;
+					myP.force = - s_sSpeedFiltered;
 				}
+
+				/*static uint8_t n;  // bremsen!!!
+				if (n++ == 10)
+				{
+					n = 0;
+					myP.velocity = (myP.velocity * myP.friction) / 100;
+				}*/
 
 				myP.velocity = myP.velocity + myP.force;
 			}
@@ -332,8 +339,10 @@ void ProcessTouch(void)
 				}
 				else
 				{
-					// do nothing and let particle move on
+					// do nothing and let particle move on // evtl bremsen fixme?
 				}
+
+			myP.position = limit(myP.position + myP.velocity,myP.min,myP.max);
 			break;
 
 		case eTSGesture:
@@ -389,15 +398,6 @@ void ProcessTouch(void)
 		default:
 			break;
 	}
-
-	static uint8_t n;
-	if (n++ == 10)
-	{
-		n = 0;
-		myP.velocity = (myP.velocity * myP.friction) / 100;
-	}
-
-	myP.position = limit(myP.position + myP.velocity,myP.min,myP.max);
 
 	s_ucOldGesture = ucActualGesture;
 
