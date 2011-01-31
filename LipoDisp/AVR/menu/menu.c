@@ -25,7 +25,7 @@ void GetSubMenuCount(uint8_t *Size, uint8_t *StartIndex)
 	{
 		if(m_items[i].ucParent == m_items[gucSelectedItem].ucParent)
 			{
-			if(!ResultStartIndex) ResultStartIndex = i;	
+			if(ResultStartIndex == 0) ResultStartIndex = i;	
 			ResultSize++;								
 			}
 	}
@@ -77,6 +77,8 @@ void menu_init(void)
 
 }
 
+uint16_t debug33;
+
 void menu_show(void)
 {	
 	uint8_t SubMenuGroupSize=0, StartIndex=0, i=0, LCDPos=0;
@@ -94,7 +96,9 @@ void menu_show(void)
 	{
 		GetSubMenuCount(&SubMenuGroupSize, &StartIndex);
 		//gucSelectedItem = (StartIndex+SubMenuGroupSize)-(uint8_t)GetvalueFromUI();
-		gucSelectedItem = (StartIndex+SubMenuGroupSize)-(uint8_t)GetvalueFromUI();
+		debug33 = GetvalueFromUI();
+		gucSelectedItem = (StartIndex+SubMenuGroupSize)-(uint8_t)debug33; // menue runs backwards.
+		
 	}
 	else	//check for new menu index
 	{

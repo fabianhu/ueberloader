@@ -32,8 +32,8 @@ extern particle_t myP;
 
 		
 // Defines for this file
-#define DISPLAYTEST 0
-#define TOUCHTEST 1
+#define DISPLAYTEST 1
+#define TOUCHTEST 0
 
 // *********  Task definitions
 OS_DeclareTask(TaskTouch,200);
@@ -99,7 +99,7 @@ void TaskDisplay(void)
 
 	uint16_t ypos=0;
 	uint32_t t1,t2;
-//	uint8_t i;
+	uint8_t i;
 
 #define FONTSIZE 1
 #define LINEDIFF FONTSIZE*16
@@ -142,6 +142,9 @@ void TaskDisplay(void)
 			if (g_bMenuActive)
 			{
 				menu_show();
+
+				// debug
+				lcd_print(WHITE, BLACK, 1, 150, 200,"Particle: %i , %i   " ,(uint16_t)myP.position,(uint16_t)myP.velocity);
 			}
 			else
 			{
@@ -211,7 +214,7 @@ void TaskDisplay(void)
 				OS_GetTicks(&t2);
 
 				t2=t2-t1;
-				lcd_print(GREY, BLACK, FONTSIZE, 0, 220,"Time: %i ms     " ,(uint16_t)t2);
+				lcd_print(GREY, BLACK, FONTSIZE, 0, 220,"Time: %i ms     " ,(uint16_t)t2/100);
 			}
 		}
 		else
