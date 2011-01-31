@@ -5,11 +5,12 @@
 
 //extern vars / functions
 extern uint8_t gucSelectedItem;
-extern void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower, uint8_t type);
-extern uint16_t GetvalueFromUI(void);
+//extern void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower, uint8_t type);
+//extern uint16_t GetvalueFromUI(void);
 extern void GetSubMenuCount(uint8_t *Size, uint8_t *StartIndex);
 //global vars
 					
+
 
 
 
@@ -99,7 +100,11 @@ void ActionChargeModeMaual (void){;}
 void ActionChargeMethodFull (void){;}
 void ActionChargeMethodStorage (void){;}
 void ActionChargeMethodManual (void){;}
-void leavenmenu (void){;}
+extern uint8_t g_bMenuActive;
+void leavenmenu (void)
+{
+	g_bMenuActive = 0;
+}
 
 
 

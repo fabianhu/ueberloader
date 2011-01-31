@@ -22,13 +22,13 @@
 #define TOUCHMINSIGNAL 35
 #define SLIDEMINSIGNAL 45
 
-#define MINSLIDESPEED 5
+#define MINSLIDESPEED 10
 #define MINSLIDERECOGNIZESPEED 10
 
 #define MINGESTURETIME 10
 
 
-#define TOUCHREDUCEFACTOR 8 // fixme kommentare ?
+#define TOUCHREDUCEFACTOR 8UL // fixme kommentare ?
 
 #define MAXSLIDESPEED 70
 
@@ -36,8 +36,7 @@ void touch_init(void);
 //uint8_t touchGetPad(uint8_t pin);
 //int16_t touchGetSchwerpunkt(void);
 int16_t touch(void);
-void touchGetValue(int32_t* pValue);
-//void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower);
+void touchGetValue(int16_t* pValue);
 
 #define TOUCHCALINIT {15800,15600,11300,11300,12900} //
 

@@ -3,7 +3,7 @@
 #include "../lcd/lcd.h" // fixme remove
 
 
-int32_t GetvalueFromUI(void);
+int16_t GetvalueFromUI(void);
 uint8_t touchGetSpeed(int16_t* speed, int32_t *Schwerpunkt);
 extern void menu_select(void);
 int32_t touchGetSchwerpunkt(void);
@@ -11,6 +11,9 @@ void sFilter(int16_t* o, int16_t* n);
 void svFilter(int16_t* o, int16_t* n, uint8_t x);
 eGestures_t getGesture(void);
 uint8_t bitcount3(uint8_t b);
+extern uint8_t g_bMenuActive;
+
+extern void GetSubMenuCount(uint8_t *Size, uint8_t *StartIndex);
 
 
 int16_t g_ausTouchCalValues[5] =
@@ -167,12 +170,12 @@ void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower,uint8_t ty
 	myP.max = upper * TOUCHREDUCEFACTOR;
 }
 
-int32_t GetvalueFromUI(void)
+int16_t GetvalueFromUI(void)
 {
-	return myP.position / TOUCHREDUCEFACTOR; // fixme return type?
+	return  myP.position / TOUCHREDUCEFACTOR; 
 }
 
-void touchGetValue(int32_t* pValue) // read txtback the (changed) value Mutex?
+void touchGetValue(int16_t* pValue) // read txtback the (changed) value Mutex?
 {
 	//OS_ENTERCRITICAL
 	OS_PREVENTSCHEDULING;
@@ -247,6 +250,7 @@ eTouchstate_t eTouchstate = eTSIdle;
 
 #define MINDIST 200
 
+uint8_t SubMenuGroupSize, StartIndex; // fixme debug only
 
 void ProcessTouch(void)
 {
@@ -317,7 +321,10 @@ void ProcessTouch(void)
 				myP.velocity = myP.velocity + myP.force;
 			}
 			else
-				if (myP.velocity == 0 && --magic > 0)
+			{	
+				if(magic >0) magic--;
+
+				if (myP.velocity == 0 /*&& magic > 0*/)
 				{
 					if(abs(OldSchwerpunkt-Schwerpunkt)< MINDIST)
 					eTouchstate = eTSGesture;
@@ -329,7 +336,7 @@ void ProcessTouch(void)
 					// do nothing and let particle move on // evtl bremsen fixme?
 				}
 
-
+			}
 
 
 			myP.position = limit(myP.position + myP.velocity,myP.min,myP.max);
@@ -347,7 +354,11 @@ void ProcessTouch(void)
 
 					break;
 				case eGMitte:
-
+					// menue bestätigung
+					if(g_bMenuActive)
+					{
+						menu_select();
+					}
 					break;
 				case eGMittePlus:
 
@@ -357,7 +368,20 @@ void ProcessTouch(void)
 						myP.position--;
 					break;
 				case eGSplit:
-					// fixme lock / unlock
+					// unlock
+					if(g_bMenuActive)
+					{
+						// nix, weil im menu gibt's nen "back"
+					}
+					else
+					{
+						
+						GetSubMenuCount(&SubMenuGroupSize, &StartIndex);
+
+						HandOverValueToUI(SubMenuGroupSize, SubMenuGroupSize, 1, 0);
+
+						g_bMenuActive = 1;
+					}
 
 					break;
 				case eGMitteMinus:
@@ -371,7 +395,7 @@ void ProcessTouch(void)
 			}
 			g_debug2 = s_ucOldGesture;
 
-			eTouchstate = eTSIdle;
+			eTouchstate = eTSBlocked;
 			TimeDiff =0;
 
 			//OS_WaitTicks(OSALTouchPause,10);
