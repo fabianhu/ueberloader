@@ -5,6 +5,7 @@
 
 int16_t GetvalueFromUI(void);
 uint8_t touchGetSpeed(int16_t* speed, int32_t *Schwerpunkt);
+void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower, uint16_t stepsize);
 extern void menu_select(void);
 int32_t touchGetSchwerpunkt(void);
 void sFilter(int16_t* o, int16_t* n);
@@ -79,7 +80,7 @@ uint8_t touchGetPad5(uint8_t pin)
 		if(value*100 < g_ausTouchCalValues[pin] - 500) //ups das war aber zu flott
 		{
 			// lassen wie's war bzw. nur leicht weniger
-			g_ausTouchCalValues[pin] -= 100;
+			g_ausTouchCalValues[pin] -= 100;  // fixme zu flott !!!!!
 		}
 		else
 		{
@@ -163,23 +164,29 @@ void svFilter(int16_t* o, int16_t* n, uint8_t x)
 	}
 }
 
-void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower,uint8_t type) // fixme umziehen ins menu_variant
+#define SLIDERUPSCALE 32000
+
+void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower, uint16_t stepsize) 
 {
-	myP.position = value * TOUCHREDUCEFACTOR; // fixme particle rein
-	myP.min = lower * TOUCHREDUCEFACTOR;
-	myP.max = upper * TOUCHREDUCEFACTOR;
+	myP.upscale = SLIDERUPSCALE / (upper-lower);
+
+
+	myP.position = value * myP.upscale; // fixme particle rein
+	myP.stepsize = stepsize * myP.upscale;
+	myP.min = lower * myP.upscale;
+	myP.max = upper * myP.upscale;
 }
 
 int16_t GetvalueFromUI(void)
 {
-	return  myP.position / TOUCHREDUCEFACTOR; 
+	return  myP.position / myP.upscale;
 }
 
 void touchGetValue(int16_t* pValue) // read txtback the (changed) value Mutex?
 {
 	//OS_ENTERCRITICAL
 	OS_PREVENTSCHEDULING;
-	*pValue = myP.position / TOUCHREDUCEFACTOR;
+	*pValue = myP.position / myP.upscale;
 	OS_ALLOWSCHEDULING;
 	//OS_LEAVECRITICAL
 }
@@ -248,19 +255,21 @@ uint8_t touchGetSpeed(int16_t* speed, int32_t *Schwerpunkt)
 
 eTouchstate_t eTouchstate = eTSIdle;
 
-#define MINDIST 200
+
 
 uint8_t SubMenuGroupSize, StartIndex; // fixme debug only
+int32_t Schwerpunkt;
+static int16_t s_sSpeedFiltered = 0;
+
 
 void ProcessTouch(void)
 {
 //	int16_t sSpeed;
 	uint8_t ucActualGesture;
-	static int16_t s_sSpeedFiltered = 0;
 	static uint8_t s_ucOldGesture;
 	uint8_t bMoved;
 
-	int32_t Schwerpunkt;
+
 	static int32_t OldSchwerpunkt;
 
 
@@ -288,15 +297,11 @@ void ProcessTouch(void)
 			else
 			{
 				TimeDiff =0;
-				eTouchstate = eTSTouched;
+				OldSchwerpunkt = Schwerpunkt;
+				eTouchstate = eTSTouching;
 			}
 			// no break;
-		case eTSTouched:
-			OldSchwerpunkt = Schwerpunkt;
-			eTouchstate = eTSMoving;
-			// no break!!
-
-		case eTSMoving:
+		case eTSTouching:
 			if (bMoved == 1) // touched / moved
 			{
 				magic = 10;
@@ -326,7 +331,7 @@ void ProcessTouch(void)
 
 				if (myP.velocity == 0 /*&& magic > 0*/)
 				{
-					if(abs(OldSchwerpunkt-Schwerpunkt)< MINDIST)
+					if(abs(OldSchwerpunkt-Schwerpunkt)< TOUCHMINDIST)
 					eTouchstate = eTSGesture;
 					else
 					eTouchstate = eTSIdle;
@@ -339,7 +344,7 @@ void ProcessTouch(void)
 			}
 
 
-			myP.position = limit(myP.position + myP.velocity,myP.min,myP.max);
+			myP.position = limit(myP.position + myP.velocity , myP.min , myP.max);
 			break;
 
 		case eTSGesture:
@@ -349,9 +354,10 @@ void ProcessTouch(void)
 
 					break;
 				case eGPlus:
-					if(myP.position < myP.max)
-						myP.position++;
-
+					if(myP.position + myP.stepsize < myP.max)
+						myP.position += myP.stepsize;
+					else
+						myP.position = myP.max;
 					break;
 				case eGMitte:
 					// menue bestätigung
@@ -364,8 +370,10 @@ void ProcessTouch(void)
 
 					break;
 				case eGMinus:
-					if(myP.position > myP.min)
-						myP.position--;
+					if(myP.position - myP.stepsize > myP.min)
+						myP.position -= myP.stepsize;
+					else
+						myP.position = myP.min;
 					break;
 				case eGSplit:
 					// unlock

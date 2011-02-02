@@ -232,6 +232,11 @@ void TaskDisplay(void)
 
 void touchtest(void)
 {
+
+	myP.max = 32000;
+	myP.min = 0;
+
+
 	//			for (i = 0; i < 3; i++)
 	//			{
 	//				lcd_print(WHITE, BLACK, 1, 0, 16*i,"val/t%i/tIdx/t%i      " ,maxVal[i],maxIdx[i]);

@@ -9,7 +9,7 @@
 
 extern uint16_t GetvalueFromUI(void);
 extern MenuItem_t m_items[MENUESIZE];
-extern void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower, uint8_t type);
+extern void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower, uint16_t stepsize);
 //extern void touchSetValue(int16_t v, int16_t lower, int16_t upper);
 
 uint8_t gucSelectedItem = 1;
@@ -55,6 +55,9 @@ void AdjustStartPos(uint8_t *Size, uint8_t *StartIndex)
 
 }
 
+// void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower,uint16_t stepsize)
+
+
 void menu_init(void)
 {
 	uint8_t i;
@@ -73,7 +76,8 @@ void menu_init(void)
 	}
 	//set actual limits for UI
 	GetSubMenuCount(&SubMenuGroupSize, &StartIndex);
-// fixme später mal.	HandOverValueToUI(SubMenuGroupSize, SubMenuGroupSize, 1, 0);
+
+	HandOverValueToUI(SubMenuGroupSize, SubMenuGroupSize, 1,1);
 
 }
 
@@ -212,7 +216,7 @@ void menu_select(void)
 		//get array start index of the submenu items
 		GetSubMenuCount(&SubMenuGroupSize, &StartIndex);
 		//send values to UI
-		HandOverValueToUI(SubMenuGroupSize-(gucSelectedItem-StartIndex), SubMenuGroupSize, 1, 0);
+		HandOverValueToUI(SubMenuGroupSize-(gucSelectedItem-StartIndex), SubMenuGroupSize, 1, 1);
 	}	
 	else if(m_items[gucSelectedItem].pParamID)//toggle parameter edit mode
 	{
@@ -223,7 +227,7 @@ void menu_select(void)
 			//get array start index of the submenu items
 			GetSubMenuCount(&SubMenuGroupSize,&StartIndex);
 			//send values to UI
-			HandOverValueToUI(SubMenuGroupSize-(gucSelectedItem-StartIndex), SubMenuGroupSize, 1,0);
+			HandOverValueToUI(SubMenuGroupSize-(gucSelectedItem-StartIndex), SubMenuGroupSize, 1,1);
 			//parameter deactivate
 			MenuMode = 1;
 			ShowMenu = 1; //init menu view
@@ -232,7 +236,11 @@ void menu_select(void)
 		else
 		{	
 			//send parameter values and limits to UI
-			HandOverValueToUI(m_items[gucSelectedItem].pParamID->sParam, m_items[gucSelectedItem].pParamID->sUpperLimit, m_items[gucSelectedItem].pParamID->sLowerLimit, m_items[gucSelectedItem].pParamID->sParType);
+			HandOverValueToUI(	m_items[gucSelectedItem].pParamID->sParam,
+								m_items[gucSelectedItem].pParamID->sUpperLimit,
+								m_items[gucSelectedItem].pParamID->sLowerLimit,
+								/*fixme step size??*/10
+								);
 
 			//parameter active
 			MenuMode = 0;
@@ -247,7 +255,7 @@ void menu_select(void)
 		//get array start index of the submenu items
 		GetSubMenuCount(&SubMenuGroupSize, &StartIndex);
 		//send values to UI
-		HandOverValueToUI(SubMenuGroupSize-(gucSelectedItem-StartIndex), SubMenuGroupSize, 1,0);
+		HandOverValueToUI(SubMenuGroupSize-(gucSelectedItem-StartIndex), SubMenuGroupSize, 1,1);
 		ShowMenu = 1; //init menu view
 	}
 	else
