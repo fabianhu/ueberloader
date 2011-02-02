@@ -19,16 +19,17 @@
 
 #define TOUCHREPCNT 5
 
-#define TOUCHMINSIGNAL 35
-#define SLIDEMINSIGNAL 45
+#define TOUCHMINSIGNAL 20
+#define SLIDEMINSIGNAL 25
+#define TOUCHMINDIST 200
 
 #define MINSLIDESPEED 10
-#define MINSLIDERECOGNIZESPEED 10
+//#define MINSLIDERECOGNIZESPEED 10
 
-#define MINGESTURETIME 10
+//#define MINGESTURETIME 20
 
 
-#define TOUCHREDUCEFACTOR 8UL // fixme kommentare ?
+
 
 #define MAXSLIDESPEED 70
 
@@ -38,7 +39,7 @@ void touch_init(void);
 int16_t touch(void);
 void touchGetValue(int16_t* pValue);
 
-#define TOUCHCALINIT {15800,15600,11300,11300,12900} //
+#define TOUCHCALINIT {15800,15600,11300,11300,12900} //fixme automatisch machen
 
 #define abs(X) ((X)<0?-(X):(X))
 #define min(x,y) (((x)<(y))?(x):(y))
@@ -54,6 +55,8 @@ typedef struct paticle_tag
 	int32_t friction; //(factor)
 	int32_t min;
 	int32_t max;
+	int16_t stepsize;
+	int16_t upscale;
 }particle_t;
 
 typedef enum eGestures_tag
@@ -72,10 +75,9 @@ typedef enum eGestures_tag
 typedef enum eTouchstate_tag
 {
 	eTSIdle 		= 0,
-	eTSTouched 		= 1,
-	eTSMoving 		= 2,
-	eTSGesture	 	= 3,
-	eTSBlocked 		= 4
+	eTSTouching 	= 1,
+	eTSGesture	 	= 2,
+	eTSBlocked 		= 3
 } eTouchstate_t;
 
 
