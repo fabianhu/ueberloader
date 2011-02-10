@@ -72,7 +72,7 @@ uint8_t touchGetPad5(uint8_t pin)
 	}
 	OS_ENABLEALLINTERRUPTS;
 
-	g_ausTouchpadsRAW[pin] = value;
+	g_ausTouchpadsRAW[pin] = (value*2 + 	g_ausTouchpadsRAW[pin])/3 ;
 
 	// limit re-calibration
 	if(value*100 < g_ausTouchCalValues[pin]) // wenns denn schneller war
@@ -259,7 +259,7 @@ eTouchstate_t eTouchstate = eTSIdle;
 
 uint8_t SubMenuGroupSize, StartIndex; // fixme debug only
 int32_t Schwerpunkt;
-static int16_t s_sSpeedFiltered = 0;
+/*static*/ int16_t s_sSpeedFiltered = 0;
 
 
 void ProcessTouch(void)
@@ -365,6 +365,16 @@ void ProcessTouch(void)
 					{
 						menu_select();
 					}
+					else
+					{
+						// fixme duplicate weil der doppeltatsch net geht.
+						GetSubMenuCount(&SubMenuGroupSize, &StartIndex);
+
+						HandOverValueToUI(SubMenuGroupSize, SubMenuGroupSize, 1, 1);
+
+						g_bMenuActive = 1;
+
+					}
 					break;
 				case eGMittePlus:
 
@@ -386,7 +396,7 @@ void ProcessTouch(void)
 						
 						GetSubMenuCount(&SubMenuGroupSize, &StartIndex);
 
-						HandOverValueToUI(SubMenuGroupSize, SubMenuGroupSize, 1, 0);
+						HandOverValueToUI(SubMenuGroupSize, SubMenuGroupSize, 1, 1);
 
 						g_bMenuActive = 1;
 					}

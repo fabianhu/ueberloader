@@ -5,8 +5,7 @@
 
 //extern vars / functions
 extern uint8_t gucSelectedItem;
-//extern void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower, uint8_t type);
-//extern uint16_t GetvalueFromUI(void);
+
 extern void GetSubMenuCount(uint8_t *Size, uint8_t *StartIndex);
 //global vars
 					

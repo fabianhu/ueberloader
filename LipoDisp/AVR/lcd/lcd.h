@@ -12,7 +12,6 @@
 //                            I N C L U D E
 //*****************************************************************************
 
-//#include <util/delay.h>
 #include <avr/io.h>
 //#include <stdlib.h>
 // stdlib.h-examples:

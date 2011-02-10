@@ -12,7 +12,7 @@
 #include "font.h"
 #include <stdio.h>
 #include <string.h>
-#include <util/delay.h>
+#include "../OS/FabOS.h"
 
 //*****************************************************************************
 //                    S T R I N G S  / V A R S
@@ -76,7 +76,9 @@ void lcd_init(uint8_t ColorMode, uint8_t Orientation)
 	LCD_RD_S;
 	//Reset disable
 	LCD_RE_S;
-	_delay_ms(500);
+	//_delay_ms(500);
+	OS_WaitTicks(OSALMWaitDisp,500);
+
 	//set Color Mode
 	if(ColorMode == BPP24)//24bpp mode
 	{ 

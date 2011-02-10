@@ -48,7 +48,6 @@ void emstop(uint8_t e);
 void touchtest(void);
 extern void DoParticle(void);
 extern void process_touch(void);//change value
-int16_t touchGetSchwerpunkt(void);
 extern void ProcessTouch(void);
 
 // Global variables
@@ -114,15 +113,12 @@ void TaskDisplay(void)
 	OS_GetTicks(&t1); // just for finding error fixme
 	while(1)
 	{
-		OS_WaitAlarm(OSALMWaitDisp);
-		OS_SetAlarm(OSALMWaitDisp,250);
-
-
 		ypos = 0;
 
-		
 
 #if TOUCHTEST == 1
+		OS_WaitAlarm(OSALMWaitDisp);
+		OS_SetAlarm(OSALMWaitDisp,100);
 		// the touch is tested here!
 
 		touchtest();
@@ -133,14 +129,23 @@ void TaskDisplay(void)
 		t2=t2-t1;
 		lcd_print(GREY, BLACK, FONTSIZE, 0, 220,"Time: %i ms     " ,(uint16_t)t2/100);
 #else
+		OS_WaitAlarm(OSALMWaitDisp);
+		OS_SetAlarm(OSALMWaitDisp,250);
 
 
+		static uint8_t bMenuCleared=0;
 
 		if(!glCommError || DISPLAYTEST == 1)
 		{
 
 			if (g_bMenuActive)
 			{
+				if (bMenuCleared == 0)
+				{
+					lcd_clear();
+					bMenuCleared = 1;
+				}
+				
 				menu_show();
 
 				// debug
@@ -148,6 +153,7 @@ void TaskDisplay(void)
 			}
 			else
 			{
+				bMenuCleared = 0;
 				// show the overview page
 
 				//the lcd_print function overwrites old text-> no lcd_clear needed!
@@ -230,12 +236,13 @@ void TaskDisplay(void)
 
 }
 
+extern int32_t Schwerpunkt;
+
 void touchtest(void)
 {
 
 	myP.max = 32000;
 	myP.min = 0;
-
 
 	//			for (i = 0; i < 3; i++)
 	//			{
@@ -268,9 +275,6 @@ void touchtest(void)
 
 				g++;
 
-				//uint16_t sp = touchGetSchwerpunkt();
-				//lcd_draw_pixel(GREEN,g,sp/2);
-
 				lcd_draw_pixel(RED,g,(-myP.position/0xff)+160);
 				lcd_draw_pixel(GREEN,g,myP.velocity/0xff+128);
 				lcd_draw_pixel(YELLOW,g,myP.force/0xff+160);
@@ -284,6 +288,16 @@ void touchtest(void)
 				lcd_print(WHITE, BLACK, 1, 0, 32,"State: %i  " ,(uint16_t)g_debug);
 				lcd_print(WHITE, BLACK, 1, 0, 64,"Gesture: %i  " ,(uint16_t)g_debug2);
 				lcd_print(WHITE, BLACK, 1, 0, 96,"Particle: %i , %i   " ,(uint16_t)myP.position,(uint16_t)myP.velocity);
+
+
+				lcd_print(WHITE, BLACK, 1, 280, 20,"%i  " ,g_aucTouchpads[0]);
+				lcd_print(WHITE, BLACK, 1, 280, 60,"%i  " ,g_aucTouchpads[1]);
+				lcd_print(WHITE, BLACK, 1, 280, 120,"%i  " ,g_aucTouchpads[2]);
+				lcd_print(WHITE, BLACK, 1, 280, 180,"%i  " ,g_aucTouchpads[3]);
+				lcd_print(WHITE, BLACK, 1, 280, 220,"%i  " ,g_aucTouchpads[4]);
+
+				lcd_print(WHITE, BLACK, 1, 200, 120,"%i  " ,(int16_t) Schwerpunkt);
+
 
 				/*ypos =32;
 				lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"P1/t%i      " ,g_aucTouchpads[0]);
