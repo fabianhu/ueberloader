@@ -55,8 +55,6 @@ void AdjustStartPos(uint8_t *Size, uint8_t *StartIndex)
 
 }
 
-// void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower,uint16_t stepsize)
-
 
 void menu_init(void)
 {
