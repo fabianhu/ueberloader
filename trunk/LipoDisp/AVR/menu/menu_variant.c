@@ -13,6 +13,7 @@ extern void GetSubMenuCount(uint8_t *Size, uint8_t *StartIndex);
 
 
 
+
 //******** START OF AUTO-GENERATED CODE DO NOT EDIT!!! *********
 // Text definitions
 char	txtMAINMENU[] 	PROGMEM="Main Menu";
@@ -36,11 +37,11 @@ char	txtFEQUENCY[] 	PROGMEM="Fequency";
 char	txtREFRESHPERIOD[] 	PROGMEM="Refresh-period";
 
 // Parameter definitions
-Parameter_t maxcap = {	0, 0, 10000, mAh};
-Parameter_t maxtime = {	60, 1, 6000, min};
-Parameter_t balactvolt = {	3600, 2000, 4100, V};
-Parameter_t PWMfrequency = {	50, 10, 100, kHz};
-Parameter_t RefreshPeriod = {	10, 1, 10000, ms};
+Parameter_t maxcap = {	1000, 0, 10000, 100, mAh};
+Parameter_t maxtime = {	60, 1, 6000, 1, min};
+Parameter_t balactvolt = {	3600, 2000, 4100, 100, V};
+Parameter_t PWMfrequency = {	50, 10, 100, 10, kHz};
+Parameter_t RefreshPeriod = {	10, 1, 10000, 10, ms};
 
 			//Name	Act	Par	Jmp	Parent	Memory
 MenuItem_t m_items[MENUESIZE] = {
@@ -73,6 +74,7 @@ MenuItem_t m_items[MENUESIZE] = {
 };
 
 //******** END OF AUTO-GENERATED CODE DO NOT EDIT!!! *********
+
 
 
 

@@ -111,14 +111,14 @@ int32_t Moment;
 int32_t ret;
 	uint8_t i;
 
-	for (i = 0; i < TOUCHCOUNT; ++i)
+	for (i = 0; i < TOUCHCOUNT; i++)
 	{
 		g_aucTouchpads[i] = touchGetPad5(i);
 	}
 
 	Moment = 0;
 	sum = 0;
-	for (i = 0; i < TOUCHCOUNT; ++i)
+	for (i = 0; i < TOUCHCOUNT; i++)
 	{
 
 		Moment += (i + 1) * MOMENTMULTIPLIER * g_aucTouchpads[i];
