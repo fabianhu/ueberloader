@@ -153,7 +153,11 @@ void TaskDisplay(void)
 			}
 			else
 			{
-				bMenuCleared = 0;
+				if (bMenuCleared == 1)
+				{
+					lcd_clear();
+					bMenuCleared = 0;
+				}
 				// show the overview page
 
 				//the lcd_print function overwrites old text-> no lcd_clear needed!

@@ -12,6 +12,7 @@ typedef struct Parameter_tag
 	int16_t		sParam;			//Parameter value
 	int16_t		sLowerLimit;	//Parameter Lower Limit
 	int16_t		sUpperLimit;	//Parameter Upper Limit
+	int16_t		sStepSize;		//Parameter Step size
 	uint8_t		sParType;		//Parameter type (Voltage, Current...)	
 }Parameter_t;
 

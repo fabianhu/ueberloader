@@ -237,7 +237,7 @@ void menu_select(void)
 			HandOverValueToUI(	m_items[gucSelectedItem].pParamID->sParam,
 								m_items[gucSelectedItem].pParamID->sUpperLimit,
 								m_items[gucSelectedItem].pParamID->sLowerLimit,
-								/*fixme step size??*/10
+								m_items[gucSelectedItem].pParamID->sStepSize
 								);
 
 			//parameter active
