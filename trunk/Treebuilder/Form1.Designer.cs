@@ -64,6 +64,10 @@
             this.buttonAdd = new System.Windows.Forms.Button();
             this.checkBox1 = new System.Windows.Forms.CheckBox();
             this.treeView1 = new System.Windows.Forms.TreeView();
+            this.label13 = new System.Windows.Forms.Label();
+            this.textBoxParStepSize = new System.Windows.Forms.TextBox();
+            this.label14 = new System.Windows.Forms.Label();
+            this.textBox1 = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // imageList1
@@ -79,7 +83,7 @@
             // textBoxtxtPrefix
             // 
             this.textBoxtxtPrefix.AcceptsTab = true;
-            this.textBoxtxtPrefix.Location = new System.Drawing.Point(308, 131);
+            this.textBoxtxtPrefix.Location = new System.Drawing.Point(308, 215);
             this.textBoxtxtPrefix.Name = "textBoxtxtPrefix";
             this.textBoxtxtPrefix.Size = new System.Drawing.Size(29, 20);
             this.textBoxtxtPrefix.TabIndex = 8;
@@ -92,7 +96,7 @@
             this.tbdef1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.tbdef1.Font = new System.Drawing.Font("Courier New", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tbdef1.Location = new System.Drawing.Point(308, 160);
+            this.tbdef1.Location = new System.Drawing.Point(308, 241);
             this.tbdef1.Name = "tbdef1";
             this.tbdef1.Size = new System.Drawing.Size(778, 22);
             this.tbdef1.TabIndex = 8;
@@ -103,7 +107,7 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(218, 134);
+            this.label5.Location = new System.Drawing.Point(218, 218);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(84, 13);
             this.label5.TabIndex = 9;
@@ -114,7 +118,7 @@
             this.tbmen1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.tbmen1.Font = new System.Drawing.Font("Courier New", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tbmen1.Location = new System.Drawing.Point(308, 216);
+            this.tbmen1.Location = new System.Drawing.Point(308, 297);
             this.tbmen1.Name = "tbmen1";
             this.tbmen1.Size = new System.Drawing.Size(778, 22);
             this.tbmen1.TabIndex = 8;
@@ -188,7 +192,7 @@
             // label8
             // 
             this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(333, 96);
+            this.label8.Location = new System.Drawing.Point(369, 96);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(36, 13);
             this.label8.TabIndex = 9;
@@ -198,7 +202,7 @@
             // textBoxParValDefault
             // 
             this.textBoxParValDefault.Enabled = false;
-            this.textBoxParValDefault.Location = new System.Drawing.Point(411, 119);
+            this.textBoxParValDefault.Location = new System.Drawing.Point(411, 145);
             this.textBoxParValDefault.Name = "textBoxParValDefault";
             this.textBoxParValDefault.Size = new System.Drawing.Size(55, 20);
             this.textBoxParValDefault.TabIndex = 5;
@@ -207,7 +211,7 @@
             // label10
             // 
             this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(488, 96);
+            this.label10.Location = new System.Drawing.Point(369, 122);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(36, 13);
             this.label10.TabIndex = 9;
@@ -217,7 +221,7 @@
             // textBoxParValLower
             // 
             this.textBoxParValLower.Enabled = false;
-            this.textBoxParValLower.Location = new System.Drawing.Point(530, 93);
+            this.textBoxParValLower.Location = new System.Drawing.Point(411, 119);
             this.textBoxParValLower.Name = "textBoxParValLower";
             this.textBoxParValLower.Size = new System.Drawing.Size(55, 20);
             this.textBoxParValLower.TabIndex = 5;
@@ -245,7 +249,7 @@
             // label9
             // 
             this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(364, 122);
+            this.label9.Location = new System.Drawing.Point(364, 148);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(41, 13);
             this.label9.TabIndex = 9;
@@ -264,7 +268,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(218, 163);
+            this.label1.Location = new System.Drawing.Point(218, 244);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(52, 13);
             this.label1.TabIndex = 9;
@@ -282,7 +286,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(218, 219);
+            this.label2.Location = new System.Drawing.Point(218, 300);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(79, 13);
             this.label2.TabIndex = 9;
@@ -296,18 +300,18 @@
                         | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.textBoxResult.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBoxResult.Location = new System.Drawing.Point(215, 244);
+            this.textBoxResult.Location = new System.Drawing.Point(215, 325);
             this.textBoxResult.Multiline = true;
             this.textBoxResult.Name = "textBoxResult";
             this.textBoxResult.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.textBoxResult.Size = new System.Drawing.Size(999, 449);
+            this.textBoxResult.Size = new System.Drawing.Size(999, 368);
             this.textBoxResult.TabIndex = 4;
             this.textBoxResult.TabStop = false;
             // 
             // label12
             // 
             this.label12.AutoSize = true;
-            this.label12.Location = new System.Drawing.Point(218, 192);
+            this.label12.Location = new System.Drawing.Point(218, 273);
             this.label12.Name = "label12";
             this.label12.Size = new System.Drawing.Size(37, 13);
             this.label12.TabIndex = 9;
@@ -373,7 +377,7 @@
             this.checkBoxCreateEnum.AutoSize = true;
             this.checkBoxCreateEnum.Checked = true;
             this.checkBoxCreateEnum.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBoxCreateEnum.Location = new System.Drawing.Point(308, 188);
+            this.checkBoxCreateEnum.Location = new System.Drawing.Point(308, 269);
             this.checkBoxCreateEnum.Name = "checkBoxCreateEnum";
             this.checkBoxCreateEnum.Size = new System.Drawing.Size(126, 17);
             this.checkBoxCreateEnum.TabIndex = 12;
@@ -395,7 +399,7 @@
             this.checkBox1.AutoSize = true;
             this.checkBox1.Checked = true;
             this.checkBox1.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox1.Location = new System.Drawing.Point(440, 188);
+            this.checkBox1.Location = new System.Drawing.Point(440, 269);
             this.checkBox1.Name = "checkBox1";
             this.checkBox1.Size = new System.Drawing.Size(117, 17);
             this.checkBox1.TabIndex = 12;
@@ -426,6 +430,45 @@
             this.treeView1.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseClick);
             this.treeView1.ItemDrag += new System.Windows.Forms.ItemDragEventHandler(this.treeView1_ItemDrag);
             // 
+            // label13
+            // 
+            this.label13.AutoSize = true;
+            this.label13.Location = new System.Drawing.Point(356, 174);
+            this.label13.Name = "label13";
+            this.label13.Size = new System.Drawing.Size(49, 13);
+            this.label13.TabIndex = 9;
+            this.label13.Text = "StepSize";
+            this.label13.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // textBoxParStepSize
+            // 
+            this.textBoxParStepSize.Enabled = false;
+            this.textBoxParStepSize.Location = new System.Drawing.Point(411, 171);
+            this.textBoxParStepSize.Name = "textBoxParStepSize";
+            this.textBoxParStepSize.Size = new System.Drawing.Size(55, 20);
+            this.textBoxParStepSize.TabIndex = 5;
+            this.textBoxParStepSize.TextChanged += new System.EventHandler(this.textBoxInfo_TextChanged);
+            // 
+            // label14
+            // 
+            this.label14.AutoSize = true;
+            this.label14.Location = new System.Drawing.Point(350, 218);
+            this.label14.Name = "label14";
+            this.label14.Size = new System.Drawing.Size(70, 13);
+            this.label14.TabIndex = 9;
+            this.label14.Text = "par text prefix";
+            // 
+            // textBox1
+            // 
+            this.textBox1.AcceptsTab = true;
+            this.textBox1.Location = new System.Drawing.Point(426, 215);
+            this.textBox1.Name = "textBox1";
+            this.textBox1.Size = new System.Drawing.Size(29, 20);
+            this.textBox1.TabIndex = 8;
+            this.textBox1.TabStop = false;
+            this.textBox1.Text = "par";
+            this.textBox1.WordWrap = false;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -435,9 +478,11 @@
             this.Controls.Add(this.checkBox1);
             this.Controls.Add(this.buttonAdd);
             this.Controls.Add(this.checkBoxCreateEnum);
+            this.Controls.Add(this.textBox1);
             this.Controls.Add(this.textBoxtxtPrefix);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.tbdef1);
+            this.Controls.Add(this.label14);
             this.Controls.Add(this.comboBoxParType);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.buttonDelete);
@@ -457,6 +502,8 @@
             this.Controls.Add(this.label1);
             this.Controls.Add(this.label8);
             this.Controls.Add(this.textBoxInfo);
+            this.Controls.Add(this.textBoxParStepSize);
+            this.Controls.Add(this.label13);
             this.Controls.Add(this.textBoxParValDefault);
             this.Controls.Add(this.label9);
             this.Controls.Add(this.label10);
@@ -506,6 +553,10 @@
         private System.Windows.Forms.Button buttonAdd;
         private System.Windows.Forms.CheckBox checkBox1;
         private System.Windows.Forms.TreeView treeView1;
+        private System.Windows.Forms.Label label13;
+        private System.Windows.Forms.TextBox textBoxParStepSize;
+        private System.Windows.Forms.Label label14;
+        private System.Windows.Forms.TextBox textBox1;
     }
 }
 
