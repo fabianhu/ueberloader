@@ -3,9 +3,9 @@
  *
  * */
 
-
-#include "menu_variant.h"
 #include "../OS/FabOS.h"
+#include "menu.h"
+#include "menu_variant.h"
 
 extern uint16_t GetvalueFromUI(void);
 extern MenuItem_t m_items[MENUESIZE];
@@ -105,7 +105,7 @@ void menu_show(void)
 	else	//check for new menu index
 	{
 		NewParameterValue=GetvalueFromUI();		
-		//if(GetvalueFromUI()!=m_items[gucSelectedItem].pParamID->sParam || ShowParameter)//new menu item is selected
+		//if(GetvalueFromUI()!=m_items[gucSelectedItem].pParamID->sValue || ShowParameter)//new menu item is selected
 		if(NewParameterValue!=OldParameterValue || ShowParameter)//new menu item is selected
 		{
 			ShowParameter = 0;
@@ -114,15 +114,15 @@ void menu_show(void)
 			//draw selected item
 			if((m_items[gucSelectedItem].ucSettings & 0x03) == SRAM)
 			{
-				menu_draw_selected_parameter(m_items[gucSelectedItem].strName, OldParameterValue, m_items[gucSelectedItem].pParamID->sParType, SelParLCDPos);
+				menu_draw_selected_parameter(m_items[gucSelectedItem].strName, OldParameterValue, m_items[gucSelectedItem].pParamID->sType, SelParLCDPos);
 			}
 			else
 			{	
 				strcpy_P(StrTmp,m_items[gucSelectedItem].strName);
-				menu_draw_selected_parameter(StrTmp, OldParameterValue, m_items[gucSelectedItem].pParamID->sParType, SelParLCDPos);
+				menu_draw_selected_parameter(StrTmp, OldParameterValue, m_items[gucSelectedItem].pParamID->sType, SelParLCDPos);
 			}
 		
-			//m_items[gucSelectedItem].pParamID->sParam;	
+			//m_items[gucSelectedItem].pParamID->sValue;	
 		}
 
 	}
@@ -177,24 +177,24 @@ void menu_show(void)
 				//draw selected item
 				if((m_items[i].ucSettings&0x03) == SRAM)
 				{
-					menu_draw_selected_item(m_items[i].strName, (uint16_t)m_items[i].pParamID, m_items[i].pParamID->sParam, m_items[i].pParamID->sParType, LCDPos);
+					menu_draw_selected_item(m_items[i].strName, (uint16_t)m_items[i].pParamID, m_items[i].pParamID->sValue, m_items[i].pParamID->sType, LCDPos);
 				}
 				else
 				{	
 					strcpy_P(StrTmp,m_items[i].strName);
-					menu_draw_selected_item(StrTmp, (uint16_t)m_items[i].pParamID, m_items[i].pParamID->sParam, m_items[i].pParamID->sParType, LCDPos);
+					menu_draw_selected_item(StrTmp, (uint16_t)m_items[i].pParamID, m_items[i].pParamID->sValue, m_items[i].pParamID->sType, LCDPos);
 				}
 			}
 			else
 			{
 				if((m_items[i].ucSettings&0x03) == SRAM)
 				{
-					menu_draw_unselected_items(m_items[i].strName, (uint16_t)m_items[i].pParamID, m_items[i].pParamID->sParam, m_items[i].pParamID->sParType, LCDPos);
+					menu_draw_unselected_items(m_items[i].strName, (uint16_t)m_items[i].pParamID, m_items[i].pParamID->sValue, m_items[i].pParamID->sType, LCDPos);
 				}
 				else
 				{	
 					strcpy_P(StrTmp,m_items[i].strName);
-					menu_draw_unselected_items(StrTmp, (uint16_t)m_items[i].pParamID, m_items[i].pParamID->sParam, m_items[i].pParamID->sParType, LCDPos);
+					menu_draw_unselected_items(StrTmp, (uint16_t)m_items[i].pParamID, m_items[i].pParamID->sValue, m_items[i].pParamID->sType, LCDPos);
 				}
 			}
 		LCDPos++;
@@ -221,7 +221,7 @@ void menu_select(void)
 		if(!MenuMode)
 		{	
 			//save parameter
-			m_items[gucSelectedItem].pParamID->sParam=GetvalueFromUI();
+			m_items[gucSelectedItem].pParamID->sValue=GetvalueFromUI();
 			//get array start index of the submenu items
 			GetSubMenuCount(&SubMenuGroupSize,&StartIndex);
 			//send values to UI
@@ -234,7 +234,7 @@ void menu_select(void)
 		else
 		{	
 			//send parameter values and limits to UI
-			HandOverValueToUI(	m_items[gucSelectedItem].pParamID->sParam,
+			HandOverValueToUI(	m_items[gucSelectedItem].pParamID->sValue,
 								m_items[gucSelectedItem].pParamID->sUpperLimit,
 								m_items[gucSelectedItem].pParamID->sLowerLimit,
 								m_items[gucSelectedItem].pParamID->sStepSize
