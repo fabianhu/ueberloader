@@ -1,23 +1,32 @@
 /* definitions for menu */
 
 
-#include <avr/io.h>
-#include <avr/pgmspace.h>
-#include "menu.h"
-
 //******** START OF AUTO-GENERATED HEADER DO NOT EDIT!!! *********
 
- #define	MENUESIZE	26	// number of menu itmes (array size)
+ #define	MENUESIZE	29	// number of menu itmes (array size)
  #define	MAX_ITEM_NAME_CHARLENGTH	18	// number of menu itmes (array size)
 // Enum definitions
 typedef enum
 {
+	Cells,
 	kHz,
+	mA,
 	mAh,
 	min,
 	ms,
+	mV,
 	V,
 } eParameterType_t;
+
+// Parameter externals
+extern Parameter_t parMaxcap;
+extern Parameter_t parMaxtime;
+extern Parameter_t parBalActVolt;
+extern Parameter_t parPWMfrequency;
+extern Parameter_t parRefreshPeriod;
+extern Parameter_t parCurrent;
+extern Parameter_t parVoltSetpoint;
+extern Parameter_t parCellCount;
 
 // Action Prototypes
 void ActionChargeModeAuto (void);
@@ -28,6 +37,8 @@ void ActionChargeMethodManual (void);
 void leavenmenu (void);
 
 //******** END OF AUTO-GENERATED HEADER DO NOT EDIT!!! *********
+
+
 
 
 //Errorcode

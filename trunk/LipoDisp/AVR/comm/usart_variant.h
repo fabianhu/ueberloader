@@ -21,3 +21,6 @@
 #endif
 
 #endif /* USART_VARIANT_H_ */
+
+
+#define SLAVEDERIALID 55

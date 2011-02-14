@@ -63,6 +63,7 @@ typedef enum
 typedef struct Command_tag
 {
 	uint32_t unQ_max_mAs; // max Capacity
+	uint16_t usT_max_s; // max Time
 	uint16_t usVoltageSetpoint_mV; // volt per cell
 	int16_t  sCurrentSetpoint;  // max current
 	uint16_t usMinBalanceVolt_mV; // voltage to start balancing

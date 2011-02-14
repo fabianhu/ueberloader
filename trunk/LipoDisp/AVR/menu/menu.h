@@ -7,13 +7,13 @@
 
 
 
-typedef struct Parameter_tag
+typedef struct Parameter_tag // do not change types or order, generator uses this type!
 {
-	int16_t		sParam;			//Parameter value
+	int16_t		sValue;			//Parameter value
 	int16_t		sLowerLimit;	//Parameter Lower Limit
 	int16_t		sUpperLimit;	//Parameter Upper Limit
 	int16_t		sStepSize;		//Parameter Step size
-	uint8_t		sParType;		//Parameter type (Voltage, Current...)	
+	uint8_t		sType;		//Parameter type (Voltage, Current...)	
 }Parameter_t;
 
 

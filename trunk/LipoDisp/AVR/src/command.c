@@ -1,36 +1,99 @@
-/*
- * serial.c
- *
- *  Created on: 25.05.2010
- *      Author: Fabian
- */
+
 #include "../OS/FabOS.h"
-#include "serial.h"
-#include "usart.h"
-#include "string.h"
+#include "../comm/serial.h"
+#include "../comm/usart_variant.h"
+#include "../comm/usart.h"
+#include <string.h>
 
-Battery_Info_t g_tBattery_Info;
-Command_t g_tCommand;
-uint8_t glCommError=0;
+// Globals:
+UCIFrame_t 		g_tUCITXBlock; // used in DMA
+uint8_t 		g_NewComand =0; // indicates new command to be sent
+uint8_t 		g_GotNewComand =0; // indicates stored commands I got from slave
+Battery_Info_t 	g_tBattery_Info;
+Command_t 		g_tCommand;
+UCIFrame_t 		g_tUCIRXFrame; // serial receive data
+uint8_t    		g_ucRXLength;
+uint8_t 		glCommError=0;
 
-#if OS_TRACE_ON == 1
-	extern uint8_t OS_Tracebuffer[OS_TRACESIZE];
-	#if OS_TRACESIZE <= 0xff
-	extern uint8_t OS_TraceIdx;
-	#else
-	extern uint16_t OS_TraceIdx;
-	#endif
-#endif
 
-#define SLAVEDERIALID 55
+// Prototypes:
+uint8_t vWaitForResult(void);
+void HandleSerial(UCIFrame_t *_RXFrame);
 
-UCIFrame_t g_tUCIRXFrame;
-uint8_t    g_ucRXLength;
+void TaskCommand(void)
+{
+	OS_SetAlarm(OSALMCommandRepeat,1000);
+	while(1)
+	{
+		OS_WaitAlarm(OSALMCommandRepeat);
+		OS_SetAlarm(OSALMCommandRepeat,300);
+
+
+		if(1)
+		{
+			g_tUCITXBlock.ID = 55;
+			g_tUCITXBlock.UCI = UCI_GET_CMDs;
+			g_tUCITXBlock.len = UCIHEADERLEN;
+			UCISendBlockCrc(&g_tUCITXBlock);
+			glCommError = vWaitForResult();
+		}
+
+
+
+
+		g_tUCITXBlock.ID = 55;
+		g_tUCITXBlock.UCI = UCI_GET_OPVs;
+		g_tUCITXBlock.len = UCIHEADERLEN;
+		UCISendBlockCrc(&g_tUCITXBlock);
+	    glCommError = vWaitForResult();
+
+	    if(g_NewComand)
+	    {
+	    	g_tUCITXBlock.ID = 55;
+			g_tUCITXBlock.UCI = UCI_SET_CMDs;
+			g_tUCITXBlock.len = UCIHEADERLEN+sizeof(Command_t);
+	    	OS_MutexGet(OSMTXCommand);
+				memcpy(g_tUCITXBlock.values,&g_tCommand,sizeof(Command_t));
+	    	OS_MutexRelease(OSMTXCommand);
+	    	UCISendBlockCrc(&g_tUCITXBlock);
+
+	    	//OS_WaitTicks(OSALMCommandWait,20);
+			//glCommError = vWaitForResult();
+	    	g_NewComand = 0;
+	    }
+
+	    /*g_tUCITXBlock.ID = 55;
+	    g_tUCITXBlock.UCI = UCI_GET_CMDs;
+	    g_tUCITXBlock.len = UCIHEADERLEN;
+	    UCISendBlockCrc(&g_tUCITXBlock);
+	    glCommError = vWaitForResult();*/
+	}
+}
+
+
+uint8_t vWaitForResult(void)
+{
+	uint8_t ret;
+	uint8_t commerror = 0;
+
+	ret = OS_WaitEventTimeout(OSEVTDataRecvd,OSALMCommandTimeout, 150); // at 9600 baud it takes 105 ms to transfer the stuff.
+    if(ret == OSEVTDataRecvd)
+	{
+		HandleSerial(&g_tUCIRXFrame);
+	}
+	else
+	{
+		commerror = 100;
+	}
+    g_ucRXLength = 0;
+    g_tUCIRXFrame.len = UCIHEADERLEN;
+    return commerror;
+}
 
 ISR(USARTE0_RXC_vect)
 {
 	OS_TRACE(101);
-	
+
 	uint8_t* p = (uint8_t*)&g_tUCIRXFrame;
 	if((USARTE0_STATUS & USART_FERR_bm) || (USARTE0_STATUS & USART_BUFOVF_bm))
 	{
@@ -70,6 +133,7 @@ void HandleSerial(UCIFrame_t *_RXFrame)
 		case UCI_GET_CMDs:
 			OS_MutexGet(OSMTXCommand);
 			memcpy((uint8_t*)&g_tCommand, _RXFrame->values, sizeof(g_tCommand));
+			g_GotNewComand = 1;
 			OS_MutexRelease(OSMTXCommand);
 			break;
 		case UCI_GET_INTs:
@@ -104,7 +168,7 @@ void UCISendBlockCrc( UCIFrame_t* pU) // if the master sends a block, it is to b
 
 	g_ucRXLength = 0; // reset received data length
 	g_tUCIRXFrame.len = UCIHEADERLEN; // reset header length in recd. data
-	pU->crc = 0; 
+	pU->crc = 0;
 	pU->crc = CRC8x((uint8_t*)pU ,pU->len);
 	if(USARTSendBlockDMA(&DMA.CH1,(uint8_t*)pU ,pU->len)) glCommError = 4;
 }

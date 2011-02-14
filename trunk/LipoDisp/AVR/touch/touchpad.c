@@ -3,19 +3,24 @@
 #include "../lcd/lcd.h" // fixme remove
 
 
+// Prototypes:
+void ProcessTouch(void);
 int16_t GetvalueFromUI(void);
 uint8_t touchGetSpeed(int16_t* speed, int32_t *Schwerpunkt);
 void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower, uint16_t stepsize);
-extern void menu_select(void);
 int32_t touchGetSchwerpunkt(void);
 void sFilter(int16_t* o, int16_t* n);
 void svFilter(int16_t* o, int16_t* n, uint8_t x);
 eGestures_t getGesture(void);
 uint8_t bitcount3(uint8_t b);
-extern uint8_t g_bMenuActive;
-
+extern void menu_select(void);
 extern void GetSubMenuCount(uint8_t *Size, uint8_t *StartIndex);
 
+
+// Globals:
+extern uint8_t g_debug, g_debug2, g_debug3;
+extern int16_t g_debug4;
+extern uint8_t g_bMenuActive;
 
 int16_t g_ausTouchCalValues[5] =
 TOUCHCALINIT;
@@ -27,8 +32,48 @@ int16_t g_ausTouchpadsRAW[TOUCHCOUNT];
 particle_t myP =
 	{ 0, 0, 0, 99 ,0,32000};
 
-extern uint8_t g_debug, g_debug2, g_debug3;
-extern int16_t g_debug4;
+
+
+void TaskTouch()
+{
+	OS_SetAlarm(OSALTouchRepeat,10);
+
+#define TOUCHSENSELEVEL 15
+
+	TOUCHCONFIGPORT; // configure port
+
+	while(1)
+	{
+
+	/*if(firstrun && (eeprom_read_word(&ParMaster->usMagic)== 12312))
+		{
+			firstrun = 0;
+			OS_PREVENTSCHEDULING;
+			g_tCommand.sCurrentSetpoint = 800;
+			g_tCommand.usMinBalanceVolt_mV = 2400;//eeprom_read_word(&(ParMaster->usMinBalanceVolt_mV));
+			g_tCommand.usVoltageSetpoint_mV = 3850; //4150;
+			g_tCommand.eChargerMode = eModeAuto;
+			g_tCommand.ucUserCellCount = 0;
+			OS_ALLOWSCHEDULING;
+			}*/
+
+/*	if(firstrun)
+		{
+			eeprom_write_word(&(ParMaster->usMagic),12312);
+			eeprom_write_word(&(ParMaster->usMinBalanceVolt_mV),3000);
+		}
+*/
+		OS_WaitAlarm(OSALTouchRepeat);
+		OS_SetAlarm(OSALTouchRepeat,10); // every 10ms
+
+		ProcessTouch();//change value
+	}
+}
+
+
+
+
+
 
 
 /*
@@ -97,10 +142,7 @@ uint8_t touchGetPad5(uint8_t pin)
 }
 
 
-void touch_init(void)
-{
-	TOUCHCONFIGPORT;
-}
+
 
 #define MOMENTMULTIPLIER 100ULL
 
