@@ -62,7 +62,6 @@
             this.label6 = new System.Windows.Forms.Label();
             this.checkBoxCreateEnum = new System.Windows.Forms.CheckBox();
             this.buttonAdd = new System.Windows.Forms.Button();
-            this.checkBox1 = new System.Windows.Forms.CheckBox();
             this.treeView1 = new System.Windows.Forms.TreeView();
             this.label13 = new System.Windows.Forms.Label();
             this.textBoxParStepSize = new System.Windows.Forms.TextBox();
@@ -394,18 +393,6 @@
             this.buttonAdd.UseVisualStyleBackColor = true;
             this.buttonAdd.Click += new System.EventHandler(this.buttonAdd_Click);
             // 
-            // checkBox1
-            // 
-            this.checkBox1.AutoSize = true;
-            this.checkBox1.Checked = true;
-            this.checkBox1.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox1.Location = new System.Drawing.Point(440, 269);
-            this.checkBox1.Name = "checkBox1";
-            this.checkBox1.Size = new System.Drawing.Size(117, 17);
-            this.checkBox1.TabIndex = 12;
-            this.checkBox1.Text = "Parameter Initializer\r\n";
-            this.checkBox1.UseVisualStyleBackColor = true;
-            // 
             // treeView1
             // 
             this.treeView1.AllowDrop = true;
@@ -475,7 +462,6 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1226, 705);
             this.Controls.Add(this.treeView1);
-            this.Controls.Add(this.checkBox1);
             this.Controls.Add(this.buttonAdd);
             this.Controls.Add(this.checkBoxCreateEnum);
             this.Controls.Add(this.textBox1);
@@ -551,7 +537,6 @@
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.CheckBox checkBoxCreateEnum;
         private System.Windows.Forms.Button buttonAdd;
-        private System.Windows.Forms.CheckBox checkBox1;
         private System.Windows.Forms.TreeView treeView1;
         private System.Windows.Forms.Label label13;
         private System.Windows.Forms.TextBox textBoxParStepSize;

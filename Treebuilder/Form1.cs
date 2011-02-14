@@ -366,8 +366,13 @@ namespace Treebuilder
                 textBoxResult.AppendText(
                    "} eParameterType_t;" + Environment.NewLine);
             }
-            
             textBoxResult.AppendText(Environment.NewLine);
+
+            // Parameter externals
+            textBoxResult.AppendText("// Parameter externals" + Environment.NewLine);
+            ProcessParameterExternals(treeView1.Nodes[0]);
+            textBoxResult.AppendText(Environment.NewLine);
+
 
             textBoxResult.AppendText("// Action Prototypes" + Environment.NewLine);
             ProcessActionPrototypes(treeView1.Nodes[0]);
@@ -426,6 +431,18 @@ namespace Treebuilder
             foreach (TreeNode tn2 in tn.Nodes)
             {
                 ProcessParameters(tn2);
+            }
+        }
+
+        void ProcessParameterExternals(TreeNode tn)
+        {
+            if (((tNodeTagInfo)tn.Tag).type == eMenueElementType.parameter)
+            {
+                textBoxResult.AppendText("extern Parameter_t " + ((tNodeTagInfo)tn.Tag).info + ";" + Environment.NewLine);
+            }
+            foreach (TreeNode tn2 in tn.Nodes)
+            {
+                ProcessParameterExternals(tn2);
             }
         }
 
