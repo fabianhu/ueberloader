@@ -72,8 +72,6 @@ void TaskCommRX(void)
 		else
 		{
 			//timeout
-//			gCommErr = 1;
-//			gCommErrCnt++;
 		}
 
 		// re-init for new frame
@@ -84,7 +82,7 @@ void TaskCommRX(void)
 
 }
 
-void HandleSerial(UCIFrame_t *_RXFrame)
+uint8_t HandleSerial(UCIFrame_t *_RXFrame)
 {
 	uint8_t len=0; // byte! length of values
 
@@ -144,6 +142,7 @@ void HandleSerial(UCIFrame_t *_RXFrame)
 		}
 
 	}
+	return 0;
 }
 
 // Attention, the pointer content is CHANGED!!!

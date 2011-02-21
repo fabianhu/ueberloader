@@ -220,7 +220,7 @@ void emstop(uint8_t e) // fixme emstop reason speichern!
 
 void TaskLED(void)
 {
-	uint8_t i;
+	static uint8_t i=0;
 
 
 
