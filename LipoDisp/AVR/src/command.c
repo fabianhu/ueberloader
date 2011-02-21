@@ -18,7 +18,7 @@ uint8_t 		glCommError=0;
 
 // Prototypes:
 uint8_t vWaitForResult(void);
-void HandleSerial(UCIFrame_t *_RXFrame);
+uint8_t HandleSerial(UCIFrame_t *_RXFrame);
 
 void TaskCommand(void)
 {
@@ -122,8 +122,10 @@ ISR(USARTE0_RXC_vect)
 	OS_TRACE(102);
 }
 
-void HandleSerial(UCIFrame_t *_RXFrame)
+uint8_t HandleSerial(UCIFrame_t *_RXFrame)
 {
+	uint8_t ret = 0;
+
 	if(
 		(_RXFrame->ID == SLAVEDERIALID) &&
 		(UCIGetCRC(&g_tUCIRXFrame) == g_tUCIRXFrame.crc) )
@@ -154,10 +156,12 @@ void HandleSerial(UCIFrame_t *_RXFrame)
 	}
 	else
 	{
-		glCommError = 3; // CRC wrong
+		ret = 3; // CRC wrong
 	}
 
-	memset(_RXFrame,0xff,95);
+	memset(_RXFrame,0xff,sizeof(UCIFrame_t));
+
+	return ret;
 
 }
 

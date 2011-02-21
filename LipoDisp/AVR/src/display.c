@@ -17,7 +17,7 @@ extern Command_t 		g_tCommand; // command.c
 
 uint8_t g_bMenuActive = 0;//DISPLAYTEST; // 1 = the menue is active
 
-#define DISPLAYTEST 1
+#define DISPLAYTEST 0
 
 
 void TaskDisplay(void)
@@ -64,18 +64,17 @@ void TaskDisplay(void)
 		{
 			// gespeicherte Commands vom Slave in Parameter eintragen.
 			OS_MutexGet(OSMTXCommand);
+			 //g_tCommand.eChargerMode; // umstellen per Action // fixme
 			 parCurrent.sValue = g_tCommand.sCurrentSetpoint;
-			 parBalActVolt.sValue = g_tCommand.usMinBalanceVolt_mV;
+			 parCellCount.sValue = g_tCommand.ucUserCellCount;
+			 parVoltSetpoint.sValue = g_tCommand.usVoltageSetpoint_mV;
+
 			 parMaxcap.sValue = g_tCommand.unQ_max_mAs/3600;  // mAs in mAh
 			 parMaxtime.sValue = g_tCommand.usT_max_s;
-			 parVoltSetpoint.sValue = g_tCommand.usVoltageSetpoint_mV;
-			 parCellCount.sValue = g_tCommand.ucUserCellCount;
+			 parBalActVolt.sValue = g_tCommand.usMinBalanceVolt_mV;
 
-
-			 //g_tCommand.eChargerMode; // umstellen per Action // fixme
-			 parPWMfrequency.sValue = 7;
-			 parRefreshPeriod.sValue = 9; // fixme
-
+			 parPWMfrequency.sValue = g_tCommand.basefrequency;
+			 parRefreshPeriod.sValue = g_tCommand.refreshrate;
 
 			 OS_MutexRelease(OSMTXCommand);
 
@@ -178,7 +177,9 @@ void TaskDisplay(void)
 		}
 		else
 		{
-				//commError(glCommError);
+			lcd_clear();
+			lcd_print(RED,BLACK,2,0,180, "Comm Error: ",glCommError);
+
 		}
 
 #endif
