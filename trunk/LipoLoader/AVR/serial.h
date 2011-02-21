@@ -62,13 +62,17 @@ typedef enum
 
 typedef struct Command_tag
 {
+	ChargerMode_t  eChargerMode;
+	int16_t  sCurrentSetpoint;  // max current
+	uint8_t  ucUserCellCount; // 0 for auto
+	uint16_t usVoltageSetpoint_mV; // volt per cell
+
 	uint32_t unQ_max_mAs; // max Capacity
 	uint16_t usT_max_s; // max Time
-	uint16_t usVoltageSetpoint_mV; // volt per cell
-	int16_t  sCurrentSetpoint;  // max current
 	uint16_t usMinBalanceVolt_mV; // voltage to start balancing
-	uint8_t  ucUserCellCount; // 0 for auto
-	ChargerMode_t  eChargerMode;
+
+	uint16_t basefrequency;
+	uint16_t refreshrate;
 }Command_t;
 
 typedef struct UCIFrame_tag
@@ -84,7 +88,7 @@ typedef struct UCIFrame_tag
 
 void UCISendBlockCrc( UCIFrame_t* pU);
 uint8_t UCIGetCRC( UCIFrame_t* pU);
-void HandleSerial(UCIFrame_t *_RXFrame);
+uint8_t HandleSerial(UCIFrame_t *_RXFrame);
 
 
 
