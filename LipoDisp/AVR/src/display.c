@@ -57,17 +57,17 @@ void TaskDisplay(void)
 		lcd_print(GREY, BLACK, FONTSIZE, 0, 220,"Time: %i ms     " ,(uint16_t)t2/100);
 #else
 		OS_WaitAlarm(OSALMWaitDisp);
-		OS_SetAlarm(OSALMWaitDisp,250);
+		OS_SetAlarm(OSALMWaitDisp,333);
 
 
-		if(g_GotNewComand)
+		if(/*g_GotNewComand*/0)
 		{
 			// gespeicherte Commands vom Slave in Parameter eintragen.
 			OS_MutexGet(OSMTXCommand);
 			 //g_tCommand.eChargerMode; // umstellen per Action // fixme
 			 parCurrent.sValue = g_tCommand.sCurrentSetpoint;
 			 parCellCount.sValue = g_tCommand.ucUserCellCount;
-			 parVoltSetpoint.sValue = g_tCommand.usVoltageSetpoint_mV;
+		//	 parVoltSetpoint.sValue = g_tCommand.usVoltageSetpoint_mV;
 
 			 parMaxcap.sValue = g_tCommand.unQ_max_mAs/3600;  // mAs in mAh
 			 parMaxtime.sValue = g_tCommand.usT_max_s;
