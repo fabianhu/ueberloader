@@ -3,8 +3,8 @@
 
 //******** START OF AUTO-GENERATED HEADER DO NOT EDIT!!! *********
 
- #define	MENUESIZE	29	// number of menu itmes (array size)
- #define	MAX_ITEM_NAME_CHARLENGTH	18	// number of menu itmes (array size)
+ #define	MENUESIZE	38	// number of menu itmes (array size)
+ #define	MAX_ITEM_NAME_CHARLENGTH	19	// number of menu itmes (array size)
 // Enum definitions
 typedef enum
 {
@@ -19,33 +19,36 @@ typedef enum
 } eParameterType_t;
 
 // Parameter externals
+extern Parameter_t parCurrent;
+extern Parameter_t parCellCount;
+extern Parameter_t parLiPoChVolt;
+extern Parameter_t parLiPoStVolt;
+extern Parameter_t parLiPoDisVolt;
+extern Parameter_t parLiPoBalActVolt;
+extern Parameter_t parLiFeVolt;
+extern Parameter_t parBalActVolt;
+extern Parameter_t parLiIonVolt;
+extern Parameter_t parBalActVolt;
 extern Parameter_t parMaxcap;
 extern Parameter_t parMaxtime;
-extern Parameter_t parBalActVolt;
 extern Parameter_t parPWMfrequency;
 extern Parameter_t parRefreshPeriod;
-extern Parameter_t parCurrent;
-extern Parameter_t parVoltSetpoint;
-extern Parameter_t parCellCount;
 
 // Action Prototypes
-void ActionChargeModeAuto (void);
-void ActionChargeModeMaual (void);
 void ActionChargeMethodFull (void);
 void ActionChargeMethodStorage (void);
-void ActionChargeMethodManual (void);
-void leavenmenu (void);
+void ActionChargeMethodDischarge (void);
+void actSelTypeLiPo (void);
+void actSelTypeLiFe (void);
+void actSelTypeLiIon (void);
+void leavemenu (void);
 
 //******** END OF AUTO-GENERATED HEADER DO NOT EDIT!!! *********
 
 
 
 
-//Errorcode
-#define INFINITE_LOOP 			1			//A infinite loop exists in the menu structure
-#define WRONG_SUB_UCID 			2			//The ID of the sub menu item is wrong
-#define WRONG_PREV_UCID 		3			//The ID of the previous menu item is wrong
-#define WRONG_NEXT_UCID			4			//The ID of the next menu item is wrong
+
 
 //Menusettings
 #define ITEMS_PER_PAGE 			6				//nr of items per menu page

@@ -7,14 +7,15 @@
 
 
 //extern vars / functions
-extern uint8_t gucSelectedItem;
+extern Menue_t MyMenue;
 extern Command_t 		g_tCommand; // command.c
 
 extern void GetSubMenuCount(uint8_t *Size, uint8_t *StartIndex);
 //global vars
 					
+void leavemenu(void);
 
-
+void menuUp(void);
 
 
 
@@ -23,72 +24,94 @@ extern void GetSubMenuCount(uint8_t *Size, uint8_t *StartIndex);
 //******** START OF AUTO-GENERATED CODE DO NOT EDIT!!! *********
 // Text definitions
 char	txtMAINMENU[] 	PROGMEM="Main Menu";
-char	txtCHARGE[] 	PROGMEM="Charge";
-char	txtDISCHARGE[] 	PROGMEM="Discharge";
-char	txtSETUP[] 	PROGMEM="Setup";
 char	txtCURRENTSETPOINT[] 	PROGMEM="Current Setpoint";
-char	txtVOLTSETPOINT[] 	PROGMEM="Volt Setpoint";
-char	txtCELLCOUNT[] 	PROGMEM="CellCount";
+char	txtACTION[] 	PROGMEM="Action";
+char	txtBATTTYPESELECT[] 	PROGMEM="Batt Type Select";
+char	txtSETUP[] 	PROGMEM="Setup";
 char	txtBACK[] 	PROGMEM="(back)";
-char	txtMODE[] 	PROGMEM="Mode";
-char	txtCHARGEMETHOD[] 	PROGMEM="Charge Method";
-char	txtCHARGELIMIT[] 	PROGMEM="Charge Limit";
-char	txtAUTO[] 	PROGMEM="Auto";
-char	txtMANUAL[] 	PROGMEM="Manual";
-char	txtFULL[] 	PROGMEM="Full";
-char	txtSTORAGE[] 	PROGMEM="Storage";
+char	txtCHARGEFULL[] 	PROGMEM="Charge Full";
+char	txtCHARGESTORAGE[] 	PROGMEM="Charge Storage";
+char	txtDISCHARGE[] 	PROGMEM="Discharge";
+char	txtLIPO[] 	PROGMEM="LiPo";
+char	txtLIFEPO[] 	PROGMEM="LiFePo4";
+char	txtLIION[] 	PROGMEM="LiIon";
+char	txtCELLCOUNT[] 	PROGMEM="CellCount";
+char	txtBATTSETTINGS[] 	PROGMEM="Batt Settings";
+char	txtCHARGELIMITS[] 	PROGMEM="Charge Limits";
+char	txtPWM[] 	PROGMEM="Pwm";
+char	txtCHARGEVOLTAGE[] 	PROGMEM="Charge Voltage";
+char	txtSTORAGEVOLTAGE[] 	PROGMEM="Storage Voltage";
+char	txtDISCHARGEVOLTAGE[] 	PROGMEM="Discharge Voltage";
+char	txtBALACTIVVOLTAGE[] 	PROGMEM="Bal. Activ. Voltage";
+char	txtLIFEPOVOLT[] 	PROGMEM="LiFePo4 Volt.";
+char	txtLIIONVOLTAGE[] 	PROGMEM="LiIon Voltage";
+char	txtACTIVATIONVOLTAGE[] 	PROGMEM="Activation Voltage";
 char	txtCAPACITY[] 	PROGMEM="Capacity";
 char	txtTIME[] 	PROGMEM="Time";
-char	txtBALANCER[] 	PROGMEM="Balancer";
-char	txtPWM[] 	PROGMEM="Pwm";
-char	txtACTIVATIONVOLTAGE[] 	PROGMEM="Activation Voltage";
 char	txtFEQUENCY[] 	PROGMEM="Fequency";
 char	txtREFRESHPERIOD[] 	PROGMEM="Refresh-period";
 
 // Parameter definitions
+Parameter_t parCurrent = {	1000, 100, 10000, 100, mA};
+Parameter_t parCellCount = {	0, 0, 6, 1, Cells};
+Parameter_t parLiPoChVolt = {	4150, 3000, 4200, 10, mV};
+Parameter_t parLiPoStVolt = {	3600, 2000, 4100, 100, mV};
+Parameter_t parLiPoDisVolt = {	4150, 3000, 4200, 10, mV};
+Parameter_t parLiPoBalActVolt = {	3600, 2000, 4100, 100, mV};
+Parameter_t parLiFeVolt = {	3650, 2000, 3700, 10, mV};
+Parameter_t parBalActVolt = {	3600, 2000, 4100, 100, V};
+Parameter_t parLiIonVolt = {	4050, 3500, 4100, 10, mV};
+Parameter_t parBalActVolt2 = {	3600, 2000, 4100, 100, V};
 Parameter_t parMaxcap = {	1000, 0, 10000, 100, mAh};
 Parameter_t parMaxtime = {	60, 1, 6000, 1, min};
-Parameter_t parBalActVolt = {	3600, 2000, 4100, 100, V};
 Parameter_t parPWMfrequency = {	50, 10, 100, 10, kHz};
 Parameter_t parRefreshPeriod = {	10, 1, 10000, 10, ms};
-Parameter_t parCurrent = {	1000, 100, 10000, 100, mA};
-Parameter_t parVoltSetpoint = {	4150, 2300, 4200, 50, mV};
-Parameter_t parCellCount = {	0, 0, 6, 1, Cells};
 
 			//Name	Act	Par	Jmp	Parent	Memory
 MenuItem_t m_items[MENUESIZE] = {
 	/* 0*/	{txtMAINMENU,	 0,	 0,	1,	0,	FLASH},
-	/* 1*/	{txtCHARGE,	 0,	 0,	8,	0,	FLASH},
-	/* 2*/	{txtDISCHARGE,	 0,	 0,	0,	0,	FLASH},
-	/* 3*/	{txtSETUP,	 0,	 0,	21,	0,	FLASH},
-	/* 4*/	{txtCURRENTSETPOINT,	 0,	 &parCurrent,	0,	0,	FLASH},
-	/* 5*/	{txtVOLTSETPOINT,	 0,	 &parVoltSetpoint,	0,	0,	FLASH},
-	/* 6*/	{txtCELLCOUNT,	 0,	 &parCellCount,	0,	0,	FLASH},
-	/* 7*/	{txtBACK,	 leavenmenu,	 0,	0,	0,	FLASH},
-	/* 8*/	{txtMODE,	 0,	 0,	12,	1,	FLASH},
-	/* 9*/	{txtCHARGEMETHOD,	 0,	 0,	14,	1,	FLASH},
-	/* 10*/	{txtCHARGELIMIT,	 0,	 0,	18,	1,	FLASH},
-	/* 11*/	{txtBACK,	 0,	 0,	1,	1,	FLASH},
-	/* 12*/	{txtAUTO,	 ActionChargeModeAuto,	 0,	0,	8,	FLASH},
-	/* 13*/	{txtMANUAL,	 ActionChargeModeMaual,	 0,	0,	8,	FLASH},
-	/* 14*/	{txtFULL,	 ActionChargeMethodFull,	 0,	0,	9,	FLASH},
-	/* 15*/	{txtSTORAGE,	 ActionChargeMethodStorage,	 0,	0,	9,	FLASH},
-	/* 16*/	{txtMANUAL,	 ActionChargeMethodManual,	 0,	0,	9,	FLASH},
-	/* 17*/	{txtBACK,	 0,	 0,	9,	9,	FLASH},
-	/* 18*/	{txtCAPACITY,	 0,	 &parMaxcap,	0,	10,	FLASH},
-	/* 19*/	{txtTIME,	 0,	 &parMaxtime,	0,	10,	FLASH},
-	/* 20*/	{txtBACK,	 0,	 0,	10,	10,	FLASH},
-	/* 21*/	{txtBALANCER,	 0,	 0,	24,	3,	FLASH},
-	/* 22*/	{txtPWM,	 0,	 0,	26,	3,	FLASH},
-	/* 23*/	{txtBACK,	 0,	 0,	3,	3,	FLASH},
-	/* 24*/	{txtACTIVATIONVOLTAGE,	 0,	 &parBalActVolt,	0,	21,	FLASH},
-	/* 25*/	{txtBACK,	 0,	 0,	21,	21,	FLASH},
-	/* 26*/	{txtFEQUENCY,	 0,	 &parPWMfrequency,	0,	22,	FLASH},
-	/* 27*/	{txtREFRESHPERIOD,	 0,	 &parRefreshPeriod,	0,	22,	FLASH},
-	/* 28*/	{txtBACK,	 0,	 0,	22,	22,	FLASH},
+	/* 1*/	{txtCURRENTSETPOINT,	 0,	 &parCurrent,	0,	0,	FLASH},
+	/* 2*/	{txtACTION,	 0,	 0,	6,	0,	FLASH},
+	/* 3*/	{txtBATTTYPESELECT,	 0,	 0,	9,	0,	FLASH},
+	/* 4*/	{txtSETUP,	 0,	 0,	12,	0,	FLASH},
+	/* 5*/	{txtBACK,	 leavemenu,	 0,	0,	0,	FLASH},
+	/* 6*/	{txtCHARGEFULL,	 ActionChargeMethodFull,	 0,	0,	2,	FLASH},
+	/* 7*/	{txtCHARGESTORAGE,	 ActionChargeMethodStorage,	 0,	0,	2,	FLASH},
+	/* 8*/	{txtDISCHARGE,	 ActionChargeMethodDischarge,	 0,	0,	2,	FLASH},
+	/* 9*/	{txtLIPO,	 actSelTypeLiPo,	 0,	0,	3,	FLASH},
+	/* 10*/	{txtLIFEPO,	 actSelTypeLiFe,	 0,	0,	3,	FLASH},
+	/* 11*/	{txtLIION,	 actSelTypeLiIon,	 0,	0,	3,	FLASH},
+	/* 12*/	{txtCELLCOUNT,	 0,	 &parCellCount,	0,	4,	FLASH},
+	/* 13*/	{txtBATTSETTINGS,	 0,	 0,	17,	4,	FLASH},
+	/* 14*/	{txtCHARGELIMITS,	 0,	 0,	32,	4,	FLASH},
+	/* 15*/	{txtPWM,	 0,	 0,	35,	4,	FLASH},
+	/* 16*/	{txtBACK,	 0,	 0,	4,	4,	FLASH},
+	/* 17*/	{txtLIPO,	 0,	 0,	21,	13,	FLASH},
+	/* 18*/	{txtLIFEPO,	 0,	 0,	26,	13,	FLASH},
+	/* 19*/	{txtLIION,	 0,	 0,	29,	13,	FLASH},
+	/* 20*/	{txtBACK,	 0,	 0,	13,	13,	FLASH},
+	/* 21*/	{txtCHARGEVOLTAGE,	 0,	 &parLiPoChVolt,	0,	17,	FLASH},
+	/* 22*/	{txtSTORAGEVOLTAGE,	 0,	 &parLiPoStVolt,	0,	17,	FLASH},
+	/* 23*/	{txtDISCHARGEVOLTAGE,	 0,	 &parLiPoDisVolt,	0,	17,	FLASH},
+	/* 24*/	{txtBALACTIVVOLTAGE,	 0,	 &parLiPoBalActVolt,	0,	17,	FLASH},
+	/* 25*/	{txtBACK,	 0,	 0,	17,	17,	FLASH},
+	/* 26*/	{txtLIFEPOVOLT,	 0,	 &parLiFeVolt,	0,	18,	FLASH},
+	/* 27*/	{txtBALACTIVVOLTAGE,	 0,	 &parBalActVolt,	0,	18,	FLASH},
+	/* 28*/	{txtBACK,	 0,	 0,	18,	18,	FLASH},
+	/* 29*/	{txtLIIONVOLTAGE,	 0,	 &parLiIonVolt,	0,	19,	FLASH},
+	/* 30*/	{txtACTIVATIONVOLTAGE,	 0,	 &parBalActVolt,	0,	19,	FLASH},
+	/* 31*/	{txtBACK,	 0,	 0,	19,	19,	FLASH},
+	/* 32*/	{txtCAPACITY,	 0,	 &parMaxcap,	0,	14,	FLASH},
+	/* 33*/	{txtTIME,	 0,	 &parMaxtime,	0,	14,	FLASH},
+	/* 34*/	{txtBACK,	 0,	 0,	14,	14,	FLASH},
+	/* 35*/	{txtFEQUENCY,	 0,	 &parPWMfrequency,	0,	15,	FLASH},
+	/* 36*/	{txtREFRESHPERIOD,	 0,	 &parRefreshPeriod,	0,	15,	FLASH},
+	/* 37*/	{txtBACK,	 0,	 0,	15,	15,	FLASH},
 };
 
 //******** END OF AUTO-GENERATED CODE DO NOT EDIT!!! *********
+
+
 
 
 
@@ -110,28 +133,88 @@ char ud_name[][MAX_SRAM_ITEM_NAME_LENGHT+1]	={//Menu item name
 //uint8_t eeVarsValid EEMEM;							//Marker if a valid dataset is stored in eeprom
 
 
+extern uint8_t g_bMenuActive;
+
+typedef enum
+{
+	eBattTypeLiPo,
+	eBattTypeLiFe,
+	eBattTypeLiIon
+} eBattType_t;
+
+
+
+eBattType_t g_eBattType;
+
+
 
 // Action functions
-void ActionChargeModeAuto (void)
+
+void ActionChargeMethodFull (void)
 {
-	g_tCommand.eChargerMode = eModeAuto;
-	// fixme up!
+	switch (g_eBattType)
+	{
+		case eBattTypeLiPo:
+			g_tCommand.usVoltageSetpoint_mV = parLiPoChVolt.sValue;
+			g_tCommand.usMinBalanceVolt_mV = parLiPoBalActVolt.sValue;
+			break;
+		case eBattTypeLiFe:
+			break;
+		case eBattTypeLiIon:
+			break;
+		default:
+			break;
+	}
+	menuUp();
 }
-void ActionChargeModeMaual (void)
+
+void ActionChargeMethodStorage (void)
 {
-	g_tCommand.eChargerMode = eModeManual;
-	// fixme up!
+	switch (g_eBattType)
+	{
+		case eBattTypeLiPo:
+			g_tCommand.usVoltageSetpoint_mV = parLiPoStVolt.sValue;
+			g_tCommand.usMinBalanceVolt_mV = parLiPoBalActVolt.sValue;
+			break;
+		case eBattTypeLiFe:
+			break;
+		case eBattTypeLiIon:
+			break;
+		default:
+			break;
+	}
+	menuUp();
 }
-void ActionChargeMethodFull (void){;}
-void ActionChargeMethodStorage (void){;}
-void ActionChargeMethodManual (void){;}
-extern uint8_t g_bMenuActive;
-void leavenmenu (void)
+void ActionChargeMethodDischarge (void)
+{
+	switch (g_eBattType)
+	{
+		case eBattTypeLiPo:
+			g_tCommand.usVoltageSetpoint_mV = parLiPoDisVolt.sValue;
+			g_tCommand.usMinBalanceVolt_mV = parLiPoBalActVolt.sValue; // fixme balancieren beim Entladen aus.
+			break;
+		case eBattTypeLiFe:
+			break;
+		case eBattTypeLiIon:
+			break;
+		default:
+			break;
+	}
+	menuUp();
+}
+void actSelTypeLiPo (void){g_eBattType = eBattTypeLiPo; menuUp();}
+void actSelTypeLiFe (void){g_eBattType = eBattTypeLiFe; menuUp();}
+void actSelTypeLiIon (void){g_eBattType = eBattTypeLiIon; menuUp();}
+
+void leavemenu(void)
 {
 	g_bMenuActive = 0;
 }
 
-
+void menuUp(void)
+{
+	MyMenue.gucSelectedItem = m_items[MyMenue.gucSelectedItem].ucParent;
+}
 
 
 

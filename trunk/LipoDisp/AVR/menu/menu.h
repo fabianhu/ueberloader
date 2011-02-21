@@ -5,6 +5,15 @@
 //#include "menu_variant.h"
 #include "../lcd/lcd.h"		//nokia
 
+typedef struct Menue_tag
+{
+	uint8_t gucSelectedItem;
+	uint8_t ShowParameter;
+	uint8_t ShowMenu;
+	uint8_t MenuMode;
+}Menue_t;
+
+#define MENUEINIT {1,0,0,1}
 
 
 typedef struct Parameter_tag // do not change types or order, generator uses this type!

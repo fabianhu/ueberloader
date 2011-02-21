@@ -12,18 +12,14 @@ extern MenuItem_t m_items[MENUESIZE];
 extern void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower, uint16_t stepsize);
 //extern void touchSetValue(int16_t v, int16_t lower, int16_t upper);
 
-uint8_t gucSelectedItem = 1;
-uint8_t ShowParameter = 0;
-uint8_t ShowMenu =0;
-
-uint8_t MenuMode = 1;
+Menue_t MyMenue = MENUEINIT;
 
 void GetSubMenuCount(uint8_t *Size, uint8_t *StartIndex)
 {
 	uint8_t i, ResultStartIndex=0, ResultSize=0;
-	for(i=m_items[gucSelectedItem].ucParent+1;i<MENUESIZE;i++)
+	for(i=m_items[MyMenue.gucSelectedItem].ucParent+1;i<MENUESIZE;i++)
 	{
-		if(m_items[i].ucParent == m_items[gucSelectedItem].ucParent)
+		if(m_items[i].ucParent == m_items[MyMenue.gucSelectedItem].ucParent)
 			{
 			if(ResultStartIndex == 0) ResultStartIndex = i;	
 			ResultSize++;								
@@ -39,16 +35,16 @@ void AdjustStartPos(uint8_t *Size, uint8_t *StartIndex)
 	if(*Size>ITEMS_PER_PAGE)
 	{
 		//bottom screen
-		if((gucSelectedItem-*StartIndex)>=(*Size-(ITEMS_PER_PAGE/2)))
+		if((MyMenue.gucSelectedItem-*StartIndex)>=(*Size-(ITEMS_PER_PAGE/2)))
 		{
-		*StartIndex=gucSelectedItem-(ITEMS_PER_PAGE-(*Size-(gucSelectedItem-*StartIndex)));
+		*StartIndex=MyMenue.gucSelectedItem-(ITEMS_PER_PAGE-(*Size-(MyMenue.gucSelectedItem-*StartIndex)));
 		}
 		else
 		{
 			//middle screen
-			if((gucSelectedItem-*StartIndex)>=(ITEMS_PER_PAGE/2)) 
+			if((MyMenue.gucSelectedItem-*StartIndex)>=(ITEMS_PER_PAGE/2))
 			{
-				*StartIndex=gucSelectedItem-(ITEMS_PER_PAGE/2);
+				*StartIndex=MyMenue.gucSelectedItem-(ITEMS_PER_PAGE/2);
 			}
 		}
 	}
@@ -93,45 +89,45 @@ void menu_show(void)
 	static uint16_t NewParameterValue=255;
 	
 	//get new value from UI
-	OS_MutexGet(OSMTXMENU);//OS_PREVENTSCHEDULING; // for MenuMode AND gucSelectedItem
-	if(MenuMode)	//if parameter edit mode is active
+	OS_MutexGet(OSMTXMENU);//OS_PREVENTSCHEDULING; // for MyMenue.MenuMode AND MyMenue.gucSelectedItem
+	if(MyMenue.MenuMode)	//if parameter edit mode is active
 	{
 		GetSubMenuCount(&SubMenuGroupSize, &StartIndex);
-		//gucSelectedItem = (StartIndex+SubMenuGroupSize)-(uint8_t)GetvalueFromUI();
+		//MyMenue.gucSelectedItem = (StartIndex+SubMenuGroupSize)-(uint8_t)GetvalueFromUI();
 		debug33 = GetvalueFromUI();
-		gucSelectedItem = (StartIndex+SubMenuGroupSize)-(uint8_t)debug33; // menue runs backwards.
+		MyMenue.gucSelectedItem = (StartIndex+SubMenuGroupSize)-(uint8_t)debug33; // menue runs backwards.
 		
 	}
 	else	//check for new menu index
 	{
 		NewParameterValue=GetvalueFromUI();		
-		//if(GetvalueFromUI()!=m_items[gucSelectedItem].pParamID->sValue || ShowParameter)//new menu item is selected
-		if(NewParameterValue!=OldParameterValue || ShowParameter)//new menu item is selected
+		//if(GetvalueFromUI()!=m_items[MyMenue.gucSelectedItem].pParamID->sValue || MyMenue.ShowParameter)//new menu item is selected
+		if(NewParameterValue!=OldParameterValue || MyMenue.ShowParameter)//new menu item is selected
 		{
-			ShowParameter = 0;
+			MyMenue.ShowParameter = 0;
 				//save value
 			OldParameterValue=NewParameterValue;		
 			//draw selected item
-			if((m_items[gucSelectedItem].ucSettings & 0x03) == SRAM)
+			if((m_items[MyMenue.gucSelectedItem].ucSettings & 0x03) == SRAM)
 			{
-				menu_draw_selected_parameter(m_items[gucSelectedItem].strName, OldParameterValue, m_items[gucSelectedItem].pParamID->sType, SelParLCDPos);
+				menu_draw_selected_parameter(m_items[MyMenue.gucSelectedItem].strName, OldParameterValue, m_items[MyMenue.gucSelectedItem].pParamID->sType, SelParLCDPos);
 			}
 			else
 			{	
-				strcpy_P(StrTmp,m_items[gucSelectedItem].strName);
-				menu_draw_selected_parameter(StrTmp, OldParameterValue, m_items[gucSelectedItem].pParamID->sType, SelParLCDPos);
+				strcpy_P(StrTmp,m_items[MyMenue.gucSelectedItem].strName);
+				menu_draw_selected_parameter(StrTmp, OldParameterValue, m_items[MyMenue.gucSelectedItem].pParamID->sType, SelParLCDPos);
 			}
 		
-			//m_items[gucSelectedItem].pParamID->sValue;	
+			//m_items[MyMenue.gucSelectedItem].pParamID->sValue;
 		}
 
 	}
 	OS_MutexRelease(OSMTXMENU);//OS_ALLOWSCHEDULING;
 
-	if(LastMenuIndex!=gucSelectedItem || ShowMenu)//new menu item is selected
+	if(LastMenuIndex!=MyMenue.gucSelectedItem || MyMenue.ShowMenu)//new menu item is selected
 	{
 		//save new index
-		LastMenuIndex=gucSelectedItem;
+		LastMenuIndex=MyMenue.gucSelectedItem;
 		//get array start index of the submenu items
 		GetSubMenuCount(&SubMenuGroupSize,&StartIndex);
 		//send values to UI
@@ -145,32 +141,32 @@ void menu_show(void)
 			items_per_page = SubMenuGroupSize;
 		}
 		//write menu header
-		if(OldParentID!=m_items[gucSelectedItem].ucParent || ShowMenu)
+		if(OldParentID!=m_items[MyMenue.gucSelectedItem].ucParent || MyMenue.ShowMenu)
 		{
-			OldParentID=m_items[gucSelectedItem].ucParent;
-			if((m_items[m_items[gucSelectedItem].ucParent].ucSettings&0x03) == SRAM)
+			OldParentID=m_items[MyMenue.gucSelectedItem].ucParent;
+			if((m_items[m_items[MyMenue.gucSelectedItem].ucParent].ucSettings&0x03) == SRAM)
 			{
-				menu_draw_header(m_items[m_items[gucSelectedItem].ucParent].strName);
+				menu_draw_header(m_items[m_items[MyMenue.gucSelectedItem].ucParent].strName);
 			}
 			else
 			{	
-				strcpy_P(StrTmp,m_items[m_items[gucSelectedItem].ucParent].strName);
+				strcpy_P(StrTmp,m_items[m_items[MyMenue.gucSelectedItem].ucParent].strName);
 				menu_draw_header(StrTmp);
 			}
 			//del old menu items
 			menu_del_menuitems();
 		}
 		//reset show menu
-		ShowMenu = 0;
+		MyMenue.ShowMenu = 0;
 		//write position information
-		menu_draw_groupposition(gucSelectedItem-StartIndex+1, SubMenuGroupSize);
+		menu_draw_groupposition(MyMenue.gucSelectedItem-StartIndex+1, SubMenuGroupSize);
 		//Adjust Start index
 		AdjustStartPos(&SubMenuGroupSize, &StartIndex);
 		//write menu items
 		LCDPos = 0;
 		for(i=StartIndex;i<StartIndex+items_per_page;i++)
 		{
-			if(i==gucSelectedItem) //draw item
+			if(i==MyMenue.gucSelectedItem) //draw item
 			{
 				//save pos
 				SelParLCDPos = LCDPos;
@@ -205,56 +201,56 @@ void menu_show(void)
 void menu_select(void)
 {
 	uint8_t SubMenuGroupSize=0, StartIndex=0;
-	OS_MutexGet(OSMTXMENU);//OS_PREVENTSCHEDULING; // for MenuMode AND gucSelectedItem / Parameter
+	OS_MutexGet(OSMTXMENU);//OS_PREVENTSCHEDULING; // for MyMenue.MenuMode AND MyMenue.gucSelectedItem / Parameter
 	
-	if(m_items[gucSelectedItem].ucJumpTrg)//jump to target menu item
+	if(m_items[MyMenue.gucSelectedItem].ucJumpTrg)//jump to target menu item
 	{
 		//assign jump target
-		gucSelectedItem = m_items[gucSelectedItem].ucJumpTrg;
+		MyMenue.gucSelectedItem = m_items[MyMenue.gucSelectedItem].ucJumpTrg;
 		//get array start index of the submenu items
 		GetSubMenuCount(&SubMenuGroupSize, &StartIndex);
 		//send values to UI
-		HandOverValueToUI(SubMenuGroupSize-(gucSelectedItem-StartIndex), SubMenuGroupSize, 1, 1);
+		HandOverValueToUI(SubMenuGroupSize-(MyMenue.gucSelectedItem-StartIndex), SubMenuGroupSize, 1, 1);
 	}	
-	else if(m_items[gucSelectedItem].pParamID)//toggle parameter edit mode
+	else if(m_items[MyMenue.gucSelectedItem].pParamID)//toggle parameter edit mode
 	{
-		if(!MenuMode)
+		if(!MyMenue.MenuMode)
 		{	
 			//save parameter
-			m_items[gucSelectedItem].pParamID->sValue=GetvalueFromUI();
+			m_items[MyMenue.gucSelectedItem].pParamID->sValue=GetvalueFromUI();
 			//get array start index of the submenu items
 			GetSubMenuCount(&SubMenuGroupSize,&StartIndex);
 			//send values to UI
-			HandOverValueToUI(SubMenuGroupSize-(gucSelectedItem-StartIndex), SubMenuGroupSize, 1,1);
+			HandOverValueToUI(SubMenuGroupSize-(MyMenue.gucSelectedItem-StartIndex), SubMenuGroupSize, 1,1);
 			//parameter deactivate
-			MenuMode = 1;
-			ShowMenu = 1; //init menu view
+			MyMenue.MenuMode = 1;
+			MyMenue.ShowMenu = 1; //init menu view
 
 		}
 		else
 		{	
 			//send parameter values and limits to UI
-			HandOverValueToUI(	m_items[gucSelectedItem].pParamID->sValue,
-								m_items[gucSelectedItem].pParamID->sUpperLimit,
-								m_items[gucSelectedItem].pParamID->sLowerLimit,
-								m_items[gucSelectedItem].pParamID->sStepSize
+			HandOverValueToUI(	m_items[MyMenue.gucSelectedItem].pParamID->sValue,
+								m_items[MyMenue.gucSelectedItem].pParamID->sUpperLimit,
+								m_items[MyMenue.gucSelectedItem].pParamID->sLowerLimit,
+								m_items[MyMenue.gucSelectedItem].pParamID->sStepSize
 								);
 
 			//parameter active
-			MenuMode = 0;
+			MyMenue.MenuMode = 0;
 
-			ShowParameter = 1; //init parameter view
+			MyMenue.ShowParameter = 1; //init parameter view
 		}
 	}
-	else if(m_items[gucSelectedItem].pAction)//execute function
+	else if(m_items[MyMenue.gucSelectedItem].pAction)//execute function
 	{	
 		//execute function
-		m_items[gucSelectedItem].pAction();
+		m_items[MyMenue.gucSelectedItem].pAction();
 		//get array start index of the submenu items
 		GetSubMenuCount(&SubMenuGroupSize, &StartIndex);
 		//send values to UI
-		HandOverValueToUI(SubMenuGroupSize-(gucSelectedItem-StartIndex), SubMenuGroupSize, 1,1);
-		ShowMenu = 1; //init menu view
+		HandOverValueToUI(SubMenuGroupSize-(MyMenue.gucSelectedItem-StartIndex), SubMenuGroupSize, 1,1);
+		MyMenue.ShowMenu = 1; //init menu view
 	}
 	else
 	{
