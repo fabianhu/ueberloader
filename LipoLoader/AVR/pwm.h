@@ -24,8 +24,8 @@ void RampDn(uint16_t* ramped, uint16_t target);
 #define ENABLE_A_OFF	TCC0.CCBBUF = 0;
 #define ENABLE_B_OFF	TCD0.CCBBUF = TCD0.PERBUF +4; // inverted
 
-#define PERIOD_DIV 10ul
-#define PERIOD_H 2560ul // 1280 = 100kHz
+#define PERIOD_DIV 10ul					// main / x = slow(refresh) frq.
+#define PERIOD_H 2560ul // 1280 = 100kHz // main frequency
 //define PERIOD_L PERIOD_H + (PERIOD_H +4)* PERIOD_DIV // common divider...
 #define PERIOD_L PERIOD_H + (PERIOD_H )* PERIOD_DIV // odd divider...
 #define PERIOD_MAX 0xffff
@@ -35,7 +35,7 @@ void RampDn(uint16_t* ramped, uint16_t target);
 
 #define STARTUPLEVEL_mA 300 // minimum current for syncronous op.
 
-#define MAXCONVERTERPOWER_W 13 // maximum converter power
+#define MAXCONVERTERPOWER_W 100 // maximum converter power
 
 
 #define min(x,y) (((x)<(y))?(x):(y))

@@ -129,7 +129,7 @@ void TaskGovernor(void)
 		else if (sI_out_act < 2000)
 			ADC_ActivateLoCurrentMeas();
 
-		int32_t nConverterPower_W = ((sI_out_act) * (sU_out_act /*- usU_in_act*/))/1000; // fixme converter pwr
+		int32_t nConverterPower_W = ((sI_out_act) * (sU_out_act /*- usU_in_act*/))/1000/1000; // fixme converter pwr
 
 
 		sFilter(&sI_out_act_flt, &sI_out_act);
@@ -165,7 +165,7 @@ void TaskGovernor(void)
 		{
 			ccc++;
 			if (ccc == 20) ccc=0;
-			if	(	sU_out_act_flt < myUSetpoint /*&& sConverterPower < MAXCONVERTERPOWER_W*/ &&
+			if	(	sU_out_act_flt < myUSetpoint && /* sConverterPower < MAXCONVERTERPOWER_W &&*/
 					sU_in_act > g_tBattery_Info.ucNumberOfCells*2300 && // fixme
 					I_Set_mA_Ramped <= myISetpoint &&
 					g_bBalancerOverload == 0
@@ -219,7 +219,7 @@ void TaskBalance(void)
 {
 	int16_t sTemp;
 	int16_t sBalanceCells[6]; // quasi static
-	uint8_t ucBalanceBits;
+	uint8_t ucBalanceBits =0;
 	uint8_t i;
 
 	// direction for balancer pins
