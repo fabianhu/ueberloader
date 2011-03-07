@@ -57,10 +57,10 @@ void TaskDisplay(void)
 		lcd_print(GREY, BLACK, FONTSIZE, 0, 220,"Time: %i ms     " ,(uint16_t)t2/100);
 #else
 		OS_WaitAlarm(OSALMWaitDisp);
-		OS_SetAlarm(OSALMWaitDisp,333);
+		OS_SetAlarm(OSALMWaitDisp,500);
 
 
-		if(/*g_GotNewComand*/0)
+		if(g_GotNewComand)
 		{
 			// gespeicherte Commands vom Slave in Parameter eintragen.
 			OS_MutexGet(OSMTXCommand);
@@ -78,6 +78,7 @@ void TaskDisplay(void)
 
 			 OS_MutexRelease(OSMTXCommand);
 
+			 g_GotNewComand =0; // reset it.
 		}
 
 
@@ -148,22 +149,22 @@ void TaskDisplay(void)
 				switch (g_tBattery_Info.eState)
 				{
 					case eBattCharging:
-						strcpy(buf,"Charging  ");
+						strcpy(buf,"Charging    ");
 						break;
 					case eBattFull:
-						strcpy(buf,"Full      ");
+						strcpy(buf,"Full        ");
 						break;
 					case eBattWaiting:
-						strcpy(buf,"Waiting   ");
+						strcpy(buf,"Waiting     ");
 						break;
 					case eBattUnknown:
-						strcpy(buf,"Unknown   ");
+						strcpy(buf,"Unknown     ");
 						break;
 					case eBattError:
-						strcpy(buf,"Batt.Error");
+						strcpy(buf,"Batt.Error  ");
 						break;
 					default:
-						strcpy(buf,"Waaargh!!!");
+						strcpy(buf,"Waaargh!!!  ");
 						break;
 				}
 				lcd_print(GREEN,BLACK,2,0,180,buf);
@@ -172,13 +173,13 @@ void TaskDisplay(void)
 				OS_GetTicks(&t2);
 
 				t2=t2-t1;
-				lcd_print(GREY, BLACK, FONTSIZE, 0, 220,"Time: %i ms     " ,(uint16_t)t2/100);
+				lcd_print(GREY, BLACK, FONTSIZE, 0, 220,"Time: %i s     " ,(uint16_t)t2/1000);
 			}
 		}
 		else
 		{
 			lcd_clear();
-			lcd_print(RED,BLACK,2,0,180, "Comm Error: ",glCommError);
+			lcd_print(RED,BLACK,2,0,180, "Comm Err %i  ",glCommError);
 
 		}
 

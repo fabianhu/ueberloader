@@ -15,6 +15,7 @@
 #define UCI_GET_CMDs			33 // Get Actual command setting (Command_t)
 #define UCI_GET_OPVs 			44 // Get actual Operating values (Battery_Info_t)
 #define UCI_GET_INTs 			55 // todo
+#define UCI_WRITE_EEPROM		66 // Write settings into eeprom of slave
 
 typedef enum //BatteryStatus
 {
@@ -85,10 +86,6 @@ typedef struct UCIFrame_tag
 }UCIFrame_t;
 
 #define UCIHEADERLEN 4
-
-void UCISendBlockCrc( UCIFrame_t* pU);
-uint8_t UCIGetCRC( UCIFrame_t* pU);
-uint8_t HandleSerial(UCIFrame_t *_RXFrame);
 
 
 

@@ -28,7 +28,7 @@ extern Parameter_t parLiPoBalActVolt;
 extern Parameter_t parLiFeVolt;
 extern Parameter_t parBalActVolt;
 extern Parameter_t parLiIonVolt;
-extern Parameter_t parBalActVolt;
+extern Parameter_t parBalActVolt2;
 extern Parameter_t parMaxcap;
 extern Parameter_t parMaxtime;
 extern Parameter_t parPWMfrequency;
