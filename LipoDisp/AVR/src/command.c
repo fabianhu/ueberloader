@@ -19,26 +19,32 @@ uint8_t 		glCommError=0;
 // Prototypes:
 uint8_t vWaitForResult(void);
 uint8_t HandleSerial(UCIFrame_t *_RXFrame);
+uint8_t UCIGetCRC( UCIFrame_t* pU);
+void UCISendBlockCrc( UCIFrame_t* pU);
 
 void TaskCommand(void)
 {
+	static uint8_t CommandsKnown=0;
+
 	OS_SetAlarm(OSALMCommandRepeat,1000);
 	while(1)
 	{
 		OS_WaitAlarm(OSALMCommandRepeat);
-		OS_SetAlarm(OSALMCommandRepeat,300);
+		OS_SetAlarm(OSALMCommandRepeat,1000);
 
 
-		if(1)
+		if(CommandsKnown == 0)
 		{
 			g_tUCITXBlock.ID = 55;
 			g_tUCITXBlock.UCI = UCI_GET_CMDs;
 			g_tUCITXBlock.len = UCIHEADERLEN;
 			UCISendBlockCrc(&g_tUCITXBlock);
 			glCommError = vWaitForResult();
+			if(glCommError == 0)
+			{
+				CommandsKnown = 1;
+			}
 		}
-
-
 
 
 		g_tUCITXBlock.ID = 55;
@@ -47,7 +53,7 @@ void TaskCommand(void)
 		UCISendBlockCrc(&g_tUCITXBlock);
 	    glCommError = vWaitForResult();
 
-	    if(g_NewComand)
+	    if(CommandsKnown == 1)
 	    {
 	    	g_tUCITXBlock.ID = 55;
 			g_tUCITXBlock.UCI = UCI_SET_CMDs;
@@ -76,10 +82,10 @@ uint8_t vWaitForResult(void)
 	uint8_t ret;
 	uint8_t commerror = 0;
 
-	ret = OS_WaitEventTimeout(OSEVTDataRecvd,OSALMCommandTimeout, 150); // at 9600 baud it takes 105 ms to transfer the stuff.
-    if(ret == OSEVTDataRecvd)
+	ret = OS_WaitEventTimeout(OSEVTDataRecvd,OSALMCommandTimeout, 800); // at 9600 baud it takes 105 ms to transfer the stuff.
+    if(ret & OSEVTDataRecvd)
 	{
-		HandleSerial(&g_tUCIRXFrame);
+    	commerror = HandleSerial(&g_tUCIRXFrame);
 	}
 	else
 	{

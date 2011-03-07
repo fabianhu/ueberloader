@@ -52,20 +52,20 @@ char	txtFEQUENCY[] 	PROGMEM="Fequency";
 char	txtREFRESHPERIOD[] 	PROGMEM="Refresh-period";
 
 // Parameter definitions
-Parameter_t parCurrent = {	1000, 100, 10000, 100, mA};
+Parameter_t parCurrent = {	0, 100, 10000, 100, mA};
 Parameter_t parCellCount = {	0, 0, 6, 1, Cells};
-Parameter_t parLiPoChVolt = {	4150, 3000, 4200, 10, mV};
-Parameter_t parLiPoStVolt = {	3600, 2000, 4100, 100, mV};
-Parameter_t parLiPoDisVolt = {	4150, 3000, 4200, 10, mV};
-Parameter_t parLiPoBalActVolt = {	3600, 2000, 4100, 100, mV};
-Parameter_t parLiFeVolt = {	3650, 2000, 3700, 10, mV};
-Parameter_t parBalActVolt = {	3600, 2000, 4100, 100, V};
-Parameter_t parLiIonVolt = {	4050, 3500, 4100, 10, mV};
-Parameter_t parBalActVolt2 = {	3600, 2000, 4100, 100, V};
-Parameter_t parMaxcap = {	1000, 0, 10000, 100, mAh};
-Parameter_t parMaxtime = {	60, 1, 6000, 1, min};
-Parameter_t parPWMfrequency = {	50, 10, 100, 10, kHz};
-Parameter_t parRefreshPeriod = {	10, 1, 10000, 10, ms};
+Parameter_t parLiPoChVolt = {	0, 3000, 4200, 10, mV};
+Parameter_t parLiPoStVolt = {	0, 2000, 4100, 100, mV};
+Parameter_t parLiPoDisVolt = {	0, 3000, 4200, 10, mV};
+Parameter_t parLiPoBalActVolt = {	0, 2000, 4100, 100, mV};
+Parameter_t parLiFeVolt = {	0, 2000, 3700, 10, mV};
+Parameter_t parBalActVolt = {	0, 2000, 4100, 100, V};
+Parameter_t parLiIonVolt = {	0, 3500, 4100, 10, mV};
+Parameter_t parBalActVolt2 = {	0, 2000, 4100, 100, V};
+Parameter_t parMaxcap = {	0, 0, 10000, 100, mAh};
+Parameter_t parMaxtime = {	0, 1, 6000, 1, min};
+Parameter_t parPWMfrequency = {	0, 10, 100, 10, kHz};
+Parameter_t parRefreshPeriod = {	0, 1, 10000, 10, ms};
 
 			//Name	Act	Par	Jmp	Parent	Memory
 MenuItem_t m_items[MENUESIZE] = {
@@ -99,7 +99,7 @@ MenuItem_t m_items[MENUESIZE] = {
 	/* 27*/	{txtBALACTIVVOLTAGE,	 0,	 &parBalActVolt,	0,	18,	FLASH},
 	/* 28*/	{txtBACK,	 0,	 0,	18,	18,	FLASH},
 	/* 29*/	{txtLIIONVOLTAGE,	 0,	 &parLiIonVolt,	0,	19,	FLASH},
-	/* 30*/	{txtACTIVATIONVOLTAGE,	 0,	 &parBalActVolt,	0,	19,	FLASH},
+	/* 30*/	{txtACTIVATIONVOLTAGE,	 0,	 &parBalActVolt2,	0,	19,	FLASH},
 	/* 31*/	{txtBACK,	 0,	 0,	19,	19,	FLASH},
 	/* 32*/	{txtCAPACITY,	 0,	 &parMaxcap,	0,	14,	FLASH},
 	/* 33*/	{txtTIME,	 0,	 &parMaxtime,	0,	14,	FLASH},
@@ -110,6 +110,7 @@ MenuItem_t m_items[MENUESIZE] = {
 };
 
 //******** END OF AUTO-GENERATED CODE DO NOT EDIT!!! *********
+
 
 
 
