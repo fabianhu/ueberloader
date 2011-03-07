@@ -202,8 +202,8 @@ void emstop(uint8_t e) // fixme emstop reason speichern!
 	PORTD.OUTCLR = 0b00000011;
 
 	// Light up LED
-	PORTB.DIRSET = 0b1000;
-	PORTB.OUTSET = 0b1000;
+	PORTD.DIRSET = 0b1000;
+	PORTD.OUTSET = 0b1000;
 
 	while(1)
 	{

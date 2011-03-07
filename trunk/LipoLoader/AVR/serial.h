@@ -76,6 +76,8 @@ typedef struct Command_tag
 	uint16_t refreshrate;
 }Command_t;
 
+// "size of Command must be 16 bit aligned for CRC"
+
 typedef struct UCIFrame_tag
 {
 	uint8_t ID;

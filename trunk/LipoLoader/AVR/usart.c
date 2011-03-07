@@ -93,7 +93,7 @@ uint8_t USARTSendBlockDMA(DMA_CH_t* DMAch, uint8_t* pArray, uint8_t Len) // retu
 //}
 
 
-/* C## code
+
 /// <summary>
 /// CRC16S
 ///
@@ -104,16 +104,16 @@ uint8_t USARTSendBlockDMA(DMA_CH_t* DMAch, uint8_t* pArray, uint8_t Len) // retu
 /// </summary>
 /// <param name="Data">a byte array of data</param>
 /// <returns>2 byte CRC Checksum</returns>
-public static byte[] CRC16S ( byte[] Data )
+uint16_t calcCRC16S ( uint8_t* c, uint8_t len )
 {
-  ushort Polynom = 0xA001;
-  ushort Register = 0xFFFF;
-  ushort temp = 0x00;
+	 uint16_t Polynom = 0xA001;
+	 uint16_t Register = 0xFFFF;
+	 uint16_t temp = 0x00;
 
   // loop through the entire array of bytes
-  for ( int i = 0; i < Data.Length; i++ )
+  for ( int i = 0; i < len; i++ )
   {
-    temp = Data[i];
+    temp = c[i];
 
     // shift all 8 data bits once
     for ( int y = 0; y < 8; y++ )
@@ -133,10 +133,9 @@ public static byte[] CRC16S ( byte[] Data )
   } // end of outer for loop (data loop)
 
   // now we have got our overall 2-byte CRC "Checksum" number
-  return new byte[2] { (byte) ( Register / 256 ), (byte) ( Register %
-256 ) };
+  return Register;
 } // end of CRC16S Method
-*/
+
 
 #define CRC16INIT 0xA001
 
