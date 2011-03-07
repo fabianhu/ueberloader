@@ -10,8 +10,12 @@
 #include "pwm.h"
 #include "usart.h"
 #include "serial.h"
+#include <avr/eeprom.h>
 
 //OS_DeclareQueue(DemoQ,10,4);
+// Prototypes
+uint16_t calcCRC16(uint16_t* c, uint16_t len);
+uint16_t calcCRC16S ( uint8_t* c, uint8_t len );
 
 // ******** Globals
 
@@ -67,6 +71,7 @@ void sFilter(int16_t* o, int16_t* n)
 	}
 }
 
+uint16_t crcEE=0,crcRD =0; // fixme check
 // ********* Stuff
 void TaskGovernor(void)
 {
@@ -75,6 +80,23 @@ void TaskGovernor(void)
 	int16_t sU_in_act,sU_out_act;
 	int16_t /*sU_in_act_flt,*/sU_out_act_flt;
 	int16_t sI_out_act,sI_out_act_flt; // mV / mA
+
+	eeprom_read_block((uint8_t*)&g_tCommand, EEPROM_START, sizeof(Command_t));
+	//check CRC
+
+	if(sizeof(Command_t)%2 == 1)
+	{
+		emstop(255); // Command_t is not 16bit aligned. Not checkable at compile time.
+	}
+
+	
+	eeprom_read_block((uint8_t*)&crcEE, (void*)EEPROM_START + sizeof(Command_t), 2);
+	crcRD = calcCRC16S((uint8_t*)&g_tCommand,sizeof(Command_t));
+	if(	crcRD != crcEE)
+	{
+		emstop(77); // fixme ändern!
+	}
+
 
 	vPWM_Init();
 

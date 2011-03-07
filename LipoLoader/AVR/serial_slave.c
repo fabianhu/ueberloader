@@ -9,6 +9,20 @@
 #include "ueberloader.h"
 #include "usart.h"
 #include <string.h>
+#include <avr/eeprom.h>
+
+// prototypes:
+
+uint8_t HandleSerial(UCIFrame_t *_RXFrame);
+uint8_t UCIGetCRC( UCIFrame_t* pU);
+void UCISendBlockCrc( UCIFrame_t* pU);
+
+uint16_t calcCRC16(uint16_t* c, uint16_t len);
+uint16_t calcCRC16S ( uint8_t* c, uint8_t len );
+
+// globals
+
+
 
 extern Battery_Info_t g_tBattery_Info;
 extern ADC_Values_t g_tADCValues;
@@ -72,6 +86,7 @@ void TaskCommRX(void)
 		else
 		{
 			//timeout
+	
 		}
 
 		// re-init for new frame
@@ -81,6 +96,8 @@ void TaskCommRX(void)
 	}
 
 }
+
+uint16_t crc=0;
 
 uint8_t HandleSerial(UCIFrame_t *_RXFrame)
 {
@@ -112,10 +129,18 @@ uint8_t HandleSerial(UCIFrame_t *_RXFrame)
 			break;
 		case UCI_SET_CMDs:
 			OS_MutexGet(OSMTXCommand);
-			memcpy((uint8_t*)&g_tCommand, g_tUCIRXFrame.values, sizeof(g_tCommand));
+			memcpy((uint8_t*)&g_tCommand, g_tUCIRXFrame.values, sizeof(Command_t));
 			OS_MutexRelease(OSMTXCommand);
 			len = 0; // no answer expected.
 			break;
+		case UCI_WRITE_EEPROM:
+			eeprom_update_block((uint8_t*)&g_tCommand, EEPROM_START, sizeof(Command_t));
+			// add crc check!!!
+			crc = calcCRC16S((uint8_t*)&g_tCommand,sizeof(Command_t));
+			eeprom_update_block((uint8_t*)&crc, (void*)(EEPROM_START + sizeof(Command_t)), 2);
+
+			break;
+
 		default:
 			len = 0;
 		}
