@@ -1,21 +1,42 @@
 
+#include "../OS/FabOS.h"
 #include "menu.h"
 #include "menu_variant.h" 
 #include "string.h"
 #include "../comm/serial.h"
 #include <avr/eeprom.h>
 
+typedef enum
+{
+	eBattTypeLiPo,
+	eBattTypeLiFe,
+	eBattTypeLiIon
+} eBattType_t;
 
-//extern vars / functions
+
+// global vars
+eBattType_t g_eBattType;
+
+//SRAM
+//user defined names
+uint8_t eeNames[3][MAX_SRAM_ITEM_NAME_LENGHT+1];
+char ud_name[][MAX_SRAM_ITEM_NAME_LENGHT+1]	={//Menu item name
+													{"CURRENT-TEST"},
+													{"USER DEFINED 02"},
+													{"USER DEFINED 03"},
+											};
+
+//extern vars
 extern Menue_t MyMenue;
 extern Command_t 		g_tCommand; // command.c
+extern uint8_t g_bMenuActive;
 
-extern void GetSubMenuCount(uint8_t *Size, uint8_t *StartIndex);
-//global vars
+
+//prototypes
 					
 void leavemenu(void);
-
 void menuUp(void);
+extern void GetSubMenuCount(uint8_t *Size, uint8_t *StartIndex);
 
 
 
@@ -114,50 +135,17 @@ MenuItem_t m_items[MENUESIZE] = {
 
 
 
-
-
-
-
-
-
-//SRAM
-//user defined names
-uint8_t eeNames[3][MAX_SRAM_ITEM_NAME_LENGHT+1];
-char ud_name[][MAX_SRAM_ITEM_NAME_LENGHT+1]	={//Menu item name
-													{"CURRENT-TEST"},
-													{"USER DEFINED 02"},
-													{"USER DEFINED 03"},
-											};
-
-//Variables in EEPROM
-//uint16_t eeParameter[(100*8*4)+2] EEMEM;	//variable in eeprom for storing the parameters
-//uint8_t eeVarsValid EEMEM;							//Marker if a valid dataset is stored in eeprom
-
-
-extern uint8_t g_bMenuActive;
-
-typedef enum
-{
-	eBattTypeLiPo,
-	eBattTypeLiFe,
-	eBattTypeLiIon
-} eBattType_t;
-
-
-
-eBattType_t g_eBattType;
-
-
-
-// Action functions
+// ****** Action functions *********
 
 void ActionChargeMethodFull (void)
 {
 	switch (g_eBattType)
 	{
 		case eBattTypeLiPo:
+	    	OS_MutexGet(OSMTXCommand);
 			g_tCommand.usVoltageSetpoint_mV = parLiPoChVolt.sValue;
 			g_tCommand.usMinBalanceVolt_mV = parLiPoBalActVolt.sValue;
+	    	OS_MutexRelease(OSMTXCommand);
 			break;
 		case eBattTypeLiFe:
 			break;
@@ -174,8 +162,10 @@ void ActionChargeMethodStorage (void)
 	switch (g_eBattType)
 	{
 		case eBattTypeLiPo:
+	    	OS_MutexGet(OSMTXCommand);
 			g_tCommand.usVoltageSetpoint_mV = parLiPoStVolt.sValue;
 			g_tCommand.usMinBalanceVolt_mV = parLiPoBalActVolt.sValue;
+	    	OS_MutexRelease(OSMTXCommand);
 			break;
 		case eBattTypeLiFe:
 			break;
@@ -191,8 +181,10 @@ void ActionChargeMethodDischarge (void)
 	switch (g_eBattType)
 	{
 		case eBattTypeLiPo:
+	    	OS_MutexGet(OSMTXCommand);
 			g_tCommand.usVoltageSetpoint_mV = parLiPoDisVolt.sValue;
 			g_tCommand.usMinBalanceVolt_mV = parLiPoBalActVolt.sValue; // fixme balancieren beim Entladen aus.
+	    	OS_MutexRelease(OSMTXCommand);
 			break;
 		case eBattTypeLiFe:
 			break;
@@ -244,9 +236,6 @@ void menu_draw_unselected_items(char *item_name, uint16_t par_exists, int16_t pa
 		//write new val
 			lcd_print(WHITE, BLACK, 1, 200, 40+lcd_pos*20, "%i",parameter);
 	}
-	
-	
-	
 }
 
 extern void menu_draw_selected_item(char *item_name, uint16_t par_exists, int16_t parameter, uint8_t type, uint8_t lcd_pos)
@@ -264,7 +253,6 @@ extern void menu_draw_selected_item(char *item_name, uint16_t par_exists, int16_
 		//write new val
 		lcd_print(WHITE, BLACK, 1, 200, 40+lcd_pos*20, "%i",parameter);
 	}
-	
 }
 
 void menu_draw_selected_parameter(char *item_name, int16_t parameter, uint8_t type, uint8_t lcd_pos)
@@ -288,10 +276,6 @@ void menu_draw_groupposition(uint8_t itemnr, uint8_t groupitems)
 {
 	lcd_print(WHITE, BLACK, 1, 280, 10, "%iv%i",itemnr,groupitems);
 }
-
-/////////////////////////////////////////////////////////////////////////////////////////
-// U S E R  F U N C T I O N S
-/////////////////////////////////////////////////////////////////////////////////////////
 
 
 

@@ -67,12 +67,6 @@ void TaskCommand(void)
 			//glCommError = vWaitForResult();
 	    	g_NewComand = 0;
 	    }
-
-	    /*g_tUCITXBlock.ID = 55;
-	    g_tUCITXBlock.UCI = UCI_GET_CMDs;
-	    g_tUCITXBlock.len = UCIHEADERLEN;
-	    UCISendBlockCrc(&g_tUCITXBlock);
-	    glCommError = vWaitForResult();*/
 	}
 }
 

@@ -45,24 +45,6 @@ void TaskTouch()
 	while(1)
 	{
 
-	/*if(firstrun && (eeprom_read_word(&ParMaster->usMagic)== 12312))
-		{
-			firstrun = 0;
-			OS_PREVENTSCHEDULING;
-			g_tCommand.sCurrentSetpoint = 800;
-			g_tCommand.usMinBalanceVolt_mV = 2400;//eeprom_read_word(&(ParMaster->usMinBalanceVolt_mV));
-			g_tCommand.usVoltageSetpoint_mV = 3850; //4150;
-			g_tCommand.eChargerMode = eModeAuto;
-			g_tCommand.ucUserCellCount = 0;
-			OS_ALLOWSCHEDULING;
-			}*/
-
-/*	if(firstrun)
-		{
-			eeprom_write_word(&(ParMaster->usMagic),12312);
-			eeprom_write_word(&(ParMaster->usMinBalanceVolt_mV),3000);
-		}
-*/
 		OS_WaitAlarm(OSALTouchRepeat);
 		OS_SetAlarm(OSALTouchRepeat,10); // every 10ms
 
@@ -300,14 +282,13 @@ eTouchstate_t eTouchstate = eTSIdle;
 
 
 uint8_t SubMenuGroupSize, StartIndex; // fixme debug only
-int32_t Schwerpunkt;
-/*static*/ int16_t s_sSpeedFiltered = 0;
 
 
 void ProcessTouch(void)
 {
-//	int16_t sSpeed;
+	int32_t Schwerpunkt;
 	uint8_t ucActualGesture;
+	static int16_t s_sSpeedFiltered = 0;
 	static uint8_t s_ucOldGesture;
 	uint8_t bMoved;
 

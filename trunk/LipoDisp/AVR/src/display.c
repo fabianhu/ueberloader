@@ -180,15 +180,9 @@ void TaskDisplay(void)
 		{
 			lcd_clear();
 			lcd_print(RED,BLACK,2,0,180, "Comm Err %i  ",glCommError);
-
 		}
-
 #endif
-
-
-
 	}
-
 }
 
 /*
