@@ -11,7 +11,6 @@ uint8_t 		g_NewComand =0; // indicates new command to be sent
 uint8_t 		g_GotNewComand =0; // indicates stored commands I got from slave
 Battery_Info_t 	g_tBattery_Info;
 Command_t 		g_tCommand;
-extern ChargerMode_t 	g_eChargerMode;
 UCIFrame_t 		g_tUCIRXFrame; // serial receive data
 uint8_t    		g_ucRXLength;
 uint8_t 		glCommError=0;

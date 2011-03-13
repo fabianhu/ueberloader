@@ -156,7 +156,7 @@ void ActionChargeMethodFull (void)
 		default:
 			break;
 	}
-	g_Tansfer_Action = eModeManual; // trigger
+	g_Tansfer_Action = eModeAuto; // trigger
 
 	menuUp();
 }
@@ -178,7 +178,7 @@ void ActionChargeMethodStorage (void)
 		default:
 			break;
 	}
-	g_Tansfer_Action = eModeManual; // trigger
+	g_Tansfer_Action = eModeAuto; // trigger
 	menuUp();
 }
 void ActionChargeMethodDischarge (void)
@@ -198,7 +198,7 @@ void ActionChargeMethodDischarge (void)
 		default:
 			break;
 	}
-	g_Tansfer_Action = eModeManual; // trigger
+	g_Tansfer_Action = eModeAuto; // trigger
 	menuUp();
 }
 void actSelTypeLiPo (void){g_eBattType = eBattTypeLiPo; menuUp();}
