@@ -36,7 +36,6 @@ namespace Treebuilder
         private const string XmlNodeTagParUpper = "tagParUpper";
         private const string XmlNodeTagParLower = "tagParLower";
         private const string XmlNodeTagParStepSize = "tagParStepSize";
-        private const string XmlNodeTagParDefault = "tagParDefault";
         private const string XmlNodeTagParType = "tagParType";
 
         ArrayList m_alRememberNodeNames = new ArrayList();
@@ -62,7 +61,6 @@ namespace Treebuilder
             public string info;
             public int ParUpper;
             public int ParLower;
-            public int ParDefault;
             public int ParStepSize;
             public string ParType;
         }
@@ -211,12 +209,6 @@ namespace Treebuilder
                 nti.ParLower = int.Parse(_value);
                 _node.Tag = nti;
             }
-            else if (_propertyName == XmlNodeTagParDefault)
-            {
-                nti = (tNodeTagInfo)_node.Tag;
-                nti.ParDefault = int.Parse(_value);
-                _node.Tag = nti;
-            }
             else if (_propertyName == XmlNodeTagParStepSize)
             {
                 nti = (tNodeTagInfo)_node.Tag;
@@ -274,7 +266,6 @@ namespace Treebuilder
                         _textWriter.WriteAttributeString(XmlNodeTagInfoAtt, ((tNodeTagInfo)node.Tag).info.ToString());
                     else
                         _textWriter.WriteAttributeString(XmlNodeTagInfoAtt, "");
-                    _textWriter.WriteAttributeString(XmlNodeTagParDefault, ((tNodeTagInfo)node.Tag).ParDefault.ToString());
                     _textWriter.WriteAttributeString(XmlNodeTagParUpper, ((tNodeTagInfo)node.Tag).ParUpper.ToString());
                     _textWriter.WriteAttributeString(XmlNodeTagParLower, ((tNodeTagInfo)node.Tag).ParLower.ToString());
                     _textWriter.WriteAttributeString(XmlNodeTagParStepSize, ((tNodeTagInfo)node.Tag).ParStepSize.ToString());
@@ -425,7 +416,7 @@ namespace Treebuilder
             if (((tNodeTagInfo)tn.Tag).type == eMenueElementType.parameter)
             {
                 textBoxResult.AppendText("Parameter_t " + ((tNodeTagInfo)tn.Tag).info + " = {");
-                textBoxResult.AppendText("\t" + ((tNodeTagInfo)tn.Tag).ParDefault + ", " + ((tNodeTagInfo)tn.Tag).ParLower + ", " + ((tNodeTagInfo)tn.Tag).ParUpper + ", " + ((tNodeTagInfo)tn.Tag).ParStepSize + ", " + ((tNodeTagInfo)tn.Tag).ParType);
+                textBoxResult.AppendText("\t0, " + ((tNodeTagInfo)tn.Tag).ParLower + ", " + ((tNodeTagInfo)tn.Tag).ParUpper + ", " + ((tNodeTagInfo)tn.Tag).ParStepSize + ", " + ((tNodeTagInfo)tn.Tag).ParType);
                 textBoxResult.AppendText("}; " + Environment.NewLine);
             }
             foreach (TreeNode tn2 in tn.Nodes)
@@ -678,7 +669,7 @@ namespace Treebuilder
             comboBoxParType.Text = ((tNodeTagInfo)(e.Node.Tag)).ParType;
             textBoxParValUpper.Text = ((tNodeTagInfo)(e.Node.Tag)).ParUpper.ToString();
             textBoxParValLower.Text = ((tNodeTagInfo)(e.Node.Tag)).ParLower.ToString();
-            textBoxParValDefault.Text = ((tNodeTagInfo)(e.Node.Tag)).ParDefault.ToString();
+            
             textBoxParStepSize.Text = ((tNodeTagInfo)(e.Node.Tag)).ParStepSize.ToString();
         }
 
@@ -727,7 +718,6 @@ namespace Treebuilder
                 nti.ParLower = 0;
                 nti.ParUpper = 0;
                 nti.ParType = "";
-                nti.ParDefault = 0;
                 nti.ParStepSize = 0;
                 nti.type = eMenueElementType.normal;
                 tn.Tag = nti;
@@ -773,14 +763,6 @@ namespace Treebuilder
                 catch (Exception)
                 {
                     nti.ParLower = 0;
-                }
-                try
-                {
-                    nti.ParDefault = Convert.ToInt32(textBoxParValDefault.Text);
-                }
-                catch (Exception)
-                {
-                    nti.ParDefault = 0;
                 }
                 try
                 {
@@ -830,7 +812,6 @@ namespace Treebuilder
 
             if (comboBox1.SelectedIndex == 3)
             {
-                textBoxParValDefault.Enabled = true;
                 textBoxParValLower.Enabled = true;
                 textBoxParValUpper.Enabled = true;
                 textBoxParStepSize.Enabled = true;
@@ -838,7 +819,6 @@ namespace Treebuilder
             }
             else
             {
-                textBoxParValDefault.Enabled = false;
                 textBoxParValLower.Enabled = false;
                 textBoxParValUpper.Enabled = false;
                 textBoxParStepSize.Enabled = false;

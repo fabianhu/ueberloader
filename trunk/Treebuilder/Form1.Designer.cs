@@ -43,12 +43,10 @@
             this.label7 = new System.Windows.Forms.Label();
             this.buttonSave = new System.Windows.Forms.Button();
             this.label8 = new System.Windows.Forms.Label();
-            this.textBoxParValDefault = new System.Windows.Forms.TextBox();
             this.label10 = new System.Windows.Forms.Label();
             this.textBoxParValLower = new System.Windows.Forms.TextBox();
             this.label11 = new System.Windows.Forms.Label();
             this.textBoxParValUpper = new System.Windows.Forms.TextBox();
-            this.label9 = new System.Windows.Forms.Label();
             this.textBoxInfo = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
             this.textBoxNodeName = new System.Windows.Forms.TextBox();
@@ -198,15 +196,6 @@
             this.label8.Text = "Upper";
             this.label8.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
-            // textBoxParValDefault
-            // 
-            this.textBoxParValDefault.Enabled = false;
-            this.textBoxParValDefault.Location = new System.Drawing.Point(411, 145);
-            this.textBoxParValDefault.Name = "textBoxParValDefault";
-            this.textBoxParValDefault.Size = new System.Drawing.Size(55, 20);
-            this.textBoxParValDefault.TabIndex = 5;
-            this.textBoxParValDefault.TextChanged += new System.EventHandler(this.textBoxInfo_TextChanged);
-            // 
             // label10
             // 
             this.label10.AutoSize = true;
@@ -244,16 +233,6 @@
             this.textBoxParValUpper.Size = new System.Drawing.Size(55, 20);
             this.textBoxParValUpper.TabIndex = 5;
             this.textBoxParValUpper.TextChanged += new System.EventHandler(this.textBoxInfo_TextChanged);
-            // 
-            // label9
-            // 
-            this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(364, 148);
-            this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(41, 13);
-            this.label9.TabIndex = 9;
-            this.label9.Text = "Default";
-            this.label9.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // textBoxInfo
             // 
@@ -412,10 +391,10 @@
             this.treeView1.SelectedImageIndex = 0;
             this.treeView1.Size = new System.Drawing.Size(193, 681);
             this.treeView1.TabIndex = 0;
+            this.treeView1.ItemDrag += new System.Windows.Forms.ItemDragEventHandler(this.treeView1_ItemDrag);
+            this.treeView1.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseClick);
             this.treeView1.DragDrop += new System.Windows.Forms.DragEventHandler(this.treeView1_DragDrop);
             this.treeView1.DragEnter += new System.Windows.Forms.DragEventHandler(this.treeView1_DragEnter);
-            this.treeView1.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseClick);
-            this.treeView1.ItemDrag += new System.Windows.Forms.ItemDragEventHandler(this.treeView1_ItemDrag);
             // 
             // label13
             // 
@@ -490,8 +469,6 @@
             this.Controls.Add(this.textBoxInfo);
             this.Controls.Add(this.textBoxParStepSize);
             this.Controls.Add(this.label13);
-            this.Controls.Add(this.textBoxParValDefault);
-            this.Controls.Add(this.label9);
             this.Controls.Add(this.label10);
             this.Controls.Add(this.textBoxParValUpper);
             this.Controls.Add(this.textBoxParValLower);
@@ -518,12 +495,10 @@
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Button buttonSave;
         private System.Windows.Forms.Label label8;
-        private System.Windows.Forms.TextBox textBoxParValDefault;
         private System.Windows.Forms.Label label10;
         private System.Windows.Forms.TextBox textBoxParValLower;
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.TextBox textBoxParValUpper;
-        private System.Windows.Forms.Label label9;
         private System.Windows.Forms.TextBox textBoxInfo;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TextBox textBoxNodeName;
