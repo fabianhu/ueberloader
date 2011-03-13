@@ -19,16 +19,7 @@ uint16_t calcCRC16S ( uint8_t* c, uint8_t len );
 
 // ******** Globals
 
-Command_t g_tCommand = {0,0,0,0,0};
-/*
-=
-{
-sCurrentSetpoint = 1000,
-usMinBalanceVolt_mV = 3000,
-usVoltageSetpoint_mV = 4150,
-eChargerMode = eModeAuto
-};
- */
+Command_t g_tCommand;
 ADC_Values_t g_tADCValues;
 Battery_Info_t g_tBattery_Info;
 
@@ -40,6 +31,8 @@ uint8_t g_bBalancerOverload; // True, if one cell has reached Voltage limit.
 //volatile uint16_t g_I_filt;
 extern int16_t g_asADCvalues[3]; // fast ADC values
 extern Calibration_t g_tCalibration;
+extern uint8_t g_ParReady;
+ChargerMode_t g_eChargerMode;
 
 // *********  Prototypes
 uint8_t GetCellcount(BatteryCell_t cells[], uint16_t* pusBattVoltage);
@@ -81,21 +74,33 @@ void TaskGovernor(void)
 	int16_t /*sU_in_act_flt,*/sU_out_act_flt;
 	int16_t sI_out_act,sI_out_act_flt; // mV / mA
 
-	eeprom_read_block((uint8_t*)&g_tCommand, EEPROM_START, sizeof(Command_t));
-	//check CRC
 
 	if(sizeof(Command_t)%2 == 1)
 	{
 		emstop(255); // Command_t is not 16bit aligned. Not checkable at compile time.
 	}
 
-	
+
+	// read parameters from eeprom
+	eeprom_read_block((uint8_t*)&g_tCommand, EEPROM_START, sizeof(Command_t));
+	//check CRC
 	eeprom_read_block((uint8_t*)&crcEE, (void*)EEPROM_START + sizeof(Command_t), 2);
 	crcRD = calcCRC16S((uint8_t*)&g_tCommand,sizeof(Command_t));
 	if(	crcRD != crcEE)
 	{
-		emstop(77); // fixme ändern!
+		// set defaults: todo fill with useful values
+		g_tCommand.basefrequency = 10000;
+		g_eChargerMode = eModeStop;
+		g_tCommand.refreshrate = 1000;
+		g_tCommand.sCurrentSetpoint = 1000;
+		g_tCommand.ucUserCellCount = 6;
+		g_tCommand.unQ_max_mAs = 100000;
+		g_tCommand.usMinBalanceVolt_mV = 2000;
+		g_tCommand.usT_max_s = 10000;
+		g_tCommand.usVoltageSetpoint_mV = 3850;
 	}
+
+	g_ParReady = 1;
 
 
 	vPWM_Init();
@@ -513,7 +518,7 @@ void TaskState(void)
 		{
 			case eBattWaiting:
 				// nicht vollständig angesteckt
-				switch(g_tCommand.eChargerMode)
+				switch(g_eChargerMode)
 				{
 					case eModeAuto:
 						// charge if ok.
@@ -539,6 +544,9 @@ void TaskState(void)
 							g_tBattery_Info.eState = eBattError; // set Error for Display
 						}
 						break;
+					case eModeStop:
+						// Manual Stop mode
+						// how to get out of here? -> the mode is set manually to another.
 					default:
 						break;
 				}
@@ -577,9 +585,8 @@ void TaskState(void)
 				break;
 
 			case eBattError:
-				// fixme // set Event "Battery disconnected" for Display ??
-
-				//g_tBattery_Info.eState = eBattWaiting;
+					OS_WaitTicks(OSALMStateWait,10000);
+					g_tBattery_Info.eState = eBattWaiting;
 				break;
 			default:
 				emstop(22);

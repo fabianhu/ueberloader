@@ -21,12 +21,13 @@ uint16_t calcCRC16(uint16_t* c, uint16_t len);
 uint16_t calcCRC16S ( uint8_t* c, uint8_t len );
 
 // globals
-
+uint8_t g_ParReady =0; 
 
 
 extern Battery_Info_t g_tBattery_Info;
 extern ADC_Values_t g_tADCValues;
 extern Command_t g_tCommand ;
+extern ChargerMode_t g_eChargerMode;
 
 #define MYSERIALID 55
 
@@ -108,15 +109,17 @@ uint8_t HandleSerial(UCIFrame_t *_RXFrame)
 
 	if(
 		(_RXFrame->ID == MYSERIALID) &&
-		(UCIGetCRC(&g_tUCIRXFrame) == g_tUCIRXFrame.crc) )
+		(UCIGetCRC(&g_tUCIRXFrame) == g_tUCIRXFrame.crc) && 
+		g_ParReady
+	  )
 	{
 		switch(_RXFrame->UCI)
 		{
 		case UCI_GET_CMDs:
 			OS_MutexGet(OSMTXCommand);
 			memcpy(g_tUCITXFrame.values, (uint8_t*)&g_tCommand, sizeof(g_tCommand));
-			len = sizeof(g_tCommand);
 			OS_MutexRelease(OSMTXCommand);
+			len = sizeof(g_tCommand);
 			break;
 		case UCI_GET_INTs:
 			// fixme implement!
@@ -131,7 +134,9 @@ uint8_t HandleSerial(UCIFrame_t *_RXFrame)
 			OS_MutexGet(OSMTXCommand);
 			memcpy((uint8_t*)&g_tCommand, g_tUCIRXFrame.values, sizeof(Command_t));
 			OS_MutexRelease(OSMTXCommand);
-			len = 0; // no answer expected.
+			// prepare ok answer:
+			g_tUCITXFrame.values[0] = 1;
+			len = 1;
 			break;
 		case UCI_WRITE_EEPROM:
 			eeprom_update_block((uint8_t*)&g_tCommand, EEPROM_START, sizeof(Command_t));
@@ -139,6 +144,9 @@ uint8_t HandleSerial(UCIFrame_t *_RXFrame)
 			crc = calcCRC16S((uint8_t*)&g_tCommand,sizeof(Command_t));
 			eeprom_update_block((uint8_t*)&crc, (void*)(EEPROM_START + sizeof(Command_t)), 2);
 
+			// prepare ok answer:
+			g_tUCITXFrame.values[0] = 1;
+			len = 1;
 			break;
 
 		default:

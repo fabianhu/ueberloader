@@ -58,12 +58,12 @@ typedef struct Battery_Info_tag
 typedef enum
 {
 	eModeAuto,
-	eModeManual
+	eModeManual,
+	eModeStop
 }ChargerMode_t;
 
 typedef struct Command_tag
 {
-	ChargerMode_t  eChargerMode;
 	int16_t  sCurrentSetpoint;  // max current
 	uint8_t  ucUserCellCount; // 0 for auto
 	uint16_t usVoltageSetpoint_mV; // volt per cell
@@ -74,6 +74,7 @@ typedef struct Command_tag
 
 	uint16_t basefrequency;
 	uint16_t refreshrate;
+	uint8_t dummy;
 }Command_t;
 
 // "size of Command must be 16 bit aligned for CRC"
