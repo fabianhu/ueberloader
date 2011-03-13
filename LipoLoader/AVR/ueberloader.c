@@ -90,7 +90,7 @@ void TaskGovernor(void)
 	{
 		// set defaults: todo fill with useful values
 		g_tCommand.basefrequency = 10000;
-		g_eChargerMode = eModeStop;
+		g_eChargerMode = eModeAuto;
 		g_tCommand.refreshrate = 1000;
 		g_tCommand.sCurrentSetpoint = 1000;
 		g_tCommand.ucUserCellCount = 6;
@@ -586,6 +586,7 @@ void TaskState(void)
 
 			case eBattError:
 					OS_WaitTicks(OSALMStateWait,10000);
+					g_eChargerMode = eModeStop;
 					g_tBattery_Info.eState = eBattWaiting;
 				break;
 			default:
