@@ -11,9 +11,12 @@ uint8_t 		g_NewComand =0; // indicates new command to be sent
 uint8_t 		g_GotNewComand =0; // indicates stored commands I got from slave
 Battery_Info_t 	g_tBattery_Info;
 Command_t 		g_tCommand;
+extern ChargerMode_t 	g_eChargerMode;
 UCIFrame_t 		g_tUCIRXFrame; // serial receive data
 uint8_t    		g_ucRXLength;
 uint8_t 		glCommError=0;
+uint8_t 		g_Trig_SavePars; // triger save parameter command
+ChargerMode_t 	g_Tansfer_Action;
 
 
 // Prototypes:
@@ -63,10 +66,36 @@ void TaskCommand(void)
 	    	OS_MutexRelease(OSMTXCommand);
 	    	UCISendBlockCrc(&g_tUCITXBlock);
 
-	    	//OS_WaitTicks(OSALMCommandWait,20);
-			//glCommError = vWaitForResult();
+			glCommError = vWaitForResult();
 	    	g_NewComand = 0;
+
+
+			if(g_Trig_SavePars == 1)
+			{
+				g_Trig_SavePars = 0; // reset
+				g_tUCITXBlock.ID = 55;
+				g_tUCITXBlock.UCI = UCI_WRITE_EEPROM;
+				g_tUCITXBlock.len = UCIHEADERLEN;
+				UCISendBlockCrc(&g_tUCITXBlock);
+				glCommError = vWaitForResult();
+			}
+
+			if(g_Tansfer_Action != eModeNoChange)
+			{
+				g_Tansfer_Action = eModeNoChange; // reset
+
+				g_tUCITXBlock.ID = 55;
+				g_tUCITXBlock.UCI = UCI_ACTION;
+				g_tUCITXBlock.len = UCIHEADERLEN+1;
+				g_tUCITXBlock.values[0] = (uint8_t)g_Tansfer_Action;
+				UCISendBlockCrc(&g_tUCITXBlock);
+				glCommError = vWaitForResult();
+			}
 	    }
+
+
+
+
 	}
 }
 
@@ -124,7 +153,7 @@ ISR(USARTE0_RXC_vect)
 
 uint8_t HandleSerial(UCIFrame_t *_RXFrame)
 {
-	uint8_t ret = 0;
+	uint8_t ret = 99;
 
 	if(
 		(_RXFrame->ID == SLAVEDERIALID) &&
@@ -137,18 +166,25 @@ uint8_t HandleSerial(UCIFrame_t *_RXFrame)
 			memcpy((uint8_t*)&g_tCommand, _RXFrame->values, sizeof(g_tCommand));
 			g_GotNewComand = 1;
 			OS_MutexRelease(OSMTXCommand);
+			ret =0; // ok, packet received!
 			break;
 		case UCI_GET_INTs:
-
+			ret =0; // ok, packet received!
 			break;
 		case UCI_GET_OPVs:
 			OS_MutexGet(OSMTXBattInfo);
 			glCommError =0;
 			memcpy((uint8_t*)&g_tBattery_Info, _RXFrame->values, sizeof(g_tBattery_Info));
 			OS_MutexRelease(OSMTXBattInfo);
+			ret =0; // ok, packet received!
 			break;
 		case UCI_SET_CMDs:
 			// fixme not likely to be answered by the slave ;-) yet
+			ret =0; // ok, packet received!
+			break;
+		case UCI_WRITE_EEPROM:
+			// fixme not likely to be answered by the slave ;-) yet
+			ret =0; // ok, packet received!
 			break;
 		default:
 			break;
@@ -159,7 +195,7 @@ uint8_t HandleSerial(UCIFrame_t *_RXFrame)
 		ret = 3; // CRC wrong
 	}
 
-	memset(_RXFrame,0xff,sizeof(UCIFrame_t));
+	memset(_RXFrame,0xff,sizeof(UCIFrame_t)); // clear frame buffer
 
 	return ret;
 
@@ -174,7 +210,10 @@ void UCISendBlockCrc( UCIFrame_t* pU) // if the master sends a block, it is to b
 	g_tUCIRXFrame.len = UCIHEADERLEN; // reset header length in recd. data
 	pU->crc = 0;
 	pU->crc = CRC8x((uint8_t*)pU ,pU->len);
-	if(USARTSendBlockDMA(&DMA.CH1,(uint8_t*)pU ,pU->len)) glCommError = 4;
+	if(USARTSendBlockDMA(&DMA.CH1,(uint8_t*)pU ,pU->len))
+	{
+		glCommError = 4;
+	}
 }
 
 uint8_t UCIGetCRC( UCIFrame_t* pU)

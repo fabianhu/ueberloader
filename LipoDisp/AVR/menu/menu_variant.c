@@ -27,9 +27,11 @@ char ud_name[][MAX_SRAM_ITEM_NAME_LENGHT+1]	={//Menu item name
 											};
 
 //extern vars
-extern Menue_t MyMenue;
-extern Command_t 		g_tCommand; // command.c
-extern uint8_t g_bMenuActive;
+extern Menue_t 		MyMenue;
+extern Command_t 	g_tCommand; // command.c
+extern uint8_t		g_bMenuActive;
+extern uint8_t		g_Trig_SavePars;
+extern ChargerMode_t g_Tansfer_Action;
 
 
 //prototypes
@@ -154,6 +156,8 @@ void ActionChargeMethodFull (void)
 		default:
 			break;
 	}
+	g_Tansfer_Action = eModeManual; // trigger
+
 	menuUp();
 }
 
@@ -174,6 +178,7 @@ void ActionChargeMethodStorage (void)
 		default:
 			break;
 	}
+	g_Tansfer_Action = eModeManual; // trigger
 	menuUp();
 }
 void ActionChargeMethodDischarge (void)
@@ -193,6 +198,7 @@ void ActionChargeMethodDischarge (void)
 		default:
 			break;
 	}
+	g_Tansfer_Action = eModeManual; // trigger
 	menuUp();
 }
 void actSelTypeLiPo (void){g_eBattType = eBattTypeLiPo; menuUp();}
@@ -202,6 +208,7 @@ void actSelTypeLiIon (void){g_eBattType = eBattTypeLiIon; menuUp();}
 void leavemenu(void)
 {
 	g_bMenuActive = 0;
+	g_Trig_SavePars = 1;
 }
 
 void menuUp(void)

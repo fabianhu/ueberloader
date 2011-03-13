@@ -16,6 +16,7 @@
 #define UCI_GET_OPVs 			44 // Get actual Operating values (Battery_Info_t)
 #define UCI_GET_INTs 			55 // todo
 #define UCI_WRITE_EEPROM		66 // Write settings into eeprom of slave
+#define UCI_ACTION				77 // perform action (see payload string e.g. ACT_AUTO_RUN)
 
 typedef enum //BatteryStatus
 {
@@ -57,6 +58,7 @@ typedef struct Battery_Info_tag
 
 typedef enum
 {
+	eModeNoChange,
 	eModeAuto,
 	eModeManual,
 	eModeStop
