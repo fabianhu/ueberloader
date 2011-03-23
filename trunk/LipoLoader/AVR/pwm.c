@@ -162,6 +162,7 @@ void vGovernor(	uint16_t _I_Set_mA,	uint16_t _I_Act_mA)
 		usStartstep = STARTMAX; // reset, because of static !!
 		vPWM_Set(0,usStartstep);
 		PID(0,0,0,0,0,0,0,1);
+		usPower = 0; // reset for display.
 	}
 	else
 	{

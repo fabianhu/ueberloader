@@ -35,7 +35,7 @@ extern uint8_t g_ParReady;
 ChargerMode_t g_eChargerMode;
 
 // *********  Prototypes
-uint8_t GetCellcount(BatteryCell_t cells[], uint16_t* pusBattVoltage);
+uint8_t GetCellcount(void);
 void StateMachineBattery(void);
 extern void emstop(uint8_t e);
 
@@ -181,6 +181,7 @@ void TaskGovernor(void)
 		OS_DISABLEALLINTERRUPTS;
 		int16_t myISetpoint = g_tCommand.sCurrentSetpoint;
 		int16_t myUSetpoint = g_tCommand.usVoltageSetpoint_mV*g_tBattery_Info.ucNumberOfCells;
+		g_tBattery_Info.sVSetpoint = myUSetpoint;
 		OS_ENABLEALLINTERRUPTS;
 
 		// calculate Current setpoint
@@ -191,9 +192,9 @@ void TaskGovernor(void)
 		if(g_tBattery_Info.eState == eBattCharging)
 		{
 			ccc++;
-			if (ccc == 20) ccc=0;
+			if (ccc == 20) ccc=0; // fixme adjust!
+
 			if	(	sU_out_act_flt < myUSetpoint && /* sConverterPower < MAXCONVERTERPOWER_W &&*/
-					sU_in_act > g_tBattery_Info.ucNumberOfCells*2300 && // fixme
 					I_Set_mA_Ramped <= myISetpoint &&
 					g_bBalancerOverload == 0
 				)
@@ -227,7 +228,6 @@ void TaskGovernor(void)
 		else
 		{
 			I_Set_mA_Ramped = 0;
-			;
 		}
 
 		vGovernor( I_Set_mA_Ramped,	sI_out_act	);
@@ -449,24 +449,36 @@ void TaskMonitor(void)
 #define MINCELLVOLTAGE_mV 2000 // minimum cell voltage
 
 // Calculate cell count ; Return cell count. 0 = error
-uint8_t GetCellcount(BatteryCell_t cells[], uint16_t* pusBattVoltage)
+uint8_t GetCellcount(void)
 {
 	uint8_t i,ucCellCount=0;
 	uint16_t usUges_mV;
 	int16_t diff;
+	int16_t VCells[6];
+	int16_t Vtotal;
 
 	usUges_mV = 0;
 
+	OS_MutexGet(OSMTXBattInfo);
+	Vtotal = g_tBattery_Info.sActVoltage_mV;
+	for (i= 0;i<6;i++)
+	{
+		VCells[i]= g_tBattery_Info.Cells[i].sVoltage_mV;
+	}
+	OS_MutexRelease(OSMTXBattInfo);
+
+
+
 	for (i= 0;i<6;i++) // 0..5 iterate over possible cell count
 	{
-		if(cells[i].sVoltage_mV > MINCELLVOLTAGE_mV)
+		if(VCells[i] > MINCELLVOLTAGE_mV)
 		{
-			usUges_mV += cells[i].sVoltage_mV; // sum up cell voltage
+			usUges_mV += VCells[i]; // sum up cell voltage
 			ucCellCount ++;
 		}
 	}
 
-	diff = usUges_mV - *pusBattVoltage;
+	diff = usUges_mV - Vtotal;
 	if(abs(diff)< CELLDIFF_mV*ucCellCount)
 	{
 		// correct!
@@ -497,8 +509,13 @@ void ResetLastBatteryInfo(void)
 	OS_MutexRelease(OSMTXBattInfo);
 }
 
+#define CHARGEDELAY 20
+
 void TaskState(void)
 {
+	uint8_t i,j,t,to;
+
+
 	while(1)
 	{
 		OS_WaitEvent(OSEVTState);
@@ -522,8 +539,18 @@ void TaskState(void)
 				{
 					case eModeAuto:
 						// charge if ok.
-						NumberOfCells = GetCellcount(g_tBattery_Info.Cells,&myBattVoltage);
-						if(NumberOfCells > 0)
+						j=0;
+						to = GetCellcount();
+						for(i = 0 ; i<CHARGEDELAY; i++)
+						{
+							OS_WaitTicks(OSALMStateWait,100); // sums up to 1s
+							t = GetCellcount();
+							if(t==to) j++;
+							to=t;
+						}
+
+						NumberOfCells = GetCellcount();
+						if(NumberOfCells > 0 && j == CHARGEDELAY-1) // it was equal for 1s...
 						{
 							g_tBattery_Info.ucNumberOfCells = NumberOfCells;
 							g_tBattery_Info.eState = eBattCharging;
@@ -532,7 +559,7 @@ void TaskState(void)
 						break;
 					case eModeManual:
 						// Manual mode
-						if(	GetCellcount(g_tBattery_Info.Cells,&myBattVoltage)== g_tCommand.ucUserCellCount &&
+						if(	GetCellcount()== g_tCommand.ucUserCellCount &&
 								g_tCommand.ucUserCellCount >0)
 						{
 							g_tBattery_Info.ucNumberOfCells = g_tCommand.ucUserCellCount;
@@ -558,7 +585,7 @@ void TaskState(void)
 					{
 						g_tBattery_Info.eState = eBattFull;
 					}
-					if(GetCellcount(g_tBattery_Info.Cells,&myBattVoltage)!=g_tBattery_Info.ucNumberOfCells)
+					if(GetCellcount()!=g_tBattery_Info.ucNumberOfCells)
 					{
 						g_tBattery_Info.ucNumberOfCells = 0;
 						g_tBattery_Info.eState = eBattUnknown;
@@ -572,7 +599,7 @@ void TaskState(void)
 	//			break;
 			case eBattFull:
 				// vollständig angesteckt, Sollwert erreicht
-				if(GetCellcount(g_tBattery_Info.Cells,&myBattVoltage)!=g_tBattery_Info.ucNumberOfCells)
+				if(GetCellcount()!=g_tBattery_Info.ucNumberOfCells)
 				{
 					g_tBattery_Info.ucNumberOfCells = 0;
 					g_tBattery_Info.eState = eBattUnknown;
