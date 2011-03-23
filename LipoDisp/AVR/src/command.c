@@ -16,6 +16,7 @@ uint8_t    		g_ucRXLength;
 uint8_t 		glCommError=0;
 uint8_t 		g_Trig_SavePars; // triger save parameter command
 ChargerMode_t 	g_Tansfer_Action;
+uint8_t 		g_OPVsValid = 0; // opvs have been received.
 
 
 // Prototypes:
@@ -23,6 +24,7 @@ uint8_t vWaitForResult(void);
 uint8_t HandleSerial(UCIFrame_t *_RXFrame);
 uint8_t UCIGetCRC( UCIFrame_t* pU);
 void UCISendBlockCrc( UCIFrame_t* pU);
+eBatteryStatus_t GetBattStatus(void);
 
 void TaskCommand(void)
 {
@@ -54,6 +56,10 @@ void TaskCommand(void)
 		g_tUCITXBlock.len = UCIHEADERLEN;
 		UCISendBlockCrc(&g_tUCITXBlock);
 	    glCommError = vWaitForResult();
+	    if (glCommError == 0)
+	    { 	g_OPVsValid = 1; }
+	    else
+	    {  	g_OPVsValid = 0;  }
 
 	    if(CommandsKnown == 1)
 	    {
@@ -81,14 +87,16 @@ void TaskCommand(void)
 
 			if(g_Tansfer_Action != eModeNoChange)
 			{
-				g_Tansfer_Action = eModeNoChange; // reset
-
 				g_tUCITXBlock.ID = 55;
 				g_tUCITXBlock.UCI = UCI_ACTION;
 				g_tUCITXBlock.len = UCIHEADERLEN+1;
 				g_tUCITXBlock.values[0] = (uint8_t)g_Tansfer_Action;
 				UCISendBlockCrc(&g_tUCITXBlock);
+
 				glCommError = vWaitForResult();
+
+				if (glCommError == 0) g_Tansfer_Action = eModeNoChange; // reset on success
+
 			}
 	    }
 
@@ -172,8 +180,9 @@ uint8_t HandleSerial(UCIFrame_t *_RXFrame)
 			break;
 		case UCI_GET_OPVs:
 			OS_MutexGet(OSMTXBattInfo);
-			glCommError =0;
+			//glCommError =0; wieso fixme ?????
 			memcpy((uint8_t*)&g_tBattery_Info, _RXFrame->values, sizeof(g_tBattery_Info));
+
 			OS_MutexRelease(OSMTXBattInfo);
 			ret =0; // ok, packet received!
 			break;
@@ -222,5 +231,13 @@ uint8_t UCIGetCRC( UCIFrame_t* pU)
 	uint8_t res = CRC8x((uint8_t*)pU,pU->len);
 	pU->crc = tempCRC;
 	return res;
+}
+
+eBatteryStatus_t GetBattStatus(void)
+{
+	if(g_OPVsValid == 1)
+		return g_tBattery_Info.eState;
+	else
+		return eBattUnknown;
 }
 

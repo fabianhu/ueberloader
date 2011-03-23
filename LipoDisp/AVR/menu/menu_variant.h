@@ -3,11 +3,12 @@
 
 //******** START OF AUTO-GENERATED HEADER DO NOT EDIT!!! *********
 
- #define	MENUESIZE	38	// number of menu itmes (array size)
+ #define	MENUESIZE	36	// number of menu itmes (array size)
  #define	MAX_ITEM_NAME_CHARLENGTH	19	// number of menu itmes (array size)
 // Enum definitions
 typedef enum
 {
+	proz,
 	Cells,
 	kHz,
 	mA,
@@ -15,7 +16,6 @@ typedef enum
 	min,
 	ms,
 	mV,
-	V,
 } eParameterType_t;
 
 // Parameter externals
@@ -24,11 +24,9 @@ extern Parameter_t parCellCount;
 extern Parameter_t parLiPoChVolt;
 extern Parameter_t parLiPoStVolt;
 extern Parameter_t parLiPoDisVolt;
-extern Parameter_t parLiPoBalActVolt;
 extern Parameter_t parLiFeVolt;
-extern Parameter_t parBalActVolt;
 extern Parameter_t parLiIonVolt;
-extern Parameter_t parBalActVolt2;
+extern Parameter_t parBalActVolt;
 extern Parameter_t parMaxcap;
 extern Parameter_t parMaxtime;
 extern Parameter_t parPWMfrequency;
@@ -44,6 +42,7 @@ void actSelTypeLiIon (void);
 void leavemenu (void);
 
 //******** END OF AUTO-GENERATED HEADER DO NOT EDIT!!! *********
+
 
 
 
