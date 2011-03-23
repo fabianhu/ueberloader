@@ -1,6 +1,7 @@
 #include "touchpad.h"
 #include "../OS/FabOS.h"
 #include "../lcd/lcd.h" // fixme remove
+#include "../comm/serial.h"
 
 
 // Prototypes:
@@ -15,7 +16,8 @@ eGestures_t getGesture(void);
 uint8_t bitcount3(uint8_t b);
 extern void menu_select(void);
 extern void GetSubMenuCount(uint8_t *Size, uint8_t *StartIndex);
-
+extern eBatteryStatus_t GetBattStatus(void);
+extern ChargerMode_t g_Tansfer_Action;
 
 // Globals:
 extern uint8_t g_debug, g_debug2, g_debug3;
@@ -390,12 +392,19 @@ void ProcessTouch(void)
 					}
 					else
 					{
+						if(GetBattStatus() == eBattWaiting )
+						{
 						// fixme duplicate weil der doppeltatsch net geht.
+
+						// block charger
+						g_Tansfer_Action = eModeStop;
+
 						GetSubMenuCount(&SubMenuGroupSize, &StartIndex);
 
 						HandOverValueToUI(SubMenuGroupSize, SubMenuGroupSize, 1, 1);
 
 						g_bMenuActive = 1;
+						}
 
 					}
 					break;
@@ -416,12 +425,12 @@ void ProcessTouch(void)
 					}
 					else
 					{
-						
-						GetSubMenuCount(&SubMenuGroupSize, &StartIndex);
-
-						HandOverValueToUI(SubMenuGroupSize, SubMenuGroupSize, 1, 1);
-
-						g_bMenuActive = 1;
+//						geht nicht, so machen wie anderer Stelle!!
+//						GetSubMenuCount(&SubMenuGroupSize, &StartIndex);
+//
+//						HandOverValueToUI(SubMenuGroupSize, SubMenuGroupSize, 1, 1);
+//
+//						g_bMenuActive = 1;
 					}
 
 					break;

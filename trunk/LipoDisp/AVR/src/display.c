@@ -67,6 +67,7 @@ void TaskDisplay(void)
 			 //g_tCommand.eChargerMode; // umstellen per Action // fixme
 			 parCurrent.sValue = g_tCommand.sCurrentSetpoint;
 			 parCellCount.sValue = g_tCommand.ucUserCellCount;
+
 		//	 parVoltSetpoint.sValue = g_tCommand.usVoltageSetpoint_mV;
 
 			 parMaxcap.sValue = g_tCommand.unQ_max_mAs/3600;  // mAs in mAh
@@ -75,6 +76,7 @@ void TaskDisplay(void)
 
 			 parPWMfrequency.sValue = g_tCommand.basefrequency;
 			 parRefreshPeriod.sValue = g_tCommand.refreshrate;
+			 parBalActVolt.sValue = g_tCommand.usMinBalanceVolt_mV;
 
 			 OS_MutexRelease(OSMTXCommand);
 
@@ -134,7 +136,7 @@ void TaskDisplay(void)
 				ypos += LINEDIFF;
 				lcd_print(WHITE, BLACK, 1, 200, ypos,"Setp %i mA   ",g_tBattery_Info.sISetpoint);
 				ypos += LINEDIFF;
-				lcd_print(WHITE, BLACK, 1, 200, ypos,"diff %i mA   ",g_tBattery_Info.sDiff);
+				lcd_print(WHITE, BLACK, 1, 200, ypos,"SetP V   ",g_tBattery_Info.);
 				ypos += LINEDIFF;
 				lcd_print(WHITE, BLACK, 1, 200, ypos,"Time %i s   ",(uint16_t)g_tBattery_Info.unTimeCharging_s);
 				ypos += LINEDIFF;

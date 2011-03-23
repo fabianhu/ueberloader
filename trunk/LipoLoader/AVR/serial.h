@@ -48,6 +48,7 @@ typedef struct Battery_Info_tag
 	uint16_t usPWMStep; // fixme temporary-remove
 	uint16_t usConverterPower_W; // fixme temporary-remove
 	int16_t  sISetpoint;
+	int16_t  sVSetpoint;
 	int16_t  sDiff;
 	uint16_t ErrCnt;
 	uint8_t  LastErr;
