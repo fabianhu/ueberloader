@@ -8,14 +8,14 @@
 // Enum definitions
 typedef enum
 {
-	proz,
 	Cells,
 	kHz,
 	mA,
 	mAh,
 	min,
-	ms,
 	mV,
+	parts,
+	proz,
 } eParameterType_t;
 
 // Parameter externals
