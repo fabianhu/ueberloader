@@ -10,14 +10,35 @@
 
 extern Battery_Info_t g_tBattery_Info;
 
+uint16_t pwm_us_period_H = 2560ul; // 1280 = 100kHz // main frequency
+uint16_t pwm_us_period_div = 10ul;					// main / x = slow(refresh) frq.
+uint16_t pwm_us_period_L; // init !!! = (pwm_us_period_H + (pwm_us_period_H )* pwm_us_period_div );
+
+volatile uint16_t g_usPower = 0;
+volatile uint16_t startmax = 0; // max 1000 (init)
+
+void PWM_Setfrequency(int16_t f) // in kHz!!!
+{
+	pwm_us_period_H = (12800/f)*10;
+	pwm_us_period_L = (pwm_us_period_H + (pwm_us_period_H )* pwm_us_period_div );
+}
+
+void PWM_SetRatio(uint16_t r)
+{
+	pwm_us_period_div = r;
+}
+
+
 void vPWM_Init(void)
 {
+	pwm_us_period_L = (pwm_us_period_H + (pwm_us_period_H )* pwm_us_period_div );
+
 	TCC0.CTRLA = TC_CLKSEL_DIV1_gc;
 	TCC0.CTRLB = 0b00110000 | TC_WGMODE_SS_gc; // single slope
 	TCC0.CTRLC = 0; // not used: manually activate output compare
 	TCC0.CTRLD = TC_EVACT_RESTART_gc | TC_EVSEL_CH0_gc; // event0 does restart of the timer.
 	TCC0.CTRLE = 0; // not used: last bit: Byte-mode
-	TCC0.PERBUF = PERIOD_H; // 100khz
+	TCC0.PERBUF = pwm_us_period_H;
 	TCC0.CCABUF = 0;
 	TCC0.CCBBUF = 0;
 
@@ -31,8 +52,8 @@ void vPWM_Init(void)
 	TCD0.CTRLC = 0; // not used: manually activate output compare
 	TCD0.CTRLD = TC_EVACT_RESTART_gc | TC_EVSEL_CH0_gc; // event0 does restart of the timer.
 	TCD0.CTRLE = 0; // not used: last bit: Byte-mode
-	TCD0.PERBUF = PERIOD_H;// 0+9*4; // 10khz (9 Überläufe, 4 wg. hires)
-	TCD0.CCABUF = PERIOD_H-MINSWITCHOFFPWM;
+	TCD0.PERBUF = pwm_us_period_H;// 0+9*4; // 10khz (9 Überläufe, 4 wg. hires)
+	TCD0.CCABUF = pwm_us_period_H-MINSWITCHOFFPWM;
 	TCD0.CCBBUF = 0;
 
 	HIRESD.CTRL = HIRES_HREN_TC0_gc;
@@ -46,44 +67,44 @@ void vPWM_Init(void)
 
 void vPWM_Set(uint16_t usPower, uint16_t usStartstep)
 {
-	if ( usPower <= PERIOD_H - MINSWITCHOFFPWM )
+	if ( usPower <= pwm_us_period_H - MINSWITCHOFFPWM )
 	{
 		//buck
 		// links IN
 		TCC0.CCABUF = usPower;
-		TCC0.PERBUF = PERIOD_H;
+		TCC0.PERBUF = pwm_us_period_H;
 
 		// rechts IN
-		TCD0.CCABUF = PERIOD_L - MINSWITCHOFFPWM;
-		TCD0.PERBUF = PERIOD_L;
+		TCD0.CCABUF = pwm_us_period_L - MINSWITCHOFFPWM;
+		TCD0.PERBUF = pwm_us_period_L;
 
 		SetEnableBuck(usStartstep);
 	}
-	else if(usPower <= PERIOD_H)
+	else if(usPower <= pwm_us_period_H)
 	{
 		uint32_t u;
-		u = MINSWITCHOFFPWM - (PERIOD_H - (uint32_t)usPower);
-		u = u*100*PERIOD_DIV  / MINSWITCHOFFPWM; // result = 1..10 (*100)
-		u = PERIOD_H * u /100;
-		TCC0.PERBUF = PERIOD_H + u;
+		u = MINSWITCHOFFPWM - (pwm_us_period_H - (uint32_t)usPower);
+		u = u*100*pwm_us_period_div  / MINSWITCHOFFPWM; // result = 1..10 (*100)
+		u = pwm_us_period_H * u /100;
+		TCC0.PERBUF = pwm_us_period_H + u;
 		TCC0.CCABUF = TCC0.PERBUF - MINSWITCHOFFPWM;
 
-		TCD0.PERBUF = PERIOD_L;
-		TCD0.CCABUF = PERIOD_L - MINSWITCHOFFPWM;
+		TCD0.PERBUF = pwm_us_period_L;
+		TCD0.CCABUF = pwm_us_period_L - MINSWITCHOFFPWM;
 
 		SetEnableBuck(usStartstep);
 		//EVSYS.STROBE = (1<<0); // sync timers
 	}
-	else if(usPower <= PERIOD_H + MINSWITCHOFFPWM)
+	else if(usPower <= pwm_us_period_H + MINSWITCHOFFPWM)
 	{
 		uint32_t u;
-		u = MINSWITCHOFFPWM - (usPower - PERIOD_H);
-		u = u*100*PERIOD_DIV / MINSWITCHOFFPWM; // result = 1..10 (*100)
-		u = PERIOD_H * u / 100;
-		TCD0.PERBUF = PERIOD_H + u;
+		u = MINSWITCHOFFPWM - (usPower - pwm_us_period_H);
+		u = u*100*pwm_us_period_div / MINSWITCHOFFPWM; // result = 1..10 (*100)
+		u = pwm_us_period_H * u / 100;
+		TCD0.PERBUF = pwm_us_period_H + u;
 		TCD0.CCABUF = TCD0.PERBUF - MINSWITCHOFFPWM;
 
-		TCC0.PERBUF = PERIOD_L;
+		TCC0.PERBUF = pwm_us_period_L;
 		TCC0.CCABUF = TCC0.PERBUF - MINSWITCHOFFPWM;
 
 		SetEnableBoost(usStartstep);
@@ -93,17 +114,15 @@ void vPWM_Set(uint16_t usPower, uint16_t usStartstep)
 	{
 		//boost
 		// links IN
+		TCC0.PERBUF = pwm_us_period_L;
 		TCC0.CCABUF = TCC0.PERBUF - MINSWITCHOFFPWM;
 
 		// rechts IN
-		TCD0.CCABUF = PERIOD_H*2 - usPower;//PERIOD_H*2 - power - 2* MINSWITCHOFFPWM ;
+		TCD0.PERBUF = pwm_us_period_H;
+		TCD0.CCABUF = pwm_us_period_H*2 - usPower;//pwm_us_period_H*2 - power - 2* MINSWITCHOFFPWM ;
 
 		// links ENABLE immer an:
 		TCC0.CCBBUF = PERIOD_MAX;
-
-
-		TCC0.PERBUF = PERIOD_L;
-		TCD0.PERBUF = PERIOD_H;
 
 		SetEnableBoost(usStartstep);
 	}
@@ -141,7 +160,7 @@ void SetEnableBoost(uint16_t usStartstep) // 1000-0 scaled; 0= fully started
 		u= (uint32_t)TCD0.CCABUF * (uint32_t)usStartstep / STARTMAX;
 
 		// rechts ENABLE läuft mit:
-		TCD0.CCBBUF = u;//PERIOD_H*2 - power;//(invertiert!)
+		TCD0.CCBBUF = u;//pwm_us_period_H*2 - power;//(invertiert!)
 	}
 	else
 	{
@@ -150,13 +169,16 @@ void SetEnableBoost(uint16_t usStartstep) // 1000-0 scaled; 0= fully started
 	}
 }
 
+volatile uint8_t test = 0;
+
 void vGovernor(	uint16_t _I_Set_mA,	uint16_t _I_Act_mA)
 {
 	uint16_t usPower = 0;
 	static uint16_t usStartstep = STARTMAX;
 	static uint8_t cn = 0;
 
-	if(_I_Set_mA <= 0)
+
+	if(_I_Set_mA <= 0 && 0) // fixme !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	{
 		ENABLE_A_OFF;ENABLE_B_OFF;
 		usStartstep = STARTMAX; // reset, because of static !!
@@ -183,10 +205,18 @@ void vGovernor(	uint16_t _I_Set_mA,	uint16_t _I_Act_mA)
 			}
 		}
 
-		usPower = PID(_I_Act_mA, _I_Set_mA, 0, 1, 0, 0, PERIOD_H*17/10, 0);
+		usPower = PID(_I_Act_mA, _I_Set_mA, 0, 1, 0, 0, pwm_us_period_H*17/10, 0);
 
-		vPWM_Set(usPower,usStartstep);
+//		if (test) // fixme !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//		{
+//			vPWM_Set(usPower,usStartstep);
+//		}
 	}
+
+	 // fixme !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	
+	vPWM_Set(g_usPower,startmax);
+	
 
 	// fixme additional info to be removed ?
 	OS_MutexGet(OSMTXBattInfo);

@@ -8,6 +8,7 @@
 #include "serial.h"
 #include "ueberloader.h"
 #include "usart.h"
+#include "pwm.h"
 #include <string.h>
 #include <avr/eeprom.h>
 
@@ -144,6 +145,7 @@ uint8_t HandleSerial(UCIFrame_t *_RXFrame)
 			crc = calcCRC16S((uint8_t*)&g_tCommand,sizeof(Command_t));
 			eeprom_update_block((uint8_t*)&crc, (void*)(EEPROM_START + sizeof(Command_t)), 2);
 
+			PWM_Setfrequency(g_tCommand.basefrequency); // in kHz!!!
 			// prepare ok answer:
 			g_tUCITXFrame.values[0] = 1;
 			len = 1;

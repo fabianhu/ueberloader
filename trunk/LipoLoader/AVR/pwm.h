@@ -8,6 +8,10 @@
 // Prototypes
 void vPWM_Init(void);
 void vPWM_Set(uint16_t usPower, uint16_t usStartstep);
+void PWM_Setfrequency(int16_t f); // in kHz!!!
+void PWM_SetRatio(uint16_t r); // main / x = slow(refresh) frq.
+
+
 void SetEnableBuck(uint16_t usStartstep); // 1000-0 scaled; 0= fully started
 void SetEnableBoost(uint16_t usStartstep); // 1000-0 scaled; 0= fully started
 
@@ -18,23 +22,19 @@ void RampUpDn(uint16_t* ramped, uint16_t target, uint16_t upper,uint16_t lower);
 void RampUp(uint16_t* ramped, uint16_t target);
 void RampDn(uint16_t* ramped, uint16_t target);
 
-
-
 // Defines
 #define ENABLE_A_OFF	TCC0.CCBBUF = 0;
 #define ENABLE_B_OFF	TCD0.CCBBUF = TCD0.PERBUF +4; // inverted
 
-#define PERIOD_DIV 10ul					// main / x = slow(refresh) frq.
-#define PERIOD_H 2560ul // 1280 = 100kHz // main frequency
-//define PERIOD_L PERIOD_H + (PERIOD_H +4)* PERIOD_DIV // common divider...
-#define PERIOD_L PERIOD_H + (PERIOD_H )* PERIOD_DIV // odd divider...
+
+//define PERIOD_L pwm_us_period_H + (pwm_us_period_H +4)* pwm_us_period_div // common divider...
+//#define PERIOD_L pwm_us_period_H + (pwm_us_period_H )* pwm_us_period_div // odd divider...
 #define PERIOD_MAX 0xffff
 #define MINSWITCHOFFPWM 300
 
-#define STARTMAX 1000ul
+#define STARTMAX 1000ul // start value
 
 #define STARTUPLEVEL_mA 300 // minimum current for syncronous op.
-
 #define MAXCONVERTERPOWER_W 100 // maximum converter power
 
 
