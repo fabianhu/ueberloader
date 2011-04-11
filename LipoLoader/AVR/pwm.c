@@ -14,9 +14,6 @@ uint16_t pwm_us_period_H = 2560ul; // 1280 = 100kHz // main frequency
 uint16_t pwm_us_period_div = 10ul;					// main / x = slow(refresh) frq.
 uint16_t pwm_us_period_L; // init !!! = (pwm_us_period_H + (pwm_us_period_H )* pwm_us_period_div );
 
-volatile uint16_t g_usPower = 0;
-volatile uint16_t startmax = 0; // max 1000 (init)
-
 void PWM_Setfrequency(int16_t f) // in kHz!!!
 {
 	pwm_us_period_H = (12800/f)*10;
@@ -178,7 +175,7 @@ void vGovernor(	uint16_t _I_Set_mA,	uint16_t _I_Act_mA)
 	static uint8_t cn = 0;
 
 
-	if(_I_Set_mA <= 0 && 0) // fixme !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	if(_I_Set_mA <= 0 )
 	{
 		ENABLE_A_OFF;ENABLE_B_OFF;
 		usStartstep = STARTMAX; // reset, because of static !!
@@ -207,16 +204,8 @@ void vGovernor(	uint16_t _I_Set_mA,	uint16_t _I_Act_mA)
 
 		usPower = PID(_I_Act_mA, _I_Set_mA, 0, 1, 0, 0, pwm_us_period_H*17/10, 0);
 
-//		if (test) // fixme !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//		{
-//			vPWM_Set(usPower,usStartstep);
-//		}
+		vPWM_Set(usPower,usStartstep);
 	}
-
-	 // fixme !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	
-	vPWM_Set(g_usPower,startmax);
-	
 
 	// fixme additional info to be removed ?
 	OS_MutexGet(OSMTXBattInfo);
