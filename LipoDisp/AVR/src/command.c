@@ -172,12 +172,8 @@ uint8_t HandleSerial(UCIFrame_t *_RXFrame)
 			OS_MutexRelease(OSMTXCommand);
 			ret =0; // ok, packet received!
 			break;
-		case UCI_GET_INTs:
-			ret =0; // ok, packet received!
-			break;
 		case UCI_GET_OPVs:
 			OS_MutexGet(OSMTXBattInfo);
-			//glCommError =0; wieso fixme ?????
 			memcpy((uint8_t*)&g_tBattery_Info, _RXFrame->values, sizeof(g_tBattery_Info));
 
 			OS_MutexRelease(OSMTXBattInfo);

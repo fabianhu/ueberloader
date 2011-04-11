@@ -22,7 +22,7 @@ void TaskDisplay(void)
 {
 
 	uint16_t ypos = 0;
-	uint32_t t1, t2;
+	uint32_t t1, t2;// just for finding error fixme
 	uint8_t i;
 
 #define FONTSIZE 1

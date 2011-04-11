@@ -228,7 +228,7 @@ void leavemenu(void)
 	g_bMenuActive = 0;
 	g_Trig_SavePars = 1;
 	UpdateCommandsFromParam();
-	g_Tansfer_Action = eModeAuto; // fixme merken ????
+	g_Tansfer_Action = eModeAuto; // fixme merken ???? / Funktion!!
 }
 
 void entermenu(void)

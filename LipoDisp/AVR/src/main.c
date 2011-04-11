@@ -24,8 +24,8 @@ void CPU_init(void);
 void emstop(uint8_t e);
 void touchtest(void);
 
-// Global variables fixme check
-static volatile uint16_t a,b,c,d;
+// Global variables
+static volatile uint16_t a,b,c,d; // stack space remaining
 
 uint8_t g_debug,g_debug2,g_debug3;
 int16_t g_debug4;
