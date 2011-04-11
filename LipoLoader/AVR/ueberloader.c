@@ -26,7 +26,6 @@ Battery_Info_t g_tBattery_Info;
 uint8_t g_aucDisChTicks[6];
 uint8_t g_bBalancerOverload; // True, if one cell has reached Voltage limit.
 
-//uint16_t usStartstep =STARTMAX;
 //uint16_t I_Max_ABS = 25000;
 //volatile uint16_t g_I_filt;
 extern int16_t g_asADCvalues[3]; // fast ADC values
@@ -89,9 +88,9 @@ void TaskGovernor(void)
 	if(	crcRD != crcEE)
 	{
 		// set defaults: todo fill with useful values
-		g_tCommand.basefrequency = 10000;
+		g_tCommand.basefrequency = 100;
+		g_tCommand.refreshrate = 10;
 		g_eChargerMode = eModeAuto;
-		g_tCommand.refreshrate = 1000;
 		g_tCommand.sCurrentSetpoint = 1000;
 		g_tCommand.ucUserCellCount = 6;
 		g_tCommand.unQ_max_mAs = 100000;
