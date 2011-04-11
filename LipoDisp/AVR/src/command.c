@@ -100,9 +100,6 @@ void TaskCommand(void)
 			}
 	    }
 
-
-
-
 	}
 }
 
