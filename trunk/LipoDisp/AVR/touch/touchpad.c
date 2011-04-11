@@ -197,7 +197,7 @@ void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower, uint16_t 
 	myP.upscale = SLIDERUPSCALE / (upper-lower);
 
 
-	myP.position = value * myP.upscale; // fixme particle rein
+	myP.position = value * myP.upscale;
 	myP.stepsize = stepsize * myP.upscale;
 	myP.min = lower * myP.upscale;
 	myP.max = upper * myP.upscale;
@@ -281,9 +281,6 @@ uint8_t touchGetSpeed(int16_t* speed, int32_t *Schwerpunkt)
 
 eTouchstate_t eTouchstate = eTSIdle;
 
-
-
-uint8_t SubMenuGroupSize, StartIndex; // fixme debug only
 
 
 void ProcessTouch(void)
@@ -398,6 +395,8 @@ void ProcessTouch(void)
 
 						// block charger
 						g_Tansfer_Action = eModeStop;
+
+						uint8_t SubMenuGroupSize, StartIndex;
 
 						GetSubMenuCount(&SubMenuGroupSize, &StartIndex);
 

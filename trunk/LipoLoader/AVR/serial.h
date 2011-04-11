@@ -14,7 +14,6 @@
 #define UCI_SET_CMDs 			22 // Set actual command struct (Command_t) (no answer expected todo
 #define UCI_GET_CMDs			33 // Get Actual command setting (Command_t)
 #define UCI_GET_OPVs 			44 // Get actual Operating values (Battery_Info_t)
-#define UCI_GET_INTs 			55 // todo
 #define UCI_WRITE_EEPROM		66 // Write settings into eeprom of slave
 #define UCI_ACTION				77 // perform action (see payload string e.g. ACT_AUTO_RUN)
 
