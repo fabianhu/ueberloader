@@ -63,7 +63,6 @@ void sFilter(int16_t* o, int16_t* n)
 	}
 }
 
-uint16_t crcEE=0,crcRD =0; // fixme check
 // ********* Stuff
 void TaskGovernor(void)
 {
@@ -80,6 +79,7 @@ void TaskGovernor(void)
 	}
 
 
+	uint16_t crcEE=0,crcRD =0;
 	// read parameters from eeprom
 	eeprom_read_block((uint8_t*)&g_tCommand, EEPROM_START, sizeof(Command_t));
 	//check CRC

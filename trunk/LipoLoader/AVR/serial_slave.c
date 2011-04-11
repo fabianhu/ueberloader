@@ -122,9 +122,6 @@ uint8_t HandleSerial(UCIFrame_t *_RXFrame)
 			OS_MutexRelease(OSMTXCommand);
 			len = sizeof(g_tCommand);
 			break;
-		case UCI_GET_INTs:
-			// fixme implement!
-			break;
 		case UCI_GET_OPVs:
 			OS_MutexGet(OSMTXBattInfo);
 			memcpy(g_tUCITXFrame.values, (uint8_t*)&g_tBattery_Info, sizeof(g_tBattery_Info));
