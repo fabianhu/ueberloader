@@ -61,9 +61,9 @@ void TaskDisplay(void)
 			OS_MutexGet( OSMTXCommand );
 			//g_tCommand.eChargerMode; // umstellen per Action // fixme
 			parCurrent.sValue = g_tCommand.sCurrentSetpoint;
+			parVoltage.sValue = g_tCommand.usVoltageSetpoint_mV;
 			parCellCount.sValue = g_tCommand.ucUserCellCount;
 
-			//	 parVoltSetpoint.sValue = g_tCommand.usVoltageSetpoint_mV;
 
 			parMaxcap.sValue = g_tCommand.unQ_max_mAs / 3600; // mAs in mAh
 			parMaxtime.sValue = g_tCommand.usT_max_s;
