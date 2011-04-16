@@ -190,17 +190,17 @@ void svFilter(int16_t* o, int16_t* n, uint8_t x)
 	}
 }
 
-#define SLIDERUPSCALE 32000
+#define SLIDERUPSCALE 32000ul
 
 void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower, uint16_t stepsize) 
 {
-	myP.upscale = SLIDERUPSCALE / (upper-lower);
+	myP.upscale = (uint32_t)SLIDERUPSCALE / ((uint32_t)upper-(uint32_t)lower);
 
 
-	myP.position = value * myP.upscale;
-	myP.stepsize = stepsize * myP.upscale;
-	myP.min = lower * myP.upscale;
-	myP.max = upper * myP.upscale;
+	myP.position = (uint32_t)value * myP.upscale;
+	myP.stepsize = (uint32_t)stepsize * myP.upscale;
+	myP.min = (uint32_t)lower * myP.upscale;
+	myP.max = (uint32_t)upper * myP.upscale;
 }
 
 int16_t GetvalueFromUI(void)
