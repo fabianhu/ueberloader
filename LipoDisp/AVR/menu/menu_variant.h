@@ -3,7 +3,7 @@
 
 //******** START OF AUTO-GENERATED HEADER DO NOT EDIT!!! *********
 
- #define	MENUESIZE	36	// number of menu itmes (array size)
+ #define	MENUESIZE	37	// number of menu itmes (array size)
  #define	MAX_ITEM_NAME_CHARLENGTH	19	// number of menu itmes (array size)
 // Enum definitions
 typedef enum
@@ -13,13 +13,14 @@ typedef enum
 	mA,
 	mAh,
 	min,
+	ms,
 	mV,
-	parts,
 	proz,
 } eParameterType_t;
 
 // Parameter externals
 extern Parameter_t parCurrent;
+extern Parameter_t parVoltage;
 extern Parameter_t parCellCount;
 extern Parameter_t parLiPoChVolt;
 extern Parameter_t parLiPoStVolt;

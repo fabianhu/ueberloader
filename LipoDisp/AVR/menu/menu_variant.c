@@ -39,10 +39,12 @@ void entermenu(void);
 
 
 
+
 //******** START OF AUTO-GENERATED CODE DO NOT EDIT!!! *********
 // Text definitions
 char	txtMAINMENU[] 	PROGMEM="Main Menu";
 char	txtCURRENTSETPOINT[] 	PROGMEM="Current Setpoint";
+char	txtVOLTAGESETPOINT[] 	PROGMEM="Voltage Setpoint";
 char	txtACTION[] 	PROGMEM="Action";
 char	txtBATTTYPESELECT[] 	PROGMEM="Batt Type Select";
 char	txtSETUP[] 	PROGMEM="Setup";
@@ -70,6 +72,7 @@ char	txtREFRESHPERIOD[] 	PROGMEM="Refresh-period";
 
 // Parameter definitions
 Parameter_t parCurrent = {	0, 100, 10000, 100, mA};
+Parameter_t parVoltage = {	0, 2500, 4200, 20, mV};
 Parameter_t parCellCount = {	0, 0, 6, 1, Cells};
 Parameter_t parLiPoChVolt = {	0, 3000, 4200, 10, mV};
 Parameter_t parLiPoStVolt = {	0, 2000, 4100, 100, mV};
@@ -80,46 +83,47 @@ Parameter_t parBalActVolt = {	0, 0, 100, 100, proz};
 Parameter_t parMaxcap = {	0, 0, 10000, 100, mAh};
 Parameter_t parMaxtime = {	0, 1, 6000, 1, min};
 Parameter_t parPWMfrequency = {	0, 10, 100, 10, kHz};
-Parameter_t parRefreshPeriod = {	0, 10, 1000, 10, parts};
+Parameter_t parRefreshPeriod = {	0, 1, 10000, 10, ms};
 
 			//Name	Act	Par	Jmp	Parent	Memory
 MenuItem_t m_items[MENUESIZE] = {
 	/* 0*/	{txtMAINMENU,	 0,	 0,	1,	0,	FLASH},
 	/* 1*/	{txtCURRENTSETPOINT,	 0,	 &parCurrent,	0,	0,	FLASH},
-	/* 2*/	{txtACTION,	 0,	 0,	6,	0,	FLASH},
-	/* 3*/	{txtBATTTYPESELECT,	 0,	 0,	9,	0,	FLASH},
-	/* 4*/	{txtSETUP,	 0,	 0,	12,	0,	FLASH},
-	/* 5*/	{txtBACK,	 leavemenu,	 0,	0,	0,	FLASH},
-	/* 6*/	{txtCHARGEFULL,	 ActionChargeMethodFull,	 0,	0,	2,	FLASH},
-	/* 7*/	{txtCHARGESTORAGE,	 ActionChargeMethodStorage,	 0,	0,	2,	FLASH},
-	/* 8*/	{txtDISCHARGE,	 ActionChargeMethodDischarge,	 0,	0,	2,	FLASH},
-	/* 9*/	{txtLIPO,	 actSelTypeLiPo,	 0,	0,	3,	FLASH},
-	/* 10*/	{txtLIFEPO,	 actSelTypeLiFe,	 0,	0,	3,	FLASH},
-	/* 11*/	{txtLIION,	 actSelTypeLiIon,	 0,	0,	3,	FLASH},
-	/* 12*/	{txtCELLCOUNT,	 0,	 &parCellCount,	0,	4,	FLASH},
-	/* 13*/	{txtBATTSETTINGS,	 0,	 0,	17,	4,	FLASH},
-	/* 14*/	{txtCHARGELIMITS,	 0,	 0,	30,	4,	FLASH},
-	/* 15*/	{txtPWM,	 0,	 0,	33,	4,	FLASH},
-	/* 16*/	{txtBACK,	 0,	 0,	4,	4,	FLASH},
-	/* 17*/	{txtLIPO,	 0,	 0,	22,	13,	FLASH},
-	/* 18*/	{txtLIFEPO,	 0,	 0,	26,	13,	FLASH},
-	/* 19*/	{txtLIION,	 0,	 0,	28,	13,	FLASH},
-	/* 20*/	{txtBALACTIVVOLTAGE,	 0,	 &parBalActVolt,	0,	13,	FLASH},
-	/* 21*/	{txtBACK,	 0,	 0,	13,	13,	FLASH},
-	/* 22*/	{txtCHARGEVOLTAGE,	 0,	 &parLiPoChVolt,	0,	17,	FLASH},
-	/* 23*/	{txtSTORAGEVOLTAGE,	 0,	 &parLiPoStVolt,	0,	17,	FLASH},
-	/* 24*/	{txtDISCHARGEVOLTAGE,	 0,	 &parLiPoDisVolt,	0,	17,	FLASH},
-	/* 25*/	{txtBACK,	 0,	 0,	17,	17,	FLASH},
-	/* 26*/	{txtLIFEPOVOLT,	 0,	 &parLiFeVolt,	0,	18,	FLASH},
-	/* 27*/	{txtBACK,	 0,	 0,	18,	18,	FLASH},
-	/* 28*/	{txtLIIONVOLTAGE,	 0,	 &parLiIonVolt,	0,	19,	FLASH},
-	/* 29*/	{txtBACK,	 0,	 0,	19,	19,	FLASH},
-	/* 30*/	{txtCAPACITY,	 0,	 &parMaxcap,	0,	14,	FLASH},
-	/* 31*/	{txtTIME,	 0,	 &parMaxtime,	0,	14,	FLASH},
-	/* 32*/	{txtBACK,	 0,	 0,	14,	14,	FLASH},
-	/* 33*/	{txtFEQUENCY,	 0,	 &parPWMfrequency,	0,	15,	FLASH},
-	/* 34*/	{txtREFRESHPERIOD,	 0,	 &parRefreshPeriod,	0,	15,	FLASH},
-	/* 35*/	{txtBACK,	 0,	 0,	15,	15,	FLASH},
+	/* 2*/	{txtVOLTAGESETPOINT,	 0,	 &parVoltage,	0,	0,	FLASH},
+	/* 3*/	{txtACTION,	 0,	 0,	7,	0,	FLASH},
+	/* 4*/	{txtBATTTYPESELECT,	 0,	 0,	10,	0,	FLASH},
+	/* 5*/	{txtSETUP,	 0,	 0,	13,	0,	FLASH},
+	/* 6*/	{txtBACK,	 leavemenu,	 0,	0,	0,	FLASH},
+	/* 7*/	{txtCHARGEFULL,	 ActionChargeMethodFull,	 0,	0,	3,	FLASH},
+	/* 8*/	{txtCHARGESTORAGE,	 ActionChargeMethodStorage,	 0,	0,	3,	FLASH},
+	/* 9*/	{txtDISCHARGE,	 ActionChargeMethodDischarge,	 0,	0,	3,	FLASH},
+	/* 10*/	{txtLIPO,	 actSelTypeLiPo,	 0,	0,	4,	FLASH},
+	/* 11*/	{txtLIFEPO,	 actSelTypeLiFe,	 0,	0,	4,	FLASH},
+	/* 12*/	{txtLIION,	 actSelTypeLiIon,	 0,	0,	4,	FLASH},
+	/* 13*/	{txtCELLCOUNT,	 0,	 &parCellCount,	0,	5,	FLASH},
+	/* 14*/	{txtBATTSETTINGS,	 0,	 0,	18,	5,	FLASH},
+	/* 15*/	{txtCHARGELIMITS,	 0,	 0,	31,	5,	FLASH},
+	/* 16*/	{txtPWM,	 0,	 0,	34,	5,	FLASH},
+	/* 17*/	{txtBACK,	 0,	 0,	5,	5,	FLASH},
+	/* 18*/	{txtLIPO,	 0,	 0,	23,	14,	FLASH},
+	/* 19*/	{txtLIFEPO,	 0,	 0,	27,	14,	FLASH},
+	/* 20*/	{txtLIION,	 0,	 0,	29,	14,	FLASH},
+	/* 21*/	{txtBALACTIVVOLTAGE,	 0,	 &parBalActVolt,	0,	14,	FLASH},
+	/* 22*/	{txtBACK,	 0,	 0,	14,	14,	FLASH},
+	/* 23*/	{txtCHARGEVOLTAGE,	 0,	 &parLiPoChVolt,	0,	18,	FLASH},
+	/* 24*/	{txtSTORAGEVOLTAGE,	 0,	 &parLiPoStVolt,	0,	18,	FLASH},
+	/* 25*/	{txtDISCHARGEVOLTAGE,	 0,	 &parLiPoDisVolt,	0,	18,	FLASH},
+	/* 26*/	{txtBACK,	 0,	 0,	18,	18,	FLASH},
+	/* 27*/	{txtLIFEPOVOLT,	 0,	 &parLiFeVolt,	0,	19,	FLASH},
+	/* 28*/	{txtBACK,	 0,	 0,	19,	19,	FLASH},
+	/* 29*/	{txtLIIONVOLTAGE,	 0,	 &parLiIonVolt,	0,	20,	FLASH},
+	/* 30*/	{txtBACK,	 0,	 0,	20,	20,	FLASH},
+	/* 31*/	{txtCAPACITY,	 0,	 &parMaxcap,	0,	15,	FLASH},
+	/* 32*/	{txtTIME,	 0,	 &parMaxtime,	0,	15,	FLASH},
+	/* 33*/	{txtBACK,	 0,	 0,	15,	15,	FLASH},
+	/* 34*/	{txtFEQUENCY,	 0,	 &parPWMfrequency,	0,	16,	FLASH},
+	/* 35*/	{txtREFRESHPERIOD,	 0,	 &parRefreshPeriod,	0,	16,	FLASH},
+	/* 36*/	{txtBACK,	 0,	 0,	16,	16,	FLASH},
 };
 
 //******** END OF AUTO-GENERATED CODE DO NOT EDIT!!! *********
@@ -140,7 +144,7 @@ void UpdateCommandsFromParam(void)
 	g_tCommand.basefrequency = parPWMfrequency.sValue;
 	g_tCommand.refreshrate = parRefreshPeriod.sValue;
 	g_tCommand.ucUserCellCount = parCellCount.sValue;
-	// g_tCommand.usVoltageSetpoint_mV is set by action.
+	g_tCommand.usVoltageSetpoint_mV = parVoltage.sValue;
 
 	OS_MutexRelease( OSMTXCommand );
 
