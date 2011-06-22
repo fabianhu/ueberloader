@@ -152,6 +152,9 @@ uint8_t HandleSerial(UCIFrame_t *_RXFrame)
 			{
 				g_eChargerMode = (ChargerMode_t)g_tUCIRXFrame.values[0];
 			}
+			// prepare ok answer:
+			g_tUCITXFrame.values[0] = 1;
+			len = 1;
 			break;
 		default:
 			len = 0;
