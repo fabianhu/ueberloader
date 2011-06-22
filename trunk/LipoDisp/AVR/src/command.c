@@ -13,22 +13,26 @@ Battery_Info_t 	g_tBattery_Info;
 Command_t 		g_tCommand;
 UCIFrame_t 		g_tUCIRXFrame; // serial receive data
 uint8_t    		g_ucRXLength;
-uint8_t 		glCommError=0;
+
 uint8_t 		g_Trig_SavePars; // triger save parameter command
 ChargerMode_t 	g_Tansfer_Action;
 uint8_t 		g_OPVsValid = 0; // opvs have been received.
 
 
 // Prototypes:
-uint8_t vWaitForResult(void);
-uint8_t HandleSerial(UCIFrame_t *_RXFrame);
+uint8_t vWaitForResult(uint8_t);
+uint8_t HandleSerial(UCIFrame_t *_RXFrame, uint8_t content);
 uint8_t UCIGetCRC( UCIFrame_t* pU);
 void UCISendBlockCrc( UCIFrame_t* pU);
 eBatteryStatus_t GetBattStatus(void);
 
+void handleCommError(uint8_t errNo);
+uint8_t getLastCommError(void);
+
 void TaskCommand(void)
 {
 	static uint8_t CommandsKnown=0;
+	uint8_t ret;
 
 	OS_SetAlarm(OSALMCommandRepeat,1000);
 	while(1)
@@ -43,8 +47,9 @@ void TaskCommand(void)
 			g_tUCITXBlock.UCI = UCI_GET_CMDs;
 			g_tUCITXBlock.len = UCIHEADERLEN;
 			UCISendBlockCrc(&g_tUCITXBlock);
-			glCommError = vWaitForResult();
-			if(glCommError == 0)
+			ret = vWaitForResult(UCI_GET_CMDs);
+			handleCommError(ret);
+			if(ret == 0)
 			{
 				CommandsKnown = 1;
 			}
@@ -55,8 +60,9 @@ void TaskCommand(void)
 		g_tUCITXBlock.UCI = UCI_GET_OPVs;
 		g_tUCITXBlock.len = UCIHEADERLEN;
 		UCISendBlockCrc(&g_tUCITXBlock);
-	    glCommError = vWaitForResult();
-	    if (glCommError == 0)
+		ret = vWaitForResult(UCI_GET_OPVs);
+		handleCommError(ret);
+	    if (ret == 0)
 	    { 	g_OPVsValid = 1; }
 	    else
 	    {  	g_OPVsValid = 0;  }
@@ -71,7 +77,8 @@ void TaskCommand(void)
 	    	OS_MutexRelease(OSMTXCommand);
 	    	UCISendBlockCrc(&g_tUCITXBlock);
 
-			glCommError = vWaitForResult();
+			ret = vWaitForResult(UCI_SET_CMDs);
+			handleCommError(ret);
 	    	g_NewComand = 0;
 
 
@@ -82,7 +89,8 @@ void TaskCommand(void)
 				g_tUCITXBlock.UCI = UCI_WRITE_EEPROM;
 				g_tUCITXBlock.len = UCIHEADERLEN;
 				UCISendBlockCrc(&g_tUCITXBlock);
-				glCommError = vWaitForResult();
+				ret = vWaitForResult(UCI_WRITE_EEPROM);
+				handleCommError(ret);
 			}
 
 			if(g_Tansfer_Action != eModeNoChange)
@@ -93,9 +101,9 @@ void TaskCommand(void)
 				g_tUCITXBlock.values[0] = (uint8_t)g_Tansfer_Action;
 				UCISendBlockCrc(&g_tUCITXBlock);
 
-				glCommError = vWaitForResult();
-
-				if (glCommError == 0) g_Tansfer_Action = eModeNoChange; // reset on success
+				ret = vWaitForResult(UCI_ACTION);
+				handleCommError(ret);
+				if (ret == 0) g_Tansfer_Action = eModeNoChange; // reset on success
 
 			}
 	    }
@@ -104,19 +112,19 @@ void TaskCommand(void)
 }
 
 
-uint8_t vWaitForResult(void)
+uint8_t vWaitForResult(uint8_t content)
 {
 	uint8_t ret;
 	uint8_t commerror = 0;
 
-	ret = OS_WaitEventTimeout(OSEVTDataRecvd,OSALMCommandTimeout, 800); // at 9600 baud it takes 105 ms to transfer the stuff.
+	ret = OS_WaitEventTimeout(OSEVTDataRecvd,OSALMCommandTimeout, 300); // at 9600 baud it takes 105 ms to transfer the stuff.
     if(ret & OSEVTDataRecvd)
 	{
-    	commerror = HandleSerial(&g_tUCIRXFrame);
+    	commerror = HandleSerial(&g_tUCIRXFrame, content);
 	}
 	else
 	{
-		commerror = 100;
+		commerror = 100;// + "content";
 	}
     g_ucRXLength = 0;
     g_tUCIRXFrame.len = UCIHEADERLEN;
@@ -130,7 +138,7 @@ ISR(USARTE0_RXC_vect)
 	uint8_t* p = (uint8_t*)&g_tUCIRXFrame;
 	if((USARTE0_STATUS & USART_FERR_bm) || (USARTE0_STATUS & USART_BUFOVF_bm))
 	{
-		glCommError = 45;
+		handleCommError(45);
 		g_ucRXLength = 0; // reset received data length
 		g_tUCIRXFrame.len = UCIHEADERLEN; // reset header length in recd. data
 	}
@@ -148,14 +156,14 @@ ISR(USARTE0_RXC_vect)
 	}
 	else
 	{
-		glCommError = 1;
+		handleCommError(1);
 		g_ucRXLength = 0; // reset received data length
 		g_tUCIRXFrame.len = UCIHEADERLEN; // reset header length in recd. data
 	}
 	OS_TRACE(102);
 }
 
-uint8_t HandleSerial(UCIFrame_t *_RXFrame)
+uint8_t HandleSerial(UCIFrame_t *_RXFrame, uint8_t content)
 {
 	uint8_t ret = 99;
 
@@ -163,6 +171,8 @@ uint8_t HandleSerial(UCIFrame_t *_RXFrame)
 		(_RXFrame->ID == SLAVEDERIALID) &&
 		(UCIGetCRC(&g_tUCIRXFrame) == g_tUCIRXFrame.crc) )
 	{
+		if(_RXFrame->UCI != content) return 98;
+
 		switch(_RXFrame->UCI)
 		{
 		case UCI_GET_CMDs:
@@ -180,11 +190,12 @@ uint8_t HandleSerial(UCIFrame_t *_RXFrame)
 			ret =0; // ok, packet received!
 			break;
 		case UCI_SET_CMDs:
-			// fixme not likely to be answered by the slave ;-) yet
 			ret =0; // ok, packet received!
 			break;
 		case UCI_WRITE_EEPROM:
-			// fixme not likely to be answered by the slave ;-) yet
+			ret =0; // ok, packet received!
+			break;
+		case UCI_ACTION:
 			ret =0; // ok, packet received!
 			break;
 		default:
@@ -211,9 +222,9 @@ void UCISendBlockCrc( UCIFrame_t* pU) // if the master sends a block, it is to b
 	g_tUCIRXFrame.len = UCIHEADERLEN; // reset header length in recd. data
 	pU->crc = 0;
 	pU->crc = CRC8x((uint8_t*)pU ,pU->len);
-	if(USARTSendBlockDMA(&DMA.CH1,(uint8_t*)pU ,pU->len))
+	if(USARTSendBlockDMA(&DMA.CH1,(uint8_t*)pU ,pU->len) != 0 )
 	{
-		glCommError = 4;
+		handleCommError(4);
 	}
 }
 
@@ -232,5 +243,30 @@ eBatteryStatus_t GetBattStatus(void)
 		return g_tBattery_Info.eState;
 	else
 		return eBattUnknown;
+}
+
+
+uint8_t LastCommError =0;
+#define COMMERRARRSIZE 5 // !! watch buffer size!!!
+uint8_t CommErrArr[COMMERRARRSIZE]; // fixme debug only!!!
+uint8_t CommErrArrIdx = 0;
+
+void handleCommError(uint8_t errNo)
+{
+OS_PREVENTSCHEDULING
+	if(CommErrArrIdx < COMMERRARRSIZE && errNo != 0)
+	{
+		CommErrArr[CommErrArrIdx] = errNo;
+		CommErrArrIdx++;
+	}
+
+	LastCommError = errNo;
+OS_ALLOWSCHEDULING
+}
+
+
+uint8_t getLastCommError(void)
+{
+	return LastCommError;
 }
 

@@ -62,9 +62,10 @@ ISR(OS_ScheduleISR) //__attribute__ ((naked,signal)) // Timer isr
 
 // *********  Internal scheduling and priority stuff
 
+uint8_t alarmID; // fixme debug wieder rein
 void OS_Int_ProcessAlarms(void)
 {
-	uint8_t alarmID;
+
 	OS_TRACE(4);
 
 	// handling of OS_Wait / Alarms
@@ -145,6 +146,7 @@ int8_t OS_GetNextTaskNumber() // which is the next task (ready and highest (= ri
 			{
 				OS_TRACE(14);
 				next = OS_NUMTASKS; // the idle task gets the run...
+				OS_ErrorHook(77);
 			}
 		}
 	}
@@ -490,18 +492,38 @@ uint8_t OS_WaitEventTimeout(uint8_t EventMask, uint8_t AlarmID, OS_TypeAlarmTick
 {
 	uint8_t ret;
 	OS_SetAlarm(AlarmID,numTicks); // set timeout
-	ret = OS_WaitEvent(EventMask);
-	if(ret & EventMask)
+
+	OS_PREVENTSCHEDULING;
+	if((EventMask & MyOS.EventMask[MyOS.CurrTask]) == 0) // This task is Not having one of these events currently active
+	{
+		OS_TRACE(26);
+		MyOS.EventWaiting[MyOS.CurrTask] = EventMask; // remember what this task is waiting for
+		// no event yet... waiting
+		MyOS.TaskReadyBits &= ~(1<<MyOS.CurrTask) ;     // indicate that this task is not ready to run.
+
+		OS_Reschedule() ; // re-schedule; will be waked up here by "SetEvent" or alarm
+		OS_PREVENTSCHEDULING;
+		OS_TRACE(27);
+
+		MyOS.EventWaiting[MyOS.CurrTask] = 0; // no more waiting!
+	}
+	ret = MyOS.EventMask[MyOS.CurrTask] & EventMask;
+	// clear the events:
+	MyOS.EventMask[MyOS.CurrTask] &= ~EventMask; // the actual events minus the ones, which have been waited for
+
+	if(ret)
 	{
 		// event occured
-		OS_SetAlarm(AlarmID,0); // disable timeout
-		return ret;
+		MyOS.Alarms[AlarmID].AlarmTicks = 0; // disable timeout
 	}
 	else
 	{
 		// timeout occured
-		return ret;
+		asm("nop");
 	}
+
+	OS_ALLOWSCHEDULING;
+	return ret;
 }
 #endif
 

@@ -13,9 +13,9 @@
 #include "../comm/usart.h"
 
 // *********  Task definitions
-OS_DeclareTask(TaskTouch,200);
+OS_DeclareTask(TaskTouch,300);
 OS_DeclareTask(TaskDisplay,700);
-OS_DeclareTask(TaskCommand,300);
+OS_DeclareTask(TaskCommand,400);
 
 //OS_DeclareQueue(DemoQ,10,4);
 
@@ -23,6 +23,8 @@ OS_DeclareTask(TaskCommand,300);
 void CPU_init(void);
 void emstop(uint8_t e);
 void touchtest(void);
+extern void handleCommError(uint8_t errNo);
+extern uint8_t getLastCommError(void);
 
 // Global variables
 static volatile uint16_t a,b,c,d; // stack space remaining
@@ -40,7 +42,6 @@ int main(void)
     OS_CreateTask(TaskCommand, OSTSKCommand);
 
 	OS_CreateAlarm(OSALMWaitDisp,OSTSKDisplay);
-	OS_CreateAlarm(OSALMCommandWait,OSTSKCommand);
 	OS_CreateAlarm(OSALMCommandRepeat,OSTSKCommand);
 	OS_CreateAlarm(OSALMCommandTimeout,OSTSKCommand);
 	OS_CreateAlarm(OSALTouchRepeat,OSTSKTouch);
@@ -171,7 +172,7 @@ void OS_ErrorHook(uint8_t ErrNo)
 	}
 	
 	dummy = ErrNo; // dummy code
-
+	asm("break"); // for automated tests of OS. may be removed in production code.
 	#if OS_DO_TESTSUITE == 1
 	asm("break"); // for automated tests of OS. may be removed in production code.
 	#endif
@@ -205,3 +206,5 @@ void emstop(uint8_t e)
 	RST_CTRL = 1; // SW reset
 
 }
+
+
