@@ -42,9 +42,8 @@
 // Task definitions
 
 #define OSTSKTouch  0
-#define OSTSKDisplay   1
-#define OSTSKCommand  2
-//#define OSTSKCommRX   2
+#define OSTSKCommand  1
+#define OSTSKDisplay   2
 
 // Event Names
 
@@ -54,7 +53,6 @@
 
 #define OSMTXBattInfo 0
 #define OSMTXCommand  1
-#define OSMTXTouch    2
 #define OSMTXMENU	  3
 
 // Alarm Names
@@ -62,9 +60,8 @@
 #define OSALMWaitDisp     	0
 #define OSALMCommandRepeat	1
 #define OSALMCommandTimeout	2
-#define OSALMCommandWait    3
-#define OSALTouchRepeat 	4
-#define OSALTouchPause	 	5
+#define OSALTouchRepeat 	3
+#define OSALTouchPause	 	4
 
 
 // *********  USER Configurable Block END 

@@ -88,15 +88,24 @@ void menu_show(void)
 	static uint16_t OldParameterValue=255;
 	static uint16_t NewParameterValue=255;
 	
+	uint8_t MenuMode,SelectedItem;
+
 	//get new value from UI
-	OS_MutexGet(OSMTXMENU);//OS_PREVENTSCHEDULING; // for MyMenue.MenuMode AND MyMenue.gucSelectedItem
-	if(MyMenue.MenuMode)	//if parameter edit mode is active
+	OS_PREVENTSCHEDULING; // for MyMenue.MenuMode AND MyMenue.gucSelectedItem
+	MenuMode = MyMenue.MenuMode;
+	SelectedItem = MyMenue.gucSelectedItem;
+	OS_ALLOWSCHEDULING;
+
+
+	if(MenuMode)	//if parameter edit mode is active
 	{
 		GetSubMenuCount(&SubMenuGroupSize, &StartIndex);
 		//MyMenue.gucSelectedItem = (StartIndex+SubMenuGroupSize)-(uint8_t)GetvalueFromUI();
 		debug33 = GetvalueFromUI();
-		MyMenue.gucSelectedItem = (StartIndex+SubMenuGroupSize)-(uint8_t)debug33; // menue runs backwards.
-		
+		SelectedItem = (StartIndex+SubMenuGroupSize)-(uint8_t)debug33; // menue runs backwards.
+		OS_PREVENTSCHEDULING;
+		MyMenue.gucSelectedItem = SelectedItem;
+		OS_ALLOWSCHEDULING;
 	}
 	else	//check for new menu index
 	{
@@ -108,26 +117,26 @@ void menu_show(void)
 				//save value
 			OldParameterValue=NewParameterValue;		
 			//draw selected item
-			if((m_items[MyMenue.gucSelectedItem].ucSettings & 0x03) == SRAM)
+			if((m_items[SelectedItem].ucSettings & 0x03) == SRAM)
 			{
-				menu_draw_selected_parameter(m_items[MyMenue.gucSelectedItem].strName, OldParameterValue, m_items[MyMenue.gucSelectedItem].pParamID->sType, SelParLCDPos);
+				menu_draw_selected_parameter(m_items[SelectedItem].strName, OldParameterValue, m_items[SelectedItem].pParamID->sType, SelParLCDPos);
 			}
 			else
 			{	
-				strcpy_P(StrTmp,m_items[MyMenue.gucSelectedItem].strName);
-				menu_draw_selected_parameter(StrTmp, OldParameterValue, m_items[MyMenue.gucSelectedItem].pParamID->sType, SelParLCDPos);
+				strcpy_P(StrTmp,m_items[SelectedItem].strName);
+				menu_draw_selected_parameter(StrTmp, OldParameterValue, m_items[SelectedItem].pParamID->sType, SelParLCDPos);
 			}
 		
 			//m_items[MyMenue.gucSelectedItem].pParamID->sValue;
 		}
 
 	}
-	OS_MutexRelease(OSMTXMENU);//OS_ALLOWSCHEDULING;
 
-	if(LastMenuIndex!=MyMenue.gucSelectedItem || MyMenue.ShowMenu)//new menu item is selected
+
+	if(LastMenuIndex!=SelectedItem || MyMenue.ShowMenu)//new menu item is selected
 	{
 		//save new index
-		LastMenuIndex=MyMenue.gucSelectedItem;
+		LastMenuIndex=SelectedItem;
 		//get array start index of the submenu items
 		GetSubMenuCount(&SubMenuGroupSize,&StartIndex);
 		//send values to UI
@@ -141,16 +150,16 @@ void menu_show(void)
 			items_per_page = SubMenuGroupSize;
 		}
 		//write menu header
-		if(OldParentID!=m_items[MyMenue.gucSelectedItem].ucParent || MyMenue.ShowMenu)
+		if(OldParentID!=m_items[SelectedItem].ucParent || MyMenue.ShowMenu)
 		{
-			OldParentID=m_items[MyMenue.gucSelectedItem].ucParent;
-			if((m_items[m_items[MyMenue.gucSelectedItem].ucParent].ucSettings&0x03) == SRAM)
+			OldParentID=m_items[SelectedItem].ucParent;
+			if((m_items[m_items[SelectedItem].ucParent].ucSettings&0x03) == SRAM)
 			{
-				menu_draw_header(m_items[m_items[MyMenue.gucSelectedItem].ucParent].strName);
+				menu_draw_header(m_items[m_items[SelectedItem].ucParent].strName);
 			}
 			else
 			{	
-				strcpy_P(StrTmp,m_items[m_items[MyMenue.gucSelectedItem].ucParent].strName);
+				strcpy_P(StrTmp,m_items[m_items[SelectedItem].ucParent].strName);
 				menu_draw_header(StrTmp);
 			}
 			//del old menu items
@@ -159,14 +168,14 @@ void menu_show(void)
 		//reset show menu
 		MyMenue.ShowMenu = 0;
 		//write position information
-		menu_draw_groupposition(MyMenue.gucSelectedItem-StartIndex+1, SubMenuGroupSize);
+		menu_draw_groupposition(SelectedItem-StartIndex+1, SubMenuGroupSize);
 		//Adjust Start index
 		AdjustStartPos(&SubMenuGroupSize, &StartIndex);
 		//write menu items
 		LCDPos = 0;
 		for(i=StartIndex;i<StartIndex+items_per_page;i++)
 		{
-			if(i==MyMenue.gucSelectedItem) //draw item
+			if(i==SelectedItem) //draw item
 			{
 				//save pos
 				SelParLCDPos = LCDPos;
