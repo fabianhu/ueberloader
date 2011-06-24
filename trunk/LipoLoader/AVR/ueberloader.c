@@ -167,15 +167,27 @@ void TaskGovernor(void)
 
  // just in case...
 
+		// supply undervoltage
+		if(sU_in_act < 7000)
+			emstop( 1 );
+		// supply overvoltage
+		if(sU_in_act > 22000)
+			emstop( 2 );
 
-		if (sU_in_act < 7000)
-			emstop(1);
-		if (sU_in_act > 22000)
-			emstop(2);
-		if (sI_out_act > 10000 && abs(sI_out_act_flt)>100)
-			emstop(3);
-		if (sU_out_act > 4250*6 && abs(sI_out_act_flt)>100)
-			emstop(4);
+		if(g_tBattery_Info.eState == eBattCharging)
+		{
+			if(sI_out_act > 10000 && abs(sI_out_act_flt) > 100)
+				emstop( 3 );
+		}
+
+		static uint8_t errcntOverVolt = 0;
+		if(sU_out_act > 4250 * 6 && abs(sI_out_act_flt) > 100)
+			errcntOverVolt++;
+		else
+			errcntOverVolt = 0;
+
+		if(errcntOverVolt > 10)
+			emstop( 4 );
 
 		OS_DISABLEALLINTERRUPTS;
 		int16_t myISetpoint = g_tCommand.sCurrentSetpoint;
@@ -549,7 +561,7 @@ void TaskState(void)
 						}
 
 						NumberOfCells = GetCellcount();
-						if(NumberOfCells > 0 && j == CHARGEDELAY-1) // it was equal for 1s...
+						if(NumberOfCells > 0 && j == CHARGEDELAY) // it was equal for 1s...
 						{
 							g_tBattery_Info.ucNumberOfCells = NumberOfCells;
 							g_tBattery_Info.eState = eBattCharging;
@@ -559,7 +571,7 @@ void TaskState(void)
 					case eModeManual:
 						// Manual mode
 						if(	GetCellcount()== g_tCommand.ucUserCellCount &&
-								g_tCommand.ucUserCellCount >0)
+								g_tCommand.ucUserCellCount >0) // fixme
 						{
 							g_tBattery_Info.ucNumberOfCells = g_tCommand.ucUserCellCount;
 							g_tBattery_Info.eState = eBattCharging;
