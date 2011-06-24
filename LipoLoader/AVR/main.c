@@ -9,6 +9,7 @@
 #include "ueberloader.h"
 #include "adc.h"
 #include "usart.h"
+#include <avr/eeprom.h>
 
 // *********  Task definitions
 OS_DeclareTask(TaskGovernor,300);
@@ -204,6 +205,15 @@ void emstop(uint8_t e) // fixme emstop reason speichern!
 	// Light up LED
 	PORTD.DIRSET = 0b1000;
 	PORTD.OUTSET = 0b1000;
+
+	uint8_t* b = (uint8_t*)EEPROM_END;
+
+	while (eeprom_read_byte((void*)b) != 0xff)
+	{
+		b--;
+	}
+
+	eeprom_update_byte((void*)b , e);
 
 	while(1)
 	{
