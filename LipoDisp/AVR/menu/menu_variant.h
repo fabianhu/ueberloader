@@ -15,7 +15,6 @@ typedef enum
 	min,
 	ms,
 	mV,
-	proz,
 } eParameterType_t;
 
 // Parameter externals

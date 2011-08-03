@@ -69,7 +69,7 @@ void TaskDisplay(void)
 		{
 			// gespeicherte Commands vom Slave in Parameter eintragen.
 			OS_MutexGet( OSMTXCommand );
-			//g_tCommand.eChargerMode; // umstellen per Action // fixme
+
 			parCurrent.sValue = g_tCommand.sCurrentSetpoint;
 			parVoltage.sValue = g_tCommand.usVoltageSetpoint_mV;
 			parCellCount.sValue = g_tCommand.ucUserCellCount;

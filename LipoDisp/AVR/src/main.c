@@ -126,6 +126,15 @@ void CPU_init(void)
 
 	USARTinit();
 
+
+	// adjust Power Reduction Register
+	PR.PRGEN = 0b00011100;
+	PR.PRPA = 0b00000111; //
+	PR.PRPB = 0b00000111; //
+	PR.PRPC = 0b01111001; // tcc1 used
+	PR.PRPD = 0b01111011; //
+	PR.PRPE = 0b01101000; // usarte0 used
+
 	// *** NO global interrupts enabled at this point!!!
 }
 
