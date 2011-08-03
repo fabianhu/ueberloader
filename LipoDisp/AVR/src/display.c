@@ -13,6 +13,7 @@ extern void handleCommError(uint8_t errNo);
 extern uint8_t getLastCommError(void);
 extern uint16_t GetvalueFromUI(void);
 extern void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower, uint16_t stepsize);
+extern void touchtest(void);
 
 extern uint8_t CommErrArr[]; // fixme debug only!!!
 extern uint8_t CommErrArrIdx;
@@ -26,6 +27,7 @@ extern uint8_t gCommandsKnown; // command.c
 uint8_t g_bMenuActive = 0;//DISPLAYTEST; // 1 = the menue is active
 
 #define DISPLAYTEST 0
+#define TOUCHTEST 1
 
 
 char buf[10];
@@ -225,75 +227,4 @@ void TaskDisplay(void)
 #endif
 	}
 }
-
-/*
- void touchtest(void)
- {
-
- myP.max = 32000;
- myP.min = 0;
-
- //			for (i = 0; i < 3; i++)
- //			{
- //				lcd_print(WHITE, BLACK, 1, 0, 16*i,"val/t%i/tIdx/t%i      " ,maxVal[i],maxIdx[i]);
- //			}
-
- //				static int16_t oypos;
- //				int16_t nypos1;
- //
- //
- //				//touchGetValue(&nypos1);
- //
- //
- //				lcd_print(WHITE, BLACK, FONTSIZE, 0, 16,"VAL/t%i/tt      " ,nypos1);
-
-
-
-
-
- //				lcd_draw_box( 255,255,255,315,nypos1,5,5);
- //				if(nypos1 >0)
- //				{
- //
- //					lcd_draw_box(255,255,255,315,nypos1/4,5,5);
- //					oypos = nypos1/4;
- //				}
-
- static uint16_t g;
-
-
- g++;
-
- lcd_draw_pixel(RED,g,(-myP.position/0xff)+160);
- lcd_draw_pixel(GREEN,g,myP.velocity/0xff+128);
- lcd_draw_pixel(YELLOW,g,myP.force/0xff+160);
- if (g == 320)
- {
- lcd_clear();
- g =0;
- }
-
-
- lcd_print(WHITE, BLACK, 1, 0, 32,"State: %i  " ,(uint16_t)g_debug);
- lcd_print(WHITE, BLACK, 1, 0, 64,"Gesture: %i  " ,(uint16_t)g_debug2);
- lcd_print(WHITE, BLACK, 1, 0, 96,"Particle: %i , %i   " ,(uint16_t)myP.position,(uint16_t)myP.velocity);
-
-
- lcd_print(WHITE, BLACK, 1, 280, 20,"%i  " ,g_aucTouchpads[0]);
- lcd_print(WHITE, BLACK, 1, 280, 60,"%i  " ,g_aucTouchpads[1]);
- lcd_print(WHITE, BLACK, 1, 280, 120,"%i  " ,g_aucTouchpads[2]);
- lcd_print(WHITE, BLACK, 1, 280, 180,"%i  " ,g_aucTouchpads[3]);
- lcd_print(WHITE, BLACK, 1, 280, 220,"%i  " ,g_aucTouchpads[4]);
-
- lcd_print(WHITE, BLACK, 1, 200, 120,"%i  " ,(int16_t) Schwerpunkt);
-
-
- //				ypos =32;
- //				lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"P1/t%i      " ,g_aucTouchpads[0]);
- //				ypos += LINEDIFF;
- //				lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"P2/t%i      " ,g_aucTouchpads[1]);
- //				ypos += LINEDIFF;
- //				lcd_print(WHITE, BLACK, FONTSIZE, 0, ypos,"P3/t%i      " ,g_aucTouchpads[2]);
- }
- */
 
