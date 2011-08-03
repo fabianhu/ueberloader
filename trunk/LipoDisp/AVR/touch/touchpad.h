@@ -20,18 +20,12 @@
 #define TOUCHREPCNT 5
 
 #define TOUCHMINSIGNAL 32
-#define SLIDEMINSIGNAL 45
-#define TOUCHMINDIST 400
+#define SLIDEMINSIGNAL 43
+#define TOUCHMINDIST 400 // fixme geht nicht
 
-#define MINSLIDESPEED 10
-//#define MINSLIDERECOGNIZESPEED 10
+#define MINSLIDESPEED 7
 
-//#define MINGESTURETIME 20
-
-
-
-
-#define MAXSLIDESPEED 70
+#define MAXSLIDESPEED 100
 
 void touch_init(void);
 //uint8_t touchGetPad(uint8_t pin);
@@ -59,7 +53,7 @@ typedef struct paticle_tag
 	int16_t upscale;
 }particle_t;
 
-typedef enum eGestures_tag
+typedef enum eGestures_tag // for only 3 pads !!!!!!!
 {
 	eGNothing 	= 0,
 	eGPlus 		= 1,

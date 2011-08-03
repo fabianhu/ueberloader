@@ -14,6 +14,7 @@ int32_t touchGetSchwerpunkt(void);
 void sFilter(int16_t* o, int16_t* n);
 void svFilter(int16_t* o, int16_t* n, uint8_t x);
 eGestures_t getGesture(void);
+eGestures_t getGestureSkip(void);
 uint8_t bitcount3(uint8_t b);
 
 extern void GetSubMenuCount(uint8_t *Size, uint8_t *StartIndex);
@@ -106,7 +107,7 @@ uint8_t touchGetPad5(uint8_t pin)
 		if(value*100 < g_ausTouchCalValues[pin] - 500) //ups das war aber zu flott
 		{
 			// lassen wie's war bzw. nur leicht weniger
-			g_ausTouchCalValues[pin] -= 100;  // fixme zu flott !!!!!
+			g_ausTouchCalValues[pin] -= 20;
 		}
 		else
 		{
@@ -225,6 +226,9 @@ int16_t touchGetPosition(void) // read the pos
 // returns 1 if speed is OK
 uint8_t touchGetSpeed(int16_t* speed, int32_t *Schwerpunkt)
 {
+
+// fixme mach rein TOUCHMINDIST
+
 	static int16_t opos=-1, fpos=-1;
 	int16_t pos;
 	int16_t speed_raw;
@@ -255,7 +259,10 @@ uint8_t touchGetSpeed(int16_t* speed, int32_t *Schwerpunkt)
 	}
 	else
 	{
-		if(abs(fpos - opos) > MAXSLIDESPEED)
+		speed_raw = fpos - opos;
+		svFilter(speed, &speed_raw, 4);
+
+		if(abs(*speed) > MAXSLIDESPEED || abs(*speed) < MINSLIDESPEED)
 		{
 			opos = -1;
 			fpos = -1;
@@ -264,8 +271,6 @@ uint8_t touchGetSpeed(int16_t* speed, int32_t *Schwerpunkt)
 		}
 		else
 		{
-			speed_raw = fpos - opos;
-			svFilter(speed, &speed_raw, 4);
 			opos = fpos;
 			return 1;
 		}
@@ -275,6 +280,8 @@ uint8_t touchGetSpeed(int16_t* speed, int32_t *Schwerpunkt)
 
 
 eTouchstate_t eTouchstate = eTSIdle;
+
+uint8_t info=0;
 
 
 	int32_t Schwerpunkt;
@@ -290,8 +297,9 @@ void ProcessTouch(void)
 	static int32_t OldSchwerpunkt;
 
 
-	bMoved = touchGetSpeed(&s_sSpeedFiltered, &Schwerpunkt/*, &TouchBitfield*/); // fixme  beim integrieren den Schwerpunkt / speed  nur rechnen, wenn nur ein bzw. zwei benachbarte gedrückt.
-	ucActualGesture = getGesture();
+	bMoved = touchGetSpeed(&s_sSpeedFiltered, &Schwerpunkt/*, &TouchBitfield*/); 
+	// fixme  beim integrieren den Schwerpunkt / speed  nur rechnen, wenn nur ein bzw. zwei benachbarte gedrückt.
+	ucActualGesture = getGestureSkip();
 
 	g_debug4 = s_sSpeedFiltered;
 
@@ -321,15 +329,10 @@ void ProcessTouch(void)
 			if (bMoved == 1) // touched / moved
 			{
 				// adapt speed
-				if (abs(s_sSpeedFiltered) < MINSLIDESPEED)
-				{
-					myP.force = 0;
-					myP.velocity = 0;
-				}
-				else
-				{
-					myP.force = - s_sSpeedFiltered;
-				}
+
+				myP.force = - s_sSpeedFiltered;
+				info = 2;
+
 
 				/*static uint8_t n;  // bremsen!!!
 				if (n++ == 10)
@@ -344,14 +347,19 @@ void ProcessTouch(void)
 			{	
 				if (myP.velocity == 0 )
 				{
-					if(abs(OldSchwerpunkt-Schwerpunkt)< TOUCHMINDIST)
-					eTouchstate = eTSGesture;
-					else
-					eTouchstate = eTSIdle;
+						eTouchstate = eTSGesture;
+						info = 3;
 				}
 				else
 				{
-					// do nothing and let particle move on // evtl bremsen fixme?
+					// do nothing and let particle move on
+					info = 5;
+					if(ucActualGesture != 0)
+					{
+						// bremsen
+						myP.velocity = 0;
+						info = 6;
+					}
 				}
 
 			}
@@ -361,6 +369,7 @@ void ProcessTouch(void)
 			break;
 
 		case eTSGesture:
+			info = 7;
 			switch (s_ucOldGesture) // können wir nehmen, weil lag lange genug an.
 			{
 				case eGNothing:
@@ -464,16 +473,31 @@ void ProcessTouch(void)
 eGestures_t getGesture(void) // delayed by one cycle
 {
 	uint8_t ret = 0;
-	uint8_t i,j;
+	uint8_t i;
 	
-	for (i=0, j=0; i < TOUCHCOUNT; i+=2,j++)
+	for (i=0; i < TOUCHCOUNT; i++)
+	{
+		if (g_aucTouchpads[i] > TOUCHMINSIGNAL)
+			ret |= (1 << i);
+	}
+
+	return ret; // scho feddisch
+}
+
+eGestures_t getGestureSkip(void) // delayed by one cycle
+{
+	uint8_t ret = 0;
+	uint8_t i,j;
+
+	for (i=0, j=0; i < TOUCHCOUNT; i+=2,j++) // nur die obere mittlere und untere zulassen.
 	{
 		if (g_aucTouchpads[i] > TOUCHMINSIGNAL)
 			ret |= (1 << j);
 	}
 
-	return ret; // scho feddisch
+	return ret ; 
 }
+
 
 uint8_t bitcount(uint8_t b)
 {
@@ -539,8 +563,8 @@ static uint16_t g;
 g++;
 
 lcd_draw_pixel(RED,g,(-myP.position/0xff)+160);
-lcd_draw_pixel(GREEN,g,myP.velocity/0xff+128);
-lcd_draw_pixel(YELLOW,g,myP.force/0xff+160);
+//lcd_draw_pixel(GREEN,g,myP.velocity/0xff+128);
+//lcd_draw_pixel(YELLOW,g,myP.force/0xff+160);
 lcd_draw_pixel(WHITE,g,30-g_debug*5);
 if (g == 320)
 {
@@ -553,7 +577,7 @@ g =0;
 lcd_print(WHITE, BLACK, 1, 0, 32,"State: %i  " ,(uint16_t)g_debug);
 lcd_print(WHITE, BLACK, 1, 0, 64,"Gesture: %i  " ,(uint16_t)g_debug2);
 lcd_print(WHITE, BLACK, 1, 0, 96,"Particle: %i , %i   " ,(uint16_t)myP.position,(uint16_t)myP.velocity);
-
+lcd_print(WHITE, BLACK, 1, 0, 128,"info: %i  " ,(uint16_t)info);
 
 lcd_print(WHITE, BLACK, 1, 280, 20,"%i  " ,g_aucTouchpads[0]);
 lcd_print(WHITE, BLACK, 1, 280, 60,"%i  " ,g_aucTouchpads[1]);

@@ -27,7 +27,7 @@ extern uint8_t gCommandsKnown; // command.c
 uint8_t g_bMenuActive = 0;//DISPLAYTEST; // 1 = the menue is active
 
 #define DISPLAYTEST 0
-#define TOUCHTEST 1
+#define TOUCHTEST 0
 
 
 char buf[10];
