@@ -304,7 +304,6 @@ void ProcessTouch(void)
 
 	TimeDiff++;
 
-	static uint8_t magic;
 
 	switch (eTouchstate)
 	{
@@ -326,7 +325,6 @@ void ProcessTouch(void)
 		case eTSTouching:
 			if (bMoved == 1) // touched / moved
 			{
-				magic = 10;
 				// adapt speed
 				if (abs(s_sSpeedFiltered) < MINSLIDESPEED)
 				{
@@ -349,9 +347,7 @@ void ProcessTouch(void)
 			}
 			else
 			{	
-				if(magic >0) magic--;
-
-				if (myP.velocity == 0 /*&& magic > 0*/)
+				if (myP.velocity == 0 )
 				{
 					if(abs(OldSchwerpunkt-Schwerpunkt)< TOUCHMINDIST)
 					eTouchstate = eTSGesture;

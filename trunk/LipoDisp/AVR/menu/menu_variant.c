@@ -72,14 +72,14 @@ char	txtREFRESHPERIOD[] 	PROGMEM="Refresh-period";
 
 // Parameter definitions
 Parameter_t parCurrent = {	0, 100, 10000, 100, mA};
-Parameter_t parVoltage = {	0, 2500, 4200, 20, mV};
+Parameter_t parVoltage = {	0, 2500, 4200, 10, mV};
 Parameter_t parCellCount = {	0, 0, 6, 1, Cells};
 Parameter_t parLiPoChVolt = {	0, 3000, 4200, 10, mV};
 Parameter_t parLiPoStVolt = {	0, 2000, 4100, 100, mV};
 Parameter_t parLiPoDisVolt = {	0, 3000, 4200, 10, mV};
 Parameter_t parLiFeVolt = {	0, 2000, 3700, 10, mV};
 Parameter_t parLiIonVolt = {	0, 3500, 4100, 10, mV};
-Parameter_t parBalActVolt = {	0, 0, 100, 100, proz};
+Parameter_t parBalActVolt = {	0, 3000, 4200, 100, mV};
 Parameter_t parMaxcap = {	0, 0, 10000, 100, mAh};
 Parameter_t parMaxtime = {	0, 1, 6000, 1, min};
 Parameter_t parPWMfrequency = {	0, 10, 100, 10, kHz};
@@ -127,6 +127,7 @@ MenuItem_t m_items[MENUESIZE] = {
 };
 
 //******** END OF AUTO-GENERATED CODE DO NOT EDIT!!! *********
+
 
 
 
