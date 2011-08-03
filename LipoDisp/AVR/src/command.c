@@ -28,10 +28,12 @@ eBatteryStatus_t GetBattStatus(void);
 
 void handleCommError(uint8_t errNo);
 uint8_t getLastCommError(void);
+uint8_t gCommandsKnown=0;
+
 
 void TaskCommand(void)
 {
-	static uint8_t CommandsKnown=0;
+
 	uint8_t ret;
 
 	OS_SetAlarm(OSALMCommandRepeat,1000);
@@ -41,7 +43,7 @@ void TaskCommand(void)
 		OS_SetAlarm(OSALMCommandRepeat,1000);
 
 
-		if(CommandsKnown == 0)
+		if(gCommandsKnown == 0)
 		{
 			g_tUCITXBlock.ID = 55;
 			g_tUCITXBlock.UCI = UCI_GET_CMDs;
@@ -51,7 +53,7 @@ void TaskCommand(void)
 			handleCommError(ret);
 			if(ret == 0)
 			{
-				CommandsKnown = 1;
+				gCommandsKnown = 1;
 			}
 		}
 
@@ -67,7 +69,7 @@ void TaskCommand(void)
 	    else
 	    {  	g_OPVsValid = 0;  }
 
-	    if(CommandsKnown == 1)
+	    if(gCommandsKnown == 1)
 	    {
 	    	g_tUCITXBlock.ID = 55;
 			g_tUCITXBlock.UCI = UCI_SET_CMDs;
@@ -253,7 +255,8 @@ uint8_t CommErrArrIdx = 0;
 
 void handleCommError(uint8_t errNo)
 {
-OS_PREVENTSCHEDULING
+	//gCommandsKnown = 0; // fixme
+	OS_PREVENTSCHEDULING
 	if(CommErrArrIdx < COMMERRARRSIZE && errNo != 0)
 	{
 		CommErrArr[CommErrArrIdx] = errNo;

@@ -2,6 +2,7 @@
 #include "../OS/FabOS.h"
 #include "../lcd/lcd.h" // fixme remove
 #include "../comm/serial.h"
+#include "../menu/menu.h"
 
 
 // Prototypes:
@@ -14,7 +15,7 @@ void sFilter(int16_t* o, int16_t* n);
 void svFilter(int16_t* o, int16_t* n, uint8_t x);
 eGestures_t getGesture(void);
 uint8_t bitcount3(uint8_t b);
-extern void menu_select(void);
+
 extern void GetSubMenuCount(uint8_t *Size, uint8_t *StartIndex);
 extern eBatteryStatus_t GetBattStatus(void);
 extern ChargerMode_t g_Tansfer_Action;
@@ -28,8 +29,6 @@ int16_t g_ausTouchCalValues[5] =
 TOUCHCALINIT;
 
 int16_t g_aucTouchpads[TOUCHCOUNT];
-int16_t g_ausTouchpadsRAW[TOUCHCOUNT];
-
 
 particle_t myP =
 	{ 0, 0, 0, 99 ,0,32000};
@@ -101,8 +100,6 @@ uint8_t touchGetPad5(uint8_t pin)
 	}
 	OS_ENABLEALLINTERRUPTS;
 
-	g_ausTouchpadsRAW[pin] = (value*2 + 	g_ausTouchpadsRAW[pin])/3 ;
-
 	// limit re-calibration
 	if(value*100 < g_ausTouchCalValues[pin]) // wenns denn schneller war
 	{
@@ -124,8 +121,6 @@ uint8_t touchGetPad5(uint8_t pin)
 
 	return value - (g_ausTouchCalValues[pin] / 100);
 }
-
-
 
 
 #define MOMENTMULTIPLIER 100ULL
@@ -387,18 +382,18 @@ void ProcessTouch(void)
 					{
 						if(GetBattStatus() == eBattWaiting )
 						{
-						// fixme duplicate weil der doppeltatsch net geht.
+							// fixme duplicate weil der doppeltatsch net geht.
 
-						// block charger
-						g_Tansfer_Action = eModeStop;
+							// block charger
+							g_Tansfer_Action = eModeStop;
 
-						uint8_t SubMenuGroupSize, StartIndex;
+							uint8_t SubMenuGroupSize, StartIndex;
 
-						GetSubMenuCount(&SubMenuGroupSize, &StartIndex);
+							GetSubMenuCount(&SubMenuGroupSize, &StartIndex);
 
-						HandOverValueToUI(SubMenuGroupSize, SubMenuGroupSize, 1, 1);
+							HandOverValueToUI(SubMenuGroupSize, SubMenuGroupSize, 1, 1);
 
-						g_bMenuActive = 1;
+							g_bMenuActive = 1;
 						}
 
 					}
