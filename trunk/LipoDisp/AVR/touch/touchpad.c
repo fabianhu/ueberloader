@@ -277,10 +277,10 @@ uint8_t touchGetSpeed(int16_t* speed, int32_t *Schwerpunkt)
 eTouchstate_t eTouchstate = eTSIdle;
 
 
-
+	int32_t Schwerpunkt;
 void ProcessTouch(void)
 {
-	int32_t Schwerpunkt;
+
 	uint8_t ucActualGesture;
 	static int16_t s_sSpeedFiltered = 0;
 	static uint8_t s_ucOldGesture;
@@ -498,3 +498,78 @@ uint8_t bitcount3(uint8_t b)
 	}
 	return r;
 }
+
+
+
+void touchtest(void)
+{
+
+myP.max = 32000;
+myP.min = 0;
+
+//			for (i = 0; i < 3; i++)
+//			{
+//				lcd_print(WHITE, BLACK, 1, 0, 16*i,"val/t%i/tIdx/t%i      " ,maxVal[i],maxIdx[i]);
+//			}
+
+//				static int16_t oypos;
+//				int16_t nypos1;
+//
+//
+//				//touchGetValue(&nypos1);
+//
+//
+//				lcd_print(WHITE, BLACK, FONTSIZE, 0, 16,"VAL/t%i/tt      " ,nypos1);
+
+
+
+
+
+//				lcd_draw_box( 255,255,255,315,nypos1,5,5);
+//				if(nypos1 >0)
+//				{
+//
+//					lcd_draw_box(255,255,255,315,nypos1/4,5,5);
+//					oypos = nypos1/4;
+//				}
+
+static uint16_t g;
+
+
+g++;
+
+lcd_draw_pixel(RED,g,(-myP.position/0xff)+160);
+lcd_draw_pixel(GREEN,g,myP.velocity/0xff+128);
+lcd_draw_pixel(YELLOW,g,myP.force/0xff+160);
+lcd_draw_pixel(WHITE,g,30-g_debug*5);
+if (g == 320)
+{
+lcd_clear();
+lcd_draw_line(YELLOW,0,30,320,30);
+g =0;
+}
+
+
+lcd_print(WHITE, BLACK, 1, 0, 32,"State: %i  " ,(uint16_t)g_debug);
+lcd_print(WHITE, BLACK, 1, 0, 64,"Gesture: %i  " ,(uint16_t)g_debug2);
+lcd_print(WHITE, BLACK, 1, 0, 96,"Particle: %i , %i   " ,(uint16_t)myP.position,(uint16_t)myP.velocity);
+
+
+lcd_print(WHITE, BLACK, 1, 280, 20,"%i  " ,g_aucTouchpads[0]);
+lcd_print(WHITE, BLACK, 1, 280, 60,"%i  " ,g_aucTouchpads[1]);
+lcd_print(WHITE, BLACK, 1, 280, 120,"%i  " ,g_aucTouchpads[2]);
+lcd_print(WHITE, BLACK, 1, 280, 180,"%i  " ,g_aucTouchpads[3]);
+lcd_print(WHITE, BLACK, 1, 280, 220,"%i  " ,g_aucTouchpads[4]);
+
+lcd_print(RED, BLACK, 1, 160, 120,"%i  " ,Schwerpunkt);
+
+/*lcd_print(WHITE, BLACK, 1, 200, 20,"%i  " ,g_aucTouchpads[0]);
+lcd_print(WHITE, BLACK, 1, 200, 60,"%i  " ,g_aucTouchpads[1]);
+lcd_print(WHITE, BLACK, 1, 200, 120,"%i  " ,g_aucTouchpads[2]);
+lcd_print(WHITE, BLACK, 1, 200, 180,"%i  " ,g_aucTouchpads[3]);
+lcd_print(WHITE, BLACK, 1, 200, 220,"%i  " ,g_aucTouchpads[4]);*/
+
+
+}
+
+

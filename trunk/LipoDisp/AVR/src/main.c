@@ -181,7 +181,7 @@ void OS_ErrorHook(uint8_t ErrNo)
 	}
 	
 	dummy = ErrNo; // dummy code
-	asm("break"); // for automated tests of OS. may be removed in production code.
+//	asm("break"); // for automated tests of OS. may be removed in production code.
 	#if OS_DO_TESTSUITE == 1
 	asm("break"); // for automated tests of OS. may be removed in production code.
 	#endif
