@@ -37,7 +37,7 @@ typedef struct MenuItem_tag
 {
 	char* 			strName;		//Name
 	void(*			pAction)(void);	//Function to execute
-	Parameter_t*	pParamID;		//Parameter to change
+	Parameter_t*	pParam;		//Parameter to change
 	uint8_t			ucJumpTrg; 		//jump target
 	uint8_t			ucParent;		//Parent item (0 = root)
 	uint8_t 		ucSettings;		//menut item settings 

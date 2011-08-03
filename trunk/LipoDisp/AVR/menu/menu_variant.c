@@ -28,13 +28,14 @@ extern Command_t g_tCommand; // command.c
 extern uint8_t g_bMenuActive;
 extern uint8_t g_Trig_SavePars;
 extern ChargerMode_t g_Tansfer_Action;
+extern uint8_t gCommandsKnown; // command.c
 
 //prototypes
 
-void leavemenu(void);
 void menuUp(void);
 extern void GetSubMenuCount(uint8_t *Size, uint8_t *StartIndex);
 void entermenu(void);
+void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower, uint16_t stepsize);
 
 
 
@@ -234,6 +235,14 @@ void leavemenu(void)
 	g_Trig_SavePars = 1;
 	UpdateCommandsFromParam();
 	g_Tansfer_Action = eModeAuto; // fixme merken ???? / Funktion!!
+
+	// Ladestrom editierbar machen: // fixme
+	//send parameter values and limits to UI
+	HandOverValueToUI(	parCurrent.sValue,
+						parCurrent.sUpperLimit,
+						parCurrent.sLowerLimit,
+						parCurrent.sStepSize
+						);
 }
 
 void entermenu(void)

@@ -110,7 +110,7 @@ void menu_show(void)
 	else	//check for new menu index
 	{
 		NewParameterValue=GetvalueFromUI();		
-		//if(GetvalueFromUI()!=m_items[MyMenue.gucSelectedItem].pParamID->sValue || MyMenue.ShowParameter)//new menu item is selected
+		//if(GetvalueFromUI()!=m_items[MyMenue.gucSelectedItem].pParam->sValue || MyMenue.ShowParameter)//new menu item is selected
 		if(NewParameterValue!=OldParameterValue || MyMenue.ShowParameter)//new menu item is selected
 		{
 			MyMenue.ShowParameter = 0;
@@ -119,15 +119,15 @@ void menu_show(void)
 			//draw selected item
 			if((m_items[SelectedItem].ucSettings & 0x03) == SRAM)
 			{
-				menu_draw_selected_parameter(m_items[SelectedItem].strName, OldParameterValue, m_items[SelectedItem].pParamID->sType, SelParLCDPos);
+				menu_draw_selected_parameter(m_items[SelectedItem].strName, OldParameterValue, m_items[SelectedItem].pParam->sType, SelParLCDPos);
 			}
 			else
 			{	
 				strcpy_P(StrTmp,m_items[SelectedItem].strName);
-				menu_draw_selected_parameter(StrTmp, OldParameterValue, m_items[SelectedItem].pParamID->sType, SelParLCDPos);
+				menu_draw_selected_parameter(StrTmp, OldParameterValue, m_items[SelectedItem].pParam->sType, SelParLCDPos);
 			}
 		
-			//m_items[MyMenue.gucSelectedItem].pParamID->sValue;
+			//m_items[MyMenue.gucSelectedItem].pParam->sValue;
 		}
 
 	}
@@ -182,24 +182,24 @@ void menu_show(void)
 				//draw selected item
 				if((m_items[i].ucSettings&0x03) == SRAM)
 				{
-					menu_draw_selected_item(m_items[i].strName, (uint16_t)m_items[i].pParamID, m_items[i].pParamID->sValue, m_items[i].pParamID->sType, LCDPos);
+					menu_draw_selected_item(m_items[i].strName, (uint16_t)m_items[i].pParam, m_items[i].pParam->sValue, m_items[i].pParam->sType, LCDPos);
 				}
 				else
 				{	
 					strcpy_P(StrTmp,m_items[i].strName);
-					menu_draw_selected_item(StrTmp, (uint16_t)m_items[i].pParamID, m_items[i].pParamID->sValue, m_items[i].pParamID->sType, LCDPos);
+					menu_draw_selected_item(StrTmp, (uint16_t)m_items[i].pParam, m_items[i].pParam->sValue, m_items[i].pParam->sType, LCDPos);
 				}
 			}
 			else
 			{
 				if((m_items[i].ucSettings&0x03) == SRAM)
 				{
-					menu_draw_unselected_items(m_items[i].strName, (uint16_t)m_items[i].pParamID, m_items[i].pParamID->sValue, m_items[i].pParamID->sType, LCDPos);
+					menu_draw_unselected_items(m_items[i].strName, (uint16_t)m_items[i].pParam, m_items[i].pParam->sValue, m_items[i].pParam->sType, LCDPos);
 				}
 				else
 				{	
 					strcpy_P(StrTmp,m_items[i].strName);
-					menu_draw_unselected_items(StrTmp, (uint16_t)m_items[i].pParamID, m_items[i].pParamID->sValue, m_items[i].pParamID->sType, LCDPos);
+					menu_draw_unselected_items(StrTmp, (uint16_t)m_items[i].pParam, m_items[i].pParam->sValue, m_items[i].pParam->sType, LCDPos);
 				}
 			}
 		LCDPos++;
@@ -221,12 +221,12 @@ void menu_select(void)
 		//send values to UI
 		HandOverValueToUI(SubMenuGroupSize-(MyMenue.gucSelectedItem-StartIndex), SubMenuGroupSize, 1, 1);
 	}	
-	else if(m_items[MyMenue.gucSelectedItem].pParamID)//toggle parameter edit mode
+	else if(m_items[MyMenue.gucSelectedItem].pParam)//toggle parameter edit mode
 	{
 		if(!MyMenue.MenuMode)
 		{	
 			//save parameter
-			m_items[MyMenue.gucSelectedItem].pParamID->sValue=GetvalueFromUI();
+			m_items[MyMenue.gucSelectedItem].pParam->sValue=GetvalueFromUI();
 			//get array start index of the submenu items
 			GetSubMenuCount(&SubMenuGroupSize,&StartIndex);
 			//send values to UI
@@ -239,10 +239,10 @@ void menu_select(void)
 		else
 		{	
 			//send parameter values and limits to UI
-			HandOverValueToUI(	m_items[MyMenue.gucSelectedItem].pParamID->sValue,
-								m_items[MyMenue.gucSelectedItem].pParamID->sUpperLimit,
-								m_items[MyMenue.gucSelectedItem].pParamID->sLowerLimit,
-								m_items[MyMenue.gucSelectedItem].pParamID->sStepSize
+			HandOverValueToUI(	m_items[MyMenue.gucSelectedItem].pParam->sValue,
+								m_items[MyMenue.gucSelectedItem].pParam->sUpperLimit,
+								m_items[MyMenue.gucSelectedItem].pParam->sLowerLimit,
+								m_items[MyMenue.gucSelectedItem].pParam->sStepSize
 								);
 
 			//parameter active
@@ -253,13 +253,14 @@ void menu_select(void)
 	}
 	else if(m_items[MyMenue.gucSelectedItem].pAction)//execute function
 	{	
-		//execute function
-		m_items[MyMenue.gucSelectedItem].pAction();
 		//get array start index of the submenu items
 		GetSubMenuCount(&SubMenuGroupSize, &StartIndex);
 		//send values to UI
 		HandOverValueToUI(SubMenuGroupSize-(MyMenue.gucSelectedItem-StartIndex), SubMenuGroupSize, 1,1);
 		MyMenue.ShowMenu = 1; //init menu view
+		//execute function
+		m_items[MyMenue.gucSelectedItem].pAction();
+		// do nothing after function, as it might have changed the menu status or content intentionally.
 	}
 	else
 	{

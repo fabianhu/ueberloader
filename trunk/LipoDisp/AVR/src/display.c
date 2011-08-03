@@ -11,6 +11,8 @@ extern void menu_init(void);
 
 extern void handleCommError(uint8_t errNo);
 extern uint8_t getLastCommError(void);
+extern uint16_t GetvalueFromUI(void);
+extern void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower, uint16_t stepsize);
 
 extern uint8_t CommErrArr[]; // fixme debug only!!!
 extern uint8_t CommErrArrIdx;
@@ -19,6 +21,7 @@ extern particle_t myP; // touchpad.c
 extern Battery_Info_t g_tBattery_Info; // serial_master.c
 extern uint8_t g_GotNewComand; // command.c
 extern Command_t g_tCommand; // command.c
+extern uint8_t gCommandsKnown; // command.c
 
 uint8_t g_bMenuActive = 0;//DISPLAYTEST; // 1 = the menue is active
 
@@ -34,6 +37,7 @@ void TaskDisplay(void)
 	uint16_t ypos = 0;
 	uint32_t t1, t2;// just for finding error fixme
 	uint8_t i;
+	static uint8_t oCMDsKnown =0;
 
 #define FONTSIZE 1
 #define LINEDIFF FONTSIZE*16
@@ -65,7 +69,7 @@ void TaskDisplay(void)
 		OS_WaitAlarm( OSALMWaitDisp );
 		OS_SetAlarm( OSALMWaitDisp, 500 );
 
-		if(g_GotNewComand)
+		if(g_GotNewComand) // fixme was hat das hier verloren?
 		{
 			// gespeicherte Commands vom Slave in Parameter eintragen.
 			OS_MutexGet( OSMTXCommand );
@@ -106,6 +110,25 @@ void TaskDisplay(void)
 			}
 			else
 			{
+				if (gCommandsKnown)
+				{
+					
+					if (oCMDsKnown == 0)
+					{
+							HandOverValueToUI(	parCurrent.sValue,
+							parCurrent.sUpperLimit,
+							parCurrent.sLowerLimit,
+							parCurrent.sStepSize
+							);
+					}
+					
+					
+					// update charge current form particle.
+					parCurrent.sValue = GetvalueFromUI(); // fixme
+					g_tCommand.sCurrentSetpoint = parCurrent.sValue;
+				}
+				oCMDsKnown = gCommandsKnown;
+
 				if (bMenuCleared == 1)
 				{
 					lcd_clear();
@@ -178,6 +201,9 @@ void TaskDisplay(void)
 
 				t2=t2-t1;
 				lcd_print(GREY, BLACK, FONTSIZE, 0, 220,"Time: %i s     " ,(uint16_t)t2/1000);
+
+				lcd_print(WHITE, BLACK, FONTSIZE, 230, 220,"I set: %i",g_tCommand.sCurrentSetpoint);
+
 			}
 		}
 		else
