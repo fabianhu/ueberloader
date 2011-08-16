@@ -55,11 +55,6 @@ void TaskTouch()
 }
 
 
-
-
-
-
-
 /*
 
  Particle needs:
@@ -213,15 +208,15 @@ void touchGetValue(int16_t* pValue) // read txtback the (changed) value Mutex?
 	//OS_LEAVECRITICAL
 }
 
-uint8_t touchGetTap(void) // get tap "event" and clear it 1== normal tap, 2 = double tap
-{
-	return 0;
-}
-
-int16_t touchGetPosition(void) // read the pos
-{
-	return 0;
-}
+//uint8_t touchGetTap(void) // get tap "event" and clear it 1== normal tap, 2 = double tap
+//{
+//	return 0;
+//}
+//
+//int16_t touchGetPosition(void) // read the pos
+//{
+//	return 0;
+//}
 
 // returns 1 if speed is OK
 uint8_t touchGetSpeed(int16_t* speed, int32_t *Schwerpunkt)
@@ -333,6 +328,7 @@ void ProcessTouch(void)
 				myP.force = - s_sSpeedFiltered;
 				info = 2;
 
+				myP.velocity = myP.velocity + myP.force;
 
 				/*static uint8_t n;  // bremsen!!!
 				if (n++ == 10)
@@ -340,8 +336,6 @@ void ProcessTouch(void)
 					n = 0;
 					myP.velocity = (myP.velocity * myP.friction) / 100;
 				}*/
-
-				myP.velocity = myP.velocity + myP.force;
 			}
 			else
 			{	
@@ -364,8 +358,11 @@ void ProcessTouch(void)
 
 			}
 
-
+#if TOUCHDISABLESLIDE == 1
+			myP.velocity = 0;
+#else
 			myP.position = limit(myP.position + myP.velocity , myP.min , myP.max);
+#endif
 			break;
 
 		case eTSGesture:
