@@ -175,7 +175,7 @@ void vGovernor(	uint16_t _I_Set_mA,	uint16_t _I_Act_mA)
 	static uint8_t cn = 0;
 
 
-	if(_I_Set_mA <= 0 )
+	if(_I_Set_mA <= 0 ) // ramp down!!! fixme! or discharge into battery!! supply volt goes high!!!
 	{
 		ENABLE_A_OFF;ENABLE_B_OFF;
 		usStartstep = STARTMAX; // reset, because of static !!
