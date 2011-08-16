@@ -72,7 +72,7 @@ char	txtFEQUENCY[] 	PROGMEM="Fequency";
 char	txtREFRESHPERIOD[] 	PROGMEM="Refresh-period";
 
 // Parameter definitions
-Parameter_t parCurrent = {	0, 100, 10000, 100, mA};
+Parameter_t parCurrent = {	0, 100, 1500, 100, mA};
 Parameter_t parVoltage = {	0, 2500, 4200, 10, mV};
 Parameter_t parCellCount = {	0, 0, 6, 1, Cells};
 Parameter_t parLiPoChVolt = {	0, 3000, 4200, 10, mV};

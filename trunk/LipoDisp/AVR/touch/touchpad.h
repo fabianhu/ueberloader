@@ -27,6 +27,10 @@
 
 #define MAXSLIDESPEED 100
 
+
+#define TOUCHDISABLESLIDE 1
+
+
 void touch_init(void);
 //uint8_t touchGetPad(uint8_t pin);
 //int16_t touchGetSchwerpunkt(void);
