@@ -3,6 +3,7 @@
 #include "../lcd/lcd.h" // fixme remove
 #include "../comm/serial.h"
 #include "../menu/menu.h"
+#include "../menu/menu_variant.h"
 
 
 // Prototypes:
@@ -25,6 +26,7 @@ extern ChargerMode_t g_Tansfer_Action;
 extern uint8_t g_debug, g_debug2, g_debug3;
 extern int16_t g_debug4;
 extern uint8_t g_bMenuActive;
+extern Command_t g_tCommand ; // only for adjusting the current while charging
 
 int16_t g_ausTouchCalValues[5] =
 TOUCHCALINIT;
@@ -373,10 +375,20 @@ void ProcessTouch(void)
 
 					break;
 				case eGPlus:
-					if(myP.position + myP.stepsize < myP.max)
-						myP.position += myP.stepsize;
+					if(g_bMenuActive)
+					{
+						if(myP.position + myP.stepsize < myP.max)
+							myP.position += myP.stepsize;
+						else
+							myP.position = myP.max;
+					}
 					else
-						myP.position = myP.max;
+					{
+						OS_MutexGet(OSMTXCommand);
+						if(g_tCommand.sCurrentSetpoint + 100 < parCurrent.sUpperLimit)
+							g_tCommand.sCurrentSetpoint += 100;
+						OS_MutexRelease(OSMTXCommand);
+					}
 					break;
 				case eGMitte:
 					// menue bestätigung
@@ -401,6 +413,8 @@ void ProcessTouch(void)
 
 							g_bMenuActive = 1;
 						}
+						else
+							g_Tansfer_Action = eModeStop; // fixme charger has to take it also in charging mode.
 
 					}
 					break;
@@ -408,10 +422,20 @@ void ProcessTouch(void)
 
 					break;
 				case eGMinus:
-					if(myP.position - myP.stepsize > myP.min)
-						myP.position -= myP.stepsize;
+					if(g_bMenuActive)
+					{
+						if(myP.position - myP.stepsize > myP.min)
+							myP.position -= myP.stepsize;
+						else
+							myP.position = myP.min;
+					}
 					else
-						myP.position = myP.min;
+					{
+						OS_MutexGet(OSMTXCommand);
+						if(g_tCommand.sCurrentSetpoint - 100 > parCurrent.sLowerLimit)
+						 g_tCommand.sCurrentSetpoint -= 100;
+						OS_MutexRelease(OSMTXCommand);
+					}
 					break;
 				case eGSplit:
 					// unlock
@@ -525,70 +549,65 @@ uint8_t bitcount3(uint8_t b)
 void touchtest(void)
 {
 
-myP.max = 32000;
-myP.min = 0;
+	myP.max = 32000;
+	myP.min = 0;
 
-//			for (i = 0; i < 3; i++)
-//			{
-//				lcd_print(WHITE, BLACK, 1, 0, 16*i,"val/t%i/tIdx/t%i      " ,maxVal[i],maxIdx[i]);
-//			}
+	//			for (i = 0; i < 3; i++)
+	//			{
+	//				lcd_print(WHITE, BLACK, 1, 0, 16*i,"val/t%i/tIdx/t%i      " ,maxVal[i],maxIdx[i]);
+	//			}
 
-//				static int16_t oypos;
-//				int16_t nypos1;
-//
-//
-//				//touchGetValue(&nypos1);
-//
-//
-//				lcd_print(WHITE, BLACK, FONTSIZE, 0, 16,"VAL/t%i/tt      " ,nypos1);
-
-
+	//				static int16_t oypos;
+	//				int16_t nypos1;
+	//
+	//
+	//				//touchGetValue(&nypos1);
+	//
+	//
+	//				lcd_print(WHITE, BLACK, FONTSIZE, 0, 16,"VAL/t%i/tt      " ,nypos1);
 
 
+	//				lcd_draw_box( 255,255,255,315,nypos1,5,5);
+	//				if(nypos1 >0)
+	//				{
+	//
+	//					lcd_draw_box(255,255,255,315,nypos1/4,5,5);
+	//					oypos = nypos1/4;
+	//				}
 
-//				lcd_draw_box( 255,255,255,315,nypos1,5,5);
-//				if(nypos1 >0)
-//				{
-//
-//					lcd_draw_box(255,255,255,315,nypos1/4,5,5);
-//					oypos = nypos1/4;
-//				}
+	static uint16_t g;
 
-static uint16_t g;
+	g++;
 
+	lcd_draw_pixel( RED,g,  (-myP.position/0xff)+160);
+	//lcd_draw_pixel(GREEN,g,myP.velocity/0xff+128);
+	//lcd_draw_pixel(YELLOW,g,myP.force/0xff+160);
+	lcd_draw_pixel(WHITE,g,30-g_debug*5);
+	if (g == 320)
+	{
+		lcd_clear();
+		lcd_draw_line(YELLOW,0,30,320,30);
+		g =0;
+	}
 
-g++;
+	lcd_print(WHITE, BLACK, 1, 0, 32,"State: %i  " ,(uint16_t)g_debug);
+	lcd_print(WHITE, BLACK, 1, 0, 64,"Gesture: %i  " ,(uint16_t)g_debug2);
+	lcd_print(WHITE, BLACK, 1, 0, 96,"Particle: %i , %i   " ,(uint16_t)myP.position,(uint16_t)myP.velocity);
+	lcd_print(WHITE, BLACK, 1, 0, 128,"info: %i  " ,(uint16_t)info);
 
-lcd_draw_pixel(RED,g,(-myP.position/0xff)+160);
-//lcd_draw_pixel(GREEN,g,myP.velocity/0xff+128);
-//lcd_draw_pixel(YELLOW,g,myP.force/0xff+160);
-lcd_draw_pixel(WHITE,g,30-g_debug*5);
-if (g == 320)
-{
-lcd_clear();
-lcd_draw_line(YELLOW,0,30,320,30);
-g =0;
-}
+	lcd_print(WHITE, BLACK, 1, 280, 20,"%i  " ,g_aucTouchpads[0]);
+	lcd_print(WHITE, BLACK, 1, 280, 60,"%i  " ,g_aucTouchpads[1]);
+	lcd_print(WHITE, BLACK, 1, 280, 120,"%i  " ,g_aucTouchpads[2]);
+	lcd_print(WHITE, BLACK, 1, 280, 180,"%i  " ,g_aucTouchpads[3]);
+	lcd_print(WHITE, BLACK, 1, 280, 220,"%i  " ,g_aucTouchpads[4]);
 
+	lcd_print(RED, BLACK, 1, 160, 120,"%i  " ,Schwerpunkt);
 
-lcd_print(WHITE, BLACK, 1, 0, 32,"State: %i  " ,(uint16_t)g_debug);
-lcd_print(WHITE, BLACK, 1, 0, 64,"Gesture: %i  " ,(uint16_t)g_debug2);
-lcd_print(WHITE, BLACK, 1, 0, 96,"Particle: %i , %i   " ,(uint16_t)myP.position,(uint16_t)myP.velocity);
-lcd_print(WHITE, BLACK, 1, 0, 128,"info: %i  " ,(uint16_t)info);
-
-lcd_print(WHITE, BLACK, 1, 280, 20,"%i  " ,g_aucTouchpads[0]);
-lcd_print(WHITE, BLACK, 1, 280, 60,"%i  " ,g_aucTouchpads[1]);
-lcd_print(WHITE, BLACK, 1, 280, 120,"%i  " ,g_aucTouchpads[2]);
-lcd_print(WHITE, BLACK, 1, 280, 180,"%i  " ,g_aucTouchpads[3]);
-lcd_print(WHITE, BLACK, 1, 280, 220,"%i  " ,g_aucTouchpads[4]);
-
-lcd_print(RED, BLACK, 1, 160, 120,"%i  " ,Schwerpunkt);
-
-/*lcd_print(WHITE, BLACK, 1, 200, 20,"%i  " ,g_aucTouchpads[0]);
-lcd_print(WHITE, BLACK, 1, 200, 60,"%i  " ,g_aucTouchpads[1]);
-lcd_print(WHITE, BLACK, 1, 200, 120,"%i  " ,g_aucTouchpads[2]);
-lcd_print(WHITE, BLACK, 1, 200, 180,"%i  " ,g_aucTouchpads[3]);
-lcd_print(WHITE, BLACK, 1, 200, 220,"%i  " ,g_aucTouchpads[4]);*/
+	/*lcd_print(WHITE, BLACK, 1, 200, 20,"%i  " ,g_aucTouchpads[0]);
+	lcd_print(WHITE, BLACK, 1, 200, 60,"%i  " ,g_aucTouchpads[1]);
+	lcd_print(WHITE, BLACK, 1, 200, 120,"%i  " ,g_aucTouchpads[2]);
+	lcd_print(WHITE, BLACK, 1, 200, 180,"%i  " ,g_aucTouchpads[3]);
+	lcd_print(WHITE, BLACK, 1, 200, 220,"%i  " ,g_aucTouchpads[4]);*/
 
 
 }

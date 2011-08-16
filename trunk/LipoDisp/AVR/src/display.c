@@ -21,7 +21,7 @@ extern uint8_t CommErrArrIdx;
 extern particle_t myP; // touchpad.c
 extern Battery_Info_t g_tBattery_Info; // serial_master.c
 extern uint8_t g_GotNewComand; // command.c
-extern Command_t g_tCommand; // command.c
+extern Command_t g_tCommand; // command.c // attention!!!!!! not task safe!!!
 extern uint8_t gCommandsKnown; // command.c
 
 uint8_t g_bMenuActive = 0;//DISPLAYTEST; // 1 = the menue is active
@@ -39,7 +39,7 @@ void TaskDisplay(void)
 	uint16_t ypos = 0;
 	uint32_t t1, t2;// just for finding error fixme
 	uint8_t i;
-	static uint8_t oCMDsKnown =0;
+
 
 #define FONTSIZE 1
 #define LINEDIFF FONTSIZE*16
@@ -108,10 +108,12 @@ void TaskDisplay(void)
 				menu_show();
 
 				// debug
-				lcd_print( WHITE, BLACK, 1, 150, 200,"Particle: %i , %i   " ,(uint16_t)myP.position,(uint16_t)myP.velocity);
+				//lcd_print( WHITE, BLACK, 1, 150, 200,"Particle: %i , %i   " ,(uint16_t)myP.position,(uint16_t)myP.velocity);
 			}
 			else
 			{
+#if MODIFYCURRENTWHILECHARGE
+				static uint8_t oCMDsKnown =0;
 				if (gCommandsKnown)
 				{
 					
@@ -126,10 +128,13 @@ void TaskDisplay(void)
 					
 					
 					// update charge current form particle.
-					parCurrent.sValue = GetvalueFromUI(); // fixme
+					parCurrent.sValue = GetvalueFromUI(); // fixme funktioniert nicht korrekt!!!
+					OS_MutexGet(OSMTXCommand);
 					g_tCommand.sCurrentSetpoint = parCurrent.sValue;
+					OS_MutexRelease OSMTXCommand);
 				}
 				oCMDsKnown = gCommandsKnown;
+#endif
 
 				if (bMenuCleared == 1)
 				{
