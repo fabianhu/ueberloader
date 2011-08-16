@@ -145,6 +145,15 @@ void CPU_init(void)
 	// invert RX pin
 	// not nec. PORTE.PIN2CTRL = 1<<6; //INVEN;
 
+	// adjust Power Reduction Register
+	PR.PRGEN = 0b00011100;
+	PR.PRPA = 0b00000101; // adc on
+	PR.PRPB = 0b00000101; // adc on
+	PR.PRPC = 0b01111000; // tcc0 & tcc1 used
+	PR.PRPD = 0b01111010; // tcd0 used
+	PR.PRPE = 0b01101000; // usarte0 used
+
+
 	// *** NO global interrupts enabled at this point!!!
 }
 

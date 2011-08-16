@@ -563,6 +563,7 @@ void TaskState(void)
 						NumberOfCells = GetCellcount();
 						if(NumberOfCells > 0 && j == CHARGEDELAY) // it was equal for 1s...
 						{
+							OS_WaitTicks(OSALMStateWait,100);
 							g_tBattery_Info.ucNumberOfCells = NumberOfCells;
 							g_tBattery_Info.eState = eBattCharging;
 							ResetLastBatteryInfo();
@@ -573,6 +574,7 @@ void TaskState(void)
 						if(	GetCellcount()== g_tCommand.ucUserCellCount &&
 								g_tCommand.ucUserCellCount >0) // fixme
 						{
+							OS_WaitTicks(OSALMStateWait,100);
 							g_tBattery_Info.ucNumberOfCells = g_tCommand.ucUserCellCount;
 							g_tBattery_Info.eState = eBattCharging;
 							ResetLastBatteryInfo();
