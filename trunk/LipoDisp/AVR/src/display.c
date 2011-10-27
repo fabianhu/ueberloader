@@ -19,6 +19,7 @@ extern uint8_t CommErrArr[]; // fixme debug only!!!
 extern uint8_t CommErrArrIdx;
 
 extern particle_t myP; // touchpad.c
+extern uint8_t s_ucKeyLock; // touchpad.c
 extern Battery_Info_t g_tBattery_Info; // serial_master.c
 extern uint8_t g_GotNewComand; // command.c
 extern Command_t g_tCommand; // command.c // attention!!!!!! not task safe!!!
@@ -210,6 +211,15 @@ void TaskDisplay(void)
 				lcd_print(GREY, BLACK, FONTSIZE, 0, 220,"Time: %i s     " ,(uint16_t)t2/1000);
 
 				lcd_print(WHITE, BLACK, FONTSIZE, 230, 220,"I set: %i",g_tCommand.sCurrentSetpoint);
+
+				if (s_ucKeyLock)
+				{
+					lcd_print(RED, BLACK, 1, 270, 10,"LOCK");
+				}
+				else
+				{
+					lcd_print(BLACK, BLACK, 1, 270, 10,"LOCK");
+				}
 
 			}
 		}
