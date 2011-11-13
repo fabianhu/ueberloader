@@ -58,11 +58,21 @@ typedef struct Battery_Info_tag
 
 typedef enum
 {
-	eModeNoChange,
+	eActNop = 0,
+	eActModeStop,
+	eActModeAuto,
+	eActModeManual,
+	eActCalLow,
+	eActCalHigh
+}ChargerAction_t;
+
+typedef enum
+{
+	eModeStop = 0,
 	eModeAuto,
-	eModeManual,
-	eModeStop
+	eModeManual
 }ChargerMode_t;
+
 
 typedef struct Command_tag
 {
