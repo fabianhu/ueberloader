@@ -230,6 +230,9 @@ namespace Treebuilder
         {
             XmlTextWriter textWriter = new XmlTextWriter(_fileName,
                                           System.Text.Encoding.ASCII);
+
+            textWriter.Formatting = Formatting.Indented;
+            
             // writing the xml declaration tag
 
             textWriter.WriteStartDocument();
