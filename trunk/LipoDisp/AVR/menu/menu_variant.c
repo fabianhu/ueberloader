@@ -60,6 +60,8 @@ char	txtCELLCOUNT[] 	PROGMEM="CellCount";
 char	txtBATTSETTINGS[] 	PROGMEM="Batt Settings";
 char	txtCHARGELIMITS[] 	PROGMEM="Charge Limits";
 char	txtPWM[] 	PROGMEM="Pwm";
+char	txtCALIBRATIONH[] 	PROGMEM="Calibration H";
+char	txtCALIBRATIONL[] 	PROGMEM="Calibration L";
 char	txtBALACTIVVOLTAGE[] 	PROGMEM="Bal. Activ. Voltage";
 char	txtCHARGEVOLTAGE[] 	PROGMEM="Charge Voltage";
 char	txtSTORAGEVOLTAGE[] 	PROGMEM="Storage Voltage";
@@ -72,7 +74,7 @@ char	txtFEQUENCY[] 	PROGMEM="Fequency";
 char	txtREFRESHPERIOD[] 	PROGMEM="Refresh-period";
 
 // Parameter definitions
-Parameter_t parCurrent = {	0, 100, 1500, 100, mA};
+Parameter_t parCurrent = {	0, 100, 10000, 100, mA};
 Parameter_t parVoltage = {	0, 2500, 4200, 10, mV};
 Parameter_t parCellCount = {	0, 0, 6, 1, Cells};
 Parameter_t parLiPoChVolt = {	0, 3000, 4200, 10, mV};
@@ -102,29 +104,31 @@ MenuItem_t m_items[MENUESIZE] = {
 	/* 11*/	{txtLIFEPO,	 actSelTypeLiFe,	 0,	0,	4,	FLASH},
 	/* 12*/	{txtLIION,	 actSelTypeLiIon,	 0,	0,	4,	FLASH},
 	/* 13*/	{txtCELLCOUNT,	 0,	 &parCellCount,	0,	5,	FLASH},
-	/* 14*/	{txtBATTSETTINGS,	 0,	 0,	18,	5,	FLASH},
-	/* 15*/	{txtCHARGELIMITS,	 0,	 0,	31,	5,	FLASH},
-	/* 16*/	{txtPWM,	 0,	 0,	34,	5,	FLASH},
-	/* 17*/	{txtBACK,	 0,	 0,	5,	5,	FLASH},
-	/* 18*/	{txtLIPO,	 0,	 0,	23,	14,	FLASH},
-	/* 19*/	{txtLIFEPO,	 0,	 0,	27,	14,	FLASH},
-	/* 20*/	{txtLIION,	 0,	 0,	29,	14,	FLASH},
-	/* 21*/	{txtBALACTIVVOLTAGE,	 0,	 &parBalActVolt,	0,	14,	FLASH},
-	/* 22*/	{txtBACK,	 0,	 0,	14,	14,	FLASH},
-	/* 23*/	{txtCHARGEVOLTAGE,	 0,	 &parLiPoChVolt,	0,	18,	FLASH},
-	/* 24*/	{txtSTORAGEVOLTAGE,	 0,	 &parLiPoStVolt,	0,	18,	FLASH},
-	/* 25*/	{txtDISCHARGEVOLTAGE,	 0,	 &parLiPoDisVolt,	0,	18,	FLASH},
-	/* 26*/	{txtBACK,	 0,	 0,	18,	18,	FLASH},
-	/* 27*/	{txtLIFEPOVOLT,	 0,	 &parLiFeVolt,	0,	19,	FLASH},
-	/* 28*/	{txtBACK,	 0,	 0,	19,	19,	FLASH},
-	/* 29*/	{txtLIIONVOLTAGE,	 0,	 &parLiIonVolt,	0,	20,	FLASH},
-	/* 30*/	{txtBACK,	 0,	 0,	20,	20,	FLASH},
-	/* 31*/	{txtCAPACITY,	 0,	 &parMaxcap,	0,	15,	FLASH},
-	/* 32*/	{txtTIME,	 0,	 &parMaxtime,	0,	15,	FLASH},
-	/* 33*/	{txtBACK,	 0,	 0,	15,	15,	FLASH},
-	/* 34*/	{txtFEQUENCY,	 0,	 &parPWMfrequency,	0,	16,	FLASH},
-	/* 35*/	{txtREFRESHPERIOD,	 0,	 &parRefreshPeriod,	0,	16,	FLASH},
-	/* 36*/	{txtBACK,	 0,	 0,	16,	16,	FLASH},
+	/* 14*/	{txtBATTSETTINGS,	 0,	 0,	20,	5,	FLASH},
+	/* 15*/	{txtCHARGELIMITS,	 0,	 0,	33,	5,	FLASH},
+	/* 16*/	{txtPWM,	 0,	 0,	36,	5,	FLASH},
+	/* 17*/	{txtCALIBRATIONH,	 actCalH,	 0,	0,	5,	FLASH},
+	/* 18*/	{txtCALIBRATIONL,	 actCalL,	 0,	0,	5,	FLASH},
+	/* 19*/	{txtBACK,	 0,	 0,	5,	5,	FLASH},
+	/* 20*/	{txtLIPO,	 0,	 0,	25,	14,	FLASH},
+	/* 21*/	{txtLIFEPO,	 0,	 0,	29,	14,	FLASH},
+	/* 22*/	{txtLIION,	 0,	 0,	31,	14,	FLASH},
+	/* 23*/	{txtBALACTIVVOLTAGE,	 0,	 &parBalActVolt,	0,	14,	FLASH},
+	/* 24*/	{txtBACK,	 0,	 0,	14,	14,	FLASH},
+	/* 25*/	{txtCHARGEVOLTAGE,	 0,	 &parLiPoChVolt,	0,	20,	FLASH},
+	/* 26*/	{txtSTORAGEVOLTAGE,	 0,	 &parLiPoStVolt,	0,	20,	FLASH},
+	/* 27*/	{txtDISCHARGEVOLTAGE,	 0,	 &parLiPoDisVolt,	0,	20,	FLASH},
+	/* 28*/	{txtBACK,	 0,	 0,	20,	20,	FLASH},
+	/* 29*/	{txtLIFEPOVOLT,	 0,	 &parLiFeVolt,	0,	21,	FLASH},
+	/* 30*/	{txtBACK,	 0,	 0,	21,	21,	FLASH},
+	/* 31*/	{txtLIIONVOLTAGE,	 0,	 &parLiIonVolt,	0,	22,	FLASH},
+	/* 32*/	{txtBACK,	 0,	 0,	22,	22,	FLASH},
+	/* 33*/	{txtCAPACITY,	 0,	 &parMaxcap,	0,	15,	FLASH},
+	/* 34*/	{txtTIME,	 0,	 &parMaxtime,	0,	15,	FLASH},
+	/* 35*/	{txtBACK,	 0,	 0,	15,	15,	FLASH},
+	/* 36*/	{txtFEQUENCY,	 0,	 &parPWMfrequency,	0,	16,	FLASH},
+	/* 37*/	{txtREFRESHPERIOD,	 0,	 &parRefreshPeriod,	0,	16,	FLASH},
+	/* 38*/	{txtBACK,	 0,	 0,	16,	16,	FLASH},
 };
 
 //******** END OF AUTO-GENERATED CODE DO NOT EDIT!!! *********
@@ -170,7 +174,7 @@ void ActionChargeMethodFull(void)
 		default:
 			break;
 	}
-	g_Tansfer_Action = eModeAuto; // trigger
+	g_Tansfer_Action = eActModeAuto; // trigger
 
 	menuUp();
 }
@@ -191,7 +195,7 @@ void ActionChargeMethodStorage(void)
 		default:
 			break;
 	}
-	g_Tansfer_Action = eModeAuto; // trigger
+	g_Tansfer_Action = eActModeAuto; // trigger
 	menuUp();
 }
 void ActionChargeMethodDischarge(void)
@@ -210,7 +214,7 @@ void ActionChargeMethodDischarge(void)
 		default:
 			break;
 	}
-	g_Tansfer_Action = eModeAuto; // trigger
+	g_Tansfer_Action = eActModeAuto; // trigger
 	menuUp();
 }
 void actSelTypeLiPo(void)
@@ -229,12 +233,29 @@ void actSelTypeLiIon(void)
 	menuUp();
 }
 
+uint8_t calstep = 0;
+
+void actCalH(void)
+{
+	if (calstep == 1)
+	{
+		g_Tansfer_Action = eActCalHigh;
+		calstep = 0;
+	}
+}
+
+void actCalL(void)
+{
+	g_Tansfer_Action = eActCalLow;
+	calstep = 1;
+}
+
 void leavemenu(void)
 {
 	g_bMenuActive = 0;
 	g_Trig_SavePars = 1;
 	UpdateCommandsFromParam();
-	g_Tansfer_Action = eModeAuto; // fixme merken ???? / Funktion!!
+	g_Tansfer_Action = eActModeAuto; // fixme merken ???? / Funktion!!
 
 	// Ladestrom editierbar machen: // fixme
 	//send parameter values and limits to UI
@@ -247,7 +268,7 @@ void leavemenu(void)
 
 void entermenu(void)
 {
-	g_Tansfer_Action = eModeStop;
+	g_Tansfer_Action = eActModeStop;
 }
 
 void menuUp(void)

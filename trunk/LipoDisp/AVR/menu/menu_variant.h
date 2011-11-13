@@ -3,7 +3,7 @@
 
 //******** START OF AUTO-GENERATED HEADER DO NOT EDIT!!! *********
 
- #define	MENUESIZE	37	// number of menu itmes (array size)
+ #define	MENUESIZE	39	// number of menu itmes (array size)
  #define	MAX_ITEM_NAME_CHARLENGTH	19	// number of menu itmes (array size)
 // Enum definitions
 typedef enum
@@ -39,10 +39,11 @@ void ActionChargeMethodDischarge (void);
 void actSelTypeLiPo (void);
 void actSelTypeLiFe (void);
 void actSelTypeLiIon (void);
+void actCalH (void);
+void actCalL (void);
 void leavemenu (void);
 
 //******** END OF AUTO-GENERATED HEADER DO NOT EDIT!!! *********
-
 
 
 
