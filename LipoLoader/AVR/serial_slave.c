@@ -101,6 +101,8 @@ void TaskCommRX(void)
 
 uint16_t crc=0;
 
+extern uint8_t g_ucCalCommand;
+
 uint8_t HandleSerial(UCIFrame_t *_RXFrame)
 {
 	uint8_t len=0; // byte! length of values
@@ -148,9 +150,25 @@ uint8_t HandleSerial(UCIFrame_t *_RXFrame)
 			len = 1;
 			break;
 		case UCI_ACTION:
-			if((ChargerMode_t)g_tUCIRXFrame.values[0] != eModeNoChange)
-			{
-				g_eChargerMode = (ChargerMode_t)g_tUCIRXFrame.values[0];
+			switch ((ChargerAction_t)g_tUCIRXFrame.values[0]) {
+				case eActModeStop:
+					g_eChargerMode = eModeStop;
+					break;
+				case eActModeAuto:
+					g_eChargerMode = eModeAuto;
+					break;
+				case eActModeManual:
+					g_eChargerMode = eModeManual;
+					break;
+				case eActCalLow:
+					g_ucCalCommand = 1;
+					break;
+				case eActCalHigh:
+					g_ucCalCommand = 2;
+					break;
+				default:
+					g_eChargerMode = eModeStop;
+					break;
 			}
 			// prepare ok answer:
 			g_tUCITXFrame.values[0] = 1;

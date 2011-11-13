@@ -7,6 +7,7 @@
 #include "OS/FabOS.h"
 #include "ueberloader.h"
 #include "adc.h"
+#include "cal.h"
 #include "pwm.h"
 #include "usart.h"
 #include "serial.h"
@@ -62,7 +63,7 @@ void sFilter_plain(int16_t* o, int16_t* n)
 	}
 }
 
-void sFilter(int16_t* o, int16_t* n) // with jump possibility, if filtered value is off by more than 20%
+void sFilter(int16_t* o, int16_t* n) // with jump possibility, if filtered value is off by more than 10%
 {
 	int32_t temp;
 	int16_t out;
@@ -278,8 +279,11 @@ void TaskGovernor(void)
 #define ADCWAITTIME 1
 #define BALANCEREPEATTIME 100L
 
+uint8_t g_ucCalCommand = 0;
+
 void TaskBalance(void)
 {
+	int32_t nTemp;
 	int16_t sTemp;
 	int16_t sBalanceCells[6]; // quasi static
 	uint8_t ucBalanceBits = 0;
@@ -311,19 +315,39 @@ void TaskBalance(void)
 		sTemp = ADC_ScaleCell_mV( ADCA.CH3.RES );
 		sFilter( &sBalanceCells[0], &sTemp );
 
+		// ok, now we have all cells, now calibrate them.
+
+		switch (g_ucCalCommand) {
+			case 1:
+				CalCellsLow( &sBalanceCells[0] );
+				g_ucCalCommand = 0;
+				break;
+			case 2:
+				CalCellsHigh( &sBalanceCells[0] );
+				g_ucCalCommand = 0;
+				break;
+			default:
+				break;
+		}
+
+
+		CalibrateCells(&sBalanceCells[0]);
+
+
+
 		ADC_StartConvCh3Pin( 11 ); // temperature external2
 		OS_WaitTicks(OSALMBalWait,ADCWAITTIME);
-		sTemp = ADCA.CH3.RES;
+		nTemp = ADCA.CH3.RES;
 		OS_DISABLEALLINTERRUPTS;
-		g_tADCValues.TempInt = sTemp; // fixme scaling!
+		g_tADCValues.TempInt = nTemp; // fixme scaling!
 		OS_ENABLEALLINTERRUPTS;
 
 		ADC_StartConvInt( 0 ); // CPU temperature
 		OS_WaitTicks(OSALMBalWait,ADCWAITTIME);
-		sTemp = ADCA.CH3.RES * 10 / 33; // what would be measured, if it was done at 1V ref (/ 3.3).
-		sTemp = ( sTemp * ( 273ul + 85ul ) / g_tCalibration.usCPUTemp85C );
+		nTemp = ADCA.CH3.RES * 10 / 33; // what would be measured, if it was done at 1V ref (/ 3.3).
+		nTemp = ( nTemp * ( 273ul + 85ul ) / g_tCalibration.usCPUTemp85C );
 		OS_DISABLEALLINTERRUPTS;
-		g_tADCValues.TempCPU = sTemp; // fixme scaling!
+		g_tADCValues.TempCPU = nTemp; // fixme scaling!
 		OS_ENABLEALLINTERRUPTS;
 
 		ADC_StartConvInt( 1 ); // Bandgap reference
@@ -331,17 +355,17 @@ void TaskBalance(void)
 		OS_DISABLEALLINTERRUPTS;
 		g_tADCValues.Bandgap = ADCA.CH3.RES; // bit value for 1.10V ! at ref = Usupp/1.6
 		OS_ENABLEALLINTERRUPTS;
-		sTemp = ( 2048ul * 1088ul ) / g_tADCValues.Bandgap; // by knowing, that the voltage is 1.088V, we calculate the ADCRef voltage. // fixme !!!! Temperature test!!
+		nTemp = ( 2048ul * 1088ul ) / g_tADCValues.Bandgap; // by knowing, that the voltage is 1.088V, we calculate the ADCRef voltage. // fixme !!!! Temperature test!!
 		OS_DISABLEALLINTERRUPTS;
-		g_tCalibration.sADCRef_mV = sTemp;
+		g_tCalibration.sADCRef_mV = nTemp;
 		OS_ENABLEALLINTERRUPTS;
 
 		ADC_StartConvInt( 2 ); // VCC_mVolt measurement
 		OS_WaitTicks(OSALMBalWait,ADCWAITTIME);
-		sTemp = ADCA.CH3.RES * 10ul;
-		sTemp = sTemp * g_tCalibration.sADCRef_mV / 2048ul;
+		nTemp = ADCA.CH3.RES * 10ul;
+		nTemp = nTemp * g_tCalibration.sADCRef_mV / 2048ul;
 		OS_DISABLEALLINTERRUPTS;
-		g_tADCValues.VCC_mVolt = sTemp;
+		g_tADCValues.VCC_mVolt = nTemp;
 		OS_ENABLEALLINTERRUPTS;
 
 		// mean Cell Voltage
@@ -565,7 +589,7 @@ void TaskState(void)
 				// nicht vollständig angesteckt
 				switch(g_eChargerMode)
 				{
-					case eModeAuto:
+					case eActModeAuto:
 						// charge if ok.
 						j = 0;
 						to = GetCellcount();
@@ -587,7 +611,7 @@ void TaskState(void)
 							ResetLastBatteryInfo();
 						}
 						break;
-					case eModeManual:
+					case eActModeManual:
 						// Manual mode
 						if(GetCellcount() == g_tCommand.ucUserCellCount
 								&& g_tCommand.ucUserCellCount > 0) // fixme
@@ -603,7 +627,7 @@ void TaskState(void)
 							g_tBattery_Info.eState = eBattError; // set Error for Display
 						}
 						break;
-					case eModeStop:
+					case eActModeStop:
 						// Manual Stop mode
 						// how to get out of here? -> the mode is set manually to another.
 						break;
@@ -615,8 +639,8 @@ void TaskState(void)
 				// Charging!
 				switch(g_eChargerMode)
 				{
-					case eModeAuto:
-					case eModeManual:
+					case eActModeAuto:
+					case eActModeManual:
 						if(myBattVoltage >= g_tCommand.usVoltageSetpoint_mV
 								* g_tBattery_Info.ucNumberOfCells
 								&& myBattCurrent < usCommandCurrent / 10) // fixme 10 ?
@@ -629,7 +653,7 @@ void TaskState(void)
 							g_tBattery_Info.eState = eBattUnknown;
 						}
 						break;
-					case eModeStop:
+					case eActModeStop:
 						// Manual Stop mode
 						g_tBattery_Info.eState = eBattWaiting;
 						// how to get out of here? -> the mode is set manually to another.
@@ -662,7 +686,7 @@ void TaskState(void)
 
 			case eBattError:
 				OS_WaitTicks(OSALMStateWait,10000);
-				g_eChargerMode = eModeStop;
+				g_eChargerMode = eActModeStop;
 				g_tBattery_Info.eState = eBattWaiting;
 				break;
 			default:
