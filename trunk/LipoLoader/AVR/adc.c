@@ -9,9 +9,9 @@
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
 
-#include "adc.h"
 #include "OS/FabOS.h"
-#include <avr/pgmspace.h>
+#include "adc.h"
+
 
 extern Calibration_t g_tCalibration;
 

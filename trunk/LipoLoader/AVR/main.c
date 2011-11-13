@@ -69,7 +69,6 @@ int main(void)
 		// THIS IS the idle task which will be preempted by all other tasks.
 		// NO OS_Wait.. functions are allowed here!!!
 		
-		// TODO add your code here
 		asm("nop"); //at least one instruction is required!!!
 
 		g_tBattery_Info.ErrCnt = gCommErrCnt;
@@ -217,7 +216,7 @@ void emstop(uint8_t e) // fixme emstop reason speichern!
 
 	uint8_t* b = (uint8_t*)EEPROM_END;
 
-	while (eeprom_read_byte((void*)b) != 0xff)
+	while (eeprom_read_byte((void*)b) != 0xff) // Suche vom Ende her
 	{
 		b--;
 	}
