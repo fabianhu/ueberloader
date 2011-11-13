@@ -15,7 +15,7 @@ UCIFrame_t 		g_tUCIRXFrame; // serial receive data
 uint8_t    		g_ucRXLength;
 
 uint8_t 		g_Trig_SavePars; // triger save parameter command
-ChargerMode_t 	g_Tansfer_Action;
+ChargerAction_t g_Tansfer_Action;
 uint8_t 		g_OPVsValid = 0; // opvs have been received.
 
 
@@ -95,7 +95,7 @@ void TaskCommand(void)
 				handleCommError(ret);
 			}
 
-			if(g_Tansfer_Action != eModeNoChange)
+			if(g_Tansfer_Action != eActNop)
 			{
 				g_tUCITXBlock.ID = 55;
 				g_tUCITXBlock.UCI = UCI_ACTION;
@@ -105,7 +105,7 @@ void TaskCommand(void)
 
 				ret = vWaitForResult(UCI_ACTION);
 				handleCommError(ret);
-				if (ret == 0) g_Tansfer_Action = eModeNoChange; // reset on success
+				if (ret == 0) g_Tansfer_Action = eActNop; // reset on success
 
 			}
 	    }

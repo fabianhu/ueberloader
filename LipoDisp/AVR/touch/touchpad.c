@@ -406,7 +406,7 @@ void ProcessTouch(void)
 							// fixme duplicate weil der doppeltatsch net geht.
 
 							// block charger
-							g_Tansfer_Action = eModeStop;
+							g_Tansfer_Action = eActModeStop;
 
 							uint8_t SubMenuGroupSize, StartIndex;
 
@@ -418,7 +418,7 @@ void ProcessTouch(void)
 							g_bMenuActive = 1;
 						}
 						else
-							g_Tansfer_Action = eModeStop; // fixme charger has to take it also in charging mode.
+							g_Tansfer_Action = eActModeStop; // fixme charger has to take it also in charging mode.
 
 					}
 					break;
