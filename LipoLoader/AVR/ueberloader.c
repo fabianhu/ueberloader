@@ -39,6 +39,7 @@ uint8_t GetCellcount(void);
 void StateMachineBattery(void);
 extern void emstop(uint8_t e);
 
+/*
 void usFilter(uint16_t* o, uint16_t* n)
 {
 	uint32_t temp;
@@ -61,7 +62,7 @@ void sFilter_plain(int16_t* o, int16_t* n)
 		temp = *o * 9ul + *n;
 		*o = ( temp + 5 ) / 10; // "halbes dazu, wg Rundungsfehler"
 	}
-}
+}*/
 
 void sFilter(int16_t* o, int16_t* n) // with jump possibility, if filtered value is off by more than 10%
 {
@@ -285,6 +286,7 @@ void TaskBalance(void)
 {
 	int32_t nTemp;
 	int16_t sTemp;
+	int16_t sBalanceCellsRaw[6]; // quasi static
 	int16_t sBalanceCells[6]; // quasi static
 	uint8_t ucBalanceBits = 0;
 	uint8_t i;
@@ -308,22 +310,22 @@ void TaskBalance(void)
 			// push voltage of channel into array
 			sTemp = ADC_ScaleCell_mV( ADCA.CH3.RES );
 
-			sFilter( &sBalanceCells[i], &sTemp );
+			sFilter( &sBalanceCellsRaw[i], &sTemp );
 		}
 		ADC_StartConvCh3Pin( 10 );
 		OS_WaitTicks(OSALMBalWait,ADCWAITTIME);
 		sTemp = ADC_ScaleCell_mV( ADCA.CH3.RES );
-		sFilter( &sBalanceCells[0], &sTemp );
+		sFilter( &sBalanceCellsRaw[0], &sTemp );
 
 		// ok, now we have all cells, now calibrate them.
 
 		switch (g_ucCalCommand) {
 			case 1:
-				CalCellsLow( &sBalanceCells[0] );
+				CalCellsLow( &sBalanceCellsRaw[0] );
 				g_ucCalCommand = 0;
 				break;
 			case 2:
-				CalCellsHigh( &sBalanceCells[0] );
+				CalCellsHigh( &sBalanceCellsRaw[0] );
 				g_ucCalCommand = 0;
 				break;
 			default:
@@ -331,7 +333,7 @@ void TaskBalance(void)
 		}
 
 
-		CalibrateCells(&sBalanceCells[0]);
+		CalibrateCells(&sBalanceCellsRaw[0], &sBalanceCells[0]);
 
 
 
