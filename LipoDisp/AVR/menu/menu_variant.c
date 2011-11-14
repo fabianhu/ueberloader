@@ -233,21 +233,15 @@ void actSelTypeLiIon(void)
 	menuUp();
 }
 
-uint8_t calstep = 0;
-
 void actCalH(void)
 {
-	if (calstep == 1)
-	{
-		g_Tansfer_Action = eActCalHigh;
-		calstep = 0;
-	}
+	g_Tansfer_Action = eActCalHigh;
+
 }
 
 void actCalL(void)
 {
 	g_Tansfer_Action = eActCalLow;
-	calstep = 1;
 }
 
 void leavemenu(void)
