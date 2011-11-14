@@ -105,7 +105,8 @@ void TaskCommand(void)
 
 				ret = vWaitForResult(UCI_ACTION);
 				handleCommError(ret);
-				if (ret == 0) g_Tansfer_Action = eActNop; // reset on success
+				if (ret == 0)
+					g_Tansfer_Action = eActNop; // reset on success
 
 			}
 	    }
