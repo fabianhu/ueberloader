@@ -1,4 +1,4 @@
-void CalibrateCells(int16_t* values);
+void CalibrateCells(int16_t* raw, int16_t* out);
 
 void CalCellsLow(int16_t* sBalanceCells);
 
