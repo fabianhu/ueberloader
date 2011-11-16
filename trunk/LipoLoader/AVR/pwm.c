@@ -172,7 +172,7 @@ void vGovernor(	uint16_t _I_Set_mA,	uint16_t _I_Act_mA)
 {
 	uint16_t usPower = 0;
 	static uint16_t usStartstep = STARTMAX;
-	static uint8_t cn = 0;
+	static uint8_t ucStartCnt = 0;
 
 
 	if(_I_Set_mA <= 0 ) // ramp down!!! fixme! or discharge into battery!! supply volt goes high!!!
@@ -194,9 +194,9 @@ void vGovernor(	uint16_t _I_Set_mA,	uint16_t _I_Act_mA)
 // calculate startstep
 		if(abs(_I_Act_mA - _I_Set_mA) < _I_Set_mA/20 && _I_Set_mA > STARTUPLEVEL_mA/2)
 		{
-			if (++cn == 3)
+			if (++ucStartCnt == 3)
 			{
-				cn=0;
+				ucStartCnt=0;
 				if (usStartstep >0)
 					usStartstep--; // muss null werden.
 			}

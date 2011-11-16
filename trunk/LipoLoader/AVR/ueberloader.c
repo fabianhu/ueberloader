@@ -32,7 +32,7 @@ uint8_t g_bBalancerOverload; // True, if one cell has reached Voltage limit.
 extern int16_t g_asADCvalues[3]; // fast ADC values
 extern Calibration_t g_tCalibration;
 extern uint8_t g_ParReady;
-ChargerMode_t g_eChargerMode;
+ChargerMode_t g_eChargerMode = eModeAuto;
 
 // *********  Prototypes
 uint8_t GetCellcount(void);
@@ -231,6 +231,17 @@ void TaskGovernor(void)
 
 		if(g_tBattery_Info.eState == eBattCharging)
 		{
+
+			/// fixme sooo ganz neu:
+			/*
+			beide Sollwerte (U, I) auf 0..100% skalieren
+
+			diff = max(Uskal, Iskal))
+
+			dann normalen PID drüber hetzen.
+
+
+			*/
 			ccc++;
 			if(ccc == 20)
 				ccc = 0; // fixme adjust!
@@ -357,7 +368,7 @@ void TaskBalance(void)
 		OS_DISABLEALLINTERRUPTS;
 		g_tADCValues.Bandgap = ADCA.CH3.RES; // bit value for 1.10V ! at ref = Usupp/1.6
 		OS_ENABLEALLINTERRUPTS;
-		nTemp = ( 2048ul * 1088ul ) / g_tADCValues.Bandgap; // by knowing, that the voltage is 1.088V, we calculate the ADCRef voltage. // fixme !!!! Temperature test!!
+		nTemp = ( 2048ul * 1105ul ) / g_tADCValues.Bandgap; // 1088ul old value fixme // by knowing, that the voltage is 1.088V, we calculate the ADCRef voltage. // fixme !!!! Temperature test!!
 		OS_DISABLEALLINTERRUPTS;
 		g_tCalibration.sADCRef_mV = nTemp;
 		OS_ENABLEALLINTERRUPTS;
@@ -564,7 +575,7 @@ void ResetLastBatteryInfo(void)
 	OS_MutexRelease( OSMTXBattInfo );
 }
 
-#define CHARGEDELAY 20
+#define CHARGEDELAY 10 // equals 1s
 
 void TaskState(void)
 {
@@ -591,7 +602,7 @@ void TaskState(void)
 				// nicht vollständig angesteckt
 				switch(g_eChargerMode)
 				{
-					case eActModeAuto:
+					case eModeAuto:
 						// charge if ok.
 						j = 0;
 						to = GetCellcount();
@@ -613,7 +624,7 @@ void TaskState(void)
 							ResetLastBatteryInfo();
 						}
 						break;
-					case eActModeManual:
+					case eModeManual:
 						// Manual mode
 						if(GetCellcount() == g_tCommand.ucUserCellCount
 								&& g_tCommand.ucUserCellCount > 0) // fixme
@@ -629,7 +640,7 @@ void TaskState(void)
 							g_tBattery_Info.eState = eBattError; // set Error for Display
 						}
 						break;
-					case eActModeStop:
+					case eModeStop:
 						// Manual Stop mode
 						// how to get out of here? -> the mode is set manually to another.
 						break;
@@ -641,8 +652,8 @@ void TaskState(void)
 				// Charging!
 				switch(g_eChargerMode)
 				{
-					case eActModeAuto:
-					case eActModeManual:
+					case eModeAuto:
+					case eModeManual:
 						if(myBattVoltage >= g_tCommand.usVoltageSetpoint_mV
 								* g_tBattery_Info.ucNumberOfCells
 								&& myBattCurrent < usCommandCurrent / 10) // fixme 10 ?
@@ -655,7 +666,7 @@ void TaskState(void)
 							g_tBattery_Info.eState = eBattUnknown;
 						}
 						break;
-					case eActModeStop:
+					case eModeStop:
 						// Manual Stop mode
 						g_tBattery_Info.eState = eBattWaiting;
 						// how to get out of here? -> the mode is set manually to another.
