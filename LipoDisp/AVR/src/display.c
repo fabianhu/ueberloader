@@ -8,6 +8,7 @@
 #include <stdio.h>
 
 extern void menu_init(void);
+void linewriter(void);
 
 extern void handleCommError(uint8_t errNo);
 extern uint8_t getLastCommError(void);
@@ -111,32 +112,17 @@ void TaskDisplay(void)
 				// debug
 				//lcd_print( WHITE, BLACK, 1, 150, 200,"Particle: %i , %i   " ,(uint16_t)myP.position,(uint16_t)myP.velocity);
 			}
+			else if (s_ucKeyLock == 1)
+			{
+				if (bMenuCleared == 0)
+				{
+					lcd_clear();
+					bMenuCleared = 1;
+				}
+				linewriter();
+			}
 			else
 			{
-#if MODIFYCURRENTWHILECHARGE
-				static uint8_t oCMDsKnown =0;
-				if (gCommandsKnown)
-				{
-					
-					if (oCMDsKnown == 0)
-					{
-							HandOverValueToUI(	parCurrent.sValue,
-							parCurrent.sUpperLimit,
-							parCurrent.sLowerLimit,
-							parCurrent.sStepSize
-							);
-					}
-					
-					
-					// update charge current form particle.
-					parCurrent.sValue = GetvalueFromUI(); // fixme funktioniert nicht korrekt!!!
-					OS_MutexGet(OSMTXCommand);
-					g_tCommand.sCurrentSetpoint = parCurrent.sValue;
-					OS_MutexRelease OSMTXCommand);
-				}
-				oCMDsKnown = gCommandsKnown;
-#endif
-
 				if (bMenuCleared == 1)
 				{
 					lcd_clear();
@@ -159,7 +145,10 @@ void TaskDisplay(void)
 
 				for (i = 0; i < 6; ++i)
 				{
-					lcd_print(WHITE, BLACK, FONTSIZE, 0,ypos,"Cell%i/t%i/tmV/t%i uAh     " ,i,g_tBattery_Info.Cells[i].sVoltage_mV, g_tBattery_Info.Cells[i].unDisCharge_mAs/36);
+					if(i<g_tBattery_Info.ucNumberOfCells)
+						lcd_print(WHITE, BLACK, FONTSIZE, 0,ypos,"Cell%i/t%i/tmV/t%i uAh     " ,i,g_tBattery_Info.Cells[i].sVoltage_mV, g_tBattery_Info.Cells[i].unDisCharge_mAs/36);
+					else
+						lcd_print(GREY, BLACK, FONTSIZE, 0,ypos,"Cell%i/t%i/tmV/t%i uAh     " ,i,g_tBattery_Info.Cells[i].sVoltage_mV, g_tBattery_Info.Cells[i].unDisCharge_mAs/36);
 					ypos += LINEDIFF;
 				}
 
@@ -241,5 +230,41 @@ void TaskDisplay(void)
 		}
 #endif
 	}
+}
+
+uint8_t scaletoscreen(int16_t val,int16_t max)
+{
+	int32_t ret;
+
+	ret = (int32_t)val*240L/(int32_t)max;
+
+
+	return limit(240-ret,0,240);
+}
+
+
+void linewriter(void)
+{
+	//the screen is 320 px wide and 240 px high
+	static uint16_t g;
+	g++;
+	if (g == 320)
+	{
+		lcd_clear();
+		lcd_draw_line(YELLOW,0,30,320,30);
+		g =0;
+	}
+
+
+	lcd_draw_pixel( YELLOW,g,  scaletoscreen(g_tBattery_Info.sActVoltage_mV,25000)  );
+	lcd_draw_pixel( WHITE ,g,  scaletoscreen(g_tBattery_Info.sActCurrent_mA,2000)  );
+	lcd_draw_pixel( RED   ,g,  scaletoscreen(g_tBattery_Info.usPWM,4500)  );
+
+
+	lcd_print(YELLOW, BLACK, 1, 0, 32,"U: %i mV  " ,(uint16_t)g_tBattery_Info.sActVoltage_mV);
+	lcd_print(WHITE , BLACK, 1, 0, 64,"I: %i mA  " ,(uint16_t)g_tBattery_Info.sActCurrent_mA);
+	lcd_print(RED   , BLACK, 1, 0, 96,"P: %i %   " ,(uint16_t)g_tBattery_Info.usPWM);
+
+
 }
 
