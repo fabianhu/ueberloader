@@ -39,6 +39,8 @@ uint8_t GetCellcount(void);
 void StateMachineBattery(void);
 extern void emstop(uint8_t e);
 
+#define GOVTEST 1
+
 /*
 void usFilter(uint16_t* o, uint16_t* n)
 {
@@ -89,6 +91,15 @@ void sFilter(int16_t* o, int16_t* n) // with jump possibility, if filtered value
 		*o = out;
 	}
 }
+
+void RampUpDn(int16_t* ramped, int16_t target)
+{
+	if(*ramped < target)
+		(*ramped)++;
+	else if(*ramped > target)
+		(*ramped)--;
+}
+
 
 // ********* Stuff
 void TaskGovernor(void)
@@ -208,8 +219,8 @@ void TaskGovernor(void)
 				emstop( 3 );
 		}
 
-		static uint8_t errcntOverVolt = 0;
-		if(sU_out_act > 4250 * 6 && abs(sI_out_act_flt) > 100)
+		static uint8_t errcntOverVolt = 0; // fixme besser machen
+		if(sU_out_act > 4200 * 6 && abs(sI_out_act_flt) > 100)
 			errcntOverVolt++;
 		else
 			errcntOverVolt = 0;
@@ -227,36 +238,21 @@ void TaskGovernor(void)
 		// calculate Current setpoint
 		static int16_t I_Set_mA_Ramped = 0;
 
-		static uint8_t ccc = 0;
-
+#if GOVTEST == 0
 		if(g_tBattery_Info.eState == eBattCharging)
 		{
 
-			/// fixme sooo ganz neu:
-			/*
-			beide Sollwerte (U, I) auf 0..100% skalieren
-
-			diff = max(Uskal, Iskal))
-
-			dann normalen PID drüber hetzen.
-
-
-			*/
-			ccc++;
-			if(ccc == 20)
-				ccc = 0; // fixme adjust!
-
-			if(sU_out_act_flt < myUSetpoint && /* sConverterPower < MAXCONVERTERPOWER_W &&*/
+			if(/* sConverterPower < MAXCONVERTERPOWER_W &&*/
 			I_Set_mA_Ramped <= myISetpoint && g_bBalancerOverload == 0)
 			{
-				if(I_Set_mA_Ramped < myISetpoint && ccc == 0)
+				if(I_Set_mA_Ramped < myISetpoint )
 				{
 					I_Set_mA_Ramped++;
 				}
 			}
 			else // usU_in_act< MAX_SUPP_VOLT ? for discharge
 			{
-				if(I_Set_mA_Ramped > 0 && ccc == 0)
+				if(I_Set_mA_Ramped > 0 )
 				{
 					I_Set_mA_Ramped--; // maybe more?
 				}
@@ -265,26 +261,29 @@ void TaskGovernor(void)
 			if(myISetpoint <= 0)
 				I_Set_mA_Ramped = 0; // switch off on zero.
 
-			/*if(		sI_out_act > (myISetpoint+(myISetpoint/5)) ||
-			 usU_out_act > (myUSetpoint+(myUSetpoint/5))
-			 )
-			 {
-			 // overshoot prevention
-			 I_Set_mA_Ramped = 0;
-			 ;
-			 }
-			 else*/
-			;
 		}
 		else
 		{
 			I_Set_mA_Ramped = 0;
 		}
 
-		vGovernor( I_Set_mA_Ramped, sI_out_act );
+#else
+#warning GOVERNOR TESTMODE ACTIVE!!!
+		myUSetpoint = 5000;
 
-		//		//OS_WaitTicks(10);
-		//		ADCStartConvAll(); // start next conversion, which again triggers this task,
+		if(myISetpoint > 250)
+		{
+		// Governor test
+			RampUpDn(&I_Set_mA_Ramped,myISetpoint);
+		}
+		else
+		{
+			I_Set_mA_Ramped =0;
+		}
+#endif
+
+		vGovernor( I_Set_mA_Ramped, sI_out_act, myUSetpoint, sU_out_act );
+
 	}
 }
 
@@ -421,7 +420,7 @@ void TaskBalance(void)
 
 		onlyEveryTwoCycles++;
 
-		if(bBalance == 1 && g_tBattery_Info.eState == eBattCharging)
+		if(bBalance == 1 && g_tBattery_Info.eState == eBattCharging && GOVTEST == 0) // inactivate for governor test
 		{
 			mean /= g_tBattery_Info.ucNumberOfCells;
 			mean += 3; // add some difference to prevent swinging

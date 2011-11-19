@@ -15,12 +15,12 @@ void PWM_SetRatio(uint16_t r); // main / x = slow(refresh) frq.
 void SetEnableBuck(uint16_t usStartstep); // 1000-0 scaled; 0= fully started
 void SetEnableBoost(uint16_t usStartstep); // 1000-0 scaled; 0= fully started
 
-void vGovernor(	uint16_t _I_Set_mA,	uint16_t _I_Act_mA);
+void vGovernor(	int16_t _I_Set_mA,	int16_t _I_Act_mA, int16_t _U_Set_mV, int16_t _U_Act_mV );
 
-uint16_t PID(int16_t actual, int16_t set, uint16_t kP, int16_t kI, uint16_t kD, int16_t lowerLimit, int16_t upperLimit, uint8_t zero);
-void RampUpDn(uint16_t* ramped, uint16_t target, uint16_t upper,uint16_t lower);
+uint16_t PID(int32_t diff,  int32_t der, uint16_t kP, int16_t kI, uint16_t kD, int16_t lowerLimit, int16_t upperLimit, uint8_t zero);
+/*void RampUpDn(uint16_t* ramped, uint16_t target, uint16_t upper,uint16_t lower);
 void RampUp(uint16_t* ramped, uint16_t target);
-void RampDn(uint16_t* ramped, uint16_t target);
+void RampDn(uint16_t* ramped, uint16_t target);*/
 
 // Defines
 #define ENABLE_A_OFF	TCC0.CCBBUF = 0;
