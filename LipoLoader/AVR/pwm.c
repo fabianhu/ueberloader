@@ -166,44 +166,69 @@ void SetEnableBoost(uint16_t usStartstep) // 1000-0 scaled; 0= fully started
 	}
 }
 
-volatile uint8_t test = 0;
-
-void vGovernor(	uint16_t _I_Set_mA,	uint16_t _I_Act_mA)
+void CalcStartStepAndLimitI(int16_t* _I_Set_mA, uint16_t* usStartstep, int16_t _I_Act_mA)
 {
+	static uint8_t ucStartCnt;
+
+	if(*_I_Set_mA > STARTUPLEVEL_mA && *usStartstep > 0)
+		{
+				*_I_Set_mA = STARTUPLEVEL_mA;
+		}
+    // calculate startstep
+    if(abs(_I_Act_mA - *_I_Set_mA) < *_I_Set_mA/20 && *_I_Set_mA > STARTUPLEVEL_mA/2)
+		{
+			if (++ucStartCnt == 3)
+			{
+				ucStartCnt=0;
+				if (*usStartstep >0)
+					(*usStartstep)--; // muss null werden.
+			}
+		}
+ }
+
+// fixme take care of negative current (discharge)
+
+uint16_t kP = 0;
+uint16_t kI = 100;  // fixme festlegen
+uint16_t kD = 0;
+
+
+void vGovernor(	int16_t _I_Set_mA,	int16_t _I_Act_mA, int16_t _U_Set_mV, int16_t _U_Act_mV )
+{
+#define SCALEMULTIPLE 10000L
+	int32_t nAct_I_pct, nAct_U_pct;
+	static int32_t nActOld_pct;
+	int32_t nAct_pct, diff_pct;
+	int32_t nDer_pct;
+
 	uint16_t usPower = 0;
 	static uint16_t usStartstep = STARTMAX;
-	static uint8_t ucStartCnt = 0;
 
+	CalcStartStepAndLimitI(&_I_Set_mA, &usStartstep, _I_Act_mA);
+
+	// scale actuals to 0..10000; (that means, that the setpoint IS now SCALEMULTIPLE for BOTH)
+	nAct_U_pct = (_U_Act_mV * SCALEMULTIPLE) / _U_Set_mV;
+	nAct_I_pct = (_I_Act_mA * SCALEMULTIPLE) / _I_Set_mA;
+
+	//  diff = Set - max(Uskal, Iskal))
+
+	nAct_pct = max(nAct_U_pct, nAct_I_pct); // the bigger wins - so the governor limits the bigger one. (!) at negative Currents!
+	diff_pct = SCALEMULTIPLE - nAct_pct;
+
+	nDer_pct = nAct_pct-nActOld_pct;
+	nActOld_pct= nAct_pct;
 
 	if(_I_Set_mA <= 0 ) // ramp down!!! fixme! or discharge into battery!! supply volt goes high!!!
 	{
 		ENABLE_A_OFF;ENABLE_B_OFF;
 		usStartstep = STARTMAX; // reset, because of static !!
 		vPWM_Set(0,usStartstep);
-		PID(0,0,0,0,0,0,0,1);
+		PID(0,0,0,0,0,0,0,1); // "Zero the I"
 		usPower = 0; // reset for display.
 	}
 	else
 	{
-
-		if(_I_Set_mA > STARTUPLEVEL_mA && usStartstep > 0)
-		{
-				_I_Set_mA = STARTUPLEVEL_mA;
-		}
-
-// calculate startstep
-		if(abs(_I_Act_mA - _I_Set_mA) < _I_Set_mA/20 && _I_Set_mA > STARTUPLEVEL_mA/2)
-		{
-			if (++ucStartCnt == 3)
-			{
-				ucStartCnt=0;
-				if (usStartstep >0)
-					usStartstep--; // muss null werden.
-			}
-		}
-
-		usPower = PID(_I_Act_mA, _I_Set_mA, 0, 1, 0, 0, pwm_us_period_H*17/10, 0);
-
+	    usPower = PID(diff_pct, nDer_pct, kP, kI, kD, 0, pwm_us_period_H*17/10, 0); // fixme max value!
 		vPWM_Set(usPower,usStartstep);
 	}
 
@@ -242,28 +267,20 @@ void RampDn(uint16_t* ramped, uint16_t target)
 		(*ramped)--;
 }*/
 
-uint16_t PID(int16_t actual, int16_t set, uint16_t kP, int16_t kI, uint16_t kD, int16_t lowerLimit, int16_t upperLimit, uint8_t zero)
+uint16_t PID(int32_t diff,  int32_t der, uint16_t kP, int16_t kI, uint16_t kD, int16_t lowerLimit, int16_t upperLimit, uint8_t zero)
 {
 
 #define I_REDUCTION 64
 
 	int32_t res;
-	int16_t P,D;
+	int32_t P,D;
 	//static uint8_t r=0;
 	static int32_t I=0;
-	static int16_t old_actual;
-	int16_t diff;
-	int16_t der;
 
-	diff = set-actual;
-
-	der = actual-old_actual;
-	old_actual= actual;
-
-	P = (kP * diff)/8192;
-	I = I + (kI*diff);
+	P = ((int32_t)kP * diff)/1024L; // reduce effect
+	I = I + ((int32_t)kI*diff)/1024L;
 	I = limit(I,(uint32_t)lowerLimit*I_REDUCTION,(uint32_t)upperLimit*I_REDUCTION); // wind-up protection
-	D = der*kD;
+	D = (der*(int32_t)kD)/1024L;
 
 	// reset integrator
 	if (zero)
@@ -276,28 +293,6 @@ uint16_t PID(int16_t actual, int16_t set, uint16_t kP, int16_t kI, uint16_t kD, 
 	{
 		asm("nop"); // fixme breakpoint only
 	}
-
-/*
-
-	r++;
-	if (r == 10)
-	{
-		if(actual < set)
-		{
-			I+=255;
-		}
-		else if (actual > set)
-		{
-			I-=255;
-		}
-		r=0;
-	}
-	P=0;D=0;
-
-	I = limit(I,(uint32_t)lowerLimit*255,(uint32_t)upperLimit*255);
-
-	if (zero) I = 0;
-	*/
 
 	res = P + I/I_REDUCTION + D;
 
