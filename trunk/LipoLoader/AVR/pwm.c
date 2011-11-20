@@ -169,15 +169,30 @@ void SetEnableBoost(uint16_t usStartstep) // 1000-0 scaled; 0= fully started
 void CalcStartStepAndLimitI(int16_t* _I_Set_mA, uint16_t* usStartstep, int16_t _I_Act_mA)
 {
 	static uint8_t ucStartCnt;
+	static int16_t Limit;
 
-	if(*_I_Set_mA > STARTUPLEVEL_mA && *usStartstep > 0)
+
+	if(*_I_Set_mA > STARTUPLEVEL_mA && *usStartstep > 0) // reduce current setpoint, if starting
+	{
+			*_I_Set_mA = STARTUPLEVEL_mA;
+			Limit = STARTUPLEVEL_mA;
+	}
+
+	if(*_I_Set_mA > STARTUPLEVEL_mA && *usStartstep == 0) // if starting is over -> un-limit I (but slow!)
+	{
+		if(Limit < *_I_Set_mA  )
 		{
-				*_I_Set_mA = STARTUPLEVEL_mA;
+			Limit++;
+			*_I_Set_mA = Limit;
 		}
+		else
+			Limit = 10000; // don't do anything with the setpoint
+	}
+
     // calculate startstep
     if(abs(_I_Act_mA - *_I_Set_mA) < *_I_Set_mA/20 && *_I_Set_mA > STARTUPLEVEL_mA/2)
 		{
-			if (++ucStartCnt == 3)
+			if (++ucStartCnt == 3) // every third cycle
 			{
 				ucStartCnt=0;
 				if (*usStartstep >0)
@@ -186,37 +201,65 @@ void CalcStartStepAndLimitI(int16_t* _I_Set_mA, uint16_t* usStartstep, int16_t _
 		}
  }
 
-// fixme take care of negative current (discharge)
+// FIXME take care of negative current (discharge)
 
-uint16_t kP = 0;
-uint16_t kI = 100;  // fixme festlegen
-uint16_t kD = 0;
+#define KP 0  // FIXME festlegen
+#define KI 1000
+#define KD 0
+
+uint16_t kP = KP;
+uint16_t kI = KI;
+uint16_t kD = KD;
 
 
-void vGovernor(	int16_t _I_Set_mA,	int16_t _I_Act_mA, int16_t _U_Set_mV, int16_t _U_Act_mV )
+void vGovernor(	int16_t _I_Set_mA,	int16_t _I_Act_mA )
 {
-#define SCALEMULTIPLE 10000L
-	int32_t nAct_I_pct, nAct_U_pct;
-	static int32_t nActOld_pct;
-	int32_t nAct_pct, diff_pct;
+#define SCALEMULTIPLE_U 10000L
+#define SCALEMULTIPLE_I 10000L
+//	int32_t nAct_I_diff_pct, nAct_U_diff_pct;
+	//static int32_t nDerOld_pct;
+	//int32_t nAct_pct, diff;
 	int32_t nDer_pct;
 
 	uint16_t usPower = 0;
 	static uint16_t usStartstep = STARTMAX;
 
-	CalcStartStepAndLimitI(&_I_Set_mA, &usStartstep, _I_Act_mA);
+	CalcStartStepAndLimitI(&_I_Set_mA, &usStartstep, _I_Act_mA); // *********************** Do before calculating with I setpoint !!!
 
-	// scale actuals to 0..10000; (that means, that the setpoint IS now SCALEMULTIPLE for BOTH)
-	nAct_U_pct = (_U_Act_mV * SCALEMULTIPLE) / _U_Set_mV;
-	nAct_I_pct = (_I_Act_mA * SCALEMULTIPLE) / _I_Set_mA;
+//	// scale diffs to 0..10000; (that means, that the setpoint IS now SCALEMULTIPLE for BOTH)
+//	nAct_U_diff_pct = SCALEMULTIPLE_U - ((int32_t)_U_Act_mV * SCALEMULTIPLE_U) / (int32_t)_U_Set_mV; 	// ex: 10000 - 4150 * 10000 / 4200 = 20
+//																				// ex: 10000 - 4201 * 10000 / 4200 = -2
+//																				// ex: 10000 - 24200 * 10000 / 24300 = 41
+//
+//	nAct_I_diff_pct = SCALEMULTIPLE_I - ((int32_t)_I_Act_mA * SCALEMULTIPLE_I) / (int32_t)_I_Set_mA; 	// ex: 10000 - 990  * 10000 / 1000 = 1000
+//																				// ex: 10000 - 1001 * 10000 / 1000 = -10
+//																				// ex: 10000 - 1 * 10000 / 300 = 9966
+// 	diff_pct = min(nAct_U_diff_pct, nAct_I_diff_pct);
 
-	//  diff = Set - max(Uskal, Iskal))
 
-	nAct_pct = max(nAct_U_pct, nAct_I_pct); // the bigger wins - so the governor limits the bigger one. (!) at negative Currents!
-	diff_pct = SCALEMULTIPLE - nAct_pct;
+	int32_t diff = _I_Set_mA - _I_Act_mA; // positive = missing value
 
-	nDer_pct = nAct_pct-nActOld_pct;
-	nActOld_pct= nAct_pct;
+
+	// wenn positiv, dannn gas
+	// wenn beide positiv, dann der kleinere
+	// wenn beide negativ, dann der kleinere
+	// wenn Spannung negativ, dann die.
+	//
+	// the bigger wins - so the governor limits the bigger one. (!) change at negative Currents!
+
+	/*
+	 * Nochmal in Text, was das werden soll:
+	 * Wenn die Spannung unter dem Sollwert ist, regeln wir den Strom.
+	 * Wenn sie Spannung erreicht ist, regeln wir die.
+	 *
+	 * Entweder brauchen wir 2 PID sets oder eine passende Skalierung.
+	 * */
+
+
+
+
+	nDer_pct = 0;
+	//nDerOld_pct= nAct_pct;
 
 	if(_I_Set_mA <= 0 ) // ramp down!!! fixme! or discharge into battery!! supply volt goes high!!!
 	{
@@ -228,7 +271,7 @@ void vGovernor(	int16_t _I_Set_mA,	int16_t _I_Act_mA, int16_t _U_Set_mV, int16_t
 	}
 	else
 	{
-	    usPower = PID(diff_pct, nDer_pct, kP, kI, kD, 0, pwm_us_period_H*17/10, 0); // fixme max value!
+		usPower = PID(diff, nDer_pct, kP, kI, kD, 0, pwm_us_period_H*17/10, 0); // fixme max value!
 		vPWM_Set(usPower,usStartstep);
 	}
 
@@ -238,46 +281,23 @@ void vGovernor(	int16_t _I_Set_mA,	int16_t _I_Act_mA, int16_t _U_Set_mV, int16_t
 	g_tBattery_Info.usPWM = usPower;
 	g_tBattery_Info.usPWMStep = usStartstep;
 	g_tBattery_Info.sISetpoint = _I_Set_mA;
-	g_tBattery_Info.sDiff = _I_Act_mA - _I_Set_mA;
+	g_tBattery_Info.sDiff = diff;
+	g_tBattery_Info.usConverterPower_W = nDer_pct;
 	OS_MutexRelease(OSMTXBattInfo);
 }
 
-/*
-void RampUpDn(uint16_t* ramped, uint16_t target)
-{
-	if(*ramped < target)
-		(*ramped)++;
-	else if(*ramped > target)
-		(*ramped)--;
-}
-
-void RampUp(uint16_t* ramped, uint16_t target)
-{
-	if(*ramped < target)
-		(*ramped)++;
-	else if(*ramped > target)
-		(*ramped)= target;
-}
-
-void RampDn(uint16_t* ramped, uint16_t target)
-{
-	if(*ramped < target)
-		(*ramped)= target;
-	else if(*ramped > target)
-		(*ramped)--;
-}*/
 
 uint16_t PID(int32_t diff,  int32_t der, uint16_t kP, int16_t kI, uint16_t kD, int16_t lowerLimit, int16_t upperLimit, uint8_t zero)
 {
 
-#define I_REDUCTION 64
+#define I_REDUCTION 255 // to get smoother I, it calculates in multiples of this.
 
 	int32_t res;
 	int32_t P,D;
 	//static uint8_t r=0;
 	static int32_t I=0;
 
-	P = ((int32_t)kP * diff)/1024L; // reduce effect
+	P = ((int32_t)kP * diff)/1024L; // reduce effect for bigger parameters
 	I = I + ((int32_t)kI*diff)/1024L;
 	I = limit(I,(uint32_t)lowerLimit*I_REDUCTION,(uint32_t)upperLimit*I_REDUCTION); // wind-up protection
 	D = (der*(int32_t)kD)/1024L;
@@ -304,6 +324,33 @@ uint16_t PID(int32_t diff,  int32_t der, uint16_t kP, int16_t kI, uint16_t kD, i
 
 
 /// BELOW CODE FRAGMENTS
+
+/*
+void RampUpDn(uint16_t* ramped, uint16_t target)
+{
+	if(*ramped < target)
+		(*ramped)++;
+	else if(*ramped > target)
+		(*ramped)--;
+}
+
+void RampUp(uint16_t* ramped, uint16_t target)
+{
+	if(*ramped < target)
+		(*ramped)++;
+	else if(*ramped > target)
+		(*ramped)= target;
+}
+
+void RampDn(uint16_t* ramped, uint16_t target)
+{
+	if(*ramped < target)
+		(*ramped)= target;
+	else if(*ramped > target)
+		(*ramped)--;
+}*/
+
+
 
 // sync timers
 /*if (TCC0.PERBUF > TCD0.PERBUF)
