@@ -40,7 +40,7 @@ void TaskCommand(void)
 	while(1)
 	{
 		OS_WaitAlarm(OSALMCommandRepeat);
-		OS_SetAlarm(OSALMCommandRepeat,1000);
+		OS_SetAlarm(OSALMCommandRepeat,600);// FIXME only for linewriter !!! ansonsten 1000 !
 
 
 		if(gCommandsKnown == 0)
