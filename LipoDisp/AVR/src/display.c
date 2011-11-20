@@ -71,9 +71,9 @@ void TaskDisplay(void)
 		lcd_print(GREY, BLACK, FONTSIZE, 0, 220,"Time: %i ms     " ,(uint16_t)t2/100);
 #else
 		OS_WaitAlarm( OSALMWaitDisp );
-		OS_SetAlarm( OSALMWaitDisp, 500 );
+		OS_SetAlarm( OSALMWaitDisp, 300 ); // FIXME only for linewriter !!! ansonsten 500 !
 
-		if(g_GotNewComand) // fixme was hat das hier verloren?
+		if(g_GotNewComand) // FIXME was hat das hier verloren? -> umziehen!
 		{
 			// gespeicherte Commands vom Slave in Parameter eintragen.
 			OS_MutexGet( OSMTXCommand );
@@ -251,19 +251,24 @@ void linewriter(void)
 	if (g == 320)
 	{
 		lcd_clear();
-		lcd_draw_line(YELLOW,0,30,320,30);
+		//lcd_draw_line(YELLOW,0,30,320,30);
 		g =0;
 	}
 
 
-	lcd_draw_pixel( YELLOW,g,  scaletoscreen(g_tBattery_Info.sActVoltage_mV,25000)  );
+	lcd_draw_pixel( YELLOW,g,  scaletoscreen(g_tBattery_Info.sActVoltage_mV-18000,25200-18000)  );
+	lcd_draw_pixel( GREY  ,g,  scaletoscreen(g_tBattery_Info.sISetpoint,2000)  );
 	lcd_draw_pixel( WHITE ,g,  scaletoscreen(g_tBattery_Info.sActCurrent_mA,2000)  );
 	lcd_draw_pixel( RED   ,g,  scaletoscreen(g_tBattery_Info.usPWM,4500)  );
+	lcd_draw_pixel( GREEN ,g,  scaletoscreen(g_tBattery_Info.sDiff+5000,10000)  );
 
 
-	lcd_print(YELLOW, BLACK, 1, 0, 32,"U: %i mV  " ,(uint16_t)g_tBattery_Info.sActVoltage_mV);
-	lcd_print(WHITE , BLACK, 1, 0, 64,"I: %i mA  " ,(uint16_t)g_tBattery_Info.sActCurrent_mA);
-	lcd_print(RED   , BLACK, 1, 0, 96,"P: %i %   " ,(uint16_t)g_tBattery_Info.usPWM);
+	lcd_print(YELLOW, BLACK, 1, 0, 16,"U: %i mV  " ,(uint16_t)g_tBattery_Info.sActVoltage_mV);
+	lcd_print(GREY  , BLACK, 1, 0, 80,"S: %i mA  " ,(uint16_t)g_tBattery_Info.sISetpoint);
+	lcd_print(WHITE , BLACK, 1, 0, 32,"I: %i mA  " ,(uint16_t)g_tBattery_Info.sActCurrent_mA);
+	lcd_print(RED   , BLACK, 1, 0, 48,"P: %i %   " ,(uint16_t)g_tBattery_Info.usPWM);
+	lcd_print(GREEN , BLACK, 1, 0, 64,"D: %i Z   " ,(uint16_t)g_tBattery_Info.sDiff);
+
 
 
 }
