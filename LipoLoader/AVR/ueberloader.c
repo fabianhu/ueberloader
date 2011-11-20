@@ -39,7 +39,7 @@ uint8_t GetCellcount(void);
 void StateMachineBattery(void);
 extern void emstop(uint8_t e);
 
-#define GOVTEST 1
+#define GOVTEST 0
 
 /*
 void usFilter(uint16_t* o, uint16_t* n)
@@ -71,15 +71,27 @@ void sFilter(int16_t* o, int16_t* n) // with jump possibility, if filtered value
 	int32_t temp;
 	int16_t out;
 
-	if(*o == 0) // accelerate up-scale from 0
+	temp = (int32_t)*o * 9L + (int32_t)*n;
+	out = ( temp + 5L ) / 10L; // "halbes dazu, wg Rundungsfehler"
+
+	// check, if difference larger than 10% of old.
+	if(abs(*n-*o) > *o / 10)
 	{
-		out = *n;
+		*o = *n;
 	}
 	else
 	{
-		temp = *o * 9ul + *n;
-		out = ( temp + 5 ) / 10; // "halbes dazu, wg Rundungsfehler"
+		*o = out;
 	}
+}
+
+void sFilterV(int16_t* o, int16_t* n, uint8_t base) // with jump possibility, if filtered value is off by more than 10%
+{
+	int32_t temp;
+	int16_t out;
+
+	temp = (int32_t)*o * (int32_t)(base-1) + (int32_t)*n;
+	out = ( temp + base/2 ) / base; // "halbes dazu, wg Rundungsfehler"
 
 	// check, if difference larger than 10% of old.
 	if(abs(*n-*o) > *o / 10)
@@ -167,7 +179,7 @@ void TaskGovernor(void)
 
 		sU_in_act = ADC_ScaleVolt_mV( g_asADCvalues[0] );
 		sU_out_act = ADC_ScaleVolt_mV( g_asADCvalues[1] );
-		;
+		sFilterV( &sU_out_act_flt, &sU_out_act,16 );
 
 		if(( ADCA.CH2.MUXCTRL & ( 0xf << 3 ) ) == ADC_CH_MUXPOS_PIN7_gc) // is high current config...
 		{
@@ -182,26 +194,21 @@ void TaskGovernor(void)
 					- (uint32_t)g_tCalibration.sADCOffset );
 			sU_out_act -= sI_out_act * 2 / 19; // Low current resistor value (0.105R) * Current
 		}
-
-		sFilter( &sU_out_act_flt, &sU_out_act );
-		OS_MutexGet( OSMTXBattInfo );
-		g_tBattery_Info.sActVoltage_mV = sU_out_act_flt;
-		OS_MutexRelease( OSMTXBattInfo );
-
 		if(sI_out_act > 2500)
 			ADC_ActivateHiCurrentMeas();
 		else
 			if(sI_out_act < 2000)
 				ADC_ActivateLoCurrentMeas();
 
-		int32_t nConverterPower_W = ( ( sI_out_act )
-				* ( sU_out_act /*- usU_in_act*/) ) / 1000 / 1000; // fixme converter pwr
-
-
 		sFilter( &sI_out_act_flt, &sI_out_act );
+
+
+		// int32_t nConverterPower_W = ( ( sI_out_act ) * ( sU_out_act /*- usU_in_act*/) ) / 1000 / 1000; // fixme converter pwr
+
 		OS_MutexGet( OSMTXBattInfo );
+		g_tBattery_Info.sActVoltage_mV = sU_out_act_flt;
 		g_tBattery_Info.sActCurrent_mA = sI_out_act_flt;
-		g_tBattery_Info.usConverterPower_W = (uint16_t)nConverterPower_W; // fixme remove
+		// g_tBattery_Info.usConverterPower_W = (uint16_t)abs(nConverterPower_W); // fixme wieder rein
 		OS_MutexRelease( OSMTXBattInfo );
 
 		// just in case...
@@ -242,19 +249,20 @@ void TaskGovernor(void)
 		if(g_tBattery_Info.eState == eBattCharging)
 		{
 
-			if(/* sConverterPower < MAXCONVERTERPOWER_W &&*/
-			I_Set_mA_Ramped <= myISetpoint && g_bBalancerOverload == 0)
+			// this task runs 1000 times per s; therefore the resulting I ramp is 1A/s. this is quite fast.
+			static uint8_t ccc;
+
+			ccc++;
+			if(ccc > 20 || ( g_bBalancerOverload == 1 && ccc > 5))
 			{
-				if(I_Set_mA_Ramped < myISetpoint )
+				ccc =0;
+				if(/* sConverterPower < MAXCONVERTERPOWER_W &&*/ g_bBalancerOverload == 0 && sU_out_act_flt < myUSetpoint)
 				{
-					I_Set_mA_Ramped++;
+					RampUpDn(&I_Set_mA_Ramped,myISetpoint);
 				}
-			}
-			else // usU_in_act< MAX_SUPP_VOLT ? for discharge
-			{
-				if(I_Set_mA_Ramped > 0 )
+				else
 				{
-					I_Set_mA_Ramped--; // maybe more?
+					RampUpDn(&I_Set_mA_Ramped,0);
 				}
 			}
 
@@ -282,7 +290,11 @@ void TaskGovernor(void)
 		}
 #endif
 
-		vGovernor( I_Set_mA_Ramped, sI_out_act, myUSetpoint, sU_out_act );
+
+
+
+
+		vGovernor( I_Set_mA_Ramped, sI_out_act );
 
 	}
 }
@@ -406,7 +418,7 @@ void TaskBalance(void)
 				j++;
 			}
 		}
-		if(j)
+		if(j>0)
 		{
 			g_bBalancerOverload = 1;
 		}

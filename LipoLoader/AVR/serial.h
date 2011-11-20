@@ -45,10 +45,10 @@ typedef struct Battery_Info_tag
 	uint32_t unTimeCharging_s;
 	uint16_t usPWM; // fixme temporary-remove
 	uint16_t usPWMStep; // fixme temporary-remove
-	uint16_t usConverterPower_W; // fixme temporary-remove
+	uint16_t usConverterPower_W;
 	int16_t  sISetpoint;
 	int16_t  sVSetpoint;
-	int16_t  sDiff;
+	int16_t  sDiff;// fixme temporary-remove
 	uint16_t ErrCnt;
 	uint8_t  LastErr;
 
