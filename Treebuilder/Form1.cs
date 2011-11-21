@@ -335,6 +335,7 @@ namespace Treebuilder
             m_alRememberNodeNames.Clear();
 
             textBoxResult.Clear();
+            textBoxResult2.Clear();
 
             TreeNode tn = treeView1.Nodes[0];
 
@@ -375,42 +376,37 @@ namespace Treebuilder
             textBoxResult.AppendText("//******** END OF AUTO-GENERATED HEADER DO NOT EDIT!!! *********" + Environment.NewLine + Environment.NewLine);
 
 
-            textBoxResult.AppendText( Environment.NewLine + Environment.NewLine);
+       
 
-            textBoxResult.AppendText("//******** START OF AUTO-GENERATED CODE DO NOT EDIT!!! *********" + Environment.NewLine);
+            textBoxResult2.AppendText("//******** START OF AUTO-GENERATED CODE DO NOT EDIT!!! *********" + Environment.NewLine);
 
             // Process the text definitions
-            textBoxResult.AppendText("// Text definitions" + Environment.NewLine);
-            textBoxResult.AppendText("" + ProcessNode(tbdef1.Text, tn) + Environment.NewLine);
+            textBoxResult2.AppendText("// Text definitions" + Environment.NewLine);
+            textBoxResult2.AppendText("" + ProcessNode(tbdef1.Text, tn) + Environment.NewLine);
             m_NodeCounterForID = 0; // fixme rename
             tNodeTagInfo nt;
             nt = (tNodeTagInfo)tn.Tag;
             nt.ID = m_NodeCounterForID++;
             tn.Tag = nt;
             processTextDefinitions(tn);
-            textBoxResult.AppendText(Environment.NewLine);
+            textBoxResult2.AppendText(Environment.NewLine);
 
         
             // Parameter list
-            textBoxResult.AppendText("// Parameter definitions" + Environment.NewLine);
+            textBoxResult2.AppendText("// Parameter definitions" + Environment.NewLine);
             ProcessParameters(treeView1.Nodes[0]);
-            textBoxResult.AppendText(Environment.NewLine);
+            textBoxResult2.AppendText(Environment.NewLine);
 
 
             // Process the MENUE LIST
-            textBoxResult.AppendText("\t\t\t//Name\tAct\tPar\tJmp\tParent\tMemory" + Environment.NewLine);
-            textBoxResult.AppendText("MenuItem_t m_items[MENUESIZE] = { " + Environment.NewLine);
-            //            textBoxResult.AppendText("MenuItem_t m_items[MENUESIZE] = {" + Environment.NewLine);	
-            textBoxResult.AppendText("\t" + ProcessNode(tbmen1.Text, tn) + " " + Environment.NewLine);
+            textBoxResult2.AppendText("\t\t\t//Name\tAct\tPar\tJmp\tParent\tMemory" + Environment.NewLine);
+            textBoxResult2.AppendText("MenuItem_t m_items[MENUESIZE] = { " + Environment.NewLine);
+            //            textBoxResult2.AppendText("MenuItem_t m_items[MENUESIZE] = {" + Environment.NewLine);	
+            textBoxResult2.AppendText("\t" + ProcessNode(tbmen1.Text, tn) + " " + Environment.NewLine);
             processMenuList(tn);
-            textBoxResult.AppendText("};" + Environment.NewLine);
+            textBoxResult2.AppendText("};" + Environment.NewLine);
 
-            textBoxResult.AppendText(Environment.NewLine +"//******** END OF AUTO-GENERATED CODE DO NOT EDIT!!! *********" + Environment.NewLine);
-
-
-            // copy all to clipboard
-            Clipboard.SetData(DataFormats.Text, textBoxResult.Text);
-            
+            textBoxResult2.AppendText(Environment.NewLine +"//******** END OF AUTO-GENERATED CODE DO NOT EDIT!!! *********" + Environment.NewLine);
 
         }
 
@@ -418,9 +414,9 @@ namespace Treebuilder
         {
             if (((tNodeTagInfo)tn.Tag).type == eMenueElementType.parameter)
             {
-                textBoxResult.AppendText("Parameter_t " + ((tNodeTagInfo)tn.Tag).info + " = {");
-                textBoxResult.AppendText("\t0, " + ((tNodeTagInfo)tn.Tag).ParLower + ", " + ((tNodeTagInfo)tn.Tag).ParUpper + ", " + ((tNodeTagInfo)tn.Tag).ParStepSize + ", " + ((tNodeTagInfo)tn.Tag).ParType);
-                textBoxResult.AppendText("}; " + Environment.NewLine);
+                textBoxResult2.AppendText("Parameter_t " + ((tNodeTagInfo)tn.Tag).info + " = {");
+                textBoxResult2.AppendText("\t0, " + ((tNodeTagInfo)tn.Tag).ParLower + ", " + ((tNodeTagInfo)tn.Tag).ParUpper + ", " + ((tNodeTagInfo)tn.Tag).ParStepSize + ", " + ((tNodeTagInfo)tn.Tag).ParType);
+                textBoxResult2.AppendText("}; " + Environment.NewLine);
             }
             foreach (TreeNode tn2 in tn.Nodes)
             {
@@ -509,7 +505,7 @@ namespace Treebuilder
                     m_alRememberNodeNames.Add(tn.Text);
 
 
-                    textBoxResult.AppendText("" + ProcessNode(tbdef1.Text, tn) + " " + Environment.NewLine);
+                    textBoxResult2.AppendText("" + ProcessNode(tbdef1.Text, tn) + " " + Environment.NewLine);
                 }
                     tNodeTagInfo tag;
                     tag = (tNodeTagInfo)tn.Tag;
@@ -530,7 +526,7 @@ namespace Treebuilder
         {
             foreach (TreeNode tn in ano.Nodes)
             {
-                textBoxResult.AppendText("\t" +ProcessNode(tbmen1.Text, tn) + " " + Environment.NewLine);
+                textBoxResult2.AppendText("\t" +ProcessNode(tbmen1.Text, tn) + " " + Environment.NewLine);
             }
             foreach (TreeNode tn in ano.Nodes)
             {
@@ -863,6 +859,20 @@ namespace Treebuilder
             }
 
         }
+
+        private void textBoxResult_Click(object sender, EventArgs e)
+        {
+            // copy all to clipboard
+            Clipboard.SetData(DataFormats.Text, textBoxResult.Text);
+        }
+
+        private void textBoxResult2_Click(object sender, EventArgs e)
+        {
+            // copy all to clipboard
+            Clipboard.SetData(DataFormats.Text, textBoxResult2.Text);
+        }
+
+        
 
 
      
