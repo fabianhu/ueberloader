@@ -78,17 +78,38 @@ void TaskDisplay(void)
 			// gespeicherte Commands vom Slave in Parameter eintragen.
 			OS_MutexGet( OSMTXCommand );
 
+
+			// switch (g_tCommand.ucMode) // FIXME cases für dei einzelnen Settings anlegen.
+
+//			switch(g_eBattMode)
+//				{
+//					case eBattModeLiPo:
+//						break;
+//					case eBattModeLiFe:
+//						break;
+//					case eBattModeLiIon:
+//						break;
+//					case eBattModeStorage:
+//						break;
+//					case eBattModeDisch:
+//						break;
+//					default:
+//						break;
+//				}
+
+
+
 			parCurrent.sValue = g_tCommand.sCurrentSetpoint;
-			parVoltage.sValue = g_tCommand.usVoltageSetpoint_mV;
+			parChVoltLiPo.sValue = g_tCommand.usVoltageSetpoint_mV; // fixme only LiPo active!!!!
 			parCellCount.sValue = g_tCommand.ucUserCellCount;
 
 			parMaxcap.sValue = g_tCommand.unQ_max_mAs / 3600; // mAs in mAh
 			parMaxtime.sValue = g_tCommand.usT_max_s;
-			parBalActVolt.sValue = g_tCommand.usMinBalanceVolt_mV;
+			parBalActVoltLiPo.sValue = g_tCommand.usMinBalanceVolt_mV;
 
 			parPWMfrequency.sValue = g_tCommand.basefrequency;
 			parRefreshPeriod.sValue = g_tCommand.refreshrate;
-			parBalActVolt.sValue = g_tCommand.usMinBalanceVolt_mV;
+			parBalActVoltLiPo.sValue = g_tCommand.usMinBalanceVolt_mV;
 
 			OS_MutexRelease( OSMTXCommand );
 

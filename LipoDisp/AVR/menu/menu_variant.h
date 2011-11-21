@@ -1,9 +1,11 @@
 /* definitions for menu */
 
 
+
+
 //******** START OF AUTO-GENERATED HEADER DO NOT EDIT!!! *********
 
- #define	MENUESIZE	39	// number of menu itmes (array size)
+ #define	MENUESIZE	49	// number of menu itmes (array size)
  #define	MAX_ITEM_NAME_CHARLENGTH	19	// number of menu itmes (array size)
 // Enum definitions
 typedef enum
@@ -15,35 +17,43 @@ typedef enum
 	min,
 	ms,
 	mV,
+	onoff,
 } eParameterType_t;
 
 // Parameter externals
 extern Parameter_t parCurrent;
-extern Parameter_t parVoltage;
-extern Parameter_t parCellCount;
-extern Parameter_t parLiPoChVolt;
-extern Parameter_t parLiPoStVolt;
-extern Parameter_t parLiPoDisVolt;
-extern Parameter_t parLiFeVolt;
-extern Parameter_t parLiIonVolt;
-extern Parameter_t parBalActVolt;
+extern Parameter_t parChVoltLiPo;
+extern Parameter_t parBalActVoltLiPo;
+extern Parameter_t parBalOnLiPo;
+extern Parameter_t parVoltLiIo;
+extern Parameter_t parBalActVoltLiIo;
+extern Parameter_t parBalOnLiIo;
+extern Parameter_t parVoltLiFe;
+extern Parameter_t parBalActVoltLiFe;
+extern Parameter_t parBalOnLiFe;
+extern Parameter_t parChtVoltStorage;
+extern Parameter_t parBalActVoltStor;
+extern Parameter_t parBalOnStor;
+extern Parameter_t parVoltDisch;
+extern Parameter_t parBalOnDisch;
 extern Parameter_t parMaxcap;
 extern Parameter_t parMaxtime;
 extern Parameter_t parPWMfrequency;
 extern Parameter_t parRefreshPeriod;
+extern Parameter_t parCellCount;
 
 // Action Prototypes
-void ActionChargeMethodFull (void);
-void ActionChargeMethodStorage (void);
-void ActionChargeMethodDischarge (void);
-void actSelTypeLiPo (void);
-void actSelTypeLiFe (void);
-void actSelTypeLiIon (void);
+void leavemenu (void);
+void ActionChargeModeLiPo (void);
+void ActionChargeModeLiIo (void);
+void ActionChargeModeLiFe (void);
+void ActionChargeModeStorage (void);
+void ActionChargeModeDischarge (void);
 void actCalH (void);
 void actCalL (void);
-void leavemenu (void);
 
 //******** END OF AUTO-GENERATED HEADER DO NOT EDIT!!! *********
+
 
 
 
