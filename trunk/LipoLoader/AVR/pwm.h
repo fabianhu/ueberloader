@@ -17,7 +17,7 @@ void SetEnableBoost(uint16_t usStartstep); // 1000-0 scaled; 0= fully started
 
 void vGovernor(	int16_t _I_Set_mA,	int16_t _I_Act_mA );
 
-uint16_t PID(int32_t diff,  int32_t der, uint16_t kP, int16_t kI, uint16_t kD, int16_t lowerLimit, int16_t upperLimit, uint8_t zero);
+uint16_t PID(int32_t diff,  int32_t* I, uint16_t kP, int16_t kI, uint16_t kD, int16_t lowerLimit, int16_t upperLimit);
 /*void RampUpDn(uint16_t* ramped, uint16_t target, uint16_t upper,uint16_t lower);
 void RampUp(uint16_t* ramped, uint16_t target);
 void RampDn(uint16_t* ramped, uint16_t target);*/

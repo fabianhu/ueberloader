@@ -204,7 +204,7 @@ void CalcStartStepAndLimitI(int16_t* _I_Set_mA, uint16_t* usStartstep, int16_t _
 // FIXME take care of negative current (discharge)
 
 #define KP 0  // FIXME festlegen
-#define KI 1000
+#define KI 300
 #define KD 0
 
 uint16_t kP = KP;
@@ -261,17 +261,19 @@ void vGovernor(	int16_t _I_Set_mA,	int16_t _I_Act_mA )
 	nDer_pct = 0;
 	//nDerOld_pct= nAct_pct;
 
+	static int32_t I_Integrator=0;
+
 	if(_I_Set_mA <= 0 ) // ramp down!!! fixme! or discharge into battery!! supply volt goes high!!!
 	{
 		ENABLE_A_OFF;ENABLE_B_OFF;
 		usStartstep = STARTMAX; // reset, because of static !!
 		vPWM_Set(0,usStartstep);
-		PID(0,0,0,0,0,0,0,1); // "Zero the I"
+		I_Integrator = 0; // "Zero the I"
 		usPower = 0; // reset for display.
 	}
 	else
 	{
-		usPower = PID(diff, nDer_pct, kP, kI, kD, 0, pwm_us_period_H*17/10, 0); // fixme max value!
+		usPower = PID(diff, &I_Integrator, kP, kI, kD, 0, pwm_us_period_H*17/10); // fixme max value!
 		vPWM_Set(usPower,usStartstep);
 	}
 
@@ -287,34 +289,19 @@ void vGovernor(	int16_t _I_Set_mA,	int16_t _I_Act_mA )
 }
 
 
-uint16_t PID(int32_t diff,  int32_t der, uint16_t kP, int16_t kI, uint16_t kD, int16_t lowerLimit, int16_t upperLimit, uint8_t zero)
+uint16_t PID(int32_t diff,  int32_t* I, uint16_t kP, int16_t kI, uint16_t kD, int16_t lowerLimit, int16_t upperLimit)
 {
-
 #define I_REDUCTION 255 // to get smoother I, it calculates in multiples of this.
 
 	int32_t res;
 	int32_t P,D;
-	//static uint8_t r=0;
-	static int32_t I=0;
 
 	P = ((int32_t)kP * diff)/1024L; // reduce effect for bigger parameters
-	I = I + ((int32_t)kI*diff)/1024L;
-	I = limit(I,(uint32_t)lowerLimit*I_REDUCTION,(uint32_t)upperLimit*I_REDUCTION); // wind-up protection
-	D = (der*(int32_t)kD)/1024L;
+	*I = *I + ((int32_t)kI*diff)/1024L;
+	*I = limit(*I,(uint32_t)lowerLimit*I_REDUCTION,(uint32_t)upperLimit*I_REDUCTION); // wind-up protection
+	D = 0;//(der*(int32_t)kD)/1024L;
 
-	// reset integrator
-	if (zero)
-	{
-		P = 0;
-		I = 0;
-		D = 0;
-	}
-	else
-	{
-		asm("nop"); // fixme breakpoint only
-	}
-
-	res = P + I/I_REDUCTION + D;
+	res = P + *I/I_REDUCTION + D;
 
 	return limit(res,lowerLimit,upperLimit);
 }
