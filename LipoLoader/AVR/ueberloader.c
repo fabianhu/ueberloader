@@ -243,55 +243,56 @@ void TaskGovernor(void)
 		OS_ENABLEALLINTERRUPTS;
 
 		// calculate Current setpoint
-		static int16_t I_Set_mA_Ramped = 0;
+		int16_t I_Set_mA_Ramped = 0;
+		static int32_t U_Integrator = 0;
 
 #if GOVTEST == 0
 		if(g_tBattery_Info.eState == eBattCharging)
 		{
-
+/*	Regler-Prinzip:
+	Zwei Regelkreise
+	Äußerer Regelkreis Spannung; Ausgang: Strom-Sollwert für Inneren Regler
+*/
 			// this task runs 1000 times per s; therefore the resulting I ramp is 1A/s. this is quite fast.
-			static uint8_t ccc;
+//			static uint8_t ccc;
+//
+//			ccc++;
+//			if(ccc > 20 || ( g_bBalancerOverload == 1 && ccc > 5))
+//			{
+//				ccc =0;
+//				if(/* sConverterPower < MAXCONVERTERPOWER_W &&*/ g_bBalancerOverload == 0 && sU_out_act_flt < myUSetpoint)
+//				{
+//					RampUpDn(&I_Set_mA_Ramped,myISetpoint);
+//				}
+//				else
+//				{
+//					RampUpDn(&I_Set_mA_Ramped,0);
+//				}
+//			}
 
-			ccc++;
-			if(ccc > 20 || ( g_bBalancerOverload == 1 && ccc > 5))
-			{
-				ccc =0;
-				if(/* sConverterPower < MAXCONVERTERPOWER_W &&*/ g_bBalancerOverload == 0 && sU_out_act_flt < myUSetpoint)
-				{
-					RampUpDn(&I_Set_mA_Ramped,myISetpoint);
-				}
-				else
-				{
-					RampUpDn(&I_Set_mA_Ramped,0);
-				}
-			}
+
+			I_Set_mA_Ramped = PID(myUSetpoint-sU_out_act_flt, &U_Integrator,0,500,0,0,myISetpoint);
+
 
 			if(myISetpoint <= 0)
+			{
 				I_Set_mA_Ramped = 0; // switch off on zero.
+				U_Integrator=0; // reset integrator!!
+			}
 
 		}
 		else
 		{
 			I_Set_mA_Ramped = 0;
+			U_Integrator=0; // reset integrator!!
 		}
 
 #else
 #warning GOVERNOR TESTMODE ACTIVE!!!
 		myUSetpoint = 5000;
 
-		if(myISetpoint > 250)
-		{
-		// Governor test
-			RampUpDn(&I_Set_mA_Ramped,myISetpoint);
-		}
-		else
-		{
-			I_Set_mA_Ramped =0;
-		}
+		I_Set_mA_Ramped = PID(myUSetpoint-sU_out_act_flt, &U_Integrator,0,10,0,0,myISetpoint);
 #endif
-
-
-
 
 
 		vGovernor( I_Set_mA_Ramped, sI_out_act );
