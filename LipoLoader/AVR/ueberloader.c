@@ -664,8 +664,8 @@ void TaskState(void)
 				// Charging!
 				switch(g_eChargerMode)
 				{
+					case eModeManual: // fixme NOT YET IMPEMENTED
 					case eModeAuto:
-					case eModeManual:
 						if(myBattVoltage >= g_tCommand.usVoltageSetpoint_mV
 								* g_tBattery_Info.ucNumberOfCells
 								&& myBattCurrent < usCommandCurrent / 10) // fixme 10 ?
