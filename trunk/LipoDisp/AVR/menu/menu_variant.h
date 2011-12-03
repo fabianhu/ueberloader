@@ -61,7 +61,7 @@ void actCalL (void);
 
 
 //Menusettings
-#define ITEMS_PER_PAGE 			6				//nr of items per menu page
+#define ITEMS_PER_PAGE 			8				//nr of items per menu page
 #define MAX_SRAM_ITEM_NAME_LENGHT 	16	//max nr of chars for SRAM item names
 #define SCROLL_LINE_DISTANCE		2			
 
