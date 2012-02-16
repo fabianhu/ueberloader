@@ -94,15 +94,16 @@ void vPWM_Set(uint16_t usPower, uint16_t usStartstep)
 	}
 	else if(usPower <= pwm_us_period_H + MINSWITCHOFFPWM)
 	{
+		TCC0.PERBUF = pwm_us_period_L;
+		TCC0.CCABUF = TCC0.PERBUF - MINSWITCHOFFPWM;
+
 		uint32_t u;
 		u = MINSWITCHOFFPWM - (usPower - pwm_us_period_H);
 		u = u*100*pwm_us_period_div / MINSWITCHOFFPWM; // result = 1..10 (*100)
 		u = pwm_us_period_H * u / 100;
+
 		TCD0.PERBUF = pwm_us_period_H + u;
 		TCD0.CCABUF = TCD0.PERBUF - MINSWITCHOFFPWM;
-
-		TCC0.PERBUF = pwm_us_period_L;
-		TCC0.CCABUF = TCC0.PERBUF - MINSWITCHOFFPWM;
 
 		SetEnableBoost(usStartstep);
 		//EVSYS.STROBE = (1<<0); // sync timers
