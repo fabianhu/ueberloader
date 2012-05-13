@@ -23,7 +23,6 @@ OS_DeclareTask(TaskState,150);
 
 #include "serial.h"
 extern Battery_Info_t g_tBattery_Info;
-extern uint16_t glTestMutexBlocked;
 
 extern uint8_t gCommErr;
 extern uint16_t gCommErrCnt;
@@ -196,7 +195,7 @@ void OS_ErrorHook(uint8_t ErrNo)
 }
 #endif
 
-void emstop(uint8_t e) // fixme emstop reason speichern!
+void emstop(uint8_t e)
 {
 	cli(); // stop OS
 
@@ -213,15 +212,17 @@ void emstop(uint8_t e) // fixme emstop reason speichern!
 	// Light up LED
 	PORTD.DIRSET = 0b1000;
 	PORTD.OUTSET = 0b1000;
-
+/*	fixme brauchen wir das noch?
 	uint8_t* b = (uint8_t*)EEPROM_END;
 
-	while (eeprom_read_byte((void*)b) != 0xff) // Suche vom Ende her
+
+   while (eeprom_read_byte((void*)b) != 0xff && ) // Suche vom Ende her
 	{
 		b--;
 	}
 
 	eeprom_update_byte((void*)b , e);
+*/
 
 	while(1)
 	{
