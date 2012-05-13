@@ -11,12 +11,12 @@
 #include "pwm.h"
 #include "usart.h"
 #include "serial.h"
-#include <avr/eeprom.h>
+#include "eeprom.h"
+#include "crc.h"
 
 //OS_DeclareQueue(DemoQ,10,4);
 // Prototypes
-uint16_t calcCRC16(uint16_t* c, uint16_t len);
-uint16_t calcCRC16S(uint8_t* c, uint8_t len);
+
 
 // ******** Globals
 
@@ -36,7 +36,6 @@ ChargerMode_t g_eChargerMode = eModeAuto;
 
 // *********  Prototypes
 uint8_t GetCellcount(void);
-void StateMachineBattery(void);
 extern void emstop(uint8_t e);
 
 #define GOVTEST 0
@@ -104,14 +103,7 @@ void TaskGovernor(void)
 		emstop( 255 ); // Command_t is not 16bit aligned. Not checkable at compile time.
 	}
 
-	uint16_t crcEE = 0, crcRD = 0;
-	// read parameters from eeprom
-	eeprom_read_block( (uint8_t*)&g_tCommand, EEPROM_START, sizeof(Command_t) );
-	//check CRC
-	eeprom_read_block( (uint8_t*)&crcEE, (void*)EEPROM_START
-			+ sizeof(Command_t), 2 );
-	crcRD = calcCRC16S( (uint8_t*)&g_tCommand, sizeof(Command_t) );
-	if(crcRD != crcEE)
+	if(eeprom_ReadBlockWCRC((uint8_t*)&g_tCommand, EEPROM_COMMAND_START, sizeof(Command_t)))
 	{
 		// set defaults: todo fill with useful values
 		g_tCommand.basefrequency = 100;
@@ -613,7 +605,7 @@ void TaskState(void)
 					case eModeManual:
 						// Manual mode
 						if(GetCellcount() == g_tCommand.ucUserCellCount
-								&& g_tCommand.ucUserCellCount > 0) // fixme
+								&& g_tCommand.ucUserCellCount > 0) // fixme manual mode aktivieren
 						{
 							OS_WaitTicks(OSALMStateWait,100);
 							g_tBattery_Info.ucNumberOfCells
@@ -642,7 +634,7 @@ void TaskState(void)
 					case eModeAuto:
 						if(myBattVoltage >= g_tCommand.usVoltageSetpoint_mV
 								* g_tBattery_Info.ucNumberOfCells
-								&& myBattCurrent < usCommandCurrent / 10) // fixme 10 ?
+								&& myBattCurrent < usCommandCurrent / 10)
 						{
 							g_tBattery_Info.eState = eBattFull;
 						}
@@ -660,8 +652,6 @@ void TaskState(void)
 					default:
 						break;
 				}
-
-				// fixme stop mode???
 				break;
 
 				//		case eBattEmpty:

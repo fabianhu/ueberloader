@@ -202,7 +202,6 @@ void CalcStartStepAndLimitI(int16_t* _I_Set_mA, uint16_t* usStartstep, int16_t _
 		}
  }
 
-// FIXME take care of negative current (discharge)
 
 #define KP 0  // FIXME festlegen
 #define KI 300
@@ -274,11 +273,11 @@ void vGovernor(	int16_t _I_Set_mA,	int16_t _I_Act_mA )
 	}
 	else
 	{
-		usPower = PID(diff, &I_Integrator, kP, kI, kD, 0, pwm_us_period_H*17/10); // fixme max value!
+		usPower = PID(diff, &I_Integrator, kP, kI, kD, 0, pwm_us_period_H*17/10); // todo max value fixieren
 		vPWM_Set(usPower,usStartstep);
 	}
 
-	// fixme additional info to be removed ?
+	// todo additional info to be removed ?
 	OS_MutexGet(OSMTXBattInfo);
 	//pwm und pwmdings
 	g_tBattery_Info.usPWM = usPower;

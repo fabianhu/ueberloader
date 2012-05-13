@@ -62,10 +62,10 @@ ISR(OS_ScheduleISR) //__attribute__ ((naked,signal)) // Timer isr
 
 // *********  Internal scheduling and priority stuff
 
-uint8_t alarmID; // fixme debug wieder rein
 void OS_Int_ProcessAlarms(void)
 {
 
+	uint8_t alarmID;
 	OS_TRACE(4);
 
 	// handling of OS_Wait / Alarms

@@ -9,8 +9,8 @@
 #include "ueberloader.h"
 #include "usart.h"
 #include "pwm.h"
+#include "eeprom.h"
 #include <string.h>
-#include <avr/eeprom.h>
 
 // prototypes:
 
@@ -18,15 +18,11 @@ uint8_t HandleSerial(UCIFrame_t *_RXFrame);
 uint8_t UCIGetCRC( UCIFrame_t* pU);
 void UCISendBlockCrc( UCIFrame_t* pU);
 
-uint16_t calcCRC16(uint16_t* c, uint16_t len);
-uint16_t calcCRC16S ( uint8_t* c, uint8_t len );
-
 // globals
 uint8_t g_ParReady =0; 
 
 
 extern Battery_Info_t g_tBattery_Info;
-extern ADC_Values_t g_tADCValues;
 extern Command_t g_tCommand ;
 extern ChargerMode_t g_eChargerMode;
 
@@ -35,7 +31,6 @@ extern ChargerMode_t g_eChargerMode;
 UCIFrame_t g_tUCIRXFrame;
 uint8_t    g_ucRXLength;
 UCIFrame_t g_tUCITXFrame;
-extern uint16_t gTest;
 
 uint8_t gCommErr = 0; // fixme remove
 uint16_t gCommErrCnt = 0;
@@ -58,7 +53,7 @@ ISR(USARTE0_RXC_vect)
 		OS_SetAlarm(OSALMCommTimeout,5); // reset Alarm, if stuff arrives
 		if(g_tUCIRXFrame.len == g_ucRXLength)
 		{
-			OS_SetEvent/*fromISR fixme*/(OSTSKCommRX,OSEVTDataRecvd);
+			OS_SetEvent/*fromISR fixme out of ISR !!! special handling for XMEGA needed.*/(OSTSKCommRX,OSEVTDataRecvd);
 		}
 	}
 	else
@@ -99,8 +94,6 @@ void TaskCommRX(void)
 
 }
 
-uint16_t crc=0;
-
 extern uint8_t g_ucCalCommand;
 
 uint8_t HandleSerial(UCIFrame_t *_RXFrame)
@@ -139,10 +132,8 @@ uint8_t HandleSerial(UCIFrame_t *_RXFrame)
 			len = 1;
 			break;
 		case UCI_WRITE_EEPROM:
-			eeprom_update_block((uint8_t*)&g_tCommand, EEPROM_START, sizeof(Command_t));
-			// add crc check!!!
-			crc = calcCRC16S((uint8_t*)&g_tCommand,sizeof(Command_t));
-			eeprom_update_block((uint8_t*)&crc, (void*)(EEPROM_START + sizeof(Command_t)), 2);
+
+			eeprom_WriteBlockWCRC((uint8_t*)&g_tCommand, EEPROM_COMMAND_START, sizeof(Command_t));
 
 			PWM_Setfrequency(g_tCommand.basefrequency); // in kHz!!!
 			// prepare ok answer:
@@ -176,6 +167,7 @@ uint8_t HandleSerial(UCIFrame_t *_RXFrame)
 			break;
 		default:
 			len = 0;
+			break;
 		}
 
 

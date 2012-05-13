@@ -11,7 +11,7 @@
 #include <avr/io.h>
 
 //Masters Commands:
-#define UCI_SET_CMDs 			22 // Set actual command struct (Command_t) (no answer expected todo
+#define UCI_SET_CMDs 			22 // Set actual command struct (Command_t) (no answer expected)
 #define UCI_GET_CMDs			33 // Get Actual command setting (Command_t)
 #define UCI_GET_OPVs 			44 // Get actual Operating values (Battery_Info_t)
 #define UCI_WRITE_EEPROM		66 // Write settings into eeprom of slave
@@ -43,12 +43,12 @@ typedef struct Battery_Info_tag
 	uint32_t unCharge_mAs;
 	uint32_t unCharge_mWs;
 	uint32_t unTimeCharging_s;
-	uint16_t usPWM; // fixme temporary-remove
-	uint16_t usPWMStep; // fixme temporary-remove
+	uint16_t usPWM; // todo temporary-remove
+	uint16_t usPWMStep; // todo temporary-remove
 	uint16_t usConverterPower_W;
 	int16_t  sISetpoint;
 	int16_t  sVSetpoint;
-	int16_t  sDiff;// fixme temporary-remove
+	int16_t  sDiff;// todo temporary-remove
 	uint16_t ErrCnt;
 	uint8_t  LastErr;
 
