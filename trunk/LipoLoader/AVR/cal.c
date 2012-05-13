@@ -76,6 +76,7 @@ void CalCellsLow(int16_t* values)
 	{
 		t_CalibData.anCellOffset[i] = FindOffset( values[i] );
 	}
+
 }
 
 void CalCellsHigh(int16_t* values)
@@ -84,6 +85,8 @@ void CalCellsHigh(int16_t* values)
 	{
 		t_CalibData.anCellGain[i] = FindGain( values[i], 4200, t_CalibData.anCellOffset[i] );
 	}
+
+	eeprom_WriteBlockWCRC((uint8_t*)&t_CalibData,(void*)(EEPROM_CALIB_START),sizeof(t_CalibData_t));
 }
 
 void CalibrateCells(int16_t* raw, int16_t* out)

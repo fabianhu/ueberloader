@@ -135,8 +135,11 @@ void TaskGovernor(void)
 	int16_t sZeroHiMeas = g_asADCvalues[2];
 
 	//ADC_ActivateLoCurrentMeas();
+    CalibInit();
 
 	OS_WaitTicks(OSALMWaitGov,200); // wait for first ADC loop...
+
+
 
 	while(1)
 	{
