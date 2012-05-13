@@ -41,30 +41,6 @@ extern void emstop(uint8_t e);
 
 #define GOVTEST 0
 
-/*
-void usFilter(uint16_t* o, uint16_t* n)
-{
-	uint32_t temp;
-	if(*o == 0)
-		*o = *n;
-	else
-	{
-		temp = *o * 9ul + *n;
-		*o = ( temp + 5 ) / 10; // "halbes dazu, wg Rundungsfehler"
-	}
-}
-
-void sFilter_plain(int16_t* o, int16_t* n)
-{
-	int32_t temp;
-	if(*o == 0)
-		*o = *n;
-	else
-	{
-		temp = *o * 9ul + *n;
-		*o = ( temp + 5 ) / 10; // "halbes dazu, wg Rundungsfehler"
-	}
-}*/
 
 void sFilter(int16_t* o, int16_t* n) // with jump possibility, if filtered value is off by more than 10%
 {
@@ -85,7 +61,7 @@ void sFilter(int16_t* o, int16_t* n) // with jump possibility, if filtered value
 	}
 }
 
-void sFilterV(int16_t* o, int16_t* n, uint8_t base) // with jump possibility, if filtered value is off by more than 10%
+void sFilterVar(int16_t* o, int16_t* n, uint8_t base) // with jump possibility, if filtered value is off by more than 10%
 {
 	int32_t temp;
 	int16_t out;
@@ -179,7 +155,7 @@ void TaskGovernor(void)
 
 		sU_in_act = ADC_ScaleVolt_mV( g_asADCvalues[0] );
 		sU_out_act = ADC_ScaleVolt_mV( g_asADCvalues[1] );
-		sFilterV( &sU_out_act_flt, &sU_out_act,16 );
+		sFilterVar( &sU_out_act_flt, &sU_out_act,16 );
 
 		if(( ADCA.CH2.MUXCTRL & ( 0xf << 3 ) ) == ADC_CH_MUXPOS_PIN7_gc) // is high current config...
 		{
@@ -340,7 +316,6 @@ void TaskBalance(void)
 		sTemp = ADC_ScaleCell_mV( ADCA.CH3.RES );
 		sFilter( &sBalanceCellsRaw[0], &sTemp );
 
-		// ok, now we have all cells, now calibrate them.
 
 		switch (g_ucCalCommand) {
 			case 1:
@@ -355,9 +330,8 @@ void TaskBalance(void)
 				break;
 		}
 
-
+		// ok, now we have all cells, now apply the calibration
 		CalibrateCells(&sBalanceCellsRaw[0], &sBalanceCells[0]);
-
 
 
 		ADC_StartConvCh3Pin( 11 ); // temperature external2
