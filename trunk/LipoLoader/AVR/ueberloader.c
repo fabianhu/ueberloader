@@ -4,6 +4,16 @@
 
  (c) 2010 Fabian Huslik
  */
+
+// fixme refresh kürzer
+// fixme refresh periode einstellbar
+// fixme kalibrierung der Gesamtspannungsmessung / Spannungsabfall über Shunt berücksichtigen
+// fixme Spannungs plausibilisierung unempfindlicher
+// Frequenz auf 60kHz festnageln
+// fixme Balancer Algo ist grober Käse!!!
+// fixme Strommessung / Bereichsumschaltung HI ist FALSCH!
+// todo Leistungslimitierung
+
 #include "OS/FabOS.h"
 #include "ueberloader.h"
 #include "adc.h"
