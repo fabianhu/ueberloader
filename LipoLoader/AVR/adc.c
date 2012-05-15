@@ -218,33 +218,31 @@ void ADC_StartConvInt(uint8_t c)
 
 int16_t ADC_ScaleCell_mV(int16_t in)
 {
-	return (int32_t)in * (int32_t)g_tCalibration.sADCRef_mV / 957L; // 957 = (2048 / factor of amplification)
+	return ((int32_t)in-(int32_t)ADCZeroOffset) * (int32_t)g_tCalibration.sADCRef_mV / 957L; // 957 = (2048 / factor of amplification (2,14))
 }
 
 int16_t ADC_ScaleVolt_mV(int16_t in)
 {
-	return (int32_t)in * (int32_t)g_tCalibration.sADCRef_mV / 2048L * 13L; // 158 = (2048 / factor of amplification (13))
+	return ((int32_t)in-(int32_t)ADCZeroOffset) * (int32_t)g_tCalibration.sADCRef_mV / 2048L * 13L; // 158 = (2048 / factor of amplification (13))
 }
 
-int16_t ADC_ScaleLowAmp_mA(int16_t in)
+int16_t ADC_ScaleLowAmp_mA(int16_t raw)
 {
-	return (int32_t)in * (int32_t)g_tCalibration.sADCRef_mV / 2048L * 100L / 63L;
+	return ((int32_t)raw-(int32_t)ADCZeroOffset) * (int32_t)g_tCalibration.sADCRef_mV / 2048L * 100L / 63L;
 	// ADC / 2048 * Uref  / ( 0.105 * 6 )
 	//                          |     |
 	//                          |     -> Amplification factor (OpAmp)
 	//                          -> Resistor
 }
 
-int16_t ADC_GetZeroOffset(void)
+// fixme Strommessung / Bereichsumschaltung HI ist FALSCH!
+int16_t ADC_ScaleHighAmp_mA(int16_t raw, int16_t zero)
 {
-	return 	ADCZeroOffset;
-}
-
-int16_t ADC_ScaleHighAmp_mA(int16_t in)
-{
-	return (int32_t)in * (int32_t)g_tCalibration.sADCRef_mV / 2048L * 1000L / 95L;
+	return ((int32_t)raw-(int32_t)zero) * (int32_t)g_tCalibration.sADCRef_mV / 2048L * 1000L / 95L;
 		// ADC / 2048 * Uref  / ( 0.005 * 19 )
 		//                          |     |
 		//                          |     -> Amplification factor (OpAmp)
 		//                          -> Resistor
 }
+// 933 mv / 10A
+

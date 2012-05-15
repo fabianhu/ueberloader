@@ -7,12 +7,11 @@
 
 // fixme refresh kürzer
 // fixme refresh periode einstellbar
-// fixme kalibrierung der Gesamtspannungsmessung / Spannungsabfall über Shunt berücksichtigen
+// todo kalibrierung der Gesamtspannungsmessung / Spannungsabfall über Shunt berücksichtigen -> war schon drin, checken.
 // Spannungs plausibilisierung unempfindlicher : OK
 // Balancer Limit aktiviert: check!
 // todo Frequenz auf 60kHz festnageln
 // Balancer Algo verbessert: check!
-// fixme Strommessung / Bereichsumschaltung HI ist FALSCH!
 // todo Leistungslimitierung
 // todo Temperaturmessung / Limit
 
@@ -60,12 +59,10 @@ extern void emstop(uint8_t e);
 // ********* Stuff
 void TaskGovernor(void)
 {
-
-
 	int16_t sU_in_act, sU_out_act;
-	int16_t /*sU_in_act_flt,*/sU_out_act_flt;
-	int16_t sI_out_act, sI_out_act_flt; // mV / mA
-
+	static int16_t /*sU_in_act_flt,*/sU_out_act_flt;
+	static int16_t sI_out_act, sI_out_act_flt; // mV / mA
+	static int16_t sZeroHiMeas;
 
 	if(sizeof(Command_t) % 2 == 1)
 	{
@@ -89,6 +86,7 @@ void TaskGovernor(void)
 	g_ParReady = 1;
 
 	vPWM_Init();
+	ADCinit(); // call only in governor task
 
 	OS_WaitTicks(OSALMWaitGov,1); // wait during timer sync
 
@@ -99,9 +97,9 @@ void TaskGovernor(void)
 	ADC_ActivateHiCurrentMeas();
 
 	EVSYS.STROBE = ( 1 << 7 ); //fire event 7, which triggers the ADC
-	OS_WaitTicks(OSALMWaitGov,1); // wait during first ADC conversion
+	OS_WaitTicks(OSALMWaitGov,100); // wait during first ADC conversion
 
-	int16_t sZeroHiMeas = g_asADCDMAvalues[2];
+	sZeroHiMeas = g_asADCDMAvalues[2]; // todo filter over several samples
 
 	//ADC_ActivateLoCurrentMeas();
     CalibInit();
@@ -117,22 +115,25 @@ void TaskGovernor(void)
 
 		OS_WaitTicks(OSALMWaitGov,1); // wait during ADC conversion
 
-		sU_in_act = ADC_ScaleVolt_mV( g_asADCDMAvalues[0] - ADC_GetZeroOffset());
-		sU_out_act = ADC_ScaleVolt_mV( g_asADCDMAvalues[1] - ADC_GetZeroOffset());
+		sU_in_act = ADC_ScaleVolt_mV( g_asADCDMAvalues[0]);
+		sU_out_act = ADC_ScaleVolt_mV( g_asADCDMAvalues[1]); // corrected below!
 		sFilterVar( &sU_out_act_flt, &sU_out_act,16 );
 
 		if(( ADCA.CH2.MUXCTRL & ( 0xf << 3 ) ) == ADC_CH_MUXPOS_PIN7_gc) // is high current config...
 		{
 			// high current
-			sI_out_act = ADC_ScaleHighAmp_mA( g_asADCDMAvalues[2] - sZeroHiMeas );
+			sI_out_act = ADC_ScaleHighAmp_mA( g_asADCDMAvalues[2], sZeroHiMeas );
+			// voltage measurement correction
 			sU_out_act -= sI_out_act * 1 / 125; // High current resistor value (0.005R)(+3mR MosFet) * Current
 		}
 		else
 		{
 			// low current
-			sI_out_act = ADC_ScaleLowAmp_mA( g_asADCDMAvalues[2] - ADC_GetZeroOffset());
+			sI_out_act = ADC_ScaleLowAmp_mA( g_asADCDMAvalues[2]);
+			// voltage measurement correction
 			sU_out_act -= sI_out_act * 2 / 19; // Low current resistor value (0.105R) * Current
 		}
+
 		if(sI_out_act > 2500)
 			ADC_ActivateHiCurrentMeas();
 		else
