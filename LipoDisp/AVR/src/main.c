@@ -7,6 +7,9 @@
 
 */
 
+// fixme Automatische Tastensperre beim Laden
+// Strom Setpoint ist global der gleiche
+
 #include "../OS/FabOS.h"
 #include <avr/eeprom.h>
 
@@ -22,9 +25,9 @@ OS_DeclareTask(TaskCommand,400);
 // *********  Prototypes
 void CPU_init(void);
 void emstop(uint8_t e);
-void touchtest(void);
-extern void handleCommError(uint8_t errNo);
-extern uint8_t getLastCommError(void);
+//void touchtest(void);
+//extern void handleCommError(uint8_t errNo);
+//extern uint8_t getLastCommError(void);
 
 // Global variables
 static volatile uint16_t a,b,c,d; // stack space remaining
