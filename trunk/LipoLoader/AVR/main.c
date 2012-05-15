@@ -42,8 +42,6 @@ int main(void)
 {
 	CPU_init();
 
-	ADCinit();
-
     uint8_t i;
 
 	OS_CreateTask(TaskGovernor, OSTSKGovernor);
