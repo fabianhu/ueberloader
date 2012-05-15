@@ -1,6 +1,5 @@
 #include "touchpad.h"
 #include "../OS/FabOS.h"
-#include "../lcd/lcd.h" // fixme remove
 #include "../comm/serial.h"
 #include "../menu/menu.h"
 #include "../menu/menu_variant.h"
