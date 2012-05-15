@@ -10,21 +10,21 @@
 extern void menu_init(void);
 void linewriter(void);
 
-extern void handleCommError(uint8_t errNo);
+
 extern uint8_t getLastCommError(void);
-extern uint16_t GetvalueFromUI(void);
-extern void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower, uint16_t stepsize);
-extern void touchtest(void);
+
+
+
 
 extern uint8_t CommErrArr[]; // fixme debug only!!!
 extern uint8_t CommErrArrIdx;
 
-extern particle_t myP; // touchpad.c
+
 extern uint8_t s_ucKeyLock; // touchpad.c
 extern Battery_Info_t g_tBattery_Info; // serial_master.c
 extern uint8_t g_GotNewComand; // command.c
 extern Command_t g_tCommand; // command.c // attention!!!!!! not task safe!!!
-extern uint8_t gCommandsKnown; // command.c
+
 
 uint8_t g_bMenuActive = 0;//DISPLAYTEST; // 1 = the menue is active
 

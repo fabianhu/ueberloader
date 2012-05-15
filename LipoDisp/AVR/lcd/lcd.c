@@ -930,7 +930,7 @@ void lcd_print(uint8_t font_red, uint8_t font_green, uint8_t font_blue, uint8_t 
 
 char *flash2ram(char *ptr_string)
 {
-	static char returnstring[40]={}, *ptr_returnstring; // fixme anders, Speicher schonen!
+	static char returnstring[40]={}, *ptr_returnstring; // todo anders, Speicher schonen!
 	//copy string 
     ptr_returnstring=returnstring;
 	while (pgm_read_byte(ptr_string))
