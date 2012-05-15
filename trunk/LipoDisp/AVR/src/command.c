@@ -3,6 +3,7 @@
 #include "../comm/serial.h"
 #include "../comm/usart_variant.h"
 #include "../comm/usart.h"
+#include "../comm/crc.h"
 #include <string.h>
 
 // Globals:

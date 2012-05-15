@@ -1,4 +1,4 @@
-#include "OS/FabOS.h"
+#include <avr/io.h>
 
 /// <summary>
 /// CRC16S
