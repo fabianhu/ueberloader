@@ -13,16 +13,8 @@
 #endif
 //@}
 
-typedef struct Calibration_tag
-{
-	int16_t sADCOffset;
-	uint16_t usCPUTemp85C;
-	int16_t sADCRef_mV;
-}Calibration_t;
 
-
-
-uint16_t ADCinit(void); //(returns offset)
+void ADCinit(void); //(returns offset)
 
 void ADC_ActivateHiCurrentMeas(void);
 void ADC_ActivateLoCurrentMeas(void);
@@ -33,3 +25,4 @@ int16_t ADC_ScaleCell_mV(int16_t in);
 int16_t ADC_ScaleVolt_mV(int16_t in);
 int16_t ADC_ScaleLowAmp_mA(int16_t in);
 int16_t ADC_ScaleHighAmp_mA(int16_t in);
+int16_t ADC_GetZeroOffset(void);

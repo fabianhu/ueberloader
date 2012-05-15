@@ -32,7 +32,7 @@ UCIFrame_t g_tUCIRXFrame;
 uint8_t    g_ucRXLength;
 UCIFrame_t g_tUCITXFrame;
 
-uint8_t gCommErr = 0; // fixme remove
+uint8_t gCommErr = 0; // todo remove?
 uint16_t gCommErrCnt = 0;
 
 ISR(USARTE0_RXC_vect)

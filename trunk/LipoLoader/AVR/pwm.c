@@ -6,7 +6,7 @@
 #include "pwm.h"
 #include "serial.h"
 #include "OS/FabOS.h"
-#include "ueberloader.h"
+#include "filter.h"
 
 extern Battery_Info_t g_tBattery_Info;
 
@@ -203,7 +203,7 @@ void CalcStartStepAndLimitI(int16_t* _I_Set_mA, uint16_t* usStartstep, int16_t _
  }
 
 
-#define KP 0  // FIXME festlegen
+#define KP 0
 #define KI 300
 #define KD 0
 
@@ -263,7 +263,7 @@ void vGovernor(	int16_t _I_Set_mA,	int16_t _I_Act_mA )
 
 	static int32_t I_Integrator=0;
 
-	if(_I_Set_mA <= 0 ) // ramp down!!! fixme! or discharge into battery!! supply volt goes high!!!
+	if(_I_Set_mA <= 0 ) // ramp down!!! todo! or discharge into battery!! supply volt goes high!!!
 	{
 		ENABLE_A_OFF;ENABLE_B_OFF;
 		usStartstep = STARTMAX; // reset, because of static !!
