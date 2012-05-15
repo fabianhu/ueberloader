@@ -55,7 +55,7 @@
 
 #define OSMTXBattInfo 0
 #define OSMTXCommand  1
-#define OSMTXIntern   2 // fixme use
+#define OSMTXIntern   2 // todo unused
 
 // Alarm Names
 

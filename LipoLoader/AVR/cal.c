@@ -2,8 +2,12 @@
 
 #include "OS/FabOS.h"
 #include "eeprom.h"
+#include "cal.h"
 
 #define GAINMULTIPLIER 10000ul
+
+
+Calibration_t g_tCalibration;
 
 typedef struct t_CalibData_tag
 {

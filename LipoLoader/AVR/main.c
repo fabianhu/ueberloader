@@ -35,14 +35,14 @@ void emstop(uint8_t e);
 
 // Global variables
 
-Calibration_t g_tCalibration;
-
 uint16_t UnusedStackSpace[OS_NUMTASKS+1];
 
 // *********  THE main()
 int main(void)
 {
 	CPU_init();
+
+	ADCinit();
 
     uint8_t i;
 
@@ -212,7 +212,7 @@ void emstop(uint8_t e)
 	// Light up LED
 	PORTD.DIRSET = 0b1000;
 	PORTD.OUTSET = 0b1000;
-/*	fixme brauchen wir das noch?
+/*	todo save the emstop reason to eeprom and send it
 	uint8_t* b = (uint8_t*)EEPROM_END;
 
 

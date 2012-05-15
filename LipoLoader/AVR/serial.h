@@ -31,7 +31,7 @@ typedef struct BatteryCell_tag
 {
 	int16_t  sVoltage_mV;
 	uint32_t unDisCharge_mAs;
-	uint32_t unDisCharge_mWs;
+	uint32_t unDisCharge_mWs; // todo fill
 }BatteryCell_t;
 
 typedef struct Battery_Info_tag

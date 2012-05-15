@@ -11,12 +11,11 @@
 
 #include "OS/FabOS.h"
 #include "adc.h"
+#include "cal.h"
 
 
-extern Calibration_t g_tCalibration;
-
-volatile int16_t g_asADCvalues[3];
-
+volatile int16_t g_asADCDMAvalues[3];
+int16_t ADCZeroOffset; // static correction of 0-value of ADC
 
 extern void emstop(uint8_t e);
 
@@ -63,10 +62,7 @@ void ADC_CalibrationValues_Load(ADC_t * adc)
 	}
 }
 
-uint16_t gusTimer =0;
-
-
-uint16_t ADCinit(void)
+void ADCinit(void)
 {
 	int16_t temp;
 
@@ -129,9 +125,9 @@ uint16_t ADCinit(void)
 	DMA.CH0.SRCADDR0 = (int)(&ADCA.CH0RES) & 0xff;
 	DMA.CH0.SRCADDR1 = ((int)(&ADCA.CH0RES) & 0xff00)>>8;
 	DMA.CH0.SRCADDR2 = ((int)(&ADCA.CH0RES) & 0xff0000)>>16;
-	DMA.CH0.DESTADDR0 = (int)(&g_asADCvalues[0]) & 0xff;
-	DMA.CH0.DESTADDR1 = ((int)(&g_asADCvalues[0]) & 0xff00)>>8;
-	DMA.CH0.DESTADDR2 = ((int)(&g_asADCvalues[0]) & 0xff0000)>>16;
+	DMA.CH0.DESTADDR0 = (int)(&g_asADCDMAvalues[0]) & 0xff;
+	DMA.CH0.DESTADDR1 = ((int)(&g_asADCDMAvalues[0]) & 0xff00)>>8;
+	DMA.CH0.DESTADDR2 = ((int)(&g_asADCDMAvalues[0]) & 0xff0000)>>16;
 	DMA.CH0.CTRLA = DMA_CH_BURSTLEN_2BYTE_gc | DMA_CH_SINGLE_bm;//0b00000001;
 	DMA.CH0.CTRLB = DMA_CH_TRNINTLVL_HI_gc; // Hi isr for complete
 	DMA.CH0.ADDRCTRL = DMA_CH_SRCRELOAD_BLOCK_gc | DMA_CH_SRCDIR_INC_gc | DMA_CH_DESTRELOAD_TRANSACTION_gc | DMA_CH_DESTDIR_INC_gc;//0b01011101;
@@ -159,10 +155,9 @@ uint16_t ADCinit(void)
 
 	temp = ADCA.CH3.RES;
 	if(temp < 10 && temp > -10 )
-		return temp;
+		ADCZeroOffset = temp;
 	else
 		emstop(111);
-	return 0; // dummy, because never reached
 }
 
 void ADC_ActivateHiCurrentMeas(void)
@@ -179,9 +174,6 @@ void ADC_ActivateLoCurrentMeas(void)
 
 ISR(DMA_CH0_vect)
 {
-
-	
-//volatile uint16_t d = TCC1.CNT - gusTimer;
 // it takes 986 clk from activation to here.
 	
 	DMA.CH0.CTRLB |= DMA_CH_TRNIF_bm;// clear interrupt flag
@@ -241,6 +233,11 @@ int16_t ADC_ScaleLowAmp_mA(int16_t in)
 	//                          |     |
 	//                          |     -> Amplification factor (OpAmp)
 	//                          -> Resistor
+}
+
+int16_t ADC_GetZeroOffset(void)
+{
+	return 	ADCZeroOffset;
 }
 
 int16_t ADC_ScaleHighAmp_mA(int16_t in)
