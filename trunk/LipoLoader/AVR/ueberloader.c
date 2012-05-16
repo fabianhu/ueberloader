@@ -6,14 +6,15 @@
  */
 
 // fixme refresh kürzer
-// fixme refresh periode einstellbar
 // todo kalibrierung der Gesamtspannungsmessung / Spannungsabfall über Shunt berücksichtigen -> war schon drin, checken.
-// Spannungs plausibilisierung unempfindlicher : OK
-// Balancer Limit aktiviert: check!
 // todo Frequenz auf 60kHz festnageln
-// Balancer Algo verbessert: check!
 // todo Leistungslimitierung
 // todo Temperaturmessung / Limit
+// check Spannungs plausibilisierung unempfindlicher : OK
+// check Balancer Limit aktiviert:
+// check Balancer Algo verbessert:
+// check refresh periode einstellbar
+// check Strommessung / Bereichsumschaltung HI ist FALSCH!
 
 #include "OS/FabOS.h"
 #include "ueberloader.h"
@@ -72,7 +73,7 @@ void TaskGovernor(void)
 	if(eeprom_ReadBlockWCRC((uint8_t*)&g_tCommand, EEPROM_COMMAND_START, sizeof(Command_t)))
 	{
 		// set defaults: todo fill with useful values
-		g_tCommand.basefrequency = 100;
+		g_tCommand.basefrequency = 60;
 		g_tCommand.refreshrate = 10;
 		g_eChargerMode = eModeAuto;
 		g_tCommand.sCurrentSetpoint = 1000;

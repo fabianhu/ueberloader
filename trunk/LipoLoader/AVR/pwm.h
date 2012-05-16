@@ -30,7 +30,7 @@ void RampDn(uint16_t* ramped, uint16_t target);*/
 //define PERIOD_L pwm_us_period_H + (pwm_us_period_H +4)* pwm_us_period_div // common divider...
 //#define PERIOD_L pwm_us_period_H + (pwm_us_period_H )* pwm_us_period_div // odd divider...
 #define PERIOD_MAX 0xffff
-#define MINSWITCHOFFPWM 500
+#define MINSWITCHOFFPWM 300 // ex 500
 
 #define STARTMAX 1000ul // start value
 
