@@ -124,9 +124,12 @@ uint8_t HandleSerial(UCIFrame_t *_RXFrame)
 			len = sizeof(g_tBattery_Info);
 			break;
 		case UCI_SET_CMDs:
-			OS_MutexGet(OSMTXCommand);
-			memcpy((uint8_t*)&g_tCommand, g_tUCIRXFrame.values, sizeof(Command_t));
-			OS_MutexRelease(OSMTXCommand);
+			if(g_tBattery_Info.eState == eBattWaiting) // prevent ANY adjustment during charging
+			{
+				OS_MutexGet(OSMTXCommand);
+				memcpy((uint8_t*)&g_tCommand, g_tUCIRXFrame.values, sizeof(Command_t));
+				OS_MutexRelease(OSMTXCommand);
+			}
 			// prepare ok answer:
 			g_tUCITXFrame.values[0] = 1;
 			len = 1;
@@ -136,6 +139,7 @@ uint8_t HandleSerial(UCIFrame_t *_RXFrame)
 			eeprom_WriteBlockWCRC((uint8_t*)&g_tCommand, EEPROM_COMMAND_START, sizeof(Command_t));
 
 			PWM_Setfrequency(g_tCommand.basefrequency); // in kHz!!!
+			PWM_SetRatio(g_tCommand.refreshrate);
 			// prepare ok answer:
 			g_tUCITXFrame.values[0] = 1;
 			len = 1;

@@ -235,14 +235,34 @@ int16_t ADC_ScaleLowAmp_mA(int16_t raw)
 	//                          -> Resistor
 }
 
-// fixme Strommessung / Bereichsumschaltung HI ist FALSCH!
+
 int16_t ADC_ScaleHighAmp_mA(int16_t raw, int16_t zero)
 {
-	return ((int32_t)raw-(int32_t)zero) * (int32_t)g_tCalibration.sADCRef_mV / 2048L * 1000L / 95L;
+	// from simulation: 94mV @ -10.0 A ; 1.027V @0A ; 1,96V@10A
+	int32_t temp;
+	int32_t umeas_mV;
+	if(raw > zero)
+	{
+		temp = raw-zero;
+		// 0mA : temp = 0
+		// 10000mA : temp = 933 mV diff
+		umeas_mV = temp * (int32_t)g_tCalibration.sADCRef_mV / 2048L;
+		return umeas_mV * 10000 / 933;
+		
+	}
+	else
+	{
+		return 0; // todo negative measurements
+		// 0mA : temp = 0
+		// -10000mA : temp = -933 mV diff
+		
+	}
+	
+	// alter mist: return ((int32_t)raw-(int32_t)zero) * (int32_t)g_tCalibration.sADCRef_mV / 2048L * 1000L / 95L;
 		// ADC / 2048 * Uref  / ( 0.005 * 19 )
 		//                          |     |
 		//                          |     -> Amplification factor (OpAmp)
 		//                          -> Resistor
 }
-// 933 mv / 10A
+
 

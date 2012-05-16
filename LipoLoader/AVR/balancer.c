@@ -22,7 +22,7 @@ uint32_t aunCharge_mAs[6]; // accumulated charge
 ADC_Values_t g_tADCValues;
 
 #define ADCWAITTIME 1
-#define BALANCEREPEATTIME 100L
+#define BALANCEREPEATTIME 330L
 
 uint8_t g_ucCalCommand = 0;
 
@@ -129,26 +129,28 @@ void TaskBalance(void)
 			if(sBalanceCells[i] > usBalanceRelease_mV) // if eine Zelle hoch genug, dann gehts los.
 				bBalance = 1;
 		}
+		mean = mean / g_tBattery_Info.ucNumberOfCells;
 
 		// balancing allowed
-		static uint8_t onlyEveryTwoCycles = 0;
+		static uint8_t onlyEveryThreeCycles = 0;
 
-		onlyEveryTwoCycles++;
+		onlyEveryThreeCycles++;
 
-		if(bBalance == 1 && g_tBattery_Info.eState == eBattCharging ) // inactivate for governor test
+		if(bBalance == 1 && g_tBattery_Info.eState == eBattCharging && onlyEveryThreeCycles >= 3)
 		{
-			mean /= g_tBattery_Info.ucNumberOfCells;
-			mean += 3; // add some difference to prevent swinging
-
 			// Balancer logic
 			for(i = 0; i < 6 ; i++) // process all cells
 			{
-				if(sBalanceCells[i] > mean && onlyEveryTwoCycles >= 2)
+				if(sBalanceCells[i] > mean )
 				{
 					// switch on Balancer for this cell
 					PORTC.OUTSET = ( 1 << ( 2 + i ) );
 					ucBalanceBits |= ( 1 << i );
-					onlyEveryTwoCycles = 0;
+
+
+					int32_t curr_mA;
+					curr_mA = sBalanceCells[i] / 22; // 22 Ohms
+					aunCharge_mAs[i] = (int32_t)curr_mA * BALANCEREPEATTIME / 1000L; // add the mAs produced in this cycle
 				}
 				else
 				{
@@ -157,30 +159,13 @@ void TaskBalance(void)
 					ucBalanceBits &= ~( 1 << i );
 				}
 			}
+			onlyEveryThreeCycles = 0;
 		}
 		else
 		{
 			// balancer off
-			for(i = 0; i < 6 ; i++)
-			{
-				// switch off Balancer for this cell
-				PORTC.OUTCLR = ( 1 << ( 2 + i ) );
-				ucBalanceBits &= ~( 1 << i );
-			}
-
-			//PORTC.OUTCLR = (0b111111<<2);
+			PORTC.OUTCLR = (0b111111<<2);
 			ucBalanceBits = 0;
-		}
-
-		for(i = 0; i < 6 ; i++)
-		{
-			// calc cell Balancing mAh
-			if(ucBalanceBits & ( 1 << i ))
-			{
-				int32_t curr_mA;
-				curr_mA = sBalanceCells[i] / 22; // 22 Ohms
-				aunCharge_mAs[i] = (int32_t)curr_mA * BALANCEREPEATTIME / 1000L; // add the mAs produced in this cycle
-			}
 		}
 
 		// calculate overvolt protection per cell
