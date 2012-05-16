@@ -195,6 +195,7 @@ void TaskBalance(void)
 			// Copy voltage stuff
 			g_tBattery_Info.Cells[i].sVoltage_mV = sBalanceCells[i];
 			g_tBattery_Info.Cells[i].unDisCharge_mAs += aunCharge_mAs[i];
+			aunCharge_mAs[i]=0;
 		}
 		OS_MutexRelease( OSMTXBattInfo );
 
