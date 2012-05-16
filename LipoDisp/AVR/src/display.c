@@ -157,10 +157,8 @@ void TaskDisplay(void)
 				// touchtest();
 
 				lcd_print(YELLOW, BLACK, 2, 0, ypos,"vBatt  /t%i mV    ",g_tBattery_Info.sActVoltage_mV);
-				ypos += LINEDIFF*2;
+				ypos += 30;
 				lcd_print(YELLOW, BLACK, 2, 0, ypos,"Current/t%i mA   ",g_tBattery_Info.sActCurrent_mA);
-				ypos += LINEDIFF*2;
-				lcd_print(WHITE, BLACK, FONTSIZE, 230, 200,"Batt. %i Cells ",g_tBattery_Info.ucNumberOfCells);
 
 				ypos = 64;
 
@@ -221,6 +219,8 @@ void TaskDisplay(void)
 				lcd_print(GREY, BLACK, FONTSIZE, 0, 220,"Time: %i s     " ,(uint16_t)t2/1000);
 
 				lcd_print(WHITE, BLACK, FONTSIZE, 230, 220,"I set: %i",g_tCommand.sCurrentSetpoint);
+
+				lcd_print(WHITE, BLACK, FONTSIZE, 230, 200,"Batt. %i Cells ",g_tBattery_Info.ucNumberOfCells);
 
 				if (s_ucKeyLock)
 				{
