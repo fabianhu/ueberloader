@@ -525,6 +525,7 @@ void lcd_draw_bmp(char *ptr_bmp, uint8_t colour, uint16_t x_pos, uint16_t y_pos)
 						lcd_write_data(pgm_read_byte(ptr_bmp));
 						lcd_write_data(pgm_read_byte(ptr_bmp));
 						lcd_write_data(pgm_read_byte(ptr_bmp++));
+						break;
 				}
 	    	}		
 		}
