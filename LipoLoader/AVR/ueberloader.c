@@ -53,8 +53,9 @@ extern void emstop(uint8_t e);
 
 #define GOVTEST 0
 
+#define VOLTGOV_KI 100
 
-
+#define BALANCEMINCHARGECURRENT 50
 
 
 // ********* Stuff
@@ -191,11 +192,11 @@ void TaskGovernor(void)
 		{
 			if(Balancer_GetOverload())
 			{
-				myISetpoint = 0;
+				myISetpoint = min(BALANCEMINCHARGECURRENT,myISetpoint);
 			}
 
 
-			I_Set_mA_Ramped = PID(myUSetpoint-sU_out_act_flt, &U_Integrator,0,500,0,0,myISetpoint); // todo adjust integrator
+			I_Set_mA_Ramped = PID(myUSetpoint-sU_out_act_flt, &U_Integrator,0,VOLTGOV_KI,0,0,myISetpoint); // todo adjust integrator
 
 
 			if(myISetpoint <= 0)
@@ -379,7 +380,7 @@ void TaskState(void)
 					case eModeAuto:
 						if(myBattVoltage >= g_tCommand.usVoltageSetpoint_mV
 								* g_tBattery_Info.ucNumberOfCells
-								&& myBattCurrent < usCommandCurrent / 10)
+								&& myBattCurrent < usCommandCurrent / 10 && Balancer_GetFinished())
 						{
 							g_tBattery_Info.eState = eBattFull;
 						}

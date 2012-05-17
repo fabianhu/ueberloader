@@ -16,13 +16,17 @@ typedef struct ADC_Values_tag
 	int16_t		TempCPU;
 }ADC_Values_t;
 
+#define BALANCEFINISHCOUNT 15
+
 uint8_t bBalancerOverload; // True, if one cell has reached Voltage limit.
+uint8_t ucBalancerFinished = BALANCEFINISHCOUNT;  // 0 indicated balancer is finished
 //uint8_t aucDisChTicks[6]; // increased for each discharge cycle
 uint32_t aunCharge_mAs[6]; // accumulated charge
 ADC_Values_t g_tADCValues;
 
 #define ADCWAITTIME 1
 #define BALANCEREPEATTIME 330L
+#define BALANCEEVERYNCYCLES 2
 
 uint8_t g_ucCalCommand = 0;
 
@@ -132,12 +136,13 @@ void TaskBalance(void)
 		mean = mean / g_tBattery_Info.ucNumberOfCells;
 
 		// balancing allowed
-		static uint8_t onlyEveryThreeCycles = 0;
+		static uint8_t onlyEveryNCycles = 0;
 
-		onlyEveryThreeCycles++;
+		onlyEveryNCycles++;
 
-		if(bBalance == 1 && g_tBattery_Info.eState == eBattCharging && onlyEveryThreeCycles >= 3)
+		if(bBalance == 1 && g_tBattery_Info.eState == eBattCharging && onlyEveryNCycles >= BALANCEEVERYNCYCLES)
 		{
+			uint8_t balact=0;
 			// Balancer logic
 			for(i = 0; i < 6 ; i++) // process all cells
 			{
@@ -151,6 +156,7 @@ void TaskBalance(void)
 					int32_t curr_mA;
 					curr_mA = sBalanceCells[i] / 22; // 22 Ohms
 					aunCharge_mAs[i] = (int32_t)curr_mA * BALANCEREPEATTIME / 1000L; // add the mAs produced in this cycle
+					balact=1;
 				}
 				else
 				{
@@ -159,7 +165,15 @@ void TaskBalance(void)
 					ucBalanceBits &= ~( 1 << i );
 				}
 			}
-			onlyEveryThreeCycles = 0;
+			if (balact)
+			{
+				ucBalancerFinished = BALANCEFINISHCOUNT;
+			}
+			else
+			{
+				if(ucBalancerFinished > 0) ucBalancerFinished--;
+			}
+			onlyEveryNCycles = 0;
 		}
 		else
 		{
@@ -209,4 +223,9 @@ void TaskBalance(void)
 uint8_t Balancer_GetOverload(void)
 {
 	return bBalancerOverload;
+}
+
+uint8_t Balancer_GetFinished(void)
+{
+	return ucBalancerFinished=0?1:0;
 }
