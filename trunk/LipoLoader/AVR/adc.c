@@ -82,7 +82,7 @@ void ADCinit(void)
 	ADCA.CTRLB = 0b00010000; // signed !
 
 	/* Set sample rate */
-	ADCA.PRESCALER = ADC_PRESCALER_DIV512_gc;// resulting in 64 kHz !!! ADC clock (slowed down for accuracy)
+	ADCA.PRESCALER = ADC_PRESCALER_DIV512_gc;// resulting in 64 kHz !!! ADC clock (maximum slowed down for accuracy)
 
 	/* Set reference voltage on ADC A to be VCC_mVolt/1.6 V.*/
 	ADCA.REFCTRL = ADC_REFSEL_VCC_gc | ADC_TEMPREF_bm | ADC_BANDGAP_bm; // VCC_mVolt/1.6 reference
@@ -149,7 +149,7 @@ void ADCinit(void)
 	// Get offset value for ADC A.
 	OS_WaitTicks(OSALMWaitGov,1);
 
-	ADC_StartConvCh3Pin(0); // measure offset of GND with GND
+	ADC_StartConvCh3Pin(0); // measure offset of GND with GND // todo cyclic??
 
 	OS_WaitTicks(OSALMWaitGov,5);
 
@@ -218,7 +218,8 @@ void ADC_StartConvInt(uint8_t c)
 
 int16_t ADC_ScaleCell_mV(int16_t in)
 {
-	return ((int32_t)in-(int32_t)ADCZeroOffset) * (int32_t)g_tCalibration.sADCRef_mV / 957L; // 957 = (2048 / factor of amplification (2,14))
+	//return ((int32_t)in-(int32_t)ADCZeroOffset) * (int32_t)g_tCalibration.sADCRef_mV / 957L; // 957 = (2048 / factor of amplification (2,14))
+	return ((int32_t)in-(int32_t)ADCZeroOffset) * 2013L / 957L; // 957 = (2048 / factor of amplification (2,14))
 }
 
 int16_t ADC_ScaleVolt_mV(int16_t in)

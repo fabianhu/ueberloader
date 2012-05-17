@@ -179,8 +179,7 @@ void TaskGovernor(void)
 
 		OS_DISABLEALLINTERRUPTS;
 		int16_t myISetpoint = g_tCommand.sCurrentSetpoint;
-		int16_t myUSetpoint = g_tCommand.usVoltageSetpoint_mV
-				* g_tBattery_Info.ucNumberOfCells;
+		int16_t myUSetpoint = g_tCommand.usVoltageSetpoint_mV * g_tBattery_Info.ucNumberOfCells;
 		g_tBattery_Info.sVSetpoint = myUSetpoint;
 		OS_ENABLEALLINTERRUPTS;
 
