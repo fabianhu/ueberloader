@@ -24,12 +24,30 @@ uint8_t ucBalancerFinished = BALANCEFINISHCOUNT;  // 0 indicated balancer is fin
 uint32_t aunCharge_mAs[6]; // accumulated charge
 ADC_Values_t g_tADCValues;
 
-#define ADCWAITTIME 1
+#define ADCWAITTIME 2
 #define BALANCEREPEATTIME 330L
-#define BALANCEEVERYNCYCLES 2
+#define BALANCEEVERYNCYCLES 1  // 1= every second time
 
 uint8_t g_ucCalCommand = 0;
 
+void sFilterBalancer(int16_t* o, int16_t* n) // with jump possibility, if filtered value is off by more than 10%
+{
+	int32_t temp;
+	int16_t out;
+
+	temp = (int32_t)*o * 19L + (int32_t)*n;
+	out = ( temp + 5L ) / 20L; // "halbes dazu, wg Rundungsfehler"
+
+	// check, if difference larger than 10% of old.
+	if(abs(*n-*o) > *o / 10)
+	{
+		*o = *n;
+	}
+	else
+	{
+		*o = out;
+	}
+}
 
 void TaskBalance(void)
 {
@@ -38,7 +56,9 @@ void TaskBalance(void)
 	int16_t sBalanceCellsRaw[6]; // quasi static
 	int16_t sBalanceCells[6]; // quasi static
 	uint8_t ucBalanceBits = 0;
-	uint8_t i;
+	uint8_t i,j;
+	// balancing allowed
+	static uint8_t onlyEveryNCycles = 0; // 0 = Balancer is possibly on; value >0 => guaranteed to be off.
 
 	// direction for balancer pins
 	PORTC.DIRSET = 0b11111100;
@@ -49,40 +69,31 @@ void TaskBalance(void)
 
 	while(1)
 	{
+
 		OS_WaitAlarm( OSALMBalRepeat );
 		OS_SetAlarm( OSALMBalRepeat, BALANCEREPEATTIME);
 
-		for(i = 1; i < 6 ; i++)
+		if (onlyEveryNCycles > 0)  // measurement not poisoned by balancer
 		{
-			ADC_StartConvCh3Pin( i );
+		/*for(j = 0; j < 10 ; j++) // fixme do conversion 10 times and filter...
+		{*/
+			for(i = 1; i < 6 ; i++)
+			{
+				ADC_StartConvCh3Pin( i );
+				OS_WaitTicks(OSALMBalWait,ADCWAITTIME);
+				// push voltage of channel into array
+				sTemp = ADC_ScaleCell_mV( ADCA.CH3.RES );
+
+				sFilter( &sBalanceCellsRaw[i], &sTemp );
+			}
+
+			ADC_StartConvCh3Pin( 10 );
 			OS_WaitTicks(OSALMBalWait,ADCWAITTIME);
-			// push voltage of channel into array
 			sTemp = ADC_ScaleCell_mV( ADCA.CH3.RES );
+			sFilter( &sBalanceCellsRaw[0], &sTemp );
+		/*}*/
 
-			sFilter( &sBalanceCellsRaw[i], &sTemp );
 		}
-		ADC_StartConvCh3Pin( 10 );
-		OS_WaitTicks(OSALMBalWait,ADCWAITTIME);
-		sTemp = ADC_ScaleCell_mV( ADCA.CH3.RES );
-		sFilter( &sBalanceCellsRaw[0], &sTemp );
-
-
-		switch (g_ucCalCommand) {
-			case 1:
-				CalCellsLow( &sBalanceCellsRaw[0] );
-				g_ucCalCommand = 0;
-				break;
-			case 2:
-				CalCellsHigh( &sBalanceCellsRaw[0] );
-				g_ucCalCommand = 0;
-				break;
-			default:
-				break;
-		}
-
-		// ok, now we have all cells, now apply the calibration
-		CalibrateCells(&sBalanceCellsRaw[0], &sBalanceCells[0]);
-
 
 		ADC_StartConvCh3Pin( 11 ); // temperature external2
 		OS_WaitTicks(OSALMBalWait,ADCWAITTIME);
@@ -113,9 +124,28 @@ void TaskBalance(void)
 		OS_WaitTicks(OSALMBalWait,ADCWAITTIME);
 		nTemp = ADCA.CH3.RES * 10ul;
 		nTemp = nTemp * g_tCalibration.sADCRef_mV / 2048ul;
+
 		OS_DISABLEALLINTERRUPTS;
 		g_tADCValues.VCC_mVolt = nTemp;
 		OS_ENABLEALLINTERRUPTS;
+
+		// end of adc conversons
+
+		switch (g_ucCalCommand) {
+			case 1:
+				CalCellsLow( &sBalanceCellsRaw[0] );
+				g_ucCalCommand = 0;
+				break;
+			case 2:
+				CalCellsHigh( &sBalanceCellsRaw[0] );
+				g_ucCalCommand = 0;
+				break;
+			default:
+				break;
+		}
+
+		// ok, now we have all cells, now apply the calibration
+		CalibrateCells(&sBalanceCellsRaw[0], &sBalanceCells[0]);
 
 		// mean Cell Voltage
 		int16_t mean = 0;
@@ -135,12 +165,8 @@ void TaskBalance(void)
 		}
 		mean = mean / g_tBattery_Info.ucNumberOfCells;
 
-		// balancing allowed
-		static uint8_t onlyEveryNCycles = 0;
 
-		onlyEveryNCycles++;
-
-		if(bBalance == 1 && g_tBattery_Info.eState == eBattCharging && onlyEveryNCycles >= BALANCEEVERYNCYCLES)
+		if(bBalance == 1 && g_tBattery_Info.eState == eBattCharging && onlyEveryNCycles == BALANCEEVERYNCYCLES)
 		{
 			uint8_t balact=0;
 			// Balancer logic
@@ -180,6 +206,8 @@ void TaskBalance(void)
 			// balancer off
 			PORTC.OUTCLR = (0b111111<<2);
 			ucBalanceBits = 0;
+			if(onlyEveryNCycles<BALANCEEVERYNCYCLES)
+				onlyEveryNCycles++;
 		}
 
 		// calculate overvolt protection per cell
