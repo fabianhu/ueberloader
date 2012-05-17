@@ -35,8 +35,8 @@ void sFilterBalancer(int16_t* o, int16_t* n) // with jump possibility, if filter
 	int32_t temp;
 	int16_t out;
 
-	temp = (int32_t)*o * 19L + (int32_t)*n;
-	out = ( temp + 5L ) / 20L; // "halbes dazu, wg Rundungsfehler"
+	temp = (int32_t)*o * 7L + (int32_t)*n;
+	out = ( temp + 5L ) / 8L; // "halbes dazu, wg Rundungsfehler"
 
 	// check, if difference larger than 10% of old.
 	if(abs(*n-*o) > *o / 10)
@@ -84,13 +84,13 @@ void TaskBalance(void)
 				// push voltage of channel into array
 				sTemp = ADC_ScaleCell_mV( ADCA.CH3.RES );
 
-				sFilter( &sBalanceCellsRaw[i], &sTemp );
+				sFilterBalancer( &sBalanceCellsRaw[i], &sTemp );
 			}
 
 			ADC_StartConvCh3Pin( 10 );
 			OS_WaitTicks(OSALMBalWait,ADCWAITTIME);
 			sTemp = ADC_ScaleCell_mV( ADCA.CH3.RES );
-			sFilter( &sBalanceCellsRaw[0], &sTemp );
+			sFilterBalancer( &sBalanceCellsRaw[0], &sTemp );
 		/*}*/
 
 		}
