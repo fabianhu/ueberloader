@@ -55,7 +55,7 @@ extern void emstop(uint8_t e);
 
 #define VOLTGOV_KI 100
 
-#define BALANCEMINCHARGECURRENT 50
+#define BALANCEMINCHARGECURRENT 30
 
 
 // ********* Stuff
