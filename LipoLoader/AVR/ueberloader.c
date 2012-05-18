@@ -174,6 +174,7 @@ void TaskGovernor(void)
 
 		static uint8_t errcntOverVolt = 0;
 		if(sU_out_act > 4200 * g_tBattery_Info.ucNumberOfCells
+				&& g_tBattery_Info.ucNumberOfCells >0
 				&& abs(sI_out_act_flt) > 100) // catch the governor
 			errcntOverVolt++;
 		else
