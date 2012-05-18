@@ -233,7 +233,7 @@ void emstop(uint8_t e)
 			LED_OFF;
 			_delay_ms(50);
 			LED_ON;
-			_delay_ms(333-50);
+			_delay_ms(333);
 		}
 		asm("nop");
 	}
