@@ -157,7 +157,7 @@ void ADCinit(void)
 	if(temp < 10 && temp > -10 )
 		ADCZeroOffset = temp;
 	else
-		emstop(111);
+		emstop(1);
 }
 
 void ADC_ActivateHiCurrentMeas(void)
@@ -218,8 +218,8 @@ void ADC_StartConvInt(uint8_t c)
 
 int16_t ADC_ScaleCell_mV(int16_t in)
 {
-	//return ((int32_t)in-(int32_t)ADCZeroOffset) * (int32_t)g_tCalibration.sADCRef_mV / 957L; // 957 = (2048 / factor of amplification (2,14))
-	return ((int32_t)in-(int32_t)ADCZeroOffset) * 2013L / 957L; // 957 = (2048 / factor of amplification (2,14))
+	return ((int32_t)in-(int32_t)ADCZeroOffset) * (int32_t)g_tCalibration.sADCRef_mV / 957L; // 957 = (2048 / factor of amplification (2,14))
+	// fixme test return ((int32_t)in-(int32_t)ADCZeroOffset) * 2013L / 957L; // 957 = (2048 / factor of amplification (2,14))
 }
 
 int16_t ADC_ScaleVolt_mV(int16_t in)

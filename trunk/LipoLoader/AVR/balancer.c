@@ -117,7 +117,7 @@ void TaskBalance(void)
 		OS_ENABLEALLINTERRUPTS;
 		nTemp = ( 2048ul * 1105ul ) / g_tADCValues.Bandgap; // 1088ul old value // by knowing, that the voltage is 1.088V, we calculate the ADCRef voltage.
 		OS_DISABLEALLINTERRUPTS;
-		g_tCalibration.sADCRef_mV = nTemp;
+		sFilter(&g_tCalibration.sADCRef_mV , &nTemp);
 		OS_ENABLEALLINTERRUPTS;
 
 		ADC_StartConvInt( 2 ); // VCC_mVolt measurement
@@ -172,7 +172,7 @@ void TaskBalance(void)
 			// Balancer logic
 			for(i = 0; i < 6 ; i++) // process all cells
 			{
-				if(sBalanceCells[i] > mean )
+				if(sBalanceCells[i] > mean+3 )
 				{
 					// switch on Balancer for this cell
 					PORTC.OUTSET = ( 1 << ( 2 + i ) );
