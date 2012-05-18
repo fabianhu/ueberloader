@@ -10,6 +10,7 @@
 #include "adc.h"
 #include "usart.h"
 #include <avr/eeprom.h>
+#include <avr/delay.h>
 
 // *********  Task definitions
 OS_DeclareTask(TaskGovernor,300);
@@ -156,7 +157,7 @@ void CPU_init(void)
 ISR(OSC_XOSCF_vect)
 {
 	// oscillator failure
-	emstop(99);// emergency stop here!
+	emstop(2);// emergency stop here!
 }
 
 
@@ -224,6 +225,16 @@ void emstop(uint8_t e)
 
 	while(1)
 	{
+		LED_ON;
+		_delay_ms(1000);
+		// blink the emstop code
+		for(int i=0; i< e; i++)
+		{
+			LED_OFF;
+			_delay_ms(50);
+			LED_ON;
+			_delay_ms(333-50);
+		}
 		asm("nop");
 	}
 
@@ -271,7 +282,7 @@ void TaskLED(void)
 				i++;
 
 				OS_WaitTicks(OSALMLEDWait,i/LEDRATIO/2);
-				if (i>LEDMAXTIME*LEDRATIO) i=0;
+				if (i>LEDMAXTIME*LEDRATIO) i=1;
 
 				LED_OFF;
 

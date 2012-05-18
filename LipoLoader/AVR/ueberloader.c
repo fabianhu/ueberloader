@@ -5,16 +5,24 @@
  (c) 2010 Fabian Huslik
  */
 
-// fixme refresh kürzer
+// Festlegung auf 25 Windungen bei 60kHz
+
+// fixme Strommessung / Bereichsumschaltung HI ist FALSCH!
+// fixme over voltage / disconnect of battery muss schneller abregeln!
+// fixme brown out fuse???
+// fixme refresh erzeugt ripple auf dem EIngangsstrom. (sync und/oder shiften)
+
 // todo kalibrierung der Gesamtspannungsmessung / Spannungsabfall über Shunt berücksichtigen -> war schon drin, checken.
 // todo Frequenz auf 60kHz festnageln
-// todo Leistungslimitierung
+// todo Leistungslimitierung auf 100W Ladeleistung / 10A
 // todo Temperaturmessung / Limit
+// todo balance only mode
+
+// check refresh kürzer
 // check Spannungs plausibilisierung unempfindlicher : OK
 // check Balancer Limit aktiviert:
 // check Balancer Algo verbessert:
 // check refresh periode einstellbar
-// check Strommessung / Bereichsumschaltung HI ist FALSCH!
 
 #include "OS/FabOS.h"
 #include "ueberloader.h"
@@ -68,7 +76,7 @@ void TaskGovernor(void)
 
 	if(sizeof(Command_t) % 2 == 1)
 	{
-		emstop( 255 ); // Command_t is not 16bit aligned. Not checkable at compile time.
+		emstop( 3 ); // Command_t is not 16bit aligned. Not checkable at compile time.
 	}
 
 	if(eeprom_ReadBlockWCRC((uint8_t*)&g_tCommand, EEPROM_COMMAND_START, sizeof(Command_t)))
@@ -157,25 +165,25 @@ void TaskGovernor(void)
 
 		// supply undervoltage
 		if(sU_in_act < 7000)
-			emstop( 1 );
+			emstop( 4 );
 		// supply overvoltage
 		if(sU_in_act > 22000)
-			emstop( 2 );
+			emstop( 5 );
 
 		if(g_tBattery_Info.eState == eBattCharging)
 		{
 			if(sI_out_act > 10000 && abs(sI_out_act_flt) > 100)
-				emstop( 3 );
+				emstop( 6 );
 		}
 
 		static uint8_t errcntOverVolt = 0;
-		if(sU_out_act > 4200 * 6 && abs(sI_out_act_flt) > 100) // catch the governor
+		if(sU_out_act > 4200 * g_tBattery_Info.ucNumberOfCells && abs(sI_out_act_flt) > 100) // catch the governor
 			errcntOverVolt++;
 		else
 			errcntOverVolt = 0;
 
-		if(errcntOverVolt > 10)
-			emstop( 4 );
+		if(errcntOverVolt > 5)
+			emstop( 7 );
 
 		OS_DISABLEALLINTERRUPTS;
 		int16_t myISetpoint = g_tCommand.sCurrentSetpoint;
@@ -424,7 +432,7 @@ void TaskState(void)
 				g_tBattery_Info.eState = eBattWaiting;
 				break;
 			default:
-				emstop( 22 );
+				emstop( 8 );
 				break;
 
 		}
