@@ -6,15 +6,20 @@
  */
 
 // Festlegung auf 25 Windungen bei 60kHz mit Spule aus BOM
+
 // fixme Strommessung / Bereichsumschaltung HI ist FALSCH!
+// fixme Beim Abschalten den Strom auf der Low-Side im Kreis laufen lassen, nicht alles abschalten
 // fixme over voltage / disconnect of battery muss schneller abregeln!
+// fixme Spannungs/strommessung über ISR - richtig schnell.
 // fixme brown out fuse???
 // fixme refresh erzeugt ripple auf dem EIngangsstrom. (sync und/oder shiften)
+
 // todo kalibrierung der Gesamtspannungsmessung / Spannungsabfall über Shunt berücksichtigen -> war schon drin, checken.
 // todo Frequenz auf 60kHz festnageln
 // todo Leistungslimitierung auf 100W Ladeleistung / 10A
 // todo Temperaturmessung / Limit
 // todo balance only mode
+
 // check refresh kürzer
 // check Spannungs plausibilisierung unempfindlicher : OK
 // check Balancer Limit aktiviert:
@@ -173,15 +178,15 @@ void TaskGovernor(void)
 		}
 
 		static uint8_t errcntOverVolt = 0;
-		if(sU_out_act > 4200 * g_tBattery_Info.ucNumberOfCells
+		if(sU_out_act > 4250 * g_tBattery_Info.ucNumberOfCells
 				&& g_tBattery_Info.ucNumberOfCells >0
-				&& abs(sI_out_act_flt) > 100) // catch the governor
+				&& g_tBattery_Info.eState == eBattCharging)
 			errcntOverVolt++;
 		else
 			errcntOverVolt = 0;
 
-		if(errcntOverVolt > 5)
-			emstop( 7 ); // after 5 ms...
+		if(errcntOverVolt > 10)
+			emstop( 7 ); // after 10 ms...
 
 		OS_DISABLEALLINTERRUPTS;
 		int16_t myISetpoint = g_tCommand.sCurrentSetpoint;
