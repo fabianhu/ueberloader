@@ -231,9 +231,9 @@ void emstop(uint8_t e)
 		for(int i=0; i< e; i++)
 		{
 			LED_OFF;
-			_delay_ms(50);
+			_delay_ms(70);
 			LED_ON;
-			_delay_ms(333);
+			_delay_ms(400);
 		}
 		asm("nop");
 	}
