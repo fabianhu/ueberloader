@@ -114,7 +114,7 @@
 #define YELLOW 0xff,0xff,0x00
 #define ORANGE 0xff,0xff,0x00
 #define GREY   0x77,0x77,0x77
-
+#define DGREY   0xAA,0xAA,0xAA
 
 #define abs(X) ((X)<0?-(X):(X))
 #define FONT 0
@@ -140,5 +140,7 @@ char *flash2ram(char *ptr_string);
 void lcd_init_scrollmode(void);
 void lcd_scrollmode(uint16_t saddr);
 void lcd_show_init_screen(void);
+void lcd_print_string(uint8_t font_red, uint8_t font_green, uint8_t font_blue, uint8_t back_red, uint8_t back_green, uint8_t back_blue, uint8_t size, uint16_t x_pos, uint16_t y_pos,char *ptr_string);
+
 
 #endif //LCD_H

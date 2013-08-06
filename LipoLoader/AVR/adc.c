@@ -12,6 +12,7 @@
 #include "OS/FabOS.h"
 #include "adc.h"
 #include "cal.h"
+#include "serial.h"
 
 
 volatile int16_t g_asADCDMAvalues[3];
@@ -82,7 +83,7 @@ void ADCinit(void)
 	ADCA.CTRLB = 0b00010000; // signed !
 
 	/* Set sample rate */
-	ADCA.PRESCALER = ADC_PRESCALER_DIV512_gc;// resulting in 64 kHz !!! ADC clock (maximum slowed down for accuracy)
+	ADCA.PRESCALER = ADC_PRESCALER_DIV512_gc;// resulting in 62,5 kHz !!! ADC clock (maximum slowed down for accuracy)
 
 	/* Set reference voltage on ADC A to be VCC_mVolt/1.6 V.*/
 	ADCA.REFCTRL = ADC_REFSEL_VCC_gc | ADC_TEMPREF_bm | ADC_BANDGAP_bm; // VCC_mVolt/1.6 reference
@@ -144,7 +145,7 @@ void ADCinit(void)
 	ADC_ActivateLoCurrentMeas();
 
 	// Event 7 triggers ADC sweep
-	EVSYS.STROBE = (1<<7); // dummy conversion
+	EVSYS.STROBE = (1<<7); // dummy conversion = enable continuous firing by dma-isr (ADC-DMA-ISR-EVENT-ADC)
 
 	// Get offset value for ADC A.
 	OS_WaitTicks(OSALMWaitGov,1);
@@ -172,14 +173,35 @@ void ADC_ActivateLoCurrentMeas(void)
 	PORTD.OUTSET = (1<<2);
 }
 
+volatile uint8_t ADCwatchdog;
+extern Battery_Info_t g_tBattery_Info;
+
 ISR(DMA_CH0_vect)
 {
-// it takes 986 clk from activation to here.
+	// it takes 5600 clk from event activation to here. (calculated with 62500 Hz ADCclk)
+	ADCwatchdog = 1;
+
+	// now check values immediately:
+	if( ADC_ScaleVolt_mV( g_asADCDMAvalues[1] ) > g_tBattery_Info.ucNumberOfCells*4500 && g_asADCDMAvalues[1] > 10000)
+	{
+		// switch off
+		emstop(2);
+	}
+
+
 	
 	DMA.CH0.CTRLB |= DMA_CH_TRNIF_bm;// clear interrupt flag
 	DMA.CH0.CTRLA |= DMA_CH_ENABLE_bm;// re-enable DMA
+	
+	EVSYS.STROBE = ( 1 << 7 ); //fire event 7, which triggers the ADC
+}
 
-	//OS_SetEvent(0,1);
+int16_t ADC_GetISRValue(uint8_t ch)
+{
+	OS_DISABLEALLINTERRUPTS;
+	int16_t ret = g_asADCDMAvalues[ch];
+	OS_ENABLEALLINTERRUPTS;
+	return ret;
 }
 
 /*

@@ -3,15 +3,8 @@
 #include "menu_variant.h" 
 #include "string.h"
 #include "../comm/serial.h"
-#include <avr/eeprom.h>
+#include "../comm/eeprom.h"
 
-typedef enum
-{
-	eBattModeLiPo, eBattModeLiFe, eBattModeLiIon, eBattModeStorage, eBattModeDisch
-} eBattMode_t;
-
-// global vars
-eBattMode_t g_eBattMode; // am Lader eingestellter Mode
 
 //SRAM
 //user defined names
@@ -34,128 +27,21 @@ extern uint8_t gCommandsKnown; // command.c
 
 void menuUp(void);
 extern void GetSubMenuCount(uint8_t *Size, uint8_t *StartIndex);
-void entermenu(void);
-void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower, uint16_t stepsize);
+void callback_menu_HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower, uint16_t stepsize);
+
+void savePersistent(void);
+void loadPersistent(void);
 
 
-
-
-
-
-//******** START OF AUTO-GENERATED CODE DO NOT EDIT!!! *********
+//******** INSERT INTO C FILE *********
 // Text definitions
-char	txtMAINMENU[] 	PROGMEM="Main Menu";
-char	txtBACK[] 	PROGMEM="(back)";
-char	txtCHARGEMODE[] 	PROGMEM="Charge Mode";
-char	txtCURRENTSETPOINT[] 	PROGMEM="Current Setpoint";
-char	txtMODESETTINGS[] 	PROGMEM="Mode Settings";
-char	txtSETUP[] 	PROGMEM="Setup";
-char	txtCHARGELIPONOW[] 	PROGMEM="Charge LiPo NOW";
-char	txtCHARGELIIONOW[] 	PROGMEM="Charge LiIo NOW";
-char	txtCHARGELIFENOW[] 	PROGMEM="Charge LiFe NOW";
-char	txtSTORAGENOW[] 	PROGMEM="Storage NOW";
-char	txtDISCHARGENOW[] 	PROGMEM="Discharge NOW";
-char	txtLITHIUMPOLYMER[] 	PROGMEM="Lithium Polymer";
-char	txtLITHIUMION[] 	PROGMEM="Lithium Ion";
-char	txtLIFEPO[] 	PROGMEM="LiFePo4";
-char	txtSTORAGE[] 	PROGMEM="Storage";
-char	txtDISCHARGE[] 	PROGMEM="Discharge";
-char	txtBACKTOMAIN[] 	PROGMEM="(back to Main)";
-char	txtLIPOVOLTAGE[] 	PROGMEM="LiPo Voltage";
-char	txtBALACTIVVOLTAGE[] 	PROGMEM="Bal. Activ. Voltage";
-char	txtBALANCER[] 	PROGMEM="Balancer";
-char	txtLIIONVOLTAGE[] 	PROGMEM="LiIon Voltage";
-char	txtLIFEPOVOLT[] 	PROGMEM="LiFePo4 Volt.";
-char	txtSTORAGEVOLTAGE[] 	PROGMEM="Storage Voltage";
-char	txtDISCHARGEVOLTAGE[] 	PROGMEM="Discharge Voltage";
-char	txtCHARGELIMITS[] 	PROGMEM="Charge Limits";
-char	txtPWM[] 	PROGMEM="Pwm";
-char	txtMANCELLCOUNT[] 	PROGMEM="Man Cell Count";
-char	txtCALIBRATIONH[] 	PROGMEM="Calibration H";
-char	txtCALIBRATIONL[] 	PROGMEM="Calibration L";
-char	txtCAPACITY[] 	PROGMEM="Capacity";
-char	txtTIME[] 	PROGMEM="Time";
-char	txtFEQUENCY[] 	PROGMEM="Fequency";
-char	txtREFRESHPERIOD[] 	PROGMEM="Refresh-period";
-
+	MENUE_TEXT_VARDEF
 // Parameter definitions
-Parameter_t parCurrent = {	0, 100, 10000, 100, mA};
-Parameter_t parChVoltLiPo = {	0, 3000, 4200, 10, mV};
-Parameter_t parBalActVoltLiPo = {	0, 3000, 4200, 100, mV};
-Parameter_t parBalOnLiPo = {	0, 0, 1, 1, onoff};
-Parameter_t parVoltLiIo = {	0, 3500, 4100, 10, mV};
-Parameter_t parBalActVoltLiIo = {	0, 3000, 4200, 100, mV};
-Parameter_t parBalOnLiIo = {	0, 0, 1, 1, onoff};
-Parameter_t parVoltLiFe = {	0, 2000, 3700, 10, mV};
-Parameter_t parBalActVoltLiFe = {	0, 3000, 4200, 100, mV};
-Parameter_t parBalOnLiFe = {	0, 0, 1, 1, onoff};
-Parameter_t parChtVoltStorage = {	0, 2000, 4100, 100, mV};
-Parameter_t parBalActVoltStor = {	0, 3000, 4200, 100, mV};
-Parameter_t parBalOnStor = {	0, 0, 1, 1, onoff};
-Parameter_t parVoltDisch = {	0, 3000, 4200, 10, mV};
-Parameter_t parBalOnDisch = {	0, 0, 1, 1, onoff};
-Parameter_t parMaxcap = {	0, 0, 10000, 100, mAh};
-Parameter_t parMaxtime = {	0, 1, 6000, 1, min};
-Parameter_t parPWMfrequency = {	0, 10, 100, 10, kHz};
-Parameter_t parRefreshPeriod = {	0, 1, 10000, 10, ms};
-Parameter_t parCellCount = {	0, 1, 6, 1, Cells};
+	MENUE_PARAM_VARDEF
+// Menue definitions
+	MENUE_MENUE_VARDEF
 
-			//Name	Act	Par	Jmp	Parent	Memory
-MenuItem_t m_items[MENUESIZE] = {
-	/* 0*/	{txtMAINMENU,	 0,	 0,	1,	0,	FLASH},
-	/* 1*/	{txtBACK,	 leavemenu,	 0,	0,	0,	FLASH},
-	/* 2*/	{txtCHARGEMODE,	 0,	 0,	6,	0,	FLASH},
-	/* 3*/	{txtCURRENTSETPOINT,	 0,	 &parCurrent,	0,	0,	FLASH},
-	/* 4*/	{txtMODESETTINGS,	 0,	 0,	11,	0,	FLASH},
-	/* 5*/	{txtSETUP,	 0,	 0,	37,	0,	FLASH},
-	/* 6*/	{txtCHARGELIPONOW,	 ActionChargeModeLiPo,	 0,	0,	2,	FLASH},
-	/* 7*/	{txtCHARGELIIONOW,	 ActionChargeModeLiIo,	 0,	0,	2,	FLASH},
-	/* 8*/	{txtCHARGELIFENOW,	 ActionChargeModeLiFe,	 0,	0,	2,	FLASH},
-	/* 9*/	{txtSTORAGENOW,	 ActionChargeModeStorage,	 0,	0,	2,	FLASH},
-	/* 10*/	{txtDISCHARGENOW,	 ActionChargeModeDischarge,	 0,	0,	2,	FLASH},
-	/* 11*/	{txtBACK,	 0,	 0,	4,	4,	FLASH},
-	/* 12*/	{txtLITHIUMPOLYMER,	 0,	 0,	18,	4,	FLASH},
-	/* 13*/	{txtLITHIUMION,	 0,	 0,	22,	4,	FLASH},
-	/* 14*/	{txtLIFEPO,	 0,	 0,	26,	4,	FLASH},
-	/* 15*/	{txtSTORAGE,	 0,	 0,	30,	4,	FLASH},
-	/* 16*/	{txtDISCHARGE,	 0,	 0,	34,	4,	FLASH},
-	/* 17*/	{txtBACKTOMAIN,	 0,	 0,	1,	4,	FLASH},
-	/* 18*/	{txtBACK,	 0,	 0,	12,	12,	FLASH},
-	/* 19*/	{txtLIPOVOLTAGE,	 0,	 &parChVoltLiPo,	0,	12,	FLASH},
-	/* 20*/	{txtBALACTIVVOLTAGE,	 0,	 &parBalActVoltLiPo,	0,	12,	FLASH},
-	/* 21*/	{txtBALANCER,	 0,	 &parBalOnLiPo,	0,	12,	FLASH},
-	/* 22*/	{txtBACK,	 0,	 0,	13,	13,	FLASH},
-	/* 23*/	{txtLIIONVOLTAGE,	 0,	 &parVoltLiIo,	0,	13,	FLASH},
-	/* 24*/	{txtBALACTIVVOLTAGE,	 0,	 &parBalActVoltLiIo,	0,	13,	FLASH},
-	/* 25*/	{txtBALANCER,	 0,	 &parBalOnLiIo,	0,	13,	FLASH},
-	/* 26*/	{txtBACK,	 0,	 0,	14,	14,	FLASH},
-	/* 27*/	{txtLIFEPOVOLT,	 0,	 &parVoltLiFe,	0,	14,	FLASH},
-	/* 28*/	{txtBALACTIVVOLTAGE,	 0,	 &parBalActVoltLiFe,	0,	14,	FLASH},
-	/* 29*/	{txtBALANCER,	 0,	 &parBalOnLiFe,	0,	14,	FLASH},
-	/* 30*/	{txtBACK,	 0,	 0,	15,	15,	FLASH},
-	/* 31*/	{txtSTORAGEVOLTAGE,	 0,	 &parChtVoltStorage,	0,	15,	FLASH},
-	/* 32*/	{txtBALACTIVVOLTAGE,	 0,	 &parBalActVoltStor,	0,	15,	FLASH},
-	/* 33*/	{txtBALANCER,	 0,	 &parBalOnStor,	0,	15,	FLASH},
-	/* 34*/	{txtBACK,	 0,	 0,	16,	16,	FLASH},
-	/* 35*/	{txtDISCHARGEVOLTAGE,	 0,	 &parVoltDisch,	0,	16,	FLASH},
-	/* 36*/	{txtBALANCER,	 0,	 &parBalOnDisch,	0,	16,	FLASH},
-	/* 37*/	{txtBACK,	 0,	 0,	5,	5,	FLASH},
-	/* 38*/	{txtCHARGELIMITS,	 0,	 0,	43,	5,	FLASH},
-	/* 39*/	{txtPWM,	 0,	 0,	46,	5,	FLASH},
-	/* 40*/	{txtMANCELLCOUNT,	 0,	 &parCellCount,	0,	5,	FLASH},
-	/* 41*/	{txtCALIBRATIONH,	 actCalH,	 0,	0,	5,	FLASH},
-	/* 42*/	{txtCALIBRATIONL,	 actCalL,	 0,	0,	5,	FLASH},
-	/* 43*/	{txtBACK,	 0,	 0,	38,	38,	FLASH},
-	/* 44*/	{txtCAPACITY,	 0,	 &parMaxcap,	0,	38,	FLASH},
-	/* 45*/	{txtTIME,	 0,	 &parMaxtime,	0,	38,	FLASH},
-	/* 46*/	{txtBACK,	 0,	 0,	39,	39,	FLASH},
-	/* 47*/	{txtFEQUENCY,	 0,	 &parPWMfrequency,	0,	39,	FLASH},
-	/* 48*/	{txtREFRESHPERIOD,	 0,	 &parRefreshPeriod,	0,	39,	FLASH},
-};
-
-//******** END OF AUTO-GENERATED CODE DO NOT EDIT!!! *********
-
-
+//******** INSERT INTO C FILE *********
 
 
 
@@ -165,17 +51,15 @@ void UpdateCommandsFromParam(void)
 {
 	OS_MutexGet( OSMTXCommand );
 
-	/// UIUIUIUI  hier nach Mode selektieren FIXME
-
-
-	g_tCommand.sCurrentSetpoint = parCurrent.sValue;
-	g_tCommand.usMinBalanceVolt_mV = parBalActVoltLiPo.sValue;
-	g_tCommand.unQ_max_mAs = parMaxcap.sValue;
-	g_tCommand.usT_max_s = parMaxtime.sValue;
-	g_tCommand.basefrequency = parPWMfrequency.sValue;
-	g_tCommand.refreshrate = parRefreshPeriod.sValue;
-	g_tCommand.ucUserCellCount = parCellCount.sValue;
-	g_tCommand.usVoltageSetpoint_mV = parChVoltLiPo.sValue;
+	g_tCommand.sCurrentSetpoint = myPar.parCurrent.sValue;
+	g_tCommand.usVoltageSetpoint_mV = myPar.parChVoltSET.sValue;	
+	g_tCommand.usMinBalanceVolt_mV = myPar.parBalActVoltSET.sValue;
+	g_tCommand.unQ_max_mAs = myPar.parMaxcap.sValue*3600;
+	g_tCommand.usT_max_s = myPar.parMaxtime.sValue;
+	g_tCommand.basefrequency = myPar.parPWMfrequency.sValue;
+	g_tCommand.refreshrate = myPar.parRefreshPeriod.sValue;
+	g_tCommand.ucUserCellCount = 0; // does not exist in menue fixme
+	g_tCommand.SuppMin_mV = myPar.parMinSupplyVolt.sValue;
 
 	OS_MutexRelease( OSMTXCommand );
 
@@ -185,39 +69,56 @@ void UpdateCommandsFromParam(void)
 
 void ActionChargeModeLiPo(void)
 {
-	g_eBattMode = eBattModeLiPo;
-
-	OS_MutexGet( OSMTXCommand );
-	g_tCommand.usVoltageSetpoint_mV = parChVoltLiPo.sValue;
-	OS_MutexRelease( OSMTXCommand );
-
-	g_Tansfer_Action = eActModeAuto; // trigger
+	myPar.parChVoltSET.sValue = myPar.parChVoltLiPo.sValue;
+	myPar.parBalActVoltSET.sValue = myPar.parBalActVoltLiPo.sValue;
 
 	menuUp();
-	leavemenu();
+	UpdateCommandsFromParam();
+	g_Trig_SavePars = 1; // fixme wann?
+		
+	//g_Tansfer_Action = eActModeAuto; // fixme merken ???? / Funktion!!
 }
 
 void ActionChargeModeLiIo(void)
 {
+	myPar.parChVoltSET.sValue = myPar.parVoltLiIo.sValue;
+	myPar.parBalActVoltSET.sValue = myPar.parBalActVoltLiIo.sValue;
+
 	menuUp();
+	UpdateCommandsFromParam();
+	g_Trig_SavePars = 1; // fixme wann?
 }
 
 void ActionChargeModeLiFe(void)
 {
+	myPar.parChVoltSET.sValue = myPar.parVoltLiFe.sValue;
+	myPar.parBalActVoltSET.sValue = myPar.parBalActVoltLiFe.sValue;
+
 	menuUp();
+	UpdateCommandsFromParam();
+	g_Trig_SavePars = 1; // fixme wann?
 }
 
 void ActionChargeModeStorage(void)
 {
+	myPar.parChVoltSET.sValue = myPar.parChtVoltStorage.sValue;
+	myPar.parBalActVoltSET.sValue = myPar.parBalActVoltStor.sValue;
+
 	menuUp();
+	UpdateCommandsFromParam();
+	g_Trig_SavePars = 1; // fixme wann?
 }
 
 void ActionChargeModeDischarge(void)
 {
+	// fixme notimplemented
 	menuUp();
 }
 
-
+void ActionShowLast (void)
+{
+	// fixme todo	
+}
 
 void actCalH(void)
 {
@@ -230,36 +131,82 @@ void actCalL(void)
 	g_Tansfer_Action = eActCalLow;
 }
 
-void leavemenu(void)
-{
-	g_bMenuActive = 0;
-	g_Trig_SavePars = 1;
-	UpdateCommandsFromParam();
-	g_Tansfer_Action = eActModeAuto; // fixme merken ???? / Funktion!!
-
-	// Ladestrom editierbar machen: // fixme
-	//send parameter values and limits to UI
-	HandOverValueToUI(	parCurrent.sValue,
-						parCurrent.sUpperLimit,
-						parCurrent.sLowerLimit,
-						parCurrent.sStepSize
-						);
-}
-
-void entermenu(void)
-{
-	g_Tansfer_Action = eActModeStop;
-}
 
 void menuUp(void)
 {
+	uint8_t SubMenuGroupSize=0, StartIndex=0;
 	MyMenue.gucSelectedItem = m_items[MyMenue.gucSelectedItem].ucParent;
+	//get array start index of the submenu items
+	GetSubMenuCount(&SubMenuGroupSize, &StartIndex);
+	//send values to UI
+	callback_menu_HandOverValueToUI(SubMenuGroupSize-(MyMenue.gucSelectedItem-StartIndex), SubMenuGroupSize, 1, 1);
 }
+
+void menuUpnSave(void)
+{
+	savePersistent();
+	menuUp();
+}
+
+
+void savePersistent(void)
+{	
+	int16_t buf[8];
+	
+	buf[0] = myPar.parChVoltLiPo.sValue	;
+	buf[1] = myPar.parBalActVoltLiPo.sValue	;
+
+	buf[2] = myPar.parVoltLiIo.sValue;
+	buf[3] = myPar.parBalActVoltLiIo.sValue;
+
+	buf[4] = myPar.parVoltLiFe.sValue;
+	buf[5] = myPar.parBalActVoltLiFe.sValue;
+
+	buf[6] = myPar.parChtVoltStorage.sValue;
+	buf[7] = myPar.parBalActVoltStor.sValue;
+	
+	eeprom_WriteBlockWCRC((uint8_t*)&buf, EEPROM_COMMAND_START, sizeof(buf));
+	
+}
+
+void loadPersistent(void)
+{
+	int16_t buf[8];
+	
+	if(eeprom_ReadBlockWCRC( (uint8_t*)&buf,
+	(void*)( EEPROM_COMMAND_START ), sizeof(buf) ))
+	{
+		// crc fail
+	}
+	else
+	{
+		myPar.parChVoltLiPo.sValue = buf[0];
+		myPar.parBalActVoltLiPo.sValue = buf[1];
+
+		myPar.parVoltLiIo.sValue = buf[2];
+		myPar.parBalActVoltLiIo.sValue = buf[3];
+
+		myPar.parVoltLiFe.sValue = buf[4];
+		myPar.parBalActVoltLiFe.sValue = buf[5];
+
+		myPar.parChtVoltStorage.sValue = buf[6];
+		myPar.parBalActVoltStor.sValue = buf[7];
+	}	
+	
+}
+
 
 // ************* LCD interface
 
 void menu_draw_header(char *menu_header)
 {
+	static uint8_t lf=0;
+	if (lf == 0)
+	{
+		loadPersistent();
+		lf = 1;
+	}
+	
 	//delete old menu header
 	lcd_draw_filled_box( BLACK, 0, 0, 320, 40);
 	//draw new menu header
@@ -279,7 +226,7 @@ void menu_draw_unselected_items(char *item_name, uint16_t par_exists,
 				//delete old val
 
 			//write new val
-			lcd_print(WHITE, BLACK, 1, 200, 40+lcd_pos*20, "%i",parameter);
+			lcd_print(WHITE, BLACK, 1, 200, 40+lcd_pos*20, "%d",parameter);
 		}
 	}
 
@@ -297,7 +244,7 @@ extern void menu_draw_selected_item(char *item_name, uint16_t par_exists,
 				//delete old val
 
 			//write new val
-			lcd_print(WHITE, BLACK, 1, 200, 40+lcd_pos*20, "%i",parameter);
+			lcd_print(WHITE, BLACK, 1, 200, 40+lcd_pos*20, "%d",parameter);
 		}
 	}
 
@@ -310,7 +257,7 @@ void menu_draw_selected_parameter(char *item_name, int16_t parameter,
 			lcd_print(RED, BLACK, 1, 20, 40+lcd_pos*20,item_name);
 			lcd_print(RED, BLACK, 1, 280, 40+lcd_pos*20, "edit");
 			//write new val
-			lcd_print(RED, BLACK, 1, 200, 40+lcd_pos*20, "%i",parameter);
+			lcd_print(RED, BLACK, 1, 200, 40+lcd_pos*20, "%d",parameter);
 		}
 
 void menu_del_menuitems(void)//menu plane is changed
@@ -321,6 +268,10 @@ void menu_del_menuitems(void)//menu plane is changed
 
 void menu_draw_groupposition(uint8_t itemnr, uint8_t groupitems)
 {
-	lcd_print( WHITE, BLACK, 1, 280, 10, "%iv%i",itemnr,groupitems);
+	lcd_print( WHITE, BLACK, 1, 280, 10, "%dv%d",itemnr,groupitems);
 }
 
+void callback_menu_ParChanged(void)
+{
+	UpdateCommandsFromParam();
+}

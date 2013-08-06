@@ -6,9 +6,9 @@
 
 // Prototypes:
 void ProcessTouch(void);
-int16_t GetvalueFromUI(void);
+int16_t callback_menu_GetvalueFromUI(void);
 uint8_t touchGetSpeed(int16_t* speed, int32_t *Schwerpunkt);
-void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower,
+void callback_menu_HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower,
 		uint16_t stepsize);
 int32_t touchGetSchwerpunkt(void);
 void sFilter(int16_t* o, int16_t* n);
@@ -24,7 +24,6 @@ extern ChargerMode_t g_Tansfer_Action;
 // Globals:
 extern uint8_t g_debug, g_debug2, g_debug3;
 extern int16_t g_debug4;
-extern uint8_t g_bMenuActive;
 extern Command_t g_tCommand; // only for adjusting the current while charging
 
 int16_t g_ausTouchCalValues[5] =
@@ -48,8 +47,11 @@ void TaskTouch()
 
 		OS_WaitAlarm( OSALTouchRepeat );
 		OS_SetAlarm( OSALTouchRepeat, 10 ); // every 10ms
-
-		ProcessTouch();//change value
+		
+		if(GetBattStatus() == eBattWaiting)
+		{	
+			ProcessTouch();//change value
+		}			
 	}
 }
 
@@ -179,7 +181,7 @@ void svFilter(int16_t* o, int16_t* n, uint8_t x)
 
 #define SLIDERUPSCALE 32000ul
 
-void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower,
+void callback_menu_HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower,
 		uint16_t stepsize)
 {
 	myP.upscale = (uint32_t)SLIDERUPSCALE
@@ -191,7 +193,7 @@ void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower,
 	myP.max = (uint32_t)upper * myP.upscale;
 }
 
-int16_t GetvalueFromUI(void)
+int16_t callback_menu_GetvalueFromUI(void)
 {
 	return myP.position / myP.upscale;
 }
@@ -271,7 +273,6 @@ uint8_t touchGetSpeed(int16_t* speed, int32_t *Schwerpunkt)
 }
 
 eTouchstate_t eTouchstate = eTSIdle;
-uint8_t s_ucKeyLock = 0;
 uint8_t info = 0;
 
 int32_t Schwerpunkt;
@@ -296,7 +297,7 @@ void ProcessTouch(void)
 	static uint16_t TimeDiff = 0;
 
 	TimeDiff++;
-
+	
 	switch(eTouchstate)
 	{
 		case eTSIdle:
@@ -318,9 +319,6 @@ void ProcessTouch(void)
 
 			if(bMoved == 1) // touched / moved
 			{
-				if(s_ucKeyLock)
-				break;
-				
 				// adapt speed
 
 				myP.force = -s_sSpeedFiltered;
@@ -372,87 +370,28 @@ void ProcessTouch(void)
 
 					break;
 				case eGPlus:
-					if(s_ucKeyLock)
-						break;
-					if(g_bMenuActive)
-					{
-						if(myP.position + myP.stepsize < myP.max)
-							myP.position += myP.stepsize;
-						else
-							myP.position = myP.max;
-					}
+					if(myP.position + myP.stepsize < myP.max)
+						myP.position += myP.stepsize;
 					else
-					{
-						OS_MutexGet( OSMTXCommand );
-						if(g_tCommand.sCurrentSetpoint + 100
-								< parCurrent.sUpperLimit)
-							g_tCommand.sCurrentSetpoint += 100;
-						OS_MutexRelease( OSMTXCommand );
-					}
+						myP.position = myP.max;
+					
 					break;
 				case eGMitte:
-					if(s_ucKeyLock)
-						break;
 					// menue bestätigung
-					if(g_bMenuActive)
-					{
-						menu_select();
-					}
-					else
-					{
-						if(GetBattStatus() == eBattWaiting)
-						{
-							// fixme duplicate weil der doppeltatsch net geht.
-
-							// block charger
-							g_Tansfer_Action = eActModeStop;
-
-							uint8_t SubMenuGroupSize, StartIndex;
-
-							GetSubMenuCount( &SubMenuGroupSize, &StartIndex );
-
-							HandOverValueToUI( SubMenuGroupSize,
-									SubMenuGroupSize, 1, 1 );
-
-							g_bMenuActive = 1;
-						}
-						else
-							g_Tansfer_Action = eActModeStop; // fixme charger has to take it also in charging mode.
-
-					}
+					menu_select();
 					break;
 				case eGMittePlus:
 
 					break;
 				case eGMinus:
-					if(s_ucKeyLock)
-						break;
-					if(g_bMenuActive)
-					{
-						if(myP.position - myP.stepsize > myP.min)
-							myP.position -= myP.stepsize;
-						else
-							myP.position = myP.min;
-					}
+					if(myP.position - myP.stepsize > myP.min)
+						myP.position -= myP.stepsize;
 					else
-					{
-						OS_MutexGet( OSMTXCommand );
-						if(g_tCommand.sCurrentSetpoint - 100
-								> parCurrent.sLowerLimit)
-							g_tCommand.sCurrentSetpoint -= 100;
-						OS_MutexRelease( OSMTXCommand );
-					}
+						myP.position = myP.min;
 					break;
 				case eGSplit:
-					// unlock
-					if(s_ucKeyLock)
-					{
-						s_ucKeyLock = 0;
-					}
-					else
-					{
-						s_ucKeyLock = 1;
-					}
+					// no func
+
 
 					break;
 				case eGMitteMinus:

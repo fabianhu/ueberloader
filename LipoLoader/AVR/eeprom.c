@@ -5,7 +5,7 @@
 #include "crc.h"
 
 // write block to eeprom with CRC16 sum AFTER it.
-void eeprom_WriteBlockWCRC( uint8_t* blk, void* dest, uint16_t size)
+void eeprom_WriteBlockWCRC( uint8_t* blk, uint8_t* dest, uint16_t size)
 {
 	uint16_t crc=0;
 	OS_PREVENTSCHEDULING;
@@ -18,7 +18,7 @@ void eeprom_WriteBlockWCRC( uint8_t* blk, void* dest, uint16_t size)
 
 // read block from eeprom with CRC16 sum AFTER it.
 // DISCARD result, if return value is <> 0
-uint8_t eeprom_ReadBlockWCRC( uint8_t* dest, void* src, uint16_t size)
+uint8_t eeprom_ReadBlockWCRC( uint8_t* dest, uint8_t* src, uint16_t size)
 {
 	uint16_t crcEE = 0, crcRD = 0;
 

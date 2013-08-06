@@ -48,46 +48,49 @@ Battery_Info_t g_tBattery_Info;
 
 //uint16_t I_Max_ABS = 25000;
 //volatile uint16_t g_I_filt;
-extern int16_t g_asADCDMAvalues[3]; // fast ADC values via DMA
 extern uint8_t g_ParReady;
+extern uint16_t pwm_us_period_H;
+extern volatile uint8_t ADCwatchdog;
+
 ChargerMode_t g_eChargerMode = eModeAuto;
 
 // *********  Prototypes
 uint8_t GetCellcount(void);
 extern void emstop(uint8_t e);
 
+
 #define GOVTEST 0
 
-#define VOLTGOV_KI 100
 
-#define BALANCEMINCHARGECURRENT 30
 
 // ********* Stuff
 void TaskGovernor(void)
 {
 	int16_t sU_in_act, sU_out_act;
-	static int16_t /*sU_in_act_flt,*/sU_out_act_flt;
+	static int16_t sU_in_act_flt,sU_out_act_flt;
 	static int16_t sI_out_act, sI_out_act_flt; // mV / mA
 	static int16_t sZeroHiMeas;
 
 	if(sizeof(Command_t) % 2 == 1)
 	{
-		emstop( 3 ); // Command_t is not 16bit aligned. Not checkable at compile time.
+		emstop( 4 ); // Command_t is not 16bit aligned. Not checkable at compile time.
 	}
 
 	if(eeprom_ReadBlockWCRC( (uint8_t*)&g_tCommand, EEPROM_COMMAND_START,
 			sizeof(Command_t) ))
 	{
 		// set defaults: todo fill with useful values
-		g_tCommand.basefrequency = 60;
-		g_tCommand.refreshrate = 10;
 		g_eChargerMode = eModeAuto;
+		
 		g_tCommand.sCurrentSetpoint = 1000;
 		g_tCommand.ucUserCellCount = 6;
-		g_tCommand.unQ_max_mAs = 100000;
-		g_tCommand.usMinBalanceVolt_mV = 2000;
-		g_tCommand.usT_max_s = 10000;
 		g_tCommand.usVoltageSetpoint_mV = 3850;
+		g_tCommand.unQ_max_mAs = 100000;
+		g_tCommand.usT_max_s = 10000;
+		g_tCommand.usMinBalanceVolt_mV = 3500;
+		g_tCommand.basefrequency = 60;
+		g_tCommand.refreshrate = 10;
+		g_tCommand.SuppMin_mV = 10000;
 	}
 
 	g_ParReady = 1;
@@ -104,42 +107,49 @@ void TaskGovernor(void)
 
 	ADC_ActivateHiCurrentMeas();
 
-	EVSYS.STROBE = ( 1 << 7 ); //fire event 7, which triggers the ADC
+	//EVSYS.STROBE = ( 1 << 7 ); //fire event 7, which triggers the ADC
 	OS_WaitTicks( OSALMWaitGov, 100 );
 	// wait during first ADC conversion
 
-	sZeroHiMeas = g_asADCDMAvalues[2]; // todo filter over several samples
+	sZeroHiMeas = ADC_GetISRValue(2); // todo filter over several samples
 
 	//ADC_ActivateLoCurrentMeas();
-	CalibInit();
+	Cal_init();
 
 	OS_WaitTicks( OSALMWaitGov, 200 );
 	// wait for first slow ADC loop...
 
 	while(1)
 	{
+		if(ADCwatchdog == 0)
+		{
+			// re-enable the adc, which is (not) re-triggered by dma-isr
+			EVSYS.STROBE = ( 1 << 7 ); //fire event 7, which triggers the ADC
+			// or
+			emstop(5);
+		}
+		ADCwatchdog = 0;
 
-		EVSYS.STROBE = ( 1 << 7 ); //fire event 7, which triggers the ADC
 
-		OS_WaitTicks( OSALMWaitGov, 1 );
+		OS_WaitTicks( OSALMWaitGov, 1 ); 
 		// wait during ADC conversion
 
-		sU_in_act = ADC_ScaleVolt_mV( g_asADCDMAvalues[0] );
-		sU_out_act = ADC_ScaleVolt_mV( g_asADCDMAvalues[1] ); // corrected below!
+		sU_in_act = ADC_ScaleVolt_mV( ADC_GetISRValue(0) );
+		sU_out_act = ADC_ScaleVolt_mV( ADC_GetISRValue(1) ); // corrected below!
 		sFilterVar( &sU_out_act_flt, &sU_out_act, 16 );
+		sFilterVar( &sU_in_act_flt, &sU_in_act, 16 );
 
 		if(( ADCA.CH2.MUXCTRL & ( 0xf << 3 ) ) == ADC_CH_MUXPOS_PIN7_gc) // is high current config...
 		{
 			// high current
-			sI_out_act = ADC_ScaleHighAmp_mA( g_asADCDMAvalues[2],
-					sZeroHiMeas );
+			sI_out_act = ADC_ScaleHighAmp_mA( ADC_GetISRValue(2), sZeroHiMeas );
 			// voltage measurement correction
 			sU_out_act -= sI_out_act * 1 / 125; // High current resistor value (0.005R)(+3mR MosFet) * Current
 		}
 		else
 		{
 			// low current
-			sI_out_act = ADC_ScaleLowAmp_mA( g_asADCDMAvalues[2] );
+			sI_out_act = ADC_ScaleLowAmp_mA( ADC_GetISRValue(2) );
 			// voltage measurement correction
 			sU_out_act -= sI_out_act * 2 / 19; // Low current resistor value (0.105R) * Current
 		}
@@ -158,27 +168,48 @@ void TaskGovernor(void)
 		OS_MutexGet( OSMTXBattInfo );
 		g_tBattery_Info.sActVoltage_mV = sU_out_act_flt;
 		g_tBattery_Info.sActCurrent_mA = sI_out_act_flt;
-		g_tBattery_Info.usConverterPower_W =
-				(uint16_t)abs(nConverterPower_mW/1000);
+		g_tBattery_Info.sSupplyVolt_mV = sU_in_act_flt;
+		g_tBattery_Info.usConverterPower_W = (uint16_t)abs(nConverterPower_mW/1000);
 		OS_MutexRelease( OSMTXBattInfo );
 
 		// just in case...
 
 		// supply undervoltage
 		if(sU_in_act < 7000)
-			emstop( 4 );
+			emstop( 6 );
 		// supply overvoltage
-		if(sU_in_act > 22000)
-			emstop( 5 );
+		if(sU_in_act > 24000)
+			emstop( 7 );
+
+#if testtest == 123
+
+#warning "Testmode"
+
+OS_MutexGet( OSMTXCommand );
+
+
+uint16_t maxpower = 2*pwm_us_period_H + 2*CHANGEOVER - 2*MINSWITCHOFFPWM ;
+
+static uint16_t pwr = 0;
+static uint16_t start = 0;
+
+pwr++;
+if (pwr > maxpower) pwr = 0;
+
+vPWM_Set(pwr, start );
+
+OS_MutexRelease( OSMTXCommand);
+
+#else
 
 		if(g_tBattery_Info.eState == eBattCharging)
 		{
 			if(sI_out_act > 10000 && abs(sI_out_act_flt) > 100)
-				emstop( 6 );
+				emstop( 8 );
 		}
 
 		static uint8_t errcntOverVolt = 0;
-		if(sU_out_act > 4250 * g_tBattery_Info.ucNumberOfCells
+		if(sU_out_act > 4500 * g_tBattery_Info.ucNumberOfCells // FIXME war vorher auf 4250 aber mein Lader misst dermaßen falsch...
 				&& g_tBattery_Info.ucNumberOfCells >0
 				&& g_tBattery_Info.eState == eBattCharging)
 			errcntOverVolt++;
@@ -186,43 +217,18 @@ void TaskGovernor(void)
 			errcntOverVolt = 0;
 
 		if(errcntOverVolt > 10)
-			emstop( 7 ); // after 10 ms...
+			emstop( 9 ); // after 10 ms...
 
 		OS_DISABLEALLINTERRUPTS;
-		int16_t myISetpoint = g_tCommand.sCurrentSetpoint;
-		int16_t myUSetpoint = g_tCommand.usVoltageSetpoint_mV
-				* g_tBattery_Info.ucNumberOfCells;
+//		int16_t myISetpoint = g_tCommand.sCurrentSetpoint;
+		uint16_t myUSetpoint = g_tCommand.usVoltageSetpoint_mV	* g_tBattery_Info.ucNumberOfCells;
 		g_tBattery_Info.sVSetpoint = myUSetpoint;
 		OS_ENABLEALLINTERRUPTS;
 
-		// calculate Current setpoint
-		int16_t I_Set_mA_Ramped = 0;
-		static int32_t U_Integrator = 0;
 
-		if(g_tBattery_Info.eState == eBattCharging)
-		{
-			if(Balancer_GetOverload())
-			{
-				myISetpoint = min(BALANCEMINCHARGECURRENT,myISetpoint);
-			}
-
-			I_Set_mA_Ramped = PID( myUSetpoint - sU_out_act_flt, &U_Integrator,
-					0, VOLTGOV_KI, 0, 0, myISetpoint ); // todo adjust integrator
-
-			if(myISetpoint <= 0)
-			{
-				I_Set_mA_Ramped = 0; // switch off on zero.
-				U_Integrator = 0; // reset integrator!!
-			}
-
-		}
-		else
-		{
-			I_Set_mA_Ramped = 0;
-			U_Integrator = 0; // reset integrator!!
-		}
-
-		vGovernor( I_Set_mA_Ramped, sI_out_act );
+		vGovernor( BalancerGetCurrentSetp(), sI_out_act );
+		
+#endif // testtest
 
 	}
 }
@@ -315,6 +321,8 @@ void TaskState(void)
 {
 	uint8_t i, j, t, to;
 
+	OS_WaitTicks( OSALMStateWait, 500 );
+
 	while(1)
 	{
 		OS_WaitEvent( OSEVTState );
@@ -322,13 +330,26 @@ void TaskState(void)
 		uint8_t NumberOfCells = 0;
 
 		OS_MutexGet( OSMTXBattInfo );
-		uint16_t myBattVoltage = g_tBattery_Info.sActVoltage_mV;
+//		uint16_t myBattVoltage = g_tBattery_Info.sActVoltage_mV;
 		int16_t myBattCurrent = g_tBattery_Info.sActCurrent_mA;
+		int16_t mySuppVoltage = g_tBattery_Info.sSupplyVolt_mV;
+
+		uint16_t myBattSumVoltage=0;
+		for(i=0;i<g_tBattery_Info.ucNumberOfCells;i++)
+		{
+			myBattSumVoltage+= g_tBattery_Info.Cells[i].sVoltage_mV;
+		}
 		OS_MutexRelease( OSMTXBattInfo );
+
 
 		OS_MutexGet( OSMTXCommand );
 		uint16_t usCommandCurrent = g_tCommand.sCurrentSetpoint;
 		OS_MutexRelease( OSMTXCommand );
+
+
+		if (mySuppVoltage < g_tCommand.SuppMin_mV )
+			g_tBattery_Info.eState = eBattSupplyUntervolt;
+
 
 		switch(g_tBattery_Info.eState)
 		{
@@ -389,7 +410,7 @@ void TaskState(void)
 				{
 					case eModeManual: // todo NOT YET IMPEMENTED
 					case eModeAuto:
-						if(myBattVoltage
+						if(myBattSumVoltage
 								>= g_tCommand.usVoltageSetpoint_mV
 										* g_tBattery_Info.ucNumberOfCells
 								&& myBattCurrent < usCommandCurrent / 10
@@ -428,17 +449,24 @@ void TaskState(void)
 				break;
 
 			case eBattUnknown:
-				OS_WaitTicks( OSALMStateWait, 7000 );
+				OS_WaitTicks( OSALMStateWait, 5000 );
 				g_tBattery_Info.eState = eBattWaiting;
+				break;
+
+			case eBattSupplyUntervolt:
+				OS_WaitTicks( OSALMStateWait, 1000 );
+				if (mySuppVoltage > g_tCommand.SuppMin_mV + 1000)
+					g_tBattery_Info.eState = eBattWaiting;
+				
 				break;
 
 			case eBattError:
 				OS_WaitTicks( OSALMStateWait, 10000 );
-				g_eChargerMode = eActModeStop;
+				//g_eChargerMode = eActModeStop;
 				g_tBattery_Info.eState = eBattWaiting;
 				break;
 			default:
-				emstop( 8 );
+				emstop( 10 );
 				break;
 
 		}

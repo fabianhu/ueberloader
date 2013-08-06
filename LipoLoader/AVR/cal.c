@@ -18,7 +18,7 @@ typedef struct t_CalibData_tag
 
 t_CalibData_t t_CalibData;
 
-void CalibInit(void)
+void Cal_init(void)
 {
 	// read back the values from eeprom
 	if(eeprom_ReadBlockWCRC( (uint8_t*)&t_CalibData,
@@ -86,7 +86,7 @@ int16_t Calibrate(int16_t raw, int16_t gain, int16_t offset)
 	return (int16_t)zc;
 }
 
-void CalibrateCells(int16_t* raw, int16_t* out)
+void Cal_Apply(int16_t* raw, int16_t* out)
 {
 	int16_t temp;
 

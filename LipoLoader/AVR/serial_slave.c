@@ -146,14 +146,14 @@ uint8_t HandleSerial(UCIFrame_t *_RXFrame)
 			break;
 		case UCI_ACTION:
 			switch ((ChargerAction_t)g_tUCIRXFrame.values[0]) {
-				case eActModeStop:
+				/*case eActModeStop:
 					g_eChargerMode = eModeStop;
-					break;
-				case eActModeAuto:
-					g_eChargerMode = eModeAuto;
 					break;
 				case eActModeManual:
 					g_eChargerMode = eModeManual;
+					break;*/
+				case eActModeAuto:
+					g_eChargerMode = eModeAuto;
 					break;
 				case eActCalLow:
 					g_ucCalCommand = 1;
