@@ -1,8 +1,10 @@
 #include "OS/FabOS.h"
+#include "ueberloader.h"
 #include "adc.h"
 #include "filter.h"
 #include "serial.h"
 #include "cal.h"
+#include "pwm.h" // for "min"
 
 extern Battery_Info_t g_tBattery_Info; // todo avoid
 
@@ -16,17 +18,22 @@ typedef struct ADC_Values_tag
 	int16_t TempCPU;
 } ADC_Values_t;
 
-#define BALANCEFINISHCOUNT 15
+#define BALANCEFINISHCOUNT 10
 
-uint8_t bBalancerOverload; // True, if one cell has reached Voltage limit.
 uint8_t ucBalancerFinished = BALANCEFINISHCOUNT; // 0 indicated balancer is finished
 //uint8_t aucDisChTicks[6]; // increased for each discharge cycle
 uint32_t aunCharge_mAs[6]; // accumulated charge
 ADC_Values_t g_tADCValues;
 
+uint16_t BattVoltFromBalancer;
+int16_t CurrentSetpointfromBal;
+
+
 #define ADCWAITTIME 2
-#define BALANCEREPEATTIME 330L
-#define BALANCEEVERYNCYCLES 1  // 1= every second time
+#define BALANCEREPEATTIME 100
+#define DECIDEEVERYNCYCLES 2  // 1= every second time
+#define BALANCEROHMS 22 // resistor value!
+
 uint8_t g_ucCalCommand = 0;
 
 void sFilterBalancer(int16_t* o, int16_t* n) // with jump possibility, if filtered value is off by more than 10%
@@ -57,7 +64,7 @@ void TaskBalance(void)
 	uint8_t ucBalanceBits = 0;
 	uint8_t i, j;
 	// balancing allowed
-	static uint8_t onlyEveryNCycles = 0; // 0 = Balancer is possibly on; value >0 => guaranteed to be off.
+	static uint8_t EveryNCycles = 0; // 0 = Balancer is guaranteed to be off.
 
 	// direction for balancer pins
 	PORTC.DIRSET = 0b11111100;
@@ -69,12 +76,12 @@ void TaskBalance(void)
 
 	while(1)
 	{
-
 		OS_WaitAlarm( OSALMBalRepeat );
 		OS_SetAlarm( OSALMBalRepeat, BALANCEREPEATTIME );
 
-		if(onlyEveryNCycles > 0) // measurement not poisoned by balancer
+		if(EveryNCycles == 0) // measure only, if the balancer was off!!
 		{
+			
 			for(j = 0; j < 8 ; j++) // do conversion 8 times and filter
 			{
 				for(i = 1; i < 6 ; i++)
@@ -146,87 +153,117 @@ void TaskBalance(void)
 		}
 
 		// ok, now we have all cells, now apply the calibration
-		CalibrateCells( &sBalanceCellsRaw[0], &sBalanceCells[0] );
-
-		// mean Cell Voltage
-		int16_t mean = 0;
-		uint8_t bBalance = 0;
-
-		OS_MutexGet( OSMTXCommand );
-		uint16_t usBalanceRelease_mV = g_tCommand.usMinBalanceVolt_mV;
-		uint16_t usMaxCell_mV = g_tCommand.usVoltageSetpoint_mV;
-		OS_MutexRelease( OSMTXCommand );
-
-		// Calculate release
+		Cal_Apply( &sBalanceCellsRaw[0], &sBalanceCells[0] );
+		
+		
+		// Calculate base values
+		uint16_t minCellVolt = 4300;
+		uint16_t maxCellVolt = 0;
+		uint16_t SumCellVolts = 0;
+		
 		for(i = 0; i < g_tBattery_Info.ucNumberOfCells ; i++)
 		{
-			mean += sBalanceCells[i];
-			if(sBalanceCells[i] > usBalanceRelease_mV) // if eine Zelle hoch genug, dann gehts los.
-				bBalance = 1;
-		}
-		mean = mean / g_tBattery_Info.ucNumberOfCells;
+			minCellVolt = min(sBalanceCells[i],minCellVolt);
+			maxCellVolt = max(sBalanceCells[i],maxCellVolt);
+			SumCellVolts += sBalanceCells[i];
+		}			
 
-		if(bBalance
-				== 1&& g_tBattery_Info.eState == eBattCharging && onlyEveryNCycles == BALANCEEVERYNCYCLES){
-		uint8_t balact=0;
-		// Balancer logic
-		for(i = 0; i < 6; i++)// process all cells
+		BattVoltFromBalancer = SumCellVolts;
+		
+		
+		OS_MutexGet( OSMTXCommand );
+		uint16_t usBalanceRelease_mV = g_tCommand.usMinBalanceVolt_mV;
+		int16_t myISetpoint = g_tCommand.sCurrentSetpoint;
+		uint16_t myUSetpoint = g_tCommand.usVoltageSetpoint_mV;
+		OS_MutexRelease( OSMTXCommand );
+		
+
+		static int32_t U_Integrator = 0;
+		int16_t I_Set_mA_Ramped;
+		#define VOLTGOV_KP 1 // /32
+		#define VOLTGOV_KI 8000 // /255 /128
+		#define VOLTGOV_KD 0 // inactive in PID()!
+		#define BALANCEMINCHARGECURRENT 2300/BALANCEROHMS/2 // 100 for 22R
+		
+		
+		if(EveryNCycles == 0) // only control if balancer is off.
 		{
-			if(sBalanceCells[i] > mean+3 )
+			if(g_tBattery_Info.eState == eBattCharging)
 			{
-				// switch on Balancer for this cell
-				PORTC.OUTSET = ( 1 << ( 2 + i ) );
-				ucBalanceBits |= ( 1 << i );
+				int32_t diff = (int32_t)myUSetpoint - (int32_t)maxCellVolt;
+				I_Set_mA_Ramped = PID(diff , &U_Integrator, VOLTGOV_KP, VOLTGOV_KI, VOLTGOV_KD, 0, myISetpoint ); // todo adjust integrator
+				
+				if(maxCellVolt > myUSetpoint + 3) // 3 mV more than desired
+				{
+					I_Set_mA_Ramped = I_Set_mA_Ramped - (I_Set_mA_Ramped/50); // reduce by 2%    fixme ?? 
+					PID(0 , &U_Integrator, 0, 0, 0, 0, I_Set_mA_Ramped);
+				}
+				else
+				{
+								
+				}
 
-				int32_t curr_mA;
-				curr_mA = sBalanceCells[i] / 22;// 22 Ohms
-				aunCharge_mAs[i] = (int32_t)curr_mA * BALANCEREPEATTIME / 1000L;// add the mAs produced in this cycle
-				balact=1;
+
+				if(I_Set_mA_Ramped <= 0)
+				{
+					I_Set_mA_Ramped = 0; // switch off on zero.
+				}
+
 			}
 			else
 			{
-				// switch off Balancer for this cell
-				PORTC.OUTCLR = ( 1 << ( 2 + i ) );
-				ucBalanceBits &= ~( 1 << i );
+				I_Set_mA_Ramped = 0;
+				U_Integrator = 0; // reset integrator!!
 			}
-		}
-		if (balact)
-		{
-			ucBalancerFinished = BALANCEFINISHCOUNT;
-		}
-		else
-		{
-			if(ucBalancerFinished > 0) ucBalancerFinished--;
-		}
-		onlyEveryNCycles = 0;
-	}
-	else
-	{
-		// balancer off
-		PORTC.OUTCLR = (0b111111<<2);
-		ucBalanceBits = 0;
-		if(onlyEveryNCycles<BALANCEEVERYNCYCLES)
-		onlyEveryNCycles++;
-	}
+			OS_DISABLEALLINTERRUPTS;
+			CurrentSetpointfromBal = I_Set_mA_Ramped;
+			OS_ENABLEALLINTERRUPTS;
+		
 
-		// calculate overvolt protection per cell
-		uint8_t j = 0;
-		for(i = 0; i < g_tBattery_Info.ucNumberOfCells ; i++)
-		{
-			if(sBalanceCells[i] > usMaxCell_mV)
+			if(minCellVolt > usBalanceRelease_mV && g_tBattery_Info.eState == eBattCharging )
 			{
-				j++;
-			}
+
+				// Balancer logic
+				for(i = 0; i < 6; i++)// process all cells
+				{
+					if(sBalanceCells[i] > minCellVolt + 2 ) // 2mV for hysteresis
+					{
+						// switch on Balancer for this cell
+						PORTC.OUTSET = ( 1 << ( 2 + i ) );
+						ucBalanceBits |= ( 1 << i );
+
+						int32_t curr_mA;
+						curr_mA = sBalanceCells[i] / BALANCEROHMS;
+						aunCharge_mAs[i] = (int32_t)curr_mA * BALANCEREPEATTIME / 1000L;// add the mAs produced in this cycle
+						ucBalancerFinished = BALANCEFINISHCOUNT;
+
+					}
+					else
+					{
+						// switch off Balancer for this cell
+						PORTC.OUTCLR = ( 1 << ( 2 + i ) );
+						ucBalanceBits &= ~( 1 << i );
+					
+					}
+				}
+				if(ucBalanceBits == 0)
+					if(ucBalancerFinished > 0) ucBalancerFinished--;
+			
+			}		
 		}
-		if(j > 0)
+		EveryNCycles++;
+		
+		if(EveryNCycles > DECIDEEVERYNCYCLES)
 		{
-			bBalancerOverload = 1;
-		}
-		else
-		{
-			bBalancerOverload = 0;
+			// balancer off
+			PORTC.OUTCLR = (0b111111<<2);
+			ucBalanceBits = 0;
+			
+			EveryNCycles = 0; // cycle 0 after wait had the balancer off.
 		}
 
+		
+		
 		// copy stuff for other tasks
 		OS_MutexGet( OSMTXBattInfo );
 
@@ -246,12 +283,29 @@ void TaskBalance(void)
 	} // while(1)
 }
 
-uint8_t Balancer_GetOverload(void)
-{
-	return bBalancerOverload;
-}
 
 uint8_t Balancer_GetFinished(void)
 {
-	return ucBalancerFinished = 0 ? 1 : 0;
+	return (ucBalancerFinished == 0)?1:0;
+}
+
+uint16_t BalancerGetBattVolt(void)
+{
+	uint16_t ret;
+	OS_DISABLEALLINTERRUPTS;
+	ret = BattVoltFromBalancer;
+	OS_ENABLEALLINTERRUPTS;
+	return ret;
+}
+
+int16_t BalancerGetCurrentSetp(void)
+{
+	int16_t ret = 0;
+	OS_DISABLEALLINTERRUPTS;
+	if(g_tBattery_Info.eState == eBattCharging)
+	{	
+		ret = CurrentSetpointfromBal;
+	}		
+	OS_ENABLEALLINTERRUPTS;
+	return ret;
 }

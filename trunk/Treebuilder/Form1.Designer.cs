@@ -33,9 +33,7 @@
             System.Windows.Forms.TreeNode treeNode1 = new System.Windows.Forms.TreeNode("root");
             this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.textBoxtxtPrefix = new System.Windows.Forms.TextBox();
-            this.tbdef1 = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
-            this.tbmen1 = new System.Windows.Forms.TextBox();
             this.label3 = new System.Windows.Forms.Label();
             this.buttonGenerate = new System.Windows.Forms.Button();
             this.label4 = new System.Windows.Forms.Label();
@@ -48,9 +46,7 @@
             this.label11 = new System.Windows.Forms.Label();
             this.textBoxParValUpper = new System.Windows.Forms.TextBox();
             this.textBoxInfo = new System.Windows.Forms.TextBox();
-            this.label1 = new System.Windows.Forms.Label();
             this.textBoxNodeName = new System.Windows.Forms.TextBox();
-            this.label2 = new System.Windows.Forms.Label();
             this.textBoxResult = new System.Windows.Forms.TextBox();
             this.label12 = new System.Windows.Forms.Label();
             this.buttonRename = new System.Windows.Forms.Button();
@@ -67,6 +63,8 @@
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
+            this.textBoxParStructName = new System.Windows.Forms.TextBox();
+            this.label9 = new System.Windows.Forms.Label();
             this.splitContainer3 = new System.Windows.Forms.SplitContainer();
             this.textBoxResult2 = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -104,19 +102,6 @@
             this.textBoxtxtPrefix.Text = "txt";
             this.textBoxtxtPrefix.WordWrap = false;
             // 
-            // tbdef1
-            // 
-            this.tbdef1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.tbdef1.Font = new System.Drawing.Font("Courier New", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tbdef1.Location = new System.Drawing.Point(93, 190);
-            this.tbdef1.Name = "tbdef1";
-            this.tbdef1.Size = new System.Drawing.Size(732, 22);
-            this.tbdef1.TabIndex = 8;
-            this.tbdef1.TabStop = false;
-            this.tbdef1.Text = "char\\t\\m[] \\tPROGMEM=\"\\s\";";
-            this.tbdef1.WordWrap = false;
-            // 
             // label5
             // 
             this.label5.AutoSize = true;
@@ -125,19 +110,6 @@
             this.label5.Size = new System.Drawing.Size(84, 13);
             this.label5.TabIndex = 9;
             this.label5.Text = "macro text prefix";
-            // 
-            // tbmen1
-            // 
-            this.tbmen1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.tbmen1.Font = new System.Drawing.Font("Courier New", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tbmen1.Location = new System.Drawing.Point(93, 246);
-            this.tbmen1.Name = "tbmen1";
-            this.tbmen1.Size = new System.Drawing.Size(732, 22);
-            this.tbmen1.TabIndex = 8;
-            this.tbmen1.TabStop = false;
-            this.tbmen1.Text = "/* \\#*/\\t{\\m,\\t \\A,\\t \\P,\\t\\j,\\t\\p,\\tFLASH},";
-            this.tbmen1.WordWrap = false;
             // 
             // label3
             // 
@@ -259,15 +231,6 @@
             this.textBoxInfo.TabIndex = 5;
             this.textBoxInfo.TextChanged += new System.EventHandler(this.textBoxInfo_TextChanged);
             // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(3, 194);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(52, 13);
-            this.label1.TabIndex = 9;
-            this.label1.Text = "text string";
-            // 
             // textBoxNodeName
             // 
             this.textBoxNodeName.Location = new System.Drawing.Point(220, 3);
@@ -276,15 +239,6 @@
             this.textBoxNodeName.TabIndex = 5;
             this.textBoxNodeName.Text = "enter node name here";
             this.textBoxNodeName.TextChanged += new System.EventHandler(this.textBoxNodeName_TextChanged);
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(3, 250);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(79, 13);
-            this.label2.TabIndex = 9;
-            this.label2.Text = "menue element";
             // 
             // textBoxResult
             // 
@@ -296,7 +250,7 @@
             this.textBoxResult.Multiline = true;
             this.textBoxResult.Name = "textBoxResult";
             this.textBoxResult.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.textBoxResult.Size = new System.Drawing.Size(376, 427);
+            this.textBoxResult.Size = new System.Drawing.Size(476, 481);
             this.textBoxResult.TabIndex = 4;
             this.textBoxResult.TabStop = false;
             this.textBoxResult.Click += new System.EventHandler(this.textBoxResult_Click);
@@ -304,7 +258,7 @@
             // label12
             // 
             this.label12.AutoSize = true;
-            this.label12.Location = new System.Drawing.Point(3, 223);
+            this.label12.Location = new System.Drawing.Point(3, 191);
             this.label12.Name = "label12";
             this.label12.Size = new System.Drawing.Size(37, 13);
             this.label12.TabIndex = 9;
@@ -370,7 +324,7 @@
             this.checkBoxCreateEnum.AutoSize = true;
             this.checkBoxCreateEnum.Checked = true;
             this.checkBoxCreateEnum.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBoxCreateEnum.Location = new System.Drawing.Point(102, 218);
+            this.checkBoxCreateEnum.Location = new System.Drawing.Point(46, 190);
             this.checkBoxCreateEnum.Name = "checkBoxCreateEnum";
             this.checkBoxCreateEnum.Size = new System.Drawing.Size(126, 17);
             this.checkBoxCreateEnum.TabIndex = 12;
@@ -478,10 +432,9 @@
             // 
             // splitContainer2.Panel1
             // 
-            this.splitContainer2.Panel1.Controls.Add(this.label2);
+            this.splitContainer2.Panel1.Controls.Add(this.textBoxParStructName);
             this.splitContainer2.Panel1.Controls.Add(this.buttonLoad);
             this.splitContainer2.Panel1.Controls.Add(this.comboBox1);
-            this.splitContainer2.Panel1.Controls.Add(this.label1);
             this.splitContainer2.Panel1.Controls.Add(this.comboBoxParType);
             this.splitContainer2.Panel1.Controls.Add(this.buttonSave);
             this.splitContainer2.Panel1.Controls.Add(this.label3);
@@ -497,16 +450,15 @@
             this.splitContainer2.Panel1.Controls.Add(this.label4);
             this.splitContainer2.Panel1.Controls.Add(this.buttonRename);
             this.splitContainer2.Panel1.Controls.Add(this.label13);
-            this.splitContainer2.Panel1.Controls.Add(this.tbmen1);
             this.splitContainer2.Panel1.Controls.Add(this.textBoxParStepSize);
             this.splitContainer2.Panel1.Controls.Add(this.textBoxInfo);
             this.splitContainer2.Panel1.Controls.Add(this.label5);
             this.splitContainer2.Panel1.Controls.Add(this.label8);
             this.splitContainer2.Panel1.Controls.Add(this.textBox1);
             this.splitContainer2.Panel1.Controls.Add(this.label7);
+            this.splitContainer2.Panel1.Controls.Add(this.label9);
             this.splitContainer2.Panel1.Controls.Add(this.label14);
             this.splitContainer2.Panel1.Controls.Add(this.textBoxNodeName);
-            this.splitContainer2.Panel1.Controls.Add(this.tbdef1);
             this.splitContainer2.Panel1.Controls.Add(this.textBoxtxtPrefix);
             this.splitContainer2.Panel1.Controls.Add(this.label6);
             // 
@@ -514,8 +466,25 @@
             // 
             this.splitContainer2.Panel2.Controls.Add(this.splitContainer3);
             this.splitContainer2.Size = new System.Drawing.Size(828, 705);
-            this.splitContainer2.SplitterDistance = 274;
+            this.splitContainer2.SplitterDistance = 220;
             this.splitContainer2.TabIndex = 13;
+            // 
+            // textBoxParStructName
+            // 
+            this.textBoxParStructName.Location = new System.Drawing.Point(380, 165);
+            this.textBoxParStructName.Name = "textBoxParStructName";
+            this.textBoxParStructName.Size = new System.Drawing.Size(100, 20);
+            this.textBoxParStructName.TabIndex = 13;
+            this.textBoxParStructName.Text = "myPar";
+            // 
+            // label9
+            // 
+            this.label9.AutoSize = true;
+            this.label9.Location = new System.Drawing.Point(294, 168);
+            this.label9.Name = "label9";
+            this.label9.Size = new System.Drawing.Size(80, 13);
+            this.label9.TabIndex = 9;
+            this.label9.Text = "par struct name";
             // 
             // splitContainer3
             // 
@@ -530,8 +499,8 @@
             // splitContainer3.Panel2
             // 
             this.splitContainer3.Panel2.Controls.Add(this.textBoxResult2);
-            this.splitContainer3.Size = new System.Drawing.Size(828, 427);
-            this.splitContainer3.SplitterDistance = 376;
+            this.splitContainer3.Size = new System.Drawing.Size(828, 481);
+            this.splitContainer3.SplitterDistance = 476;
             this.splitContainer3.TabIndex = 0;
             // 
             // textBoxResult2
@@ -544,7 +513,7 @@
             this.textBoxResult2.Multiline = true;
             this.textBoxResult2.Name = "textBoxResult2";
             this.textBoxResult2.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.textBoxResult2.Size = new System.Drawing.Size(448, 427);
+            this.textBoxResult2.Size = new System.Drawing.Size(348, 481);
             this.textBoxResult2.TabIndex = 4;
             this.textBoxResult2.TabStop = false;
             this.textBoxResult2.Click += new System.EventHandler(this.textBoxResult2_Click);
@@ -581,9 +550,7 @@
 
         private System.Windows.Forms.ImageList imageList1;
         private System.Windows.Forms.TextBox textBoxtxtPrefix;
-        private System.Windows.Forms.TextBox tbdef1;
         private System.Windows.Forms.Label label5;
-        private System.Windows.Forms.TextBox tbmen1;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Button buttonGenerate;
         private System.Windows.Forms.Label label4;
@@ -596,9 +563,7 @@
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.TextBox textBoxParValUpper;
         private System.Windows.Forms.TextBox textBoxInfo;
-        private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TextBox textBoxNodeName;
-        private System.Windows.Forms.Label label2;
         private System.Windows.Forms.TextBox textBoxResult;
         private System.Windows.Forms.Label label12;
         private System.Windows.Forms.Button buttonRename;
@@ -617,6 +582,8 @@
         private System.Windows.Forms.TextBox textBoxResult2;
         private System.Windows.Forms.SplitContainer splitContainer2;
         private System.Windows.Forms.SplitContainer splitContainer3;
+        private System.Windows.Forms.TextBox textBoxParStructName;
+        private System.Windows.Forms.Label label9;
     }
 }
 

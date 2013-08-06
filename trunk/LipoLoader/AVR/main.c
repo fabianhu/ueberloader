@@ -10,15 +10,15 @@
 #include "adc.h"
 #include "usart.h"
 #include <avr/eeprom.h>
-#include <avr/delay.h>
+#include <util/delay.h>
 
 // *********  Task definitions
 OS_DeclareTask(TaskGovernor,300);
 OS_DeclareTask(TaskBalance,300);
 OS_DeclareTask(TaskCommRX,300);
-OS_DeclareTask(TaskMonitor,200);
+OS_DeclareTask(TaskMonitor,300);
 OS_DeclareTask(TaskLED,150);
-OS_DeclareTask(TaskState,150);
+OS_DeclareTask(TaskState,300);
 
 //OS_DeclareQueue(DemoQ,10,4);
 
@@ -69,8 +69,8 @@ int main(void)
 		
 		asm("nop"); //at least one instruction is required!!!
 
-		g_tBattery_Info.ErrCnt = gCommErrCnt;
-		g_tBattery_Info.LastErr = gCommErr;
+//		g_tBattery_Info.ErrCnt = gCommErrCnt;
+//		g_tBattery_Info.LastErr = gCommErr;
 
 
 		for (i = 0; i <= OS_NUMTASKS; ++i)
@@ -157,7 +157,7 @@ void CPU_init(void)
 ISR(OSC_XOSCF_vect)
 {
 	// oscillator failure
-	emstop(2);// emergency stop here!
+	emstop(3);// emergency stop here!
 }
 
 
@@ -222,7 +222,9 @@ void emstop(uint8_t e)
 
 	eeprom_update_byte((void*)b , e);
 */
-
+	
+	asm("break");
+		
 	while(1)
 	{
 		LED_ON;

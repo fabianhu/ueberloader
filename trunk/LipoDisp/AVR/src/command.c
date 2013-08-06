@@ -8,7 +8,6 @@
 
 // Globals:
 UCIFrame_t 		g_tUCITXBlock; // used in DMA
-uint8_t 		g_NewComand =0; // indicates new command to be sent
 uint8_t 		g_GotNewComand =0; // indicates stored commands I got from slave
 Battery_Info_t 	g_tBattery_Info;
 Command_t 		g_tCommand;
@@ -51,7 +50,7 @@ void TaskCommand(void)
 			g_tUCITXBlock.len = UCIHEADERLEN;
 			UCISendBlockCrc(&g_tUCITXBlock);
 			ret = vWaitForResult(UCI_GET_CMDs);
-			handleCommError(ret);
+			//handleCommError(ret);
 			if(ret == 0)
 			{
 				gCommandsKnown = 1;
@@ -64,13 +63,13 @@ void TaskCommand(void)
 		g_tUCITXBlock.len = UCIHEADERLEN;
 		UCISendBlockCrc(&g_tUCITXBlock);
 		ret = vWaitForResult(UCI_GET_OPVs);
-		handleCommError(ret);
+		//handleCommError(ret);
 	    if (ret == 0)
 	    { 	g_OPVsValid = 1; }
 	    else
 	    {  	g_OPVsValid = 0;  }
 
-	    if(gCommandsKnown == 1)
+	    if(gCommandsKnown == 1) // set to 0 on comm error fixme
 	    {
 	    	g_tUCITXBlock.ID = 55;
 			g_tUCITXBlock.UCI = UCI_SET_CMDs;
@@ -81,9 +80,7 @@ void TaskCommand(void)
 	    	UCISendBlockCrc(&g_tUCITXBlock);
 
 			ret = vWaitForResult(UCI_SET_CMDs);
-			handleCommError(ret);
-	    	g_NewComand = 0;
-
+			//handleCommError(ret);
 
 			if(g_Trig_SavePars == 1)
 			{
@@ -93,7 +90,7 @@ void TaskCommand(void)
 				g_tUCITXBlock.len = UCIHEADERLEN;
 				UCISendBlockCrc(&g_tUCITXBlock);
 				ret = vWaitForResult(UCI_WRITE_EEPROM);
-				handleCommError(ret);
+				//handleCommError(ret);
 			}
 
 			if(g_Tansfer_Action != eActNop)
@@ -105,7 +102,7 @@ void TaskCommand(void)
 				UCISendBlockCrc(&g_tUCITXBlock);
 
 				ret = vWaitForResult(UCI_ACTION);
-				handleCommError(ret);
+				//handleCommError(ret);
 				if (ret == 0)
 					g_Tansfer_Action = eActNop; // reset on success
 
@@ -142,7 +139,7 @@ ISR(USARTE0_RXC_vect)
 	uint8_t* p = (uint8_t*)&g_tUCIRXFrame;
 	if((USARTE0_STATUS & USART_FERR_bm) || (USARTE0_STATUS & USART_BUFOVF_bm))
 	{
-		handleCommError(45);
+		//handleCommError(45);
 		g_ucRXLength = 0; // reset received data length
 		g_tUCIRXFrame.len = UCIHEADERLEN; // reset header length in recd. data
 	}
@@ -160,7 +157,7 @@ ISR(USARTE0_RXC_vect)
 	}
 	else
 	{
-		handleCommError(1);
+		//handleCommError(1);
 		g_ucRXLength = 0; // reset received data length
 		g_tUCIRXFrame.len = UCIHEADERLEN; // reset header length in recd. data
 	}
@@ -228,7 +225,7 @@ void UCISendBlockCrc( UCIFrame_t* pU) // if the master sends a block, it is to b
 	pU->crc = CRC8x((uint8_t*)pU ,pU->len);
 	if(USARTSendBlockDMA(&DMA.CH1,(uint8_t*)pU ,pU->len) != 0 )
 	{
-		handleCommError(4);
+		//handleCommError(4);
 	}
 }
 
@@ -250,28 +247,4 @@ eBatteryStatus_t GetBattStatus(void)
 }
 
 
-uint8_t LastCommError =0;
-#define COMMERRARRSIZE 5 // !! watch buffer size!!!
-uint8_t CommErrArr[COMMERRARRSIZE]; // fixme debug only!!!
-uint8_t CommErrArrIdx = 0;
-
-void handleCommError(uint8_t errNo)
-{
-	//gCommandsKnown = 0; // fixme
-	OS_PREVENTSCHEDULING
-	if(CommErrArrIdx < COMMERRARRSIZE && errNo != 0)
-	{
-		CommErrArr[CommErrArrIdx] = errNo;
-		CommErrArrIdx++;
-	}
-
-	LastCommError = errNo;
-OS_ALLOWSCHEDULING
-}
-
-
-uint8_t getLastCommError(void)
-{
-	return LastCommError;
-}
 

@@ -7,7 +7,7 @@
 // *********  USER Configurable Block BEGIN
 
 #define OS_NUMTASKS 3 // Number of (OS_Create)Tasks ; never >8 (idle task is not counted here!)
-#define OS_NUMMUTEX 4 // Number of Mutexes
+#define OS_NUMMUTEX 3 // Number of Mutexes
 #define OS_NUMALARMS 6 // Number of Alarms
 
 #if defined (__AVR_ATmega32__)
@@ -53,7 +53,7 @@
 
 #define OSMTXBattInfo 0
 #define OSMTXCommand  1
-#define OSMTXMENU	  3
+#define OSMTXMENU	  2
 
 // Alarm Names
 

@@ -101,7 +101,7 @@ void OS_Reschedule(void) //with "__attribute__ ((naked))"
 	SP = MyOS.Stacks[MyOS.CurrTask] ;// set Stack pointer
 	OS_Int_restoreCPUContext() ; // do NEVER ANYTHING, what changes register content after this instruction!
 
-	OS_ENABLEALLINTERRUPTS;
+	OS_ENABLEALLINTERRUPTS; // this covers the sei() problem...
 	asm volatile("ret"); // return from interrupt, even if not in Interrupt. Just to ensure, that the ISR is left.
 }
 

@@ -72,4 +72,5 @@ extern void menu_next(unsigned char step);
 extern void menu_prev(unsigned char step);
 extern void menu_select(void);
 extern uint8_t ParameterModeActive(void);
+extern void menue_forcedraw(void);
 

@@ -10,9 +10,10 @@
 //*****************************************************************************
 #include "lcd.h"
 #include "font.h"
-#include <stdio.h>
+//#include <stdio.h>
 #include <string.h>
 #include "../OS/FabOS.h"
+#include "../src/printf.h"
 
 //*****************************************************************************
 //                    S T R I N G S  / V A R S
@@ -807,126 +808,55 @@ void lcd_print(uint8_t font_red, uint8_t font_green, uint8_t font_blue, uint8_t 
 {
     va_list specifier;                  //list of specifier ,...                
     va_start (specifier, ptr_string);   	//initialize specifier list       
-    char act_sign;                      //actual sign of the string
-	char pixel_width, *ptr_buf, buf[8]={};
-	uint8_t tabwidth=0;
+	char buf[30]={0};
 	uint16_t new_x_pos, new_y_pos;
 
 	//get position
 	new_x_pos=x_pos;
 	new_y_pos=y_pos;
-			
-    	while (*ptr_string)
-    	{
-	  	//Get next sign
+	
+	char* s = buf;
+	tfp_format(&s,putcp,ptr_string,specifier);
+	putcp(&s,0);		
+    
+	lcd_print_string(font_red, font_green, font_blue, back_red, back_green, back_blue, size, x_pos, y_pos, buf);
+        
+    
+	va_end(specifier); //close the specifier list     
+}
+
+
+void lcd_print_string(uint8_t font_red, uint8_t font_green, uint8_t font_blue, uint8_t back_red, uint8_t back_green, uint8_t back_blue, uint8_t size, uint16_t x_pos, uint16_t y_pos,char *ptr_string)
+{
+	char act_sign;                      //actual sign of the string
+	char pixel_width;
+	uint16_t new_x_pos, new_y_pos;
+
+	//get position
+	new_x_pos=x_pos;
+	new_y_pos=y_pos;
+	
+	while (*ptr_string)
+	{
+		//Get next sign
 		act_sign = *ptr_string++;
 		//get letter width
 		pixel_width = pgm_read_byte(font[act_sign-32]);
 		//check if line ends
 		if(new_x_pos+pixel_width*size>ScreenWidth)
-			{
+		{
 			new_x_pos=0;
 			new_y_pos+=FONTHEIGHT*size;
-			}
-        if (act_sign=='%')              //value-placeholder?
-        {
-            //Get next sign
-			act_sign = *ptr_string++;
-
-            switch (act_sign)
-                {           
-					case 'i': //lcd_print integerchar
-						//convert uint16_t
-						itoa10(va_arg(specifier,uint16_t),buf);
-						//lcd_print value
-						ptr_buf=buf;
-						while(*ptr_buf)
-						{
-							//get letter width
-							pixel_width = pgm_read_byte(font[*ptr_buf-32]);
-							//check if line ends
-							if(new_x_pos+pixel_width*size>319)
-							{
-								new_x_pos=0;
-								new_y_pos+=FONTHEIGHT*size;
-							}
-							//Write sign
-							lcd_write_char(*ptr_buf++, font_red, font_green, font_blue, back_red, back_green, back_blue, size,new_x_pos, new_y_pos);
-							//adjust position
-							new_x_pos+=size*(pixel_width+CHARSPACE);
-						}
-						break;
-					case 'd': // fixed point; next char is: comma shift to !left! (%d1 = ####.# %d2= ###.## etc.)
-						;
-						//fixme das hier funzt noch gar nicht!
-						//uint8_t shift = (*ptr_string++)-48; // get shift amount
-											//convert uint16_t
-						itoa10(va_arg(specifier,uint16_t),buf);
-						//lcd_print value
-						ptr_buf=buf;
-						while(*ptr_buf)
-						{
-							//get letter width
-							pixel_width = pgm_read_byte(font[*ptr_buf-32]);
-							//check if line ends
-							if(new_x_pos+pixel_width*size>319)
-							{
-								new_x_pos=0;
-								new_y_pos+=FONTHEIGHT*size;
-							}
-							//Write sign
-							lcd_write_char(*ptr_buf++, font_red, font_green, font_blue, back_red, back_green, back_blue, size, new_x_pos, new_y_pos);
-							//adjust position
-							new_x_pos+=size*(pixel_width+CHARSPACE);
-						}
-						break;
-					default:
-						break;
-					//fixme other "itoa's"
-                }
-        }
-		else if (act_sign=='/')  //format sign, e.g. tab
-		{
-            //Get next sign
-	        act_sign = *ptr_string++;
-
-            switch (act_sign)
-                {           
-                case 't': //increase xpos
-					tabwidth=TABSIZE-(new_x_pos%TABSIZE);
-					lcd_draw_filled_box(back_red, back_green, back_blue, new_x_pos,new_y_pos, tabwidth, FONTHEIGHT*size);
-                    new_x_pos+=tabwidth;
-					break;
-				case '/': //lcd_print '/'
-					lcd_write_char((uint8_t)act_sign, font_red, font_green, font_blue, back_red, back_green, back_blue, size, new_x_pos, new_y_pos);
-        			//adjust position
-					new_x_pos+=size*(pixel_width+CHARSPACE);
-					break;
-				case '%': //lcd_print '%'
-					lcd_write_char((uint8_t)act_sign, font_red, font_green, font_blue, back_red, back_green, back_blue, size, new_x_pos, new_y_pos);
-        			//adjust position
-					new_x_pos+=size*(pixel_width+CHARSPACE);
-					break;
-				case 'n': //create newline
-					new_x_pos=0;
-					new_y_pos+=FONTHEIGHT*size;
-					break;
-                //default: 
-                }
-        }
-        else //write "normal" sign
-        {
-            //Write sign
-			lcd_write_char((uint8_t)act_sign, font_red, font_green, font_blue, back_red, back_green, back_blue, size, new_x_pos, new_y_pos);
-        	//adjust position
-			new_x_pos+=size*(pixel_width+CHARSPACE);
 		}
-        
-    }
-  va_end(specifier); //close the specifier list     
+		
+		//Write sign
+		lcd_write_char((uint8_t)act_sign, font_red, font_green, font_blue, back_red, back_green, back_blue, size, new_x_pos, new_y_pos);
+		//adjust position
+		new_x_pos+=size*(pixel_width+CHARSPACE);
+		
+		
+	}
 }
-
-
 
 
 char *flash2ram(char *ptr_string)

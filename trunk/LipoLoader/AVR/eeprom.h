@@ -6,5 +6,5 @@
 
 #define EEPROM_CALIB_START			EEPROM_START + EEPROM_COMMAND_LEN + 1
 
-void eeprom_WriteBlockWCRC( uint8_t* blk, void* dest, uint16_t size);
-uint8_t eeprom_ReadBlockWCRC( uint8_t* dest, void* src, uint16_t size);
+void eeprom_WriteBlockWCRC( uint8_t* blk, uint8_t* dest, uint16_t size);
+uint8_t eeprom_ReadBlockWCRC( uint8_t* dest, uint8_t* src, uint16_t size);

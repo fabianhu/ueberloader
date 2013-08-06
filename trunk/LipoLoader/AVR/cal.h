@@ -7,9 +7,9 @@ typedef struct Calibration_tag
 
 extern Calibration_t g_tCalibration;
 
-void CalibInit(void);
+void Cal_init(void);
 
-void CalibrateCells(int16_t* raw, int16_t* out);
+void Cal_Apply(int16_t* raw, int16_t* out);
 
 void CalCellsLow(int16_t* sBalanceCells);
 

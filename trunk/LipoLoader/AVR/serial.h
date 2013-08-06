@@ -23,6 +23,7 @@ typedef enum //BatteryStatus
 	eBattCharging,
 	eBattFull,
 	eBattError,
+	eBattSupplyUntervolt,
 	eBattUnknown,
 	//eBattEmpty,
 }eBatteryStatus_t;
@@ -43,25 +44,26 @@ typedef struct Battery_Info_tag
 	uint32_t unCharge_mAs;
 	uint32_t unCharge_mWs;
 	uint32_t unTimeCharging_s;
-	uint16_t usPWM; // todo temporary-remove
-	uint16_t usPWMStep; // todo temporary-remove
 	uint16_t usConverterPower_W;
 	int16_t  sISetpoint;
 	int16_t  sVSetpoint;
+	uint16_t usPWM; // todo temporary-remove
+/*	uint16_t usPWMStep; // todo temporary-remove
 	int16_t  sDiff;// todo temporary-remove
 	uint16_t ErrCnt;
 	uint8_t  LastErr;
-
+*/
 	BatteryCell_t Cells[6];
-
+	int16_t ucDegC; // Temperature in degrees C
+	int16_t  sSupplyVolt_mV; // supply voltage
 }Battery_Info_t;
 
 typedef enum
 {
 	eActNop = 0,
-	eActModeStop,
+	//eActModeStop,
 	eActModeAuto,
-	eActModeManual,
+	//eActModeManual,
 	eActCalLow,
 	eActCalHigh
 }ChargerAction_t;
@@ -86,10 +88,10 @@ typedef struct Command_tag
 
 	uint16_t basefrequency;
 	uint16_t refreshrate;
-	uint8_t dummy;
+	uint16_t SuppMin_mV;
+	uint8_t dummy; // "size of Command must be 16 bit aligned for CRC"
 }Command_t;
 
-// "size of Command must be 16 bit aligned for CRC"
 
 typedef struct UCIFrame_tag
 {

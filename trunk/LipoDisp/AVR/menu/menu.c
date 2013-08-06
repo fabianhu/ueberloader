@@ -7,10 +7,10 @@
 #include "menu.h"
 #include "menu_variant.h"
 
-extern uint16_t GetvalueFromUI(void);
+extern uint16_t callback_menu_GetvalueFromUI(void);
 extern MenuItem_t m_items[MENUESIZE];
-extern void HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower, uint16_t stepsize);
-//extern void touchSetValue(int16_t v, int16_t lower, int16_t upper);
+extern void callback_menu_HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower, uint16_t stepsize);
+extern void callback_menu_ParChanged(void);
 
 Menue_t MyMenue = MENUEINIT;
 
@@ -71,7 +71,7 @@ void menu_init(void)
 	//set actual limits for UI
 	GetSubMenuCount(&SubMenuGroupSize, &StartIndex);
 
-	HandOverValueToUI(SubMenuGroupSize, SubMenuGroupSize, 1,1);
+	callback_menu_HandOverValueToUI(SubMenuGroupSize, SubMenuGroupSize, 1,1);
 
 }
 
@@ -101,7 +101,7 @@ void menu_show(void)
 	{
 		GetSubMenuCount(&SubMenuGroupSize, &StartIndex);
 		//MyMenue.gucSelectedItem = (StartIndex+SubMenuGroupSize)-(uint8_t)GetvalueFromUI();
-		debug33 = GetvalueFromUI();
+		debug33 = callback_menu_GetvalueFromUI();
 		SelectedItem = (StartIndex+SubMenuGroupSize)-(uint8_t)debug33; // menue runs backwards.
 		OS_PREVENTSCHEDULING;
 		MyMenue.gucSelectedItem = SelectedItem;
@@ -109,7 +109,7 @@ void menu_show(void)
 	}
 	else	//check for new menu index
 	{
-		NewParameterValue=GetvalueFromUI();		
+		NewParameterValue=callback_menu_GetvalueFromUI();		
 		//if(GetvalueFromUI()!=m_items[MyMenue.gucSelectedItem].pParam->sValue || MyMenue.ShowParameter)//new menu item is selected
 		if(NewParameterValue!=OldParameterValue || MyMenue.ShowParameter)//new menu item is selected
 		{
@@ -219,18 +219,20 @@ void menu_select(void)
 		//get array start index of the submenu items
 		GetSubMenuCount(&SubMenuGroupSize, &StartIndex);
 		//send values to UI
-		HandOverValueToUI(SubMenuGroupSize-(MyMenue.gucSelectedItem-StartIndex), SubMenuGroupSize, 1, 1);
+		callback_menu_HandOverValueToUI(SubMenuGroupSize-(MyMenue.gucSelectedItem-StartIndex), SubMenuGroupSize, 1, 1);
 	}	
 	else if(m_items[MyMenue.gucSelectedItem].pParam)//toggle parameter edit mode
 	{
 		if(!MyMenue.MenuMode)
 		{	
 			//save parameter
-			m_items[MyMenue.gucSelectedItem].pParam->sValue=GetvalueFromUI();
+			m_items[MyMenue.gucSelectedItem].pParam->sValue=callback_menu_GetvalueFromUI();
+			// do callback
+			callback_menu_ParChanged();
 			//get array start index of the submenu items
 			GetSubMenuCount(&SubMenuGroupSize,&StartIndex);
 			//send values to UI
-			HandOverValueToUI(SubMenuGroupSize-(MyMenue.gucSelectedItem-StartIndex), SubMenuGroupSize, 1,1);
+			callback_menu_HandOverValueToUI(SubMenuGroupSize-(MyMenue.gucSelectedItem-StartIndex), SubMenuGroupSize, 1,1);
 			//parameter deactivate
 			MyMenue.MenuMode = 1;
 			MyMenue.ShowMenu = 1; //init menu view
@@ -239,7 +241,7 @@ void menu_select(void)
 		else
 		{	
 			//send parameter values and limits to UI
-			HandOverValueToUI(	m_items[MyMenue.gucSelectedItem].pParam->sValue,
+			callback_menu_HandOverValueToUI(	m_items[MyMenue.gucSelectedItem].pParam->sValue,
 								m_items[MyMenue.gucSelectedItem].pParam->sUpperLimit,
 								m_items[MyMenue.gucSelectedItem].pParam->sLowerLimit,
 								m_items[MyMenue.gucSelectedItem].pParam->sStepSize
@@ -256,7 +258,7 @@ void menu_select(void)
 		//get array start index of the submenu items
 		GetSubMenuCount(&SubMenuGroupSize, &StartIndex);
 		//send values to UI
-		HandOverValueToUI(SubMenuGroupSize-(MyMenue.gucSelectedItem-StartIndex), SubMenuGroupSize, 1,1);
+		callback_menu_HandOverValueToUI(SubMenuGroupSize-(MyMenue.gucSelectedItem-StartIndex), SubMenuGroupSize, 1,1);
 		MyMenue.ShowMenu = 1; //init menu view
 		//execute function
 		m_items[MyMenue.gucSelectedItem].pAction();
@@ -270,3 +272,7 @@ void menu_select(void)
 }
 
 
+void menue_forcedraw(void)
+{
+	MyMenue.ShowMenu = 1;
+}
