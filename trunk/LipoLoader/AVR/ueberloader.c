@@ -259,7 +259,7 @@ void TaskMonitor(void)
 #define CELLDIFF_mV 300 // millivolt tolerance per cell to total voltage
 #define MINCELLVOLTAGE_mV 2000 // minimum cell voltage
 // Calculate cell count ; Return cell count. 0 = error
-uint8_t GetCellcount(void)
+uint8_t GetCellcount(void) // fixme irgendwas, um zu erkennen, dass der Balancer-Stecker verrutscht ist.
 {
 	uint8_t i, ucCellCount = 0;
 	uint16_t usUges_mV;
@@ -281,6 +281,7 @@ uint8_t GetCellcount(void)
 	{
 		if(myCellVoltage[i] > MINCELLVOLTAGE_mV)
 		{
+			if(ucCellCount < i) return 0; // there was a cell missing.
 			usUges_mV += myCellVoltage[i]; // sum up cell voltage
 			ucCellCount++;
 		}
@@ -374,6 +375,12 @@ void TaskState(void)
 						NumberOfCells = GetCellcount();
 						if(NumberOfCells > 0 && j == CHARGEDELAY) // it was equal for 1s...
 						{
+							// safe the actual setting, which is used to charge
+							eeprom_WriteBlockWCRC((uint8_t*)&g_tCommand, EEPROM_COMMAND_START, sizeof(Command_t));
+
+							PWM_Setfrequency(g_tCommand.basefrequency); // in kHz!!!
+							PWM_SetRatio(g_tCommand.refreshrate);
+							
 							OS_WaitTicks( OSALMStateWait, 100 );
 							g_tBattery_Info.ucNumberOfCells = NumberOfCells;
 							g_tBattery_Info.eState = eBattCharging;
@@ -449,7 +456,7 @@ void TaskState(void)
 				break;
 
 			case eBattUnknown:
-				OS_WaitTicks( OSALMStateWait, 5000 );
+				OS_WaitTicks( OSALMStateWait, 1000 );
 				g_tBattery_Info.eState = eBattWaiting;
 				break;
 

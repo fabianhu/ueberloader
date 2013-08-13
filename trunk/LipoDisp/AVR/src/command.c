@@ -82,7 +82,7 @@ void TaskCommand(void)
 			ret = vWaitForResult(UCI_SET_CMDs);
 			//handleCommError(ret);
 
-			if(g_Trig_SavePars == 1)
+			if(g_Trig_SavePars == 1) // fixme not used
 			{
 				g_Trig_SavePars = 0; // reset
 				g_tUCITXBlock.ID = 55;
