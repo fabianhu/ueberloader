@@ -224,24 +224,32 @@ void emstop(uint8_t e)
 */
 	
 	asm("break");
+	
+	static uint8_t resetcnt=0;
 		
-	while(1)
+	while(resetcnt<6)
 	{
 		LED_ON;
-		_delay_ms(1000);
+		_delay_ms(800);
 		// blink the emstop code
 		for(int i=0; i< e; i++)
 		{
 			LED_OFF;
-			_delay_ms(70);
+			_delay_ms(60);
 			LED_ON;
-			_delay_ms(400);
+			_delay_ms(333);
 		}
 		asm("nop");
+		resetcnt++;
 	}
 
 	CCP = CCP_IOREG_gc; // unlock
 	RST.CTRL = 1; // SW reset
+	
+	while(1)
+	{
+		asm("nop");
+	}
 
 }
 

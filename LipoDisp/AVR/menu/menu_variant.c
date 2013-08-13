@@ -19,7 +19,6 @@ char ud_name[][MAX_SRAM_ITEM_NAME_LENGHT + 1] =
 extern Menue_t MyMenue;
 extern Command_t g_tCommand; // command.c
 extern uint8_t g_bMenuActive;
-extern uint8_t g_Trig_SavePars;
 extern ChargerMode_t g_Tansfer_Action;
 extern uint8_t gCommandsKnown; // command.c
 
@@ -74,9 +73,7 @@ void ActionChargeModeLiPo(void)
 
 	menuUp();
 	UpdateCommandsFromParam();
-	g_Trig_SavePars = 1; // fixme wann?
 		
-	//g_Tansfer_Action = eActModeAuto; // fixme merken ???? / Funktion!!
 }
 
 void ActionChargeModeLiIo(void)
@@ -86,7 +83,6 @@ void ActionChargeModeLiIo(void)
 
 	menuUp();
 	UpdateCommandsFromParam();
-	g_Trig_SavePars = 1; // fixme wann?
 }
 
 void ActionChargeModeLiFe(void)
@@ -96,7 +92,6 @@ void ActionChargeModeLiFe(void)
 
 	menuUp();
 	UpdateCommandsFromParam();
-	g_Trig_SavePars = 1; // fixme wann?
 }
 
 void ActionChargeModeStorage(void)
@@ -106,7 +101,6 @@ void ActionChargeModeStorage(void)
 
 	menuUp();
 	UpdateCommandsFromParam();
-	g_Trig_SavePars = 1; // fixme wann?
 }
 
 void ActionChargeModeDischarge(void)
