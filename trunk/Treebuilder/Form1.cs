@@ -347,8 +347,8 @@ namespace Treebuilder
 
             // some Defines
             textBoxResult.AppendText(" #define\tMENUESIZE\t" + treeView1.GetNodeCount(true) + "\t// number of menu itmes (array size)" + Environment.NewLine);
-            textBoxResult.AppendText(" #define\tMAX_ITEM_NAME_CHARLENGTH\t" + GetSubNodeMaxNameLength(treeView1.Nodes[0]) + "\t// number of menu itmes (array size)" + Environment.NewLine);
-
+            textBoxResult.AppendText(" #define\tMAX_ITEM_NAME_CHARLENGTH\t" + GetSubNodeMaxNameLength(treeView1.Nodes[0]) + "\t// max name length" + Environment.NewLine);
+        
     // Parameter enum
             if (checkBoxCreateEnum.Checked)
             {
@@ -370,6 +370,8 @@ namespace Treebuilder
             textBoxResult.AppendText("// Parameter externals" + Environment.NewLine);
             textBoxResult.AppendText("typedef struct " + textBoxParStructName.Text+"_tag" + Environment.NewLine);
             textBoxResult.AppendText("{" + Environment.NewLine);
+
+            parcount = 0; // will be counted by following fn, which is recursively called.
             ProcessParameterExternals(treeView1.Nodes[0]);
             textBoxResult.AppendText("\tuint8_t crc8;" + Environment.NewLine);
             textBoxResult.AppendText("} " + textBoxParStructName.Text + "_t;" + Environment.NewLine);
@@ -377,6 +379,8 @@ namespace Treebuilder
             textBoxResult.AppendText("extern " +textBoxParStructName.Text + "_t " + textBoxParStructName.Text +";"+ Environment.NewLine);
             textBoxResult.AppendText(Environment.NewLine);
 
+            textBoxResult.AppendText(" #define\tMENUE_PARCOUNT\t" + parcount + "\t// number of parameters" + Environment.NewLine);
+			textBoxResult.AppendText(Environment.NewLine);
 
             textBoxResult.AppendText("// Action Prototypes" + Environment.NewLine);
             ProcessActionPrototypes(treeView1.Nodes[0]);
@@ -451,11 +455,15 @@ namespace Treebuilder
             }
         }
 
+        int parcount;
+
         void ProcessParameterExternals(TreeNode tn)
         {
+            
             if (((tNodeTagInfo)tn.Tag).type == eMenueElementType.parameter)
             {
                 textBoxResult.AppendText("      Parameter_t " + ((tNodeTagInfo)tn.Tag).info + ";" + Environment.NewLine);
+                parcount++;
             }
             foreach (TreeNode tn2 in tn.Nodes)
             {
