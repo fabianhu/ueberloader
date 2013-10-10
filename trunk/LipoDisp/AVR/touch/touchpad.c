@@ -9,7 +9,7 @@ void ProcessTouch(void);
 int16_t callback_menu_GetvalueFromUI(void);
 uint8_t touchGetSpeed(int16_t* speed, int32_t *Schwerpunkt);
 void callback_menu_HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower,
-		uint16_t stepsize);
+uint16_t stepsize);
 int32_t touchGetSchwerpunkt(void);
 void sFilter(int16_t* o, int16_t* n);
 void svFilter(int16_t* o, int16_t* n, uint8_t x);
@@ -32,13 +32,13 @@ TOUCHCALINIT;
 int16_t g_aucTouchpads[TOUCHCOUNT];
 
 particle_t myP =
-	{ 0, 0, 0, 99, 0, 32000 };
+{ 0, 0, 0, 99, 0, 32000 };
 
 void TaskTouch()
 {
 	OS_SetAlarm( OSALTouchRepeat, 10 );
 
-#define TOUCHSENSELEVEL 15
+	#define TOUCHSENSELEVEL 15
 
 	TOUCHCONFIGPORT; // configure port
 
@@ -49,30 +49,30 @@ void TaskTouch()
 		OS_SetAlarm( OSALTouchRepeat, 10 ); // every 10ms
 		
 		if(GetBattStatus() == eBattWaiting)
-		{	
+		{
 			ProcessTouch();//change value
-		}			
+		}
 	}
 }
 
 /*
 
- Particle needs:
- Position (= value)
- Velocity (= speed and direction)
- Acceleration (the more the user slides, the more speed.)
+Particle needs:
+Position (= value)
+Velocity (= speed and direction)
+Acceleration (the more the user slides, the more speed.)
 
 
- 1. You need to measure the velocity of your cursor (either mouse cursor or finger.
- 2. Implement a simple particle physics loop. information about how to do that here
- 3. give your particle "bounds" using math derived from the width of your scrolling plane, and the width of your viewport
- 4. continuously Add the the difference between the mouse velocity and the particle velocity, to the particle's velocity, so the particle's velocity "matches" the mouse's velocity for as long as it's moving.
- 5. Stop doing step 4 as soon as the user lifts their finger. The physics loop takes care of inertia.
- 6. Add your personal flourishes such as "bumper" margins, and smooth scrolling "anchor" points that operate on zeno's paradox for calculating motion.
- 7. I nearly forgot: Take the coordinates derived from above, and use it as the location of your scrolling plane.
+1. You need to measure the velocity of your cursor (either mouse cursor or finger.
+2. Implement a simple particle physics loop. information about how to do that here
+3. give your particle "bounds" using math derived from the width of your scrolling plane, and the width of your viewport
+4. continuously Add the the difference between the mouse velocity and the particle velocity, to the particle's velocity, so the particle's velocity "matches" the mouse's velocity for as long as it's moving.
+5. Stop doing step 4 as soon as the user lifts their finger. The physics loop takes care of inertia.
+6. Add your personal flourishes such as "bumper" margins, and smooth scrolling "anchor" points that operate on zeno's paradox for calculating motion.
+7. I nearly forgot: Take the coordinates derived from above, and use it as the location of your scrolling plane.
 
 
- */
+*/
 
 uint8_t touchGetPad5(uint8_t pin)
 {
@@ -151,7 +151,7 @@ int32_t touchGetSchwerpunkt(void)
 		return ret;
 	}
 	else
-		return -1;
+	return -1;
 
 }
 
@@ -159,7 +159,7 @@ void sFilter(int16_t* o, int16_t* n)
 {
 	int32_t temp;
 	if(*o == 0)
-		*o = *n;
+	*o = *n;
 	else
 	{
 		temp = *o * 3 + *n;
@@ -171,7 +171,7 @@ void svFilter(int16_t* o, int16_t* n, uint8_t x)
 {
 	int32_t temp;
 	if(*o == 0)
-		*o = *n;
+	*o = *n;
 	else
 	{
 		temp = *o * ( x - 1 ) + *n;
@@ -182,10 +182,10 @@ void svFilter(int16_t* o, int16_t* n, uint8_t x)
 #define SLIDERUPSCALE 32000ul
 
 void callback_menu_HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower,
-		uint16_t stepsize)
+uint16_t stepsize)
 {
 	myP.upscale = (uint32_t)SLIDERUPSCALE
-			/ ( (uint32_t)upper - (uint32_t)lower );
+	/ ( (uint32_t)upper - (uint32_t)lower );
 
 	myP.position = (uint32_t)value * myP.upscale;
 	myP.stepsize = (uint32_t)stepsize * myP.upscale;
@@ -231,9 +231,9 @@ uint8_t touchGetSpeed(int16_t* speed, int32_t *Schwerpunkt)
 	if(pos != -1)
 	{
 		if(fpos == -1)
-			fpos = pos; // filter überschreiben, wenn gerade gültig geworden.
+		fpos = pos; // filter überschreiben, wenn gerade gültig geworden.
 		else
-			svFilter( &fpos, &pos, 8 ); // sonst filtern
+		svFilter( &fpos, &pos, 8 ); // sonst filtern
 	}
 	else
 	{
@@ -297,130 +297,177 @@ void ProcessTouch(void)
 	static uint16_t TimeDiff = 0;
 
 	TimeDiff++;
+
+// welcome to Ulis dirtiest hack ever!
+	int16_t stepsize_used = myP.stepsize;
+	uint8_t plus=0,minus=0;
+	
+	if(eTouchstate == eTSGesture)
+	{
+		if(s_ucOldGesture == eGPlus)
+		plus =1;
+		if(s_ucOldGesture == eGMinus)
+		minus =1;
+	}
+	
+	if(myP.stepsize == -1*myP.upscale && (plus || minus))
+	{
+		if(plus)
+		{
+			if(myP.position < 500*myP.upscale)
+			stepsize_used = 100*myP.upscale;
+			
+			if(myP.position >= 500*myP.upscale)
+			stepsize_used = 250*myP.upscale;
+			
+			if(myP.position >= 2000*myP.upscale)
+			stepsize_used = 500*myP.upscale;
+
+			if(myP.position >= 6000*myP.upscale)
+			stepsize_used = 1000*myP.upscale;
+		}
+		else
+		{
+			if(myP.position <= 10000*myP.upscale)
+			stepsize_used = 1000*myP.upscale;
+			
+			if(myP.position <= 6000*myP.upscale)
+			stepsize_used = 500*myP.upscale;
+			
+			if(myP.position <= 2000*myP.upscale)
+			stepsize_used = 250*myP.upscale;
+						
+			if(myP.position <= 500*myP.upscale)
+			stepsize_used = 100*myP.upscale;
+		}
+	}
+	
+// nearly end of dirty hack
+
 	
 	switch(eTouchstate)
 	{
 		case eTSIdle:
-			//s_sSpeedFiltered = 0;
-			myP.force = 0;
-			if(bMoved == 0 && eActualGesture == 0)
-			{
-				// not touched
-				break;
-			}
-			else
-			{
-				TimeDiff = 0;
-				OldSchwerpunkt = Schwerpunkt;
-				eTouchstate = eTSTouching;
-			}
-			// no break;
+		//s_sSpeedFiltered = 0;
+		myP.force = 0;
+		if(bMoved == 0 && eActualGesture == 0)
+		{
+			// not touched
+			break;
+		}
+		else
+		{
+			TimeDiff = 0;
+			OldSchwerpunkt = Schwerpunkt;
+			eTouchstate = eTSTouching;
+		}
+		// no break;
 		case eTSTouching:
 
-			if(bMoved == 1) // touched / moved
+		if(bMoved == 1) // touched / moved
+		{
+			// adapt speed
+
+			myP.force = -s_sSpeedFiltered;
+			info = 2;
+
+			myP.velocity = myP.velocity + myP.force;
+
+			/*static uint8_t n;  // bremsen!!!
+			if (n++ == 10)
 			{
-				// adapt speed
-
-				myP.force = -s_sSpeedFiltered;
-				info = 2;
-
-				myP.velocity = myP.velocity + myP.force;
-
-				/*static uint8_t n;  // bremsen!!!
-				 if (n++ == 10)
-				 {
-				 n = 0;
-				 myP.velocity = (myP.velocity * myP.friction) / 100;
-				 }*/
+			n = 0;
+			myP.velocity = (myP.velocity * myP.friction) / 100;
+			}*/
+		}
+		else
+		{
+			if(myP.velocity == 0)
+			{
+				eTouchstate = eTSGesture;
+				info = 3;
 			}
 			else
 			{
-				if(myP.velocity == 0)
+				// do nothing and let particle move on
+				info = 5;
+				if(eActualGesture != 0)
 				{
-					eTouchstate = eTSGesture;
-					info = 3;
+					// bremsen
+					myP.velocity = 0;
+					info = 6;
 				}
-				else
-				{
-					// do nothing and let particle move on
-					info = 5;
-					if(eActualGesture != 0)
-					{
-						// bremsen
-						myP.velocity = 0;
-						info = 6;
-					}
-				}
-
 			}
 
-#if TOUCHDISABLESLIDE == 1
-			myP.velocity = 0;
-#else
-			myP.position = limit(myP.position + myP.velocity , myP.min , myP.max);
-#endif
-			break;
+		}
+
+		#if TOUCHDISABLESLIDE == 1
+		myP.velocity = 0;
+		#else
+		myP.position = limit(myP.position + myP.velocity , myP.min , myP.max);
+		#endif
+		break;
 
 		case eTSGesture:
-			info = 7;
-			switch(s_ucOldGesture)
-			// können wir nehmen, weil lag lange genug an.
-			{
-				case eGNothing:
+		info = 7;
+		switch(s_ucOldGesture)
+		// können wir nehmen, weil lag lange genug an.
+		{
+			case eGNothing:
 
-					break;
-				case eGPlus:
-					if(myP.position + myP.stepsize < myP.max)
-						myP.position += myP.stepsize;
-					else
-						myP.position = myP.max;
-					
-					break;
-				case eGMitte:
-					// menue bestätigung
-					menu_select();
-					break;
-				case eGMittePlus:
-
-					break;
-				case eGMinus:
-					if(myP.position - myP.stepsize > myP.min)
-						myP.position -= myP.stepsize;
-					else
-						myP.position = myP.min;
-					break;
-				case eGSplit:
-					// no func
-
-
-					break;
-				case eGMitteMinus:
-
-					break;
-				case eGFullHouse:
-
-					break;
-				default:
-					break;
-			}
-			g_debug2 = s_ucOldGesture;
-
-			eTouchstate = eTSBlocked;
-			TimeDiff = 0;
-
-			//OS_WaitTicks(OSALTouchPause,10);
 			break;
+			case eGPlus:
+			if(myP.position + stepsize_used < myP.max)
+			myP.position += stepsize_used;
+			else
+			myP.position = myP.max;
+			
+			break;
+			case eGMitte:
+			// menue bestätigung
+			menu_select();
+			break;
+			case eGMittePlus:
+
+			break;
+			case eGMinus:
+			if(myP.position - stepsize_used > myP.min)
+			myP.position -= stepsize_used;
+			else
+			myP.position = myP.min;
+			break;
+			case eGSplit:
+			// no func
+
+
+			break;
+			case eGMitteMinus:
+
+			break;
+			case eGFullHouse:
+
+			break;
+			default:
+			break;
+		}
+		g_debug2 = s_ucOldGesture;
+
+		eTouchstate = eTSBlocked;
+		TimeDiff = 0;
+
+		//OS_WaitTicks(OSALTouchPause,10);
+		break;
 
 		case eTSBlocked:
-			if(bMoved == 0 && TimeDiff > 20 && eActualGesture == 0) // warte bis komplett losgelassen
-			{
-				eTouchstate = eTSIdle;
-			}
+		if(bMoved == 0 && TimeDiff > 20 && eActualGesture == 0) // warte bis komplett losgelassen
+		{
+			eTouchstate = eTSIdle;
+		}
 
-			break;
+		break;
 
 		default:
-			break;
+		break;
 	}
 
 	s_ucOldGesture = eActualGesture;
@@ -439,7 +486,7 @@ eGestures_t getGesture(void) // delayed by one cycle
 	for(i = 0; i < TOUCHCOUNT ; i++)
 	{
 		if(g_aucTouchpads[i] > TOUCHMINSIGNAL)
-			ret |= ( 1 << i );
+		ret |= ( 1 << i );
 	}
 
 	return ret; // scho feddisch
@@ -453,7 +500,7 @@ eGestures_t getGestureSkip(void) // delayed by one cycle
 	for(i = 0 , j = 0; i < TOUCHCOUNT ; i += 2 , j++) // nur die obere mittlere und untere zulassen.
 	{
 		if(g_aucTouchpads[i] > TOUCHMINSIGNAL)
-			ret |= ( 1 << j );
+		ret |= ( 1 << j );
 	}
 
 	return ret;
@@ -466,7 +513,7 @@ uint8_t bitcount(uint8_t b)
 	for(i = 0; i < 8 ; ++i)
 	{
 		if(b & ( 1 << i ))
-			r++;
+		r++;
 	}
 	return r;
 }
@@ -478,7 +525,7 @@ uint8_t bitcount3(uint8_t b)
 	for(i = 0; i < 3 ; ++i)
 	{
 		if(b & ( 1 << i ))
-			r++;
+		r++;
 	}
 	return r;
 }
@@ -518,17 +565,17 @@ void touchtest(void)
 
 	lcd_draw_pixel( RED,g,  (-myP.position/0xff)+160);
 	//lcd_draw_pixel(GREEN,g,myP.velocity/0xff+128);
-			//lcd_draw_pixel(YELLOW,g,myP.force/0xff+160);
-			lcd_draw_pixel(WHITE,g,30-g_debug*5);
-			if (g == 320)
-			{
-				lcd_clear();
-				lcd_draw_line(YELLOW,0,30,320,30);
-				g =0;
-			}
+	//lcd_draw_pixel(YELLOW,g,myP.force/0xff+160);
+	lcd_draw_pixel(WHITE,g,30-g_debug*5);
+	if (g == 320)
+	{
+		lcd_clear();
+		lcd_draw_line(YELLOW,0,30,320,30);
+		g =0;
+	}
 
-			lcd_print(WHITE, BLACK, 1, 0, 32,"State: %i  " ,(uint16_t)g_debug);
-			lcd_print(WHITE, BLACK, 1, 0, 64,"Gesture: %i  " ,(uint16_t)g_debug2);
+	lcd_print(WHITE, BLACK, 1, 0, 32,"State: %i  " ,(uint16_t)g_debug);
+	lcd_print(WHITE, BLACK, 1, 0, 64,"Gesture: %i  " ,(uint16_t)g_debug2);
 	lcd_print(WHITE, BLACK, 1, 0, 96,"Particle: %i , %i   " ,(uint16_t)myP.position,(uint16_t)myP.velocity);
 	lcd_print(WHITE, BLACK, 1, 0, 128,"info: %i  " ,(uint16_t)info);
 

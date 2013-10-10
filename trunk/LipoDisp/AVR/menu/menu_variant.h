@@ -113,7 +113,7 @@ char	txtREFRESHPERIOD[] 	PROGMEM="Refresh-period"; \
 #ifndef MENUE_PARAM_VARDEF
 #define MENUE_PARAM_VARDEF \
 myPar_t myPar = { \
-/*parCurrent*/ {	0, 100, 10000, 100, mA}, \
+/*parCurrent*/ {	0, 100, 10000, -1, mA}, \
 /*parChVoltSET*/ {	0, 3000, 4200, 10, mV}, \
 /*parBalActVoltSET*/ {	0, 3000, 4200, 100, mV}, \
 /*parMaxcap*/ {	0, 0, 10000, 100, mAh}, \
