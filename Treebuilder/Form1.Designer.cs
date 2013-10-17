@@ -100,6 +100,7 @@
             this.textBoxtxtPrefix.TabIndex = 8;
             this.textBoxtxtPrefix.TabStop = false;
             this.textBoxtxtPrefix.Text = "txt";
+            this.textBoxtxtPrefix.Visible = false;
             this.textBoxtxtPrefix.WordWrap = false;
             // 
             // label5
@@ -110,6 +111,7 @@
             this.label5.Size = new System.Drawing.Size(84, 13);
             this.label5.TabIndex = 9;
             this.label5.Text = "macro text prefix";
+            this.label5.Visible = false;
             // 
             // label3
             // 
@@ -233,9 +235,10 @@
             // 
             // textBoxNodeName
             // 
+            this.textBoxNodeName.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.textBoxNodeName.Location = new System.Drawing.Point(220, 3);
             this.textBoxNodeName.Name = "textBoxNodeName";
-            this.textBoxNodeName.Size = new System.Drawing.Size(183, 20);
+            this.textBoxNodeName.Size = new System.Drawing.Size(183, 21);
             this.textBoxNodeName.TabIndex = 5;
             this.textBoxNodeName.Text = "enter node name here";
             this.textBoxNodeName.TextChanged += new System.EventHandler(this.textBoxNodeName_TextChanged);
@@ -263,6 +266,7 @@
             this.label12.Size = new System.Drawing.Size(37, 13);
             this.label12.TabIndex = 9;
             this.label12.Text = "create";
+            this.label12.Visible = false;
             // 
             // buttonRename
             // 
@@ -316,8 +320,8 @@
             this.label6.Size = new System.Drawing.Size(168, 117);
             this.label6.TabIndex = 10;
             this.label6.Text = "\\t tab\r\n\\n newline\r\n\\# ID of element\r\n\\s String name of element\r\n\\m macrodisized " +
-                "name of element \r\n\\p parent ID\r\n\\j jump target ID\r\n\\A action function\r\n\\P Parame" +
-                "ter name";
+    "name of element \r\n\\p parent ID\r\n\\j jump target ID\r\n\\A action function\r\n\\P Parame" +
+    "ter name";
             // 
             // checkBoxCreateEnum
             // 
@@ -330,6 +334,7 @@
             this.checkBoxCreateEnum.TabIndex = 12;
             this.checkBoxCreateEnum.Text = "Parameter type enum\r\n";
             this.checkBoxCreateEnum.UseVisualStyleBackColor = true;
+            this.checkBoxCreateEnum.Visible = false;
             // 
             // buttonAdd
             // 
@@ -345,6 +350,7 @@
             // 
             this.treeView1.AllowDrop = true;
             this.treeView1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.treeView1.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.treeView1.HideSelection = false;
             this.treeView1.ImageIndex = 0;
             this.treeView1.ImageList = this.imageList1;
@@ -390,6 +396,7 @@
             this.label14.Size = new System.Drawing.Size(70, 13);
             this.label14.TabIndex = 9;
             this.label14.Text = "par text prefix";
+            this.label14.Visible = false;
             // 
             // textBox1
             // 
@@ -400,6 +407,7 @@
             this.textBox1.TabIndex = 8;
             this.textBox1.TabStop = false;
             this.textBox1.Text = "par";
+            this.textBox1.Visible = false;
             this.textBox1.WordWrap = false;
             // 
             // splitContainer1
@@ -476,6 +484,7 @@
             this.textBoxParStructName.Size = new System.Drawing.Size(100, 20);
             this.textBoxParStructName.TabIndex = 13;
             this.textBoxParStructName.Text = "myPar";
+            this.textBoxParStructName.Visible = false;
             // 
             // label9
             // 
@@ -485,6 +494,7 @@
             this.label9.Size = new System.Drawing.Size(80, 13);
             this.label9.TabIndex = 9;
             this.label9.Text = "par struct name";
+            this.label9.Visible = false;
             // 
             // splitContainer3
             // 
