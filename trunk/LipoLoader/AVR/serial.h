@@ -47,12 +47,7 @@ typedef struct Battery_Info_tag
 	uint16_t usConverterPower_W;
 	int16_t  sISetpoint;
 	int16_t  sVSetpoint;
-	uint16_t usPWM; // todo temporary-remove
-/*	uint16_t usPWMStep; // todo temporary-remove
-	int16_t  sDiff;// todo temporary-remove
-	uint16_t ErrCnt;
-	uint8_t  LastErr;
-*/
+	uint16_t usPWM; 
 	BatteryCell_t Cells[6];
 	int16_t ucDegC; // Temperature in degrees C
 	int16_t  sSupplyVolt_mV; // supply voltage
@@ -80,16 +75,15 @@ typedef struct Command_tag
 {
 	int16_t  sCurrentSetpoint;  // max current
 	uint8_t  ucUserCellCount; // 0 for auto
+	uint8_t  dummy; // "size of Command must be 16 bit aligned for CRC"
 	uint16_t usVoltageSetpoint_mV; // volt per cell
 
 	uint32_t unQ_max_mAs; // max Capacity
 	uint16_t usT_max_s; // max Time
 	uint16_t usMinBalanceVolt_mV; // voltage to start balancing
 
-	uint16_t basefrequency;
-	uint16_t refreshrate;
+	uint16_t refreshrate; // 10
 	uint16_t SuppMin_mV;
-	uint8_t dummy; // "size of Command must be 16 bit aligned for CRC"
 }Command_t;
 
 

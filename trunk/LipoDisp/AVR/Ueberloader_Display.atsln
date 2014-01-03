@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Atmel Studio Solution File, Format Version 11.00
 Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "Ueberloader_Display", "Ueberloader_Display.cproj", "{6A70E02F-9FFC-4561-8DD4-B3DEE29145F7}"
 EndProject
+Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "ueberloader", "..\..\LipoLoader\AVR\ueberloader.cproj", "{D235F77C-3C8B-49FB-B71B-41E952E0B0C8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		default|AVR = default|AVR
@@ -10,6 +12,8 @@ Global
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{6A70E02F-9FFC-4561-8DD4-B3DEE29145F7}.default|AVR.ActiveCfg = default|AVR
 		{6A70E02F-9FFC-4561-8DD4-B3DEE29145F7}.default|AVR.Build.0 = default|AVR
+		{D235F77C-3C8B-49FB-B71B-41E952E0B0C8}.default|AVR.ActiveCfg = default|AVR
+		{D235F77C-3C8B-49FB-B71B-41E952E0B0C8}.default|AVR.Build.0 = default|AVR
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
