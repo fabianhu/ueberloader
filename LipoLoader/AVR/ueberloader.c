@@ -88,7 +88,6 @@ void TaskGovernor(void)
 		g_tCommand.unQ_max_mAs = 100000;
 		g_tCommand.usT_max_s = 10000;
 		g_tCommand.usMinBalanceVolt_mV = 3500;
-		g_tCommand.basefrequency = 60;
 		g_tCommand.refreshrate = 10;
 		g_tCommand.SuppMin_mV = 10000;
 	}
@@ -181,27 +180,6 @@ void TaskGovernor(void)
 		if(sU_in_act > 24000)
 			emstop( 7 );
 
-#if testtest == 123
-
-#warning "Testmode"
-
-OS_MutexGet( OSMTXCommand );
-
-
-uint16_t maxpower = 2*pwm_us_period_H + 2*CHANGEOVER - 2*MINSWITCHOFFPWM ;
-
-static uint16_t pwr = 0;
-static uint16_t start = 0;
-
-pwr++;
-if (pwr > maxpower) pwr = 0;
-
-vPWM_Set(pwr, start );
-
-OS_MutexRelease( OSMTXCommand);
-
-#else
-
 		if(g_tBattery_Info.eState == eBattCharging)
 		{
 			if(sI_out_act > 10000 && abs(sI_out_act_flt) > 100)
@@ -228,8 +206,6 @@ OS_MutexRelease( OSMTXCommand);
 
 		vGovernor( BalancerGetCurrentSetp(), sI_out_act );
 		
-#endif // testtest
-
 	}
 }
 
@@ -378,7 +354,7 @@ void TaskState(void)
 							// safe the actual setting, which is used to charge
 							eeprom_WriteBlockWCRC((uint8_t*)&g_tCommand, EEPROM_COMMAND_START, sizeof(Command_t));
 
-							PWM_Setfrequency(g_tCommand.basefrequency); // in kHz!!!
+							PWM_Setfrequency(60); // in kHz!!!
 							PWM_SetRatio(g_tCommand.refreshrate);
 							
 							OS_WaitTicks( OSALMStateWait, 100 );

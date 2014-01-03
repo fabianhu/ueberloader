@@ -137,8 +137,6 @@ uint8_t HandleSerial(UCIFrame_t *_RXFrame)
 		case UCI_WRITE_EEPROM:
 
 			eeprom_WriteBlockWCRC((uint8_t*)&g_tCommand, EEPROM_COMMAND_START, sizeof(Command_t));
-
-			PWM_Setfrequency(g_tCommand.basefrequency); // in kHz!!!
 			PWM_SetRatio(g_tCommand.refreshrate);
 			// prepare ok answer:
 			g_tUCITXFrame.values[0] = 1;
