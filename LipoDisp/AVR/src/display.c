@@ -77,7 +77,7 @@ void TaskDisplay(void)
 		OS_WaitAlarm( OSALMWaitDisp );
 		OS_SetAlarm( OSALMWaitDisp, 300 ); // FIXME only for linewriter !!! ansonsten 500 !
 
-		if(g_GotNewComand) // FIXME was hat das hier verloren? -> umziehen! --> Nö, weil die daten im ISR empfangen werden, und ein Mutex im ISR nicht geht.
+		if(g_GotNewComand) // was hat das hier verloren? -> umziehen! --> Nö, weil die daten im ISR empfangen werden, und ein Mutex im ISR nicht geht.
 		{
 			// gespeicherte Commands vom Slave in Parameter eintragen.
 			OS_MutexGet( OSMTXCommand );
@@ -90,7 +90,6 @@ void TaskDisplay(void)
 			myPar.parMaxtime.sValue = g_tCommand.usT_max_s;
 			myPar.parBalActVoltSET.sValue = g_tCommand.usMinBalanceVolt_mV;
 
-			myPar.parPWMfrequency.sValue = g_tCommand.basefrequency;
 			myPar.parRefreshPeriod.sValue = g_tCommand.refreshrate;
 			
 			myPar.parMinSupplyVolt.sValue = g_tCommand.SuppMin_mV;
