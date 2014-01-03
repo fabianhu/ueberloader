@@ -46,7 +46,6 @@
       </node>
       <node text="Pwm" imageindex="0" tagType="normal" tagID="-1" tagInfo="" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="">
         <node text="(back)" imageindex="1" tagType="back" tagID="-1" tagInfo="" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" />
-        <node text="Fequency" imageindex="3" tagType="parameter" tagID="-1" tagInfo="parPWMfrequency" tagParUpper="100" tagParLower="10" tagParStepSize="10" tagParType="kHz" />
         <node text="Refresh-period" imageindex="3" tagType="parameter" tagID="-1" tagInfo="parRefreshPeriod" tagParUpper="10000" tagParLower="1" tagParStepSize="10" tagParType="ms" />
       </node>
       <node text="Min Supply" imageindex="3" tagType="parameter" tagID="-1" tagInfo="parMinSupplyVolt" tagParUpper="20000" tagParLower="8000" tagParStepSize="500" tagParType="mV" />

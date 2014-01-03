@@ -23,13 +23,12 @@ extern void menu_draw_groupposition(uint8_t itemnr, uint8_t groupitems);
 
 //******** START OF AUTO-GENERATED HEADER DO NOT EDIT!!! *********
 
- #define	MENUESIZE	45	// number of menu itmes (array size)
- #define	MAX_ITEM_NAME_CHARLENGTH	19	// number of menu itmes (array size)
+ #define	MENUESIZE	44	// number of menu itmes (array size)
+ #define	MAX_ITEM_NAME_CHARLENGTH	19	// max name length
 // Enum definitions
 typedef enum
 {
 	Cells,
-	kHz,
 	mA,
 	mAh,
 	min,
@@ -54,13 +53,14 @@ typedef struct myPar_tag
       Parameter_t parChtVoltStorage;
       Parameter_t parBalActVoltStor;
       Parameter_t parVoltDisch;
-      Parameter_t parPWMfrequency;
       Parameter_t parRefreshPeriod;
       Parameter_t parMinSupplyVolt;
 	uint8_t crc8;
 } myPar_t;
 
 extern myPar_t myPar;
+
+ #define	MENUE_PARCOUNT	16	// number of parameters
 
 // Action Prototypes
 void ActionChargeModeStorage (void);
@@ -104,7 +104,6 @@ char	txtLIIONVOLTAGE[] 	PROGMEM="LiIon Voltage"; \
 char	txtLIFEPOVOLT[] 	PROGMEM="LiFePo4 Volt."; \
 char	txtSTORAGEVOLTAGE[] 	PROGMEM="Storage Voltage"; \
 char	txtDISCHARGEVOLTAGE[] 	PROGMEM="Discharge Voltage"; \
-char	txtFEQUENCY[] 	PROGMEM="Fequency"; \
 char	txtREFRESHPERIOD[] 	PROGMEM="Refresh-period"; \
 
 #endif
@@ -113,7 +112,7 @@ char	txtREFRESHPERIOD[] 	PROGMEM="Refresh-period"; \
 #ifndef MENUE_PARAM_VARDEF
 #define MENUE_PARAM_VARDEF \
 myPar_t myPar = { \
-/*parCurrent*/ {	0, 100, 10000, -1, mA}, \
+/*parCurrent*/ {	0, 100, 10000, 100, mA}, \
 /*parChVoltSET*/ {	0, 3000, 4200, 10, mV}, \
 /*parBalActVoltSET*/ {	0, 3000, 4200, 100, mV}, \
 /*parMaxcap*/ {	0, 0, 10000, 100, mAh}, \
@@ -127,7 +126,6 @@ myPar_t myPar = { \
 /*parChtVoltStorage*/ {	0, 2000, 4100, 10, mV}, \
 /*parBalActVoltStor*/ {	0, 3000, 4200, 100, mV}, \
 /*parVoltDisch*/ {	0, 3000, 4200, 10, mV}, \
-/*parPWMfrequency*/ {	0, 10, 100, 10, kHz}, \
 /*parRefreshPeriod*/ {	0, 1, 10000, 10, ms}, \
 /*parMinSupplyVolt*/ {	0, 8000, 20000, 500, mV}, \
 /*CRC*/	0 \
@@ -181,16 +179,9 @@ MenuItem_t m_items[MENUESIZE] = { \
 	/* 40*/	{txtBACK,	 0,	 0,	26,	26,	FLASH}, \
 	/* 41*/	{txtDISCHARGEVOLTAGE,	 0,	 &myPar.parVoltDisch,	0,	26,	FLASH}, \
 	/* 42*/	{txtBACK,	 0,	 0,	17,	17,	FLASH}, \
-	/* 43*/	{txtFEQUENCY,	 0,	 &myPar.parPWMfrequency,	0,	17,	FLASH}, \
-	/* 44*/	{txtREFRESHPERIOD,	 0,	 &myPar.parRefreshPeriod,	0,	17,	FLASH}, \
+	/* 43*/	{txtREFRESHPERIOD,	 0,	 &myPar.parRefreshPeriod,	0,	17,	FLASH}, \
 };
 #endif
 
 //******** END OF AUTO-GENERATED HEADER DO NOT EDIT!!! *********
-
-
-
-
-
-
 
