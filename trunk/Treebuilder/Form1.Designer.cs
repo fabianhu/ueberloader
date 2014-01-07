@@ -30,7 +30,7 @@
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
-            System.Windows.Forms.TreeNode treeNode1 = new System.Windows.Forms.TreeNode("root");
+            System.Windows.Forms.TreeNode treeNode2 = new System.Windows.Forms.TreeNode("root");
             this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.textBoxtxtPrefix = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
@@ -63,10 +63,14 @@
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
+            this.textboxParDesc = new System.Windows.Forms.TextBox();
             this.textBoxParStructName = new System.Windows.Forms.TextBox();
             this.label9 = new System.Windows.Forms.Label();
             this.splitContainer3 = new System.Windows.Forms.SplitContainer();
+            this.splitContainer4 = new System.Windows.Forms.SplitContainer();
             this.textBoxResult2 = new System.Windows.Forms.TextBox();
+            this.textBoxDescSum = new System.Windows.Forms.TextBox();
+            this.label1 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -79,6 +83,10 @@
             this.splitContainer3.Panel1.SuspendLayout();
             this.splitContainer3.Panel2.SuspendLayout();
             this.splitContainer3.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer4)).BeginInit();
+            this.splitContainer4.Panel1.SuspendLayout();
+            this.splitContainer4.Panel2.SuspendLayout();
+            this.splitContainer4.SuspendLayout();
             this.SuspendLayout();
             // 
             // imageList1
@@ -357,10 +365,10 @@
             this.treeView1.LabelEdit = true;
             this.treeView1.Location = new System.Drawing.Point(0, 0);
             this.treeView1.Name = "treeView1";
-            treeNode1.Name = "root";
-            treeNode1.Text = "root";
+            treeNode2.Name = "root";
+            treeNode2.Text = "root";
             this.treeView1.Nodes.AddRange(new System.Windows.Forms.TreeNode[] {
-            treeNode1});
+            treeNode2});
             this.treeView1.SelectedImageIndex = 0;
             this.treeView1.Size = new System.Drawing.Size(256, 705);
             this.treeView1.TabIndex = 0;
@@ -440,6 +448,7 @@
             // 
             // splitContainer2.Panel1
             // 
+            this.splitContainer2.Panel1.Controls.Add(this.textboxParDesc);
             this.splitContainer2.Panel1.Controls.Add(this.textBoxParStructName);
             this.splitContainer2.Panel1.Controls.Add(this.buttonLoad);
             this.splitContainer2.Panel1.Controls.Add(this.comboBox1);
@@ -457,6 +466,7 @@
             this.splitContainer2.Panel1.Controls.Add(this.buttonDelete);
             this.splitContainer2.Panel1.Controls.Add(this.label4);
             this.splitContainer2.Panel1.Controls.Add(this.buttonRename);
+            this.splitContainer2.Panel1.Controls.Add(this.label1);
             this.splitContainer2.Panel1.Controls.Add(this.label13);
             this.splitContainer2.Panel1.Controls.Add(this.textBoxParStepSize);
             this.splitContainer2.Panel1.Controls.Add(this.textBoxInfo);
@@ -476,6 +486,14 @@
             this.splitContainer2.Size = new System.Drawing.Size(828, 705);
             this.splitContainer2.SplitterDistance = 220;
             this.splitContainer2.TabIndex = 13;
+            // 
+            // textboxParDesc
+            // 
+            this.textboxParDesc.Location = new System.Drawing.Point(520, 150);
+            this.textboxParDesc.Multiline = true;
+            this.textboxParDesc.Name = "textboxParDesc";
+            this.textboxParDesc.Size = new System.Drawing.Size(296, 67);
+            this.textboxParDesc.TabIndex = 14;
             // 
             // textBoxParStructName
             // 
@@ -508,10 +526,28 @@
             // 
             // splitContainer3.Panel2
             // 
-            this.splitContainer3.Panel2.Controls.Add(this.textBoxResult2);
+            this.splitContainer3.Panel2.Controls.Add(this.splitContainer4);
             this.splitContainer3.Size = new System.Drawing.Size(828, 481);
             this.splitContainer3.SplitterDistance = 476;
             this.splitContainer3.TabIndex = 0;
+            // 
+            // splitContainer4
+            // 
+            this.splitContainer4.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainer4.Location = new System.Drawing.Point(0, 0);
+            this.splitContainer4.Name = "splitContainer4";
+            this.splitContainer4.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            // 
+            // splitContainer4.Panel1
+            // 
+            this.splitContainer4.Panel1.Controls.Add(this.textBoxResult2);
+            // 
+            // splitContainer4.Panel2
+            // 
+            this.splitContainer4.Panel2.Controls.Add(this.textBoxDescSum);
+            this.splitContainer4.Size = new System.Drawing.Size(348, 481);
+            this.splitContainer4.SplitterDistance = 239;
+            this.splitContainer4.TabIndex = 5;
             // 
             // textBoxResult2
             // 
@@ -523,10 +559,35 @@
             this.textBoxResult2.Multiline = true;
             this.textBoxResult2.Name = "textBoxResult2";
             this.textBoxResult2.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.textBoxResult2.Size = new System.Drawing.Size(348, 481);
+            this.textBoxResult2.Size = new System.Drawing.Size(348, 239);
             this.textBoxResult2.TabIndex = 4;
             this.textBoxResult2.TabStop = false;
             this.textBoxResult2.Click += new System.EventHandler(this.textBoxResult2_Click);
+            // 
+            // textBoxDescSum
+            // 
+            this.textBoxDescSum.AcceptsReturn = true;
+            this.textBoxDescSum.AcceptsTab = true;
+            this.textBoxDescSum.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.textBoxDescSum.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.textBoxDescSum.Location = new System.Drawing.Point(0, 0);
+            this.textBoxDescSum.Multiline = true;
+            this.textBoxDescSum.Name = "textBoxDescSum";
+            this.textBoxDescSum.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            this.textBoxDescSum.Size = new System.Drawing.Size(348, 238);
+            this.textBoxDescSum.TabIndex = 4;
+            this.textBoxDescSum.TabStop = false;
+            this.textBoxDescSum.Click += new System.EventHandler(this.textBoxDescSum_Click);
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(517, 134);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(60, 13);
+            this.label1.TabIndex = 9;
+            this.label1.Text = "Description";
+            this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // Form1
             // 
@@ -549,9 +610,14 @@
             this.splitContainer3.Panel1.ResumeLayout(false);
             this.splitContainer3.Panel1.PerformLayout();
             this.splitContainer3.Panel2.ResumeLayout(false);
-            this.splitContainer3.Panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer3)).EndInit();
             this.splitContainer3.ResumeLayout(false);
+            this.splitContainer4.Panel1.ResumeLayout(false);
+            this.splitContainer4.Panel1.PerformLayout();
+            this.splitContainer4.Panel2.ResumeLayout(false);
+            this.splitContainer4.Panel2.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer4)).EndInit();
+            this.splitContainer4.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -594,6 +660,10 @@
         private System.Windows.Forms.SplitContainer splitContainer3;
         private System.Windows.Forms.TextBox textBoxParStructName;
         private System.Windows.Forms.Label label9;
+        private System.Windows.Forms.TextBox textboxParDesc;
+        private System.Windows.Forms.SplitContainer splitContainer4;
+        private System.Windows.Forms.TextBox textBoxDescSum;
+        private System.Windows.Forms.Label label1;
     }
 }
 
