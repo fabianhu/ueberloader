@@ -37,6 +37,7 @@ namespace Treebuilder
         private const string XmlNodeTagParLower = "tagParLower";
         private const string XmlNodeTagParStepSize = "tagParStepSize";
         private const string XmlNodeTagParType = "tagParType";
+        private const string XmlNodeTagParDesc = "tagParDesc";
 
         private string tbdef = "char\\t\\m[] \\tPROGMEM=\"\\s\";";
         private string tbmen = "/* \\#*/\\t{\\m,\\t \\A,\\t \\P,\\t\\j,\\t\\p,\\tFLASH},";
@@ -66,6 +67,7 @@ namespace Treebuilder
             public int ParLower;
             public int ParStepSize;
             public string ParType;
+            public string ParDesc;
         }
 
 
@@ -227,6 +229,12 @@ namespace Treebuilder
                 _node.ImageIndex = (int)((tNodeTagInfo)_node.Tag).type; // this is duplicated somehow..., but if node info is missing in XML, it is restored here.
                 _node.SelectedImageIndex = (int)((tNodeTagInfo)_node.Tag).type;
             }
+            else if (_propertyName == XmlNodeTagParDesc)
+            {
+                nti = (tNodeTagInfo)_node.Tag;
+                nti.ParDesc =_value;
+                _node.Tag = nti;
+            }
         }
 
         public void vSerializeTreeView(TreeView _treeView, string _fileName)
@@ -279,6 +287,7 @@ namespace Treebuilder
                         _textWriter.WriteAttributeString(XmlNodeTagParType, ((tNodeTagInfo)node.Tag).ParType.ToString());
                     else
                         _textWriter.WriteAttributeString(XmlNodeTagParType, "");
+                    _textWriter.WriteAttributeString(XmlNodeTagParDesc, ((tNodeTagInfo)node.Tag).ParDesc);
                 }
                 // add other node properties to serialize here  
 
@@ -439,6 +448,8 @@ namespace Treebuilder
             textBoxResult2.AppendText("\tMENUE_MENUE_VARDEF" + Environment.NewLine);
             textBoxResult2.AppendText(Environment.NewLine +"//******** INSERT INTO C FILE *********" + Environment.NewLine);
 
+
+            processDescriptionText(tn);
         }
 
         void ProcessParameters(TreeNode tn)
@@ -568,6 +579,24 @@ namespace Treebuilder
                 processMenuList(tn);
             }
         }
+
+        private void processDescriptionText(TreeNode ano)
+        {
+            foreach (TreeNode tn in ano.Nodes)
+            {
+                for (int i = 1; i < tn.Level; i++)
+                {
+                    textBoxDescSum.AppendText("  |");
+                }
+                textBoxDescSum.AppendText(" " + tn.Text +"\t"+ ((tNodeTagInfo)tn.Tag).ParDesc + Environment.NewLine);
+                
+                if(tn.Nodes.Count !=0)
+                 processDescriptionText(tn);
+            }
+        }
+
+
+
 
         static public string CleanString(string s)
         {
@@ -705,6 +734,7 @@ namespace Treebuilder
             textBoxParValLower.Text = ((tNodeTagInfo)(e.Node.Tag)).ParLower.ToString();
             
             textBoxParStepSize.Text = ((tNodeTagInfo)(e.Node.Tag)).ParStepSize.ToString();
+            textboxParDesc.Text = ((tNodeTagInfo)(e.Node.Tag)).ParDesc;
         }
 
         private void textBoxNodeName_TextChanged(object sender, EventArgs e)
@@ -754,6 +784,7 @@ namespace Treebuilder
                 nti.ParType = "";
                 nti.ParStepSize = 0;
                 nti.type = eMenueElementType.normal;
+                nti.ParDesc = "";
                 tn.Tag = nti;
             }
         }
@@ -807,6 +838,7 @@ namespace Treebuilder
                     nti.ParStepSize = 0;
                 }
                 nti.ParType = comboBoxParType.Text;
+                nti.ParDesc = textboxParDesc.Text;
 
                 nti.type = (eMenueElementType)comboBox1.SelectedIndex;
                 tn.Tag = nti;
@@ -906,6 +938,14 @@ namespace Treebuilder
             // copy all to clipboard
             Clipboard.SetData(DataFormats.Text, textBoxResult2.Text);
         }
+
+        private void textBoxDescSum_Click(object sender, EventArgs e)
+        {
+            // copy all to clipboard
+            Clipboard.SetData(DataFormats.Text, textBoxDescSum.Text);
+        }
+
+  
 
      
 
