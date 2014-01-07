@@ -351,7 +351,8 @@ namespace Treebuilder
 
             TreeNode tn = treeView1.Nodes[0];
 
-            textBoxResult.AppendText("//******** START OF AUTO-GENERATED HEADER DO NOT EDIT!!! *********" + Environment.NewLine + Environment.NewLine);
+            textBoxResult.AppendText("//******** START OF AUTO-GENERATED HEADER DO NOT EDIT!!! *********" + Environment.NewLine);
+            textBoxResult.AppendText("//********          Generated with Treebuilder.exe       *********" + Environment.NewLine + Environment.NewLine);
 
 
             // some Defines
@@ -452,6 +453,22 @@ namespace Treebuilder
             processDescriptionText(tn);
         }
 
+
+        string cleantext(string s)
+        {
+            // no spaces: return new String(s.Where(Char.IsLetterOrDigit).ToArray());
+
+            string removeChars = "\\/";//" ?&^$#@!()+-,:;<>’\'-_*";
+            string result = s;
+
+            foreach (char c in removeChars)
+            {
+                result = result.Replace(c.ToString(), string.Empty);
+            }
+
+            return result;
+        }
+
         void ProcessParameters(TreeNode tn)
         {
             if (((tNodeTagInfo)tn.Tag).type == eMenueElementType.parameter)
@@ -473,7 +490,7 @@ namespace Treebuilder
             
             if (((tNodeTagInfo)tn.Tag).type == eMenueElementType.parameter)
             {
-                textBoxResult.AppendText("      Parameter_t " + ((tNodeTagInfo)tn.Tag).info + ";" + Environment.NewLine);
+                textBoxResult.AppendText("      Parameter_t " + ((tNodeTagInfo)tn.Tag).info + ";" + "\t// " + cleantext(((tNodeTagInfo)tn.Tag).ParDesc) + Environment.NewLine);
                 parcount++;
             }
             foreach (TreeNode tn2 in tn.Nodes)
@@ -486,7 +503,7 @@ namespace Treebuilder
         {
             if (((tNodeTagInfo)tn.Tag).type == eMenueElementType.action)
             {
-                textBoxResult.AppendText("void " + ((tNodeTagInfo)tn.Tag).info + " (void);" + Environment.NewLine);
+                textBoxResult.AppendText("void " + ((tNodeTagInfo)tn.Tag).info + " (void);" + "\t// " + cleantext(((tNodeTagInfo)tn.Tag).ParDesc) + Environment.NewLine);
             }
             foreach (TreeNode tn2 in tn.Nodes)
             {
@@ -675,6 +692,9 @@ namespace Treebuilder
                                     sb.Append("&" + textBoxParStructName.Text + "." + ((tNodeTagInfo)tn.Tag).info);
                                 else
                                     sb.Append("0");
+                                break;
+                            case 'D':
+                                sb.Append(" //" + ((tNodeTagInfo)tn.Tag).ParDesc);
                                 break;
                             case 'j':
                                 tNodeTagInfo nti;

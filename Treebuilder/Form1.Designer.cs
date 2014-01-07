@@ -323,13 +323,13 @@
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(626, 92);
+            this.label6.Location = new System.Drawing.Point(626, 82);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(168, 117);
+            this.label6.Size = new System.Drawing.Size(168, 130);
             this.label6.TabIndex = 10;
             this.label6.Text = "\\t tab\r\n\\n newline\r\n\\# ID of element\r\n\\s String name of element\r\n\\m macrodisized " +
     "name of element \r\n\\p parent ID\r\n\\j jump target ID\r\n\\A action function\r\n\\P Parame" +
-    "ter name";
+    "ter name\r\n\\D Description";
             // 
             // checkBoxCreateEnum
             // 
@@ -556,7 +556,7 @@
             // 
             this.splitContainer4.Panel2.Controls.Add(this.textBoxDescSum);
             this.splitContainer4.Size = new System.Drawing.Size(348, 481);
-            this.splitContainer4.SplitterDistance = 239;
+            this.splitContainer4.SplitterDistance = 162;
             this.splitContainer4.TabIndex = 5;
             // 
             // textBoxResult2
@@ -569,7 +569,7 @@
             this.textBoxResult2.Multiline = true;
             this.textBoxResult2.Name = "textBoxResult2";
             this.textBoxResult2.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.textBoxResult2.Size = new System.Drawing.Size(348, 239);
+            this.textBoxResult2.Size = new System.Drawing.Size(348, 162);
             this.textBoxResult2.TabIndex = 4;
             this.textBoxResult2.TabStop = false;
             this.textBoxResult2.Click += new System.EventHandler(this.textBoxResult2_Click);
@@ -584,7 +584,7 @@
             this.textBoxDescSum.Multiline = true;
             this.textBoxDescSum.Name = "textBoxDescSum";
             this.textBoxDescSum.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.textBoxDescSum.Size = new System.Drawing.Size(348, 238);
+            this.textBoxDescSum.Size = new System.Drawing.Size(348, 315);
             this.textBoxDescSum.TabIndex = 4;
             this.textBoxDescSum.TabStop = false;
             this.textBoxDescSum.Click += new System.EventHandler(this.textBoxDescSum_Click);
