@@ -30,7 +30,7 @@
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
-            System.Windows.Forms.TreeNode treeNode2 = new System.Windows.Forms.TreeNode("root");
+            System.Windows.Forms.TreeNode treeNode1 = new System.Windows.Forms.TreeNode("root");
             this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.textBoxtxtPrefix = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
@@ -65,12 +65,12 @@
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
             this.textboxParDesc = new System.Windows.Forms.TextBox();
             this.textBoxParStructName = new System.Windows.Forms.TextBox();
+            this.label1 = new System.Windows.Forms.Label();
             this.label9 = new System.Windows.Forms.Label();
             this.splitContainer3 = new System.Windows.Forms.SplitContainer();
             this.splitContainer4 = new System.Windows.Forms.SplitContainer();
             this.textBoxResult2 = new System.Windows.Forms.TextBox();
             this.textBoxDescSum = new System.Windows.Forms.TextBox();
-            this.label1 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -102,9 +102,9 @@
             // textBoxtxtPrefix
             // 
             this.textBoxtxtPrefix.AcceptsTab = true;
-            this.textBoxtxtPrefix.Location = new System.Drawing.Point(93, 164);
+            this.textBoxtxtPrefix.Location = new System.Drawing.Point(510, 3);
             this.textBoxtxtPrefix.Name = "textBoxtxtPrefix";
-            this.textBoxtxtPrefix.Size = new System.Drawing.Size(38, 20);
+            this.textBoxtxtPrefix.Size = new System.Drawing.Size(24, 20);
             this.textBoxtxtPrefix.TabIndex = 8;
             this.textBoxtxtPrefix.TabStop = false;
             this.textBoxtxtPrefix.Text = "txt";
@@ -114,7 +114,7 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(3, 168);
+            this.label5.Location = new System.Drawing.Point(420, 6);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(84, 13);
             this.label5.TabIndex = 9;
@@ -269,7 +269,7 @@
             // label12
             // 
             this.label12.AutoSize = true;
-            this.label12.Location = new System.Drawing.Point(3, 191);
+            this.label12.Location = new System.Drawing.Point(451, 82);
             this.label12.Name = "label12";
             this.label12.Size = new System.Drawing.Size(37, 13);
             this.label12.TabIndex = 9;
@@ -323,7 +323,7 @@
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(459, 12);
+            this.label6.Location = new System.Drawing.Point(626, 92);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(168, 117);
             this.label6.TabIndex = 10;
@@ -336,7 +336,7 @@
             this.checkBoxCreateEnum.AutoSize = true;
             this.checkBoxCreateEnum.Checked = true;
             this.checkBoxCreateEnum.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBoxCreateEnum.Location = new System.Drawing.Point(46, 190);
+            this.checkBoxCreateEnum.Location = new System.Drawing.Point(494, 81);
             this.checkBoxCreateEnum.Name = "checkBoxCreateEnum";
             this.checkBoxCreateEnum.Size = new System.Drawing.Size(126, 17);
             this.checkBoxCreateEnum.TabIndex = 12;
@@ -365,10 +365,10 @@
             this.treeView1.LabelEdit = true;
             this.treeView1.Location = new System.Drawing.Point(0, 0);
             this.treeView1.Name = "treeView1";
-            treeNode2.Name = "root";
-            treeNode2.Text = "root";
+            treeNode1.Name = "root";
+            treeNode1.Text = "root";
             this.treeView1.Nodes.AddRange(new System.Windows.Forms.TreeNode[] {
-            treeNode2});
+            treeNode1});
             this.treeView1.SelectedImageIndex = 0;
             this.treeView1.Size = new System.Drawing.Size(256, 705);
             this.treeView1.TabIndex = 0;
@@ -399,7 +399,7 @@
             // label14
             // 
             this.label14.AutoSize = true;
-            this.label14.Location = new System.Drawing.Point(144, 167);
+            this.label14.Location = new System.Drawing.Point(420, 28);
             this.label14.Name = "label14";
             this.label14.Size = new System.Drawing.Size(70, 13);
             this.label14.TabIndex = 9;
@@ -409,9 +409,9 @@
             // textBox1
             // 
             this.textBox1.AcceptsTab = true;
-            this.textBox1.Location = new System.Drawing.Point(220, 164);
+            this.textBox1.Location = new System.Drawing.Point(510, 25);
             this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(38, 20);
+            this.textBox1.Size = new System.Drawing.Size(24, 20);
             this.textBox1.TabIndex = 8;
             this.textBox1.TabStop = false;
             this.textBox1.Text = "par";
@@ -489,25 +489,35 @@
             // 
             // textboxParDesc
             // 
-            this.textboxParDesc.Location = new System.Drawing.Point(520, 150);
+            this.textboxParDesc.Location = new System.Drawing.Point(3, 160);
             this.textboxParDesc.Multiline = true;
             this.textboxParDesc.Name = "textboxParDesc";
-            this.textboxParDesc.Size = new System.Drawing.Size(296, 67);
+            this.textboxParDesc.Size = new System.Drawing.Size(617, 49);
             this.textboxParDesc.TabIndex = 14;
             // 
             // textBoxParStructName
             // 
-            this.textBoxParStructName.Location = new System.Drawing.Point(380, 165);
+            this.textBoxParStructName.Location = new System.Drawing.Point(510, 51);
             this.textBoxParStructName.Name = "textBoxParStructName";
             this.textBoxParStructName.Size = new System.Drawing.Size(100, 20);
             this.textBoxParStructName.TabIndex = 13;
             this.textBoxParStructName.Text = "myPar";
             this.textBoxParStructName.Visible = false;
             // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(0, 144);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(60, 13);
+            this.label1.TabIndex = 9;
+            this.label1.Text = "Description";
+            this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
             // label9
             // 
             this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(294, 168);
+            this.label9.Location = new System.Drawing.Point(420, 47);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(80, 13);
             this.label9.TabIndex = 9;
@@ -578,16 +588,6 @@
             this.textBoxDescSum.TabIndex = 4;
             this.textBoxDescSum.TabStop = false;
             this.textBoxDescSum.Click += new System.EventHandler(this.textBoxDescSum_Click);
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(517, 134);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(60, 13);
-            this.label1.TabIndex = 9;
-            this.label1.Text = "Description";
-            this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // Form1
             // 
