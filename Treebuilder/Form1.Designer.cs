@@ -30,7 +30,7 @@
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
-            System.Windows.Forms.TreeNode treeNode1 = new System.Windows.Forms.TreeNode("root");
+            System.Windows.Forms.TreeNode treeNode2 = new System.Windows.Forms.TreeNode("root");
             this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.textBoxtxtPrefix = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
@@ -66,6 +66,7 @@
             this.textboxParDesc = new System.Windows.Forms.TextBox();
             this.textBoxParStructName = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
+            this.labelGUID = new System.Windows.Forms.Label();
             this.label9 = new System.Windows.Forms.Label();
             this.splitContainer3 = new System.Windows.Forms.SplitContainer();
             this.splitContainer4 = new System.Windows.Forms.SplitContainer();
@@ -365,10 +366,10 @@
             this.treeView1.LabelEdit = true;
             this.treeView1.Location = new System.Drawing.Point(0, 0);
             this.treeView1.Name = "treeView1";
-            treeNode1.Name = "root";
-            treeNode1.Text = "root";
+            treeNode2.Name = "root";
+            treeNode2.Text = "root";
             this.treeView1.Nodes.AddRange(new System.Windows.Forms.TreeNode[] {
-            treeNode1});
+            treeNode2});
             this.treeView1.SelectedImageIndex = 0;
             this.treeView1.Size = new System.Drawing.Size(256, 705);
             this.treeView1.TabIndex = 0;
@@ -467,6 +468,7 @@
             this.splitContainer2.Panel1.Controls.Add(this.label4);
             this.splitContainer2.Panel1.Controls.Add(this.buttonRename);
             this.splitContainer2.Panel1.Controls.Add(this.label1);
+            this.splitContainer2.Panel1.Controls.Add(this.labelGUID);
             this.splitContainer2.Panel1.Controls.Add(this.label13);
             this.splitContainer2.Panel1.Controls.Add(this.textBoxParStepSize);
             this.splitContainer2.Panel1.Controls.Add(this.textBoxInfo);
@@ -513,6 +515,16 @@
             this.label1.TabIndex = 9;
             this.label1.Text = "Description";
             this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // labelGUID
+            // 
+            this.labelGUID.AutoSize = true;
+            this.labelGUID.Location = new System.Drawing.Point(683, 60);
+            this.labelGUID.Name = "labelGUID";
+            this.labelGUID.Size = new System.Drawing.Size(34, 13);
+            this.labelGUID.TabIndex = 9;
+            this.labelGUID.Text = "GUID";
+            this.labelGUID.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // label9
             // 
@@ -664,6 +676,7 @@
         private System.Windows.Forms.SplitContainer splitContainer4;
         private System.Windows.Forms.TextBox textBoxDescSum;
         private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label labelGUID;
     }
 }
 

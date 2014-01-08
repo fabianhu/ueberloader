@@ -49,6 +49,8 @@ namespace Treebuilder
 
         TreeNode m_DragDropSourceNode;
 
+        UInt16 m_Generateduuid;
+
         enum eMenueElementType
         {
             normal = 0,  // do not change numbers, as the combo box relies on this
@@ -312,7 +314,14 @@ namespace Treebuilder
             if (res == DialogResult.OK && sfd.FileName != "")
             {
                 vSerializeTreeView(treeView1, sfd.FileName);
+                if (m_Generateduuid != 0)
+                {
+                    string s = Path.GetDirectoryName(sfd.FileName) +"\\"+ m_Generateduuid.ToString("00000")+".jmdef";
+                    if(!File.Exists(s))
+                        vSerializeTreeView(treeView1, s);
+                }
             }
+
         }
 
         private void buttonLoad_Click(object sender, EventArgs e)
@@ -348,8 +357,9 @@ namespace Treebuilder
 
             textBoxResult.Clear();
             textBoxResult2.Clear();
+            textBoxDescSum.Clear();
 
-            TreeNode tn = treeView1.Nodes[0];
+            TreeNode RootNode = treeView1.Nodes[0];
 
             textBoxResult.AppendText("//******** START OF AUTO-GENERATED HEADER DO NOT EDIT!!! *********" + Environment.NewLine);
             textBoxResult.AppendText("//********          Generated with Treebuilder.exe       *********" + Environment.NewLine + Environment.NewLine);
@@ -358,6 +368,13 @@ namespace Treebuilder
             // some Defines
             textBoxResult.AppendText(" #define\tMENUESIZE\t" + treeView1.GetNodeCount(true) + "\t// number of menu itmes (array size)" + Environment.NewLine);
             textBoxResult.AppendText(" #define\tMAX_ITEM_NAME_CHARLENGTH\t" + GetSubNodeMaxNameLength(treeView1.Nodes[0]) + "\t// max name length" + Environment.NewLine);
+
+            m_Generateduuid = GetSubNodeUID(RootNode);
+            m_Generateduuid += Convert.ToUInt16(treeView1.GetNodeCount(true));
+            m_Generateduuid += Convert.ToUInt16(treeView1.GetNodeCount(true));
+            textBoxResult.AppendText(" #define\tMENUGENUID\t" + m_Generateduuid.ToString("") + "\t// Generation UID" + Environment.NewLine);
+
+            
         
     // Parameter enum
             if (checkBoxCreateEnum.Checked)
@@ -401,13 +418,13 @@ namespace Treebuilder
             textBoxResult.AppendText("// Text definitions" + Environment.NewLine);
             textBoxResult.AppendText("#ifndef MENUE_TEXT_VARDEF" + Environment.NewLine);            
             textBoxResult.AppendText("#define MENUE_TEXT_VARDEF \\" + Environment.NewLine);
-            textBoxResult.AppendText("" + ProcessNode(tbdef, tn) +" \\" + Environment.NewLine);
+            textBoxResult.AppendText("" + ProcessNode(tbdef, RootNode) +" \\" + Environment.NewLine);
             m_NodeCounterForID = 0; // fixme rename
             tNodeTagInfo nt;
-            nt = (tNodeTagInfo)tn.Tag;
+            nt = (tNodeTagInfo)RootNode.Tag;
             nt.ID = m_NodeCounterForID++;
-            tn.Tag = nt;
-            processTextDefinitions(tn);
+            RootNode.Tag = nt;
+            processTextDefinitions(RootNode);
             textBoxResult.AppendText(Environment.NewLine);
             textBoxResult.AppendText("#endif" + Environment.NewLine);
 
@@ -430,9 +447,8 @@ namespace Treebuilder
             textBoxResult.AppendText("#ifndef MENUE_MENUE_VARDEF" + Environment.NewLine);
             textBoxResult.AppendText("#define MENUE_MENUE_VARDEF \\" + Environment.NewLine);
             textBoxResult.AppendText("MenuItem_t m_items[MENUESIZE] = { \\" + Environment.NewLine);
-            //            textBoxResult.AppendText("MenuItem_t m_items[MENUESIZE] = {\\" + Environment.NewLine);	
-            textBoxResult.AppendText("\t" + ProcessNode(tbmen, tn) + " \\" + Environment.NewLine);
-            processMenuList(tn);
+            textBoxResult.AppendText("\t" + ProcessNode(tbmen, RootNode) + " \\" + Environment.NewLine);
+            processMenuList(RootNode);
             textBoxResult.AppendText("};" + Environment.NewLine);
             textBoxResult.AppendText("#endif" + Environment.NewLine);
             textBoxResult.AppendText(Environment.NewLine);
@@ -450,7 +466,11 @@ namespace Treebuilder
             textBoxResult2.AppendText(Environment.NewLine +"//******** INSERT INTO C FILE *********" + Environment.NewLine);
 
 
-            processDescriptionText(tn);
+            processDescriptionText(RootNode);
+
+            GetSubNodeUID(RootNode);
+            labelGUID.Text = m_Generateduuid.ToString("00000");
+
         }
 
 
@@ -522,6 +542,20 @@ namespace Treebuilder
             }
 
             return mitl;
+        }
+
+        UInt16 GetSubNodeUID(TreeNode tn)
+        {
+            string s = tn.Index.ToString() + tn.Text.ToString() + tn.Level.ToString() + tn.Nodes.Count.ToString();
+            int hash = s.GetHashCode();
+            UInt16 UID = Convert.ToUInt16((hash ^ (hash>>16)) & 0xffff);
+
+            foreach (TreeNode tn2 in tn.Nodes)
+            {
+                UID += GetSubNodeUID(tn2);
+            }
+
+            return UID;
         }
 
         void UpdateParComboBox(TreeNode tn)
@@ -964,6 +998,7 @@ namespace Treebuilder
             // copy all to clipboard
             Clipboard.SetData(DataFormats.Text, textBoxDescSum.Text);
         }
+
 
   
 
