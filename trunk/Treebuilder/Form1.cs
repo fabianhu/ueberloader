@@ -400,7 +400,6 @@ namespace Treebuilder
 
             parcount = 0; // will be counted by following fn, which is recursively called.
             ProcessParameterExternals(treeView1.Nodes[0]);
-            textBoxResult.AppendText("\tuint8_t crc8;" + Environment.NewLine);
             textBoxResult.AppendText("} " + textBoxParStructName.Text + "_t;" + Environment.NewLine);
             textBoxResult.AppendText(Environment.NewLine);
             textBoxResult.AppendText("extern " +textBoxParStructName.Text + "_t " + textBoxParStructName.Text +";"+ Environment.NewLine);
@@ -436,7 +435,7 @@ namespace Treebuilder
             textBoxResult.AppendText("#define MENUE_PARAM_VARDEF \\" + Environment.NewLine);
             textBoxResult.AppendText(textBoxParStructName.Text + "_t " + textBoxParStructName.Text + " = { \\" + Environment.NewLine);
             ProcessParameters(treeView1.Nodes[0]);
-            textBoxResult.AppendText("/*CRC*/\t0 \\" + Environment.NewLine);
+            //textBoxResult.AppendText("/*CRC*/\t0 \\" + Environment.NewLine);
             textBoxResult.AppendText("};" + Environment.NewLine);
             textBoxResult.AppendText("#endif" + Environment.NewLine);
             textBoxResult.AppendText(Environment.NewLine);
