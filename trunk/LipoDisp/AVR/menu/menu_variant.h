@@ -22,9 +22,11 @@ extern void menu_draw_groupposition(uint8_t itemnr, uint8_t groupitems);
 
 
 //******** START OF AUTO-GENERATED HEADER DO NOT EDIT!!! *********
+//********          Generated with Treebuilder.exe       *********
 
  #define	MENUESIZE	44	// number of menu itmes (array size)
  #define	MAX_ITEM_NAME_CHARLENGTH	19	// max name length
+ #define	MENUGENUID	59198	// Generation UID
 // Enum definitions
 typedef enum
 {
@@ -39,23 +41,22 @@ typedef enum
 // Parameter externals
 typedef struct myPar_tag
 {
-      Parameter_t parCurrent;
-      Parameter_t parChVoltSET;
-      Parameter_t parBalActVoltSET;
-      Parameter_t parMaxcap;
-      Parameter_t parMaxtime;
-      Parameter_t parChVoltLiPo;
-      Parameter_t parBalActVoltLiPo;
-      Parameter_t parVoltLiIo;
-      Parameter_t parBalActVoltLiIo;
-      Parameter_t parVoltLiFe;
-      Parameter_t parBalActVoltLiFe;
-      Parameter_t parChtVoltStorage;
-      Parameter_t parBalActVoltStor;
-      Parameter_t parVoltDisch;
-      Parameter_t parRefreshPeriod;
-      Parameter_t parMinSupplyVolt;
-	uint8_t crc8;
+      Parameter_t parCurrent;	// stepsize -1 for Ulis dirty hack
+      Parameter_t parChVoltSET;	// 
+      Parameter_t parBalActVoltSET;	// 
+      Parameter_t parMaxcap;	// 
+      Parameter_t parMaxtime;	// 
+      Parameter_t parChVoltLiPo;	// 
+      Parameter_t parBalActVoltLiPo;	// 
+      Parameter_t parVoltLiIo;	// 
+      Parameter_t parBalActVoltLiIo;	// 
+      Parameter_t parVoltLiFe;	// 
+      Parameter_t parBalActVoltLiFe;	// 
+      Parameter_t parChtVoltStorage;	// 
+      Parameter_t parBalActVoltStor;	// 
+      Parameter_t parVoltDisch;	// 
+      Parameter_t parRefreshPeriod;	// 
+      Parameter_t parMinSupplyVolt;	// 
 } myPar_t;
 
 extern myPar_t myPar;
@@ -63,14 +64,14 @@ extern myPar_t myPar;
  #define	MENUE_PARCOUNT	16	// number of parameters
 
 // Action Prototypes
-void ActionChargeModeStorage (void);
-void ActionChargeModeLiPo (void);
-void ActionChargeModeLiIo (void);
-void ActionChargeModeLiFe (void);
-void ActionChargeModeDischarge (void);
-void actCalH (void);
-void actCalL (void);
-void ActionShowLast (void);
+void ActionChargeModeStorage (void);	// 
+void ActionChargeModeLiPo (void);	// 
+void ActionChargeModeLiIo (void);	// 
+void ActionChargeModeLiFe (void);	// 
+void ActionChargeModeDischarge (void);	// 
+void actCalH (void);	// 
+void actCalL (void);	// 
+void ActionShowLast (void);	// 
 
 // Text definitions
 #ifndef MENUE_TEXT_VARDEF
@@ -112,7 +113,7 @@ char	txtREFRESHPERIOD[] 	PROGMEM="Refresh-period"; \
 #ifndef MENUE_PARAM_VARDEF
 #define MENUE_PARAM_VARDEF \
 myPar_t myPar = { \
-/*parCurrent*/ {	0, 100, 10000, 100, mA}, \
+/*parCurrent*/ {	0, 100, 10000, -1, mA}, \
 /*parChVoltSET*/ {	0, 3000, 4200, 10, mV}, \
 /*parBalActVoltSET*/ {	0, 3000, 4200, 100, mV}, \
 /*parMaxcap*/ {	0, 0, 10000, 100, mAh}, \
@@ -128,7 +129,6 @@ myPar_t myPar = { \
 /*parVoltDisch*/ {	0, 3000, 4200, 10, mV}, \
 /*parRefreshPeriod*/ {	0, 1, 10000, 10, ms}, \
 /*parMinSupplyVolt*/ {	0, 8000, 20000, 500, mV}, \
-/*CRC*/	0 \
 };
 #endif
 
