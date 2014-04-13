@@ -12,10 +12,12 @@
 #include <avr/eeprom.h>
 #include <util/delay.h>
 
-fixme voltage setpoint übernehmen bei umstellen von storage auf laden. Braucht 1x abstecken nochmal.
-letzte fw lädt nicht ?, parameter werden vergessen.
-Ladestromverstellung alt?
-Versionsnummer + anzeigen! + filename
+// fixme voltage setpoint übernehmen bei umstellen von storage auf laden. Braucht 1x abstecken nochmal.
+// letzte fw lädt nicht ?, parameter werden vergessen.
+// Ladestromverstellung alt?
+// Versionsnummer + anzeigen! + filename
+// Werte überprüfen von Command und Parametern beim Start (nicht nur CRC)
+
 
 // *********  Task definitions
 OS_DeclareTask(TaskGovernor,300);

@@ -158,7 +158,7 @@ void savePersistent(void)
 	buf[6] = myPar.parChtVoltStorage.sValue;
 	buf[7] = myPar.parBalActVoltStor.sValue;
 	
-	eeprom_WriteBlockWCRC((uint8_t*)&buf, EEPROM_COMMAND_START, sizeof(buf));
+	eeprom_WriteBlockWCRC((uint8_t*)&buf, EEPROM_PAR_START, sizeof(buf));
 	
 }
 
@@ -167,7 +167,7 @@ void loadPersistent(void)
 	int16_t buf[8];
 	
 	if(eeprom_ReadBlockWCRC( (uint8_t*)&buf,
-	(void*)( EEPROM_COMMAND_START ), sizeof(buf) ))
+	(void*)( EEPROM_PAR_START ), sizeof(buf) ))
 	{
 		// crc fail
 	}

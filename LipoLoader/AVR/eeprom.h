@@ -1,5 +1,7 @@
 #include "serial.h"
 
+// Loader
+
 #define EEPROM_COMMAND_START 		EEPROM_START
 #define EEPROM_COMMAND_CRC_START 	(EEPROM_START + sizeof(Command_t))
 #define EEPROM_COMMAND_LEN			(EEPROM_START + sizeof(Command_t)+2)
