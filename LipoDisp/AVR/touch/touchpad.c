@@ -78,6 +78,7 @@ uint8_t touchGetPad5(uint8_t pin)
 {
 	uint8_t value, i;
 	uint8_t mask = ( 1 << pin );
+	static uint8_t first = 0; 
 
 	value = 0;
 	OS_DISABLEALLINTERRUPTS;// absolutely no interrupts allowed here!
@@ -95,7 +96,14 @@ uint8_t touchGetPad5(uint8_t pin)
 		}
 	}
 	OS_ENABLEALLINTERRUPTS;
-
+	
+	// beim allerersten Aufruf wird der Calibrierwert auf value * 100 gesetzt = verbessertes Verhalten beim Gerätestart
+	if (first < 5)	
+	{
+		g_ausTouchCalValues[pin] = value * 100;
+		first++;
+	}
+	
 	// limit re-calibration
 	if(value * 100 < g_ausTouchCalValues[pin]) // wenns denn schneller war
 	{
@@ -112,7 +120,8 @@ uint8_t touchGetPad5(uint8_t pin)
 	}
 
 	g_ausTouchCalValues[pin]++; // every some time, correct the calibration bytes.. even, if a touch is recognized... -> provides self healing..
-
+	
+	
 
 	return value - ( g_ausTouchCalValues[pin] / 100 );
 }
@@ -478,6 +487,8 @@ void ProcessTouch(void)
 
 }
 
+// Ermittelt welche der fünf!! Tasten gedrückt sind. Eine Taste gilt als gedrückt, wenn der gelieferte Zahlenwert größer als der Wert von TouchMinSignal (32) ist.
+// Rückgabewert ist Taste Oben =001, Taste Mitte = 0100, Taste uben = 10000 oder eine Kombi davon und Zwischenwerte.
 eGestures_t getGesture(void) // delayed by one cycle
 {
 	uint8_t ret = 0;
@@ -492,6 +503,8 @@ eGestures_t getGesture(void) // delayed by one cycle
 	return ret; // scho feddisch
 }
 
+// Ermittelt welche der drei!! Tasten gedrückt sind. Eine Taste gilt als gedrückt, wenn der gelieferte Zahlenwert größer als der Wert von TouchMinSignal (32) ist.
+// Rückgabewert ist Taste Oben =001, Taste Mitte = 010, Taste uben = 100 oder eine Kombi davon.
 eGestures_t getGestureSkip(void) // delayed by one cycle
 {
 	uint8_t ret = 0;
