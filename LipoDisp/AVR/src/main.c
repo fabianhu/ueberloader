@@ -16,7 +16,7 @@
 #include "../comm/usart.h"
 
 // *********  Task definitions
-OS_DeclareTask(TaskTouch,300);
+OS_DeclareTask(TaskTouch,400);			// war zu klein und wurde von 300 auf 400 grändert
 OS_DeclareTask(TaskDisplay,700);
 OS_DeclareTask(TaskCommand,400);
 
