@@ -121,7 +121,7 @@ int16_t touchGetPad5(uint8_t pin)
 		
 	//neue Tastenkalibrierung - läuft besser
 	
-	meanvalue[pin] = ((meanvalue[pin]*99) + value)/100;	// Mittelwert über 100 Werte
+	meanvalue[pin] = ((meanvalue[pin]*99) + value)/100;	// Mittelwert über 100 Werte, nicht ändern!! nur bei diesem Setup laufen die Werte, wenn man eine Taste hält, weiß aber nicht warum
 	
 	if (first < 250)
 	{
@@ -198,7 +198,7 @@ int32_t touchGetSchwerpunkt(void)
 		// fixme debug:
 		if(ret < 0)
 		{
-			asm("break");
+			//asm("break"); bin grad da drin hängen geblieben (ret =-74) habs rausgeschmissen (Uli)
 		}
 		return ret;
 	}
@@ -573,13 +573,39 @@ eGestures_t getGesture(void) // delayed by one cycle
 // Rückgabewert ist Taste Oben =001, Taste Mitte = 010, Taste uben = 100 oder eine Kombi davon.
 eGestures_t getGestureSkip(void) // delayed by one cycle
 {
-	uint8_t ret = 0;
+	uint8_t result , ret = 0;
+	static uint8_t oldresult, buttonReleased = 0;
 	uint8_t i, j;
 
+	result = 0;
 	for(i = 0 , j = 0; i < TOUCHCOUNT ; i += 2 , j++) // nur die obere mittlere und untere zulassen.
 	{
 		if(g_aucTouchpads[i] > TOUCHMINSIGNAL)
-		ret |= ( 1 << j );
+		result |= ( 1 << j );
+	}
+	
+	if (buttonReleased < 1)	// wenn alle Tasten ausgelassen wurden, wird das letzte Ergebnis 2 mal ausgegeben
+	{
+		if (result < oldresult & result == 0)
+		{
+			ret = oldresult;
+			buttonReleased = 1;
+		}
+		else
+		{
+			ret = 0;
+			buttonReleased = 0;
+			oldresult = result;
+		}
+	}
+	else
+	{
+		if (result == 0)
+		{
+			ret = oldresult;
+		}
+		buttonReleased = 0;
+		oldresult = result;
 	}
 
 	return ret;
