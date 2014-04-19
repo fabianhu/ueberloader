@@ -76,9 +76,10 @@ Acceleration (the more the user slides, the more speed.)
 
 uint8_t touchGetPad5(uint8_t pin)
 {
-	uint8_t value, i;
+	uint16_t value, i;
 	uint8_t mask = ( 1 << pin );
-	static uint8_t first = 0; 
+	static uint8_t first = 0;
+	static uint16_t meanvalue[5];
 
 	value = 0;
 	OS_DISABLEALLINTERRUPTS;// absolutely no interrupts allowed here!
@@ -97,8 +98,50 @@ uint8_t touchGetPad5(uint8_t pin)
 	}
 	OS_ENABLEALLINTERRUPTS;
 	
+	/* Info: 
+	Bei nicht gedrückten Tasten liegen die Pin values in folgenden Bereichen (bei meinem 3-Tastigen):
+	Tasten nicht gedrückt
+	T1: 145 bis 151 nicht gedrückt / gedrückt 231 bis 241
+	T2: (nix angeschlossen) 140 bis 141 / gedrückt 144 bis 145
+	T3: 111 bis 122 nicht gedrückt / gedrückt 205 bis 219
+	T4: (nix angeschlossen) 99 bis 101 nicht gedrückt / gedrückt 102
+	T5: 170 bis 184 nicht gedrückt / gedrückt  251 bis 279                                                          -----> uint8 war zu klein!
+	--> es liegen mindestens 50% value zwischen nicht gedrückt und gedrückt  --> es soll ein Tastendruck erkannt 
+	werden, wenn der value über 30% gegenüber dem Langzeitmittel ansteigt. 
+ 	
+	// debug um alte values zu sehen
+	static uint16_t storage[5][50];
+	static uint8_t indexStorage;
+	storage[pin][indexStorage] = value;
+	if (pin > 3) // indexStorage muss richtig verändert werden
+	{
+		indexStorage++;
+		if (indexStorage == 50){ indexStorage = 0;}
+	} */
+		
+	//neue Tastenkalibrierung - läuft besser
+	
+	meanvalue[pin] = ((meanvalue[pin]*99) + value)/100;	// Mittelwert über 100 Werte
+	
+	if (first < 250)
+	{
+		if (first < 10) meanvalue[pin] = value;			// der 1. Wert wird verworfen, der 2. genommen und überschreibt meanvalue[pin]
+		first++;
+		return 0;
+	}
+	else
+	{
+		return ((value * 100)/ meanvalue[pin])-100;		// gibt die Prozentzahl zurück, die der Value höher liegt als der Durchschnitt der letzten 100 Werte
+														// derzeit wird eine gedrückte Taste bei > 32% erkannt
+	}
+	
+
+	
+	
+	
+	/* alte Tastenkalibrierung - irgendwann mal löschen
 	// beim allerersten Aufruf wird der Calibrierwert auf value * 100 gesetzt = verbessertes Verhalten beim Gerätestart
-	if (first < 5)	
+	if (first < 250)	
 	{
 		g_ausTouchCalValues[pin] = value * 100;
 		first++;
@@ -110,7 +153,7 @@ uint8_t touchGetPad5(uint8_t pin)
 		if(value * 100 < g_ausTouchCalValues[pin] - 500) //ups das war aber zu flott
 		{
 			// lassen wie's war bzw. nur leicht weniger
-			g_ausTouchCalValues[pin] -= 20;
+			g_ausTouchCalValues[pin] -= 10;  // war vorher auf 20 jetzt rekalibriert es langsamer
 		}
 		else
 		{
@@ -120,10 +163,10 @@ uint8_t touchGetPad5(uint8_t pin)
 	}
 
 	g_ausTouchCalValues[pin]++; // every some time, correct the calibration bytes.. even, if a touch is recognized... -> provides self healing..
-	
-	
-
 	return value - ( g_ausTouchCalValues[pin] / 100 );
+	*/
+
+	
 }
 
 #define MOMENTMULTIPLIER 100ULL
@@ -299,7 +342,7 @@ void ProcessTouch(void)
 
 	bMoved	= touchGetSpeed( &s_sSpeedFiltered, &Schwerpunkt/*, &TouchBitfield*/);
 	// fixme  beim integrieren den Schwerpunkt / speed  nur rechnen, wenn nur ein bzw. zwei benachbarte gedrückt.
-	eActualGesture = getGestureSkip();
+	eActualGesture = getGestureSkip();		// ermittelt welche Taste gedrückt ist
 
 	g_debug4 = s_sSpeedFiltered;
 
@@ -308,8 +351,10 @@ void ProcessTouch(void)
 	TimeDiff++;
 
 // welcome to Ulis dirtiest hack ever!
+// es geht immer noch dreckiger :) Grüße Uli
+// verschiedene Schrittweiten für die Ladestromeinstellung oder direkte Anwahl von minimalem / mittlerem oder maximalem Ladestrom
 	int16_t stepsize_used = myP.stepsize;
-	uint8_t plus=0,minus=0;
+	uint8_t plus=0,minus=0, maximum=0, split=0,minimum=0;
 	
 	if(eTouchstate == eTSGesture)
 	{
@@ -317,9 +362,15 @@ void ProcessTouch(void)
 		plus =1;
 		if(s_ucOldGesture == eGMinus)
 		minus =1;
+		if(s_ucOldGesture == eGMittePlus)
+		maximum =1;
+		if(s_ucOldGesture == eGSplit)
+		split =1;
+		if(s_ucOldGesture == eGMitteMinus)
+		minimum =1;
 	}
 	
-	if(myP.stepsize == -1*myP.upscale && (plus || minus))
+	if(myP.stepsize == -1*myP.upscale && (plus || minus || maximum || split || minimum))
 	{
 		if(plus)
 		{
@@ -335,7 +386,7 @@ void ProcessTouch(void)
 			if(myP.position >= 6000*myP.upscale)
 			stepsize_used = 1000*myP.upscale;
 		}
-		else
+		if(minus)
 		{
 			if(myP.position <= 10000*myP.upscale)
 			stepsize_used = 1000*myP.upscale;
@@ -349,12 +400,27 @@ void ProcessTouch(void)
 			if(myP.position <= 500*myP.upscale)
 			stepsize_used = 100*myP.upscale;
 		}
+		if(maximum)
+		{
+			myP.position = 10000*myP.upscale;
+			stepsize_used = 0;
+		}
+		if(split)
+		{
+			myP.position = 5000*myP.upscale;
+			stepsize_used = 0;
+		}
+		if(minimum)
+		{
+			myP.position = 100*myP.upscale;
+			stepsize_used = 0;
+		}
 	}
 	
 // nearly end of dirty hack
 
 	
-	switch(eTouchstate)
+	switch(eTouchstate)	// Wertet die gedrückten Tasten aus
 	{
 		case eTSIdle:
 		//s_sSpeedFiltered = 0;
@@ -487,8 +553,8 @@ void ProcessTouch(void)
 
 }
 
-// Ermittelt welche der fünf!! Tasten gedrückt sind. Eine Taste gilt als gedrückt, wenn der gelieferte Zahlenwert größer als der Wert von TouchMinSignal (32) ist.
-// Rückgabewert ist Taste Oben =001, Taste Mitte = 0100, Taste uben = 10000 oder eine Kombi davon und Zwischenwerte.
+// Ermittelt welche der fünf!! Tasten gedrückt sind. Eine Taste gilt als gedrückt, wenn der gelieferte Zahlenwert größer als der Wert von TOUCHMINSIGNAL (32) ist.
+// Rückgabewert ist Taste Oben =00001, Taste Mitte = 00100, Taste unten = 10000 oder eine Kombi davon und Zwischenwerte.
 eGestures_t getGesture(void) // delayed by one cycle
 {
 	uint8_t ret = 0;

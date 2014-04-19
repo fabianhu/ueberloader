@@ -116,10 +116,11 @@ void TaskDisplay(void)
 			// debug
 			//lcd_print( WHITE, BLACK, 1, 150, 200,"Particle: %d , %d   " ,(uint16_t)myP.position,(uint16_t)myP.velocity);
 		}
-		else if (g_tBattery_Info.eState == eBattSupplyUntervolt)
+		else if (g_tBattery_Info.eState == eBattSupplyUntervolt ) //fixme derzeit ist dieses feature deaktiviert
 		{
-			lcd_print(RED, BLACK, 3, 90, 60,"Supply"); // sch.... für mehrere Lader fixme
-			lcd_print(RED, BLACK, 3, 20, 120,"undervoltage");
+			//lcd_print(RED, BLACK, 3, 90, 60,"Supply"); // sch.... für mehrere Lader fixme									// fixme muss rein
+			//lcd_print(RED, BLACK, 3, 20, 120,"undervoltage");																// fixme muss rein
+			menu_show();																									// fixme muss raus
 		}
 		
 		#if GRAPH_AT_LOCK == 1
