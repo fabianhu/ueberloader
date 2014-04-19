@@ -74,12 +74,12 @@ Acceleration (the more the user slides, the more speed.)
 
 */
 
-uint8_t touchGetPad5(uint8_t pin)
+int16_t touchGetPad5(uint8_t pin)
 {
-	uint16_t value, i;
+	int16_t value, i;
 	uint8_t mask = ( 1 << pin );
 	static uint8_t first = 0;
-	static uint16_t meanvalue[5];
+	static int16_t meanvalue[5];
 
 	value = 0;
 	OS_DISABLEALLINTERRUPTS;// absolutely no interrupts allowed here!
