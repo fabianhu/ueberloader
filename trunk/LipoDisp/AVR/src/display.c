@@ -118,9 +118,9 @@ void TaskDisplay(void)
 		}
 		else if (g_tBattery_Info.eState == eBattSupplyUntervolt ) //fixme derzeit ist dieses feature deaktiviert
 		{
-			//lcd_print(RED, BLACK, 3, 90, 60,"Supply"); // sch.... für mehrere Lader fixme									// fixme muss rein
-			//lcd_print(RED, BLACK, 3, 20, 120,"undervoltage");																// fixme muss rein
-			menu_show();																									// fixme muss raus
+			lcd_print(RED, BLACK, 3, 90, 60,"Supply"); // sch.... für mehrere Lader fixme									
+			lcd_print(RED, BLACK, 3, 20, 120,"undervoltage");																
+																											
 		}
 		
 		#if GRAPH_AT_LOCK == 1
