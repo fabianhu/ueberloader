@@ -68,7 +68,6 @@ int main(void)
 	}
 }
 
-
 // *********  Code to be executed inside Timer ISR used for the OS, defined in FabOS_config.h
 void OS_CustomISRCode(void)
 {
