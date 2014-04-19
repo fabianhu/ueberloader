@@ -574,7 +574,7 @@ eGestures_t getGesture(void) // delayed by one cycle
 eGestures_t getGestureSkip(void) // delayed by one cycle
 {
 	uint8_t result , ret = 0;
-	static uint8_t oldresult, buttonReleased = 0;
+	static uint8_t oldresult, buttonReleased, gesture, gesturerecognized = 0;
 	uint8_t i, j;
 
 	result = 0;
@@ -584,28 +584,53 @@ eGestures_t getGestureSkip(void) // delayed by one cycle
 		result |= ( 1 << j );
 	}
 	
-	if (buttonReleased < 1)	// wenn alle Tasten ausgelassen wurden, wird das letzte Ergebnis 2 mal ausgegeben
+	// ich habe ein Monster erschaffen:
+	// Das Ding entscheidet, ob es sich um eine Geste handelt oder um einen einfachen Tastendruck
+	// Falls es eine Geste ist, wird diese abgespeichert. Erst beim loslassen der Taste(n) wird reagiert und 2mal das Ergebnis ausgegeben
+	if (buttonReleased < 1)							// wenn alle Tasten ausgelassen wurden, sorgt dafür, dass das Ergebnis 2 mal ausgegeben wird
 	{
-		if (result < oldresult & result == 0)
+		if (result < oldresult && result == 0)		// wenn die letzte Taste losgelassen wurde
 		{
-			ret = oldresult;
-			buttonReleased = 1;
+			if (gesturerecognized == 1)				// wenn Geste erkannt wurdeben
+			{
+				ret = gesture;						// Geste zum 1. mal ausgeben 
+			}
+			else
+			{
+				ret = oldresult;					// einfachen Tastendruck zum 1. mal ausgeben
+			}
+			buttonReleased = 1;						// Knopf wurde losgelassen, das merken wir uns
 		}
 		else
-		{
-			ret = 0;
-			buttonReleased = 0;
-			oldresult = result;
+		{											// wird immer abgearbeitet, wenn nicht gerade die letzte Taste losgelassen wird, hier erfolgt die Entscheidung, ob es sich um eine Geste handelt oder nicht.
+			ret = 0;								// nix zu melden
+			buttonReleased = 0;						// zurücksetzten
+			oldresult = result;						// aktuelle Tastenauswertung merken
+			if (result != 0 && result != 1 
+					&& result != 2 && result != 4)	// Wenn Geste erkannt wurde
+			{
+				gesture = result;					// Geste speichern
+				gesturerecognized = 1;
+			}
 		}
 	}
 	else
 	{
-		if (result == 0)
+		if (result == 0)							// wenn das Result immernoch NULL ist
 		{
-			ret = oldresult;
+			if (gesturerecognized == 1)				// wenn Geste erkannt
+			{
+				ret = gesture;						// Geste zum 2. mal ausgeben 
+				gesturerecognized = 0;				// zurücksetzten
+			}
+			else
+			{
+				ret = oldresult;					// einfachen Tastendruck zum 2. mal ausgeben
+			}		
 		}
-		buttonReleased = 0;
-		oldresult = result;
+		
+		buttonReleased = 0;							// zurücksetzten
+		oldresult = result;							// Ergebnis merken
 	}
 
 	return ret;
