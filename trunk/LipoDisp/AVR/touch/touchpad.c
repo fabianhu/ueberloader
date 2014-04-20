@@ -74,7 +74,8 @@ Acceleration (the more the user slides, the more speed.)
 
 */
 
-int16_t touchGetPad5(uint8_t pin)
+// erfasst welche Tasten gedrückt sind und gibt eine Prozentzahl zurück, um wieviel Prozent die Tastitensität höher liegt als der Langzeitdurchschnitt
+int16_t touchGetPad5(uint8_t pin)	
 {
 	int16_t value, i;
 	uint8_t mask = ( 1 << pin );
@@ -119,8 +120,6 @@ int16_t touchGetPad5(uint8_t pin)
 		if (indexStorage == 50){ indexStorage = 0;}
 	} */
 		
-	//neue Tastenkalibrierung - läuft besser
-	
 	meanvalue[pin] = ((meanvalue[pin]*99) + value)/100;	// Mittelwert über 100 Werte, nicht ändern!! nur bei diesem Setup laufen die Werte, wenn man eine Taste hält, weiß aber nicht warum
 	
 	if (first < 250)
@@ -131,46 +130,12 @@ int16_t touchGetPad5(uint8_t pin)
 	}
 	else
 	{
-		return ((value * 100)/ meanvalue[pin])-100;		// gibt die Prozentzahl zurück, die der Value höher liegt als der Durchschnitt der letzten 100 Werte
-														// derzeit wird eine gedrückte Taste bei > 32% erkannt
-	}
-	
-
-	
-	
-	
-	/* alte Tastenkalibrierung - irgendwann mal löschen
-	// beim allerersten Aufruf wird der Calibrierwert auf value * 100 gesetzt = verbessertes Verhalten beim Gerätestart
-	if (first < 250)	
-	{
-		g_ausTouchCalValues[pin] = value * 100;
-		first++;
-	}
-	
-	// limit re-calibration
-	if(value * 100 < g_ausTouchCalValues[pin]) // wenns denn schneller war
-	{
-		if(value * 100 < g_ausTouchCalValues[pin] - 500) //ups das war aber zu flott
-		{
-			// lassen wie's war bzw. nur leicht weniger
-			g_ausTouchCalValues[pin] -= 10;  // war vorher auf 20 jetzt rekalibriert es langsamer
-		}
-		else
-		{
-			// mitnehmen
-			g_ausTouchCalValues[pin] = value * 100;
-		}
-	}
-
-	g_ausTouchCalValues[pin]++; // every some time, correct the calibration bytes.. even, if a touch is recognized... -> provides self healing..
-	return value - ( g_ausTouchCalValues[pin] / 100 );
-	*/
-
-	
+		return ((value * 100)/ meanvalue[pin])-100;		// gibt die Prozentzahl zurück, die der Value höher liegt als der Durchschnitt der letzten 100 Werte											
+	}													// derzeit wird eine gedrückte Taste bei > 32% erkannt
 }
 
+// fixme, wird das Ding noch gebraucht ?
 #define MOMENTMULTIPLIER 100ULL
-
 int32_t touchGetSchwerpunkt(void)
 {
 	int32_t sum;
@@ -206,7 +171,7 @@ int32_t touchGetSchwerpunkt(void)
 	return -1;
 
 }
-
+// fixme, wird das Ding noch gebraucht ?
 void sFilter(int16_t* o, int16_t* n)
 {
 	int32_t temp;
@@ -218,7 +183,7 @@ void sFilter(int16_t* o, int16_t* n)
 		*o = ( temp + 2 ) / 4; // "halbes dazu, wg Rundungsfehler"
 	}
 }
-
+// fixme, wird das Ding noch gebraucht ?
 void svFilter(int16_t* o, int16_t* n, uint8_t x)
 {
 	int32_t temp;
@@ -259,17 +224,6 @@ void touchGetValue(int16_t* pValue) // read txtback the (changed) value Mutex?
 	//OS_LEAVECRITICAL
 }
 
-//uint8_t touchGetTap(void) // get tap "event" and clear it 1== normal tap, 2 = double tap
-//{
-//	return 0;
-//}
-//
-//int16_t touchGetPosition(void) // read the pos
-//{
-//	return 0;
-//}
-
-// returns 1 if speed is OK
 uint8_t touchGetSpeed(int16_t* speed, int32_t *Schwerpunkt)
 {
 
@@ -330,228 +284,201 @@ uint8_t info = 0;
 int32_t Schwerpunkt;
 void ProcessTouch(void)
 {
-
-	eGestures_t eActualGesture;
-	static int16_t s_sSpeedFiltered = 0;
+	eGestures_t eActualGesture, newGesture;
 	static eGestures_t s_ucOldGesture;
+	static int16_t s_sSpeedFiltered = 0;
 	uint8_t bMoved;
-
-	
-
 	static int32_t OldSchwerpunkt;
+	int16_t calculator;
+	
+	// hier wird die aktuell gültige Geste ermittelt = eActualGesture
+	eActualGesture = eGNothing;					// Ausgangslage, nix gedrückt, keine Aktion
+	//bMoved	= touchGetSpeed( &s_sSpeedFiltered, &Schwerpunkt/*, &TouchBitfield*/);	// fixme  beim integrieren den Schwerpunkt / speed  nur rechnen, wenn nur ein bzw. zwei benachbarte gedrückt.
+	newGesture = getGestureSkip();				// ermittelt welche Taste gedrückt ist
+	if (newGesture == s_ucOldGesture)			// wenn alt gleich neu	
+	{
+		eActualGesture = newGesture;			// Geste ausführen
+	}
+	else
+	{
+		eActualGesture = eGNothing;				// nix tun
+	}
+	s_ucOldGesture = newGesture;				// aktuelle Geste merken
+												// weils so schön war und um das schneller zu machen gleich nochmal
+	//bMoved	= touchGetSpeed( &s_sSpeedFiltered, &Schwerpunkt/*, &TouchBitfield*/);	// fixme  beim integrieren den Schwerpunkt / speed  nur rechnen, wenn nur ein bzw. zwei benachbarte gedrückt.
+	newGesture = getGestureSkip();				// ermittelt welche Taste gedrückt ist
+	if (eActualGesture == eGNothing)			// wenn vorher noch keine Geste erkannt wurde
+	{
+		if (newGesture == s_ucOldGesture)	// wenn neue gleich alter Geste UND noch keine Geste erkannt wurde
+		{
+			eActualGesture = newGesture;			// Geste ausführen
+		}
+		else
+		{
+			eActualGesture = eGNothing;			// nix tun
+		}
+	}
+	s_ucOldGesture = newGesture;				// neue Geste merken
 
-	bMoved	= touchGetSpeed( &s_sSpeedFiltered, &Schwerpunkt/*, &TouchBitfield*/);
-	// fixme  beim integrieren den Schwerpunkt / speed  nur rechnen, wenn nur ein bzw. zwei benachbarte gedrückt.
-	eActualGesture = getGestureSkip();		// ermittelt welche Taste gedrückt ist
-
-	g_debug4 = s_sSpeedFiltered;
-
-	static uint16_t TimeDiff = 0;
-
-	TimeDiff++;
+//	static uint16_t TimeDiff = 0;
+//	TimeDiff++;
 
 // welcome to Ulis dirtiest hack ever!
 // es geht immer noch dreckiger :) Grüße Uli
-// verschiedene Schrittweiten für die Ladestromeinstellung oder direkte Anwahl von minimalem / mittlerem oder maximalem Ladestrom
+// verschiedene Schrittweiten für die Ladestromeinstellung
 	int16_t stepsize_used = myP.stepsize;
-	uint8_t plus=0,minus=0, maximum=0, split=0,minimum=0;
+	uint8_t plus=0,minus=0;
 	
-	if(eTouchstate == eTSGesture)
-	{
-		if(s_ucOldGesture == eGPlus)
+		if(eActualGesture == eGPlus)
 		plus =1;
-		if(s_ucOldGesture == eGMinus)
+		if(eActualGesture == eGMinus)
 		minus =1;
-		if(s_ucOldGesture == eGMittePlus)
-		maximum =1;
-		if(s_ucOldGesture == eGSplit)
-		split =1;
-		if(s_ucOldGesture == eGMitteMinus)
-		minimum =1;
-	}
-	
-	if(myP.stepsize == -1*myP.upscale && (plus || minus || maximum || split || minimum))
-	{
+
+	if(myP.stepsize == -1*myP.upscale && (plus || minus))			// wird nur aufgerufen wenn gerade Ladestromverstellung ausgewählt ist	
+	{			
 		if(plus)
 		{
-			if(myP.position < 500*myP.upscale)
-			stepsize_used = 100*myP.upscale;
-			
+			if(myP.position < 500*myP.upscale)						// setzt verschiedene Schrittweiten, je nach aktuell eingestelltem Ladestrom
+				stepsize_used = 100*myP.upscale;		
 			if(myP.position >= 500*myP.upscale)
-			stepsize_used = 250*myP.upscale;
-			
+				stepsize_used = 250*myP.upscale;		
 			if(myP.position >= 2000*myP.upscale)
-			stepsize_used = 500*myP.upscale;
-
+				stepsize_used = 500*myP.upscale;
 			if(myP.position >= 6000*myP.upscale)
-			stepsize_used = 1000*myP.upscale;
+				stepsize_used = 1000*myP.upscale;
 		}
 		if(minus)
 		{
-			if(myP.position <= 10000*myP.upscale)
-			stepsize_used = 1000*myP.upscale;
-			
+			if(myP.position <= 10000*myP.upscale)					// setzt verschiedene Schrittweiten, je nach aktuell eingestelltem Ladestrom
+				stepsize_used = 1000*myP.upscale;
 			if(myP.position <= 6000*myP.upscale)
-			stepsize_used = 500*myP.upscale;
-			
+				stepsize_used = 500*myP.upscale;		
 			if(myP.position <= 2000*myP.upscale)
-			stepsize_used = 250*myP.upscale;
-						
+				stepsize_used = 250*myP.upscale;				
 			if(myP.position <= 500*myP.upscale)
-			stepsize_used = 100*myP.upscale;
-		}
-		if(maximum)
-		{
-			myP.position = 10000*myP.upscale;
-			stepsize_used = 0;
-		}
-		if(split)
-		{
-			myP.position = 5000*myP.upscale;
-			stepsize_used = 0;
-		}
-		if(minimum)
-		{
-			myP.position = 100*myP.upscale;
-			stepsize_used = 0;
+				stepsize_used = 100*myP.upscale;
 		}
 	}
-	
 // nearly end of dirty hack
 
-	
+/*	
 	switch(eTouchstate)	// Wertet die gedrückten Tasten aus
 	{
 		case eTSIdle:
-		//s_sSpeedFiltered = 0;
-		myP.force = 0;
-		if(bMoved == 0 && eActualGesture == 0)
-		{
-			// not touched
-			break;
-		}
-		else
-		{
-			TimeDiff = 0;
-			OldSchwerpunkt = Schwerpunkt;
-			eTouchstate = eTSTouching;
-		}
-		// no break;
-		case eTSTouching:
-
-		if(bMoved == 1) // touched / moved
-		{
-			// adapt speed
-
-			myP.force = -s_sSpeedFiltered;
-			info = 2;
-
-			myP.velocity = myP.velocity + myP.force;
-
-			/*static uint8_t n;  // bremsen!!!
-			if (n++ == 10)
-			{
-			n = 0;
-			myP.velocity = (myP.velocity * myP.friction) / 100;
-			}*/
-		}
-		else
-		{
-			if(myP.velocity == 0)
-			{
-				eTouchstate = eTSGesture;
-				info = 3;
+			//s_sSpeedFiltered = 0;
+			myP.force = 0;
+			if(bMoved == 0 && eActualGesture == 0)
+			{		// not touched	
+				break;
 			}
 			else
 			{
-				// do nothing and let particle move on
-				info = 5;
-				if(eActualGesture != 0)
+				TimeDiff = 0;
+				OldSchwerpunkt = Schwerpunkt;
+				eTouchstate = eTSTouching;
+			}
+			// no break;
+		case eTSTouching:
+			if(bMoved == 1) // touched / moved
+			{	// adapt speed	
+				myP.force = -s_sSpeedFiltered;
+				info = 2;
+				myP.velocity = myP.velocity + myP.force; */
+				/*static uint8_t n;  // bremsen!!!
+				if (n++ == 10)
 				{
-					// bremsen
-					myP.velocity = 0;
-					info = 6;
+				n = 0;
+				myP.velocity = (myP.velocity * myP.friction) / 100;
+				}*/ /*
+			}
+			else
+			{
+				if(myP.velocity == 0)
+				{
+					eTouchstate = eTSGesture;
+					info = 3;
+				}
+				else
+				{			// do nothing and let particle move on	
+					info = 5;
+					if(eActualGesture != 0)
+					{
+						myP.velocity = 0;			// bremsen
+						info = 6;
+					}
 				}
 			}
-
-		}
-
-		#if TOUCHDISABLESLIDE == 1
-		myP.velocity = 0;
-		#else
-		myP.position = limit(myP.position + myP.velocity , myP.min , myP.max);
-		#endif
-		break;
+			#if TOUCHDISABLESLIDE == 1
+			myP.velocity = 0;
+			#else
+			myP.position = limit(myP.position + myP.velocity , myP.min , myP.max);
+			#endif
+			break;
 
 		case eTSGesture:
-		info = 7;
-		switch(s_ucOldGesture)
-		// können wir nehmen, weil lag lange genug an.
-		{
-			case eGNothing:
-
+			info = 7; */
+			switch(eActualGesture)   //Je nach ermittelter Geste wird hier reagiert
+			{
+				case eGNothing:
+					break;
+				case eGPlus:
+					if(myP.position + stepsize_used < myP.max)
+					myP.position += stepsize_used;
+					else
+					myP.position = myP.max;
+					break;
+				case eGMitte:
+					// menue bestätigung
+					menu_select();
+					break;
+				case eGMittePlus:			// Wert aufs maximum gesetzt
+					myP.position = myP.max;
+					break;
+				case eGMinus:
+					if(myP.position - stepsize_used > myP.min)
+					myP.position -= stepsize_used;
+					else
+					myP.position = myP.min;
+					break;
+				case eGSplit:				// Wert in die Mitte des Wertebereichs gesetzt
+						if (myP.stepsize == -1*myP.upscale)		// special Uli Hack, damit der Ladestrom auf 5A gesetzt wird
+						{
+							myP.position = 5000 * myP.upscale;				// entspricht 5A
+						}
+						else
+						{
+							calculator = ((myP.max - myP.min) / stepsize_used) / 2;	
+							myP.position = myP.min + (calculator * stepsize_used);	
+						}
+						
+					break;
+					case eGMitteMinus:		// Wert aufs miinimum gesetzt
+						myP.position = myP.min;
+					break;
+				case eGFullHouse:
+					break;
+				default:
+					break;
+			}
+			//eTouchstate = eTSIdle;  // auf eTSBlocked zu gehen macht es nur langsam
+			//eTouchstate = eTSBlocked;
+			/*
+			TimeDiff = 0;
 			break;
-			case eGPlus:
-			if(myP.position + stepsize_used < myP.max)
-			myP.position += stepsize_used;
-			else
-			myP.position = myP.max;
-			
-			break;
-			case eGMitte:
-			// menue bestätigung
-			menu_select();
-			break;
-			case eGMittePlus:
-
-			break;
-			case eGMinus:
-			if(myP.position - stepsize_used > myP.min)
-			myP.position -= stepsize_used;
-			else
-			myP.position = myP.min;
-			break;
-			case eGSplit:
-			// no func
-
-
-			break;
-			case eGMitteMinus:
-
-			break;
-			case eGFullHouse:
-
-			break;
-			default:
-			break;
-		}
-		g_debug2 = s_ucOldGesture;
-
-		eTouchstate = eTSBlocked;
-		TimeDiff = 0;
-
-		//OS_WaitTicks(OSALTouchPause,10);
-		break;
 
 		case eTSBlocked:
-		if(bMoved == 0 && TimeDiff > 20 && eActualGesture == 0) // warte bis komplett losgelassen
-		{
-			eTouchstate = eTSIdle;
-		}
-
-		break;
-
+			if(bMoved == 0 && TimeDiff > 20 && eActualGesture == 0) // warte bis komplett losgelassen
+			{
+				eTouchstate = eTSIdle;
+			}
+			break;
 		default:
-		break;
+			break;
 	}
-
-	s_ucOldGesture = eActualGesture;
-
 	g_debug = eTouchstate;
-
-	g_debug3 = eActualGesture;
-
+	g_debug3 = eActualGesture;*/
 }
+
 
 // Ermittelt welche der fünf!! Tasten gedrückt sind. Eine Taste gilt als gedrückt, wenn der gelieferte Zahlenwert größer als der Wert von TOUCHMINSIGNAL (32) ist.
 // Rückgabewert ist Taste Oben =00001, Taste Mitte = 00100, Taste unten = 10000 oder eine Kombi davon und Zwischenwerte.
@@ -575,10 +502,15 @@ eGestures_t getGestureSkip(void) // delayed by one cycle
 {
 	uint8_t result , ret = 0;
 	static uint8_t oldresult, buttonReleased, gesture, gesturerecognized = 0;
-	uint8_t i, j;
-
+	uint8_t i, j, k;
+	
+	for(k = 0; k < TOUCHCOUNT ; k++)
+	{
+		g_aucTouchpads[k] = touchGetPad5(k);		// holt die Tastenwerte
+	}
+	
 	result = 0;
-	for(i = 0 , j = 0; i < TOUCHCOUNT ; i += 2 , j++) // nur die obere mittlere und untere zulassen.
+	for(i = 0 , j = 0; i < TOUCHCOUNT ; i += 2 , j++) // nur die obere mittlere und untere Taste zulassen.
 	{
 		if(g_aucTouchpads[i] > TOUCHMINSIGNAL)
 		result |= ( 1 << j );
