@@ -450,7 +450,6 @@ void ProcessTouch(void)
 							calculator = ((myP.max - myP.min) / stepsize_used) / 2;	
 							myP.position = myP.min + (calculator * stepsize_used);	
 						}
-						
 					break;
 					case eGMitteMinus:		// Wert aufs miinimum gesetzt
 						myP.position = myP.min;
@@ -501,8 +500,8 @@ eGestures_t getGesture(void) // delayed by one cycle
 eGestures_t getGestureSkip(void) // delayed by one cycle
 {
 	uint8_t result , ret = 0;
-	static uint8_t oldresult, buttonReleased, gesture, gesturerecognized = 0;
-	uint8_t i, j, k;
+	static uint8_t oldresult, buttonReleased, gesture, gesturerecognized, moveup, movedown, movedownrecognized, moveuprecognized, count = 0;
+	uint8_t i, j, k, l;
 	
 	for(k = 0; k < TOUCHCOUNT ; k++)
 	{
@@ -517,33 +516,75 @@ eGestures_t getGestureSkip(void) // delayed by one cycle
 	}
 	
 	// ich habe ein Monster erschaffen:
-	// Das Ding entscheidet, ob es sich um eine Geste handelt oder um einen einfachen Tastendruck
+	// Das Ding entscheidet, ob es sich um eine Geste, einen move oder um einen einfachen Tastendruck
 	// Falls es eine Geste ist, wird diese abgespeichert. Erst beim loslassen der Taste(n) wird reagiert und 2mal das Ergebnis ausgegeben
-	if (buttonReleased < 1)							// wenn alle Tasten ausgelassen wurden, sorgt dafür, dass das Ergebnis 2 mal ausgegeben wird
+	if (buttonReleased < 1)							// wenn alle Tasten ausgelassen wurden
 	{
-		if (result < oldresult && result == 0)		// wenn die letzte Taste losgelassen wurde
+		if (result < oldresult && result == 0)		// wenn die letzte Taste losgelassen wurde wird entschieden ob es eine Geste, ein Move oder ein normaler Tastendruck war
 		{
-			if (gesturerecognized == 1)				// wenn Geste erkannt wurdeben
+			if (movedown == 3 || moveup == 3)		// wenn move vorliegt
 			{
-				ret = gesture;						// Geste zum 1. mal ausgeben 
+				if (movedown == 3) movedownrecognized = 1;
+				if (moveup == 3) moveuprecognized = 1;
+				ret = 0;							
+				gesturerecognized = 0;				// wenn Move erkannt wurde, Move sticht Geste
+				movedown = 0;						// alles wieder zurücksetzen
+				moveup = 0;
+				oldresult = result;					// sonst funktioniert es mit der permanenten Ausgabe nicht
+				
 			}
 			else
 			{
 				ret = oldresult;					// einfachen Tastendruck zum 1. mal ausgeben
+				buttonReleased = 1;						// Knopf wurde losgelassen, das merken wir uns
 			}
-			buttonReleased = 1;						// Knopf wurde losgelassen, das merken wir uns
+			if (gesturerecognized == 1)				// wenn Geste erkannt wurde
+			{
+				ret = gesture;						// Geste zum 1. mal ausgeben
+				buttonReleased = 1;						// Knopf wurde losgelassen, das merken wir uns	 
+			}	
 		}
 		else
 		{											// wird immer abgearbeitet, wenn nicht gerade die letzte Taste losgelassen wird, hier erfolgt die Entscheidung, ob es sich um eine Geste handelt oder nicht.
 			ret = 0;								// nix zu melden
 			buttonReleased = 0;						// zurücksetzten
-			oldresult = result;						// aktuelle Tastenauswertung merken
-			if (result != 0 && result != 1 
-					&& result != 2 && result != 4)	// Wenn Geste erkannt wurde
+			//---------- Gestenerkennung									
+			if (result != 0 && result != 1			// Wenn Geste erkannt wurde
+					&& result != 2 && result != 4)	
 			{
 				gesture = result;					// Geste speichern
 				gesturerecognized = 1;
 			}
+			//---------- Move down
+			if (result == 1 && oldresult == 0)			// könnte ein Move von oben nach unten werden
+			{
+				movedown = 1;
+			}
+			if (movedown == 1 && result == 2)			// jetzt schon bei der Mitte
+			{
+				movedown = 2;
+			}
+			if (movedown == 2 && result == 4)			// unten angekommem --> gültiger Move down
+			{
+				movedown = 3;
+			}
+			// ---------------------
+			//---------- Move up
+			if (result == 4 && oldresult == 0)			// könnte ein Move von unten noch oben werden
+			{
+				moveup = 1;
+			}
+			if (moveup == 1 && result == 2)				// jetzt schon bei der Mitte
+			{
+				moveup = 2;
+			}
+			if (moveup == 2 && result == 1)				// oben angekommem --> gültiger Move up
+			{
+				moveup = 3;
+			}
+			// ---------------------
+			
+			oldresult = result;						// aktuelle Tastenauswertung merken				
 		}
 	}
 	else
@@ -564,7 +605,26 @@ eGestures_t getGestureSkip(void) // delayed by one cycle
 		buttonReleased = 0;							// zurücksetzten
 		oldresult = result;							// Ergebnis merken
 	}
-
+	
+	//----- Gibt Move aus, bis eine Taste gedrückt wird 
+	if ((movedownrecognized == 1 || moveuprecognized == 1) && ret == 0)
+	{
+		if (count > 29)
+		{
+			if (movedownrecognized == 1) { ret = 4; }
+			else { ret = 1; }						// Move wird auch immer 2 mal ausgeben, hoch = 1 , runter = 4
+			if (count >30) count = 0;			
+		}
+		count++;							
+	}
+	else
+	{
+		if (movedownrecognized == 1 || moveuprecognized == 1) ret = 0;	// unterdrückt den ersten Tastendruck nach dem move und stoppt ihn
+		count = 0;
+		movedownrecognized = 0;
+		moveuprecognized = 0;
+	}
+	
 	return ret;
 }
 
