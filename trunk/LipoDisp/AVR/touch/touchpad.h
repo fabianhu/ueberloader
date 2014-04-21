@@ -19,13 +19,16 @@
 
 #define TOUCHREPCNT 5
 
-#define TOUCHMINSIGNAL 32
-#define SLIDEMINSIGNAL 43
-#define TOUCHMINDIST 400 // fixme geht nicht
+#define TOUCHMINSIGNAL 20
+#define MOVEMAXTIME 150
+#define MOVEMINTIME 20
 
-#define MINSLIDESPEED 7
+//#define SLIDEMINSIGNAL 43
+//#define TOUCHMINDIST 400 // fixme geht nicht
 
-#define MAXSLIDESPEED 100
+//#define MINSLIDESPEED 7
+
+//#define MAXSLIDESPEED 100
 
 
 #define TOUCHDISABLESLIDE 1
