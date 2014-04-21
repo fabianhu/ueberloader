@@ -7,10 +7,10 @@
 // Prototypes:
 void ProcessTouch(void);
 int16_t callback_menu_GetvalueFromUI(void);
-uint8_t touchGetSpeed(int16_t* speed, int32_t *Schwerpunkt);
+//uint8_t touchGetSpeed(int16_t* speed, int32_t *Schwerpunkt);
 void callback_menu_HandOverValueToUI(uint16_t value, uint16_t upper, uint16_t lower,
 uint16_t stepsize);
-int32_t touchGetSchwerpunkt(void);
+//int32_t touchGetSchwerpunkt(void);
 void sFilter(int16_t* o, int16_t* n);
 void svFilter(int16_t* o, int16_t* n, uint8_t x);
 eGestures_t getGesture(void);
@@ -135,6 +135,7 @@ int16_t touchGetPad5(uint8_t pin)
 }
 
 // fixme, wird das Ding noch gebraucht ?
+/* 
 #define MOMENTMULTIPLIER 100ULL
 int32_t touchGetSchwerpunkt(void)
 {
@@ -171,6 +172,9 @@ int32_t touchGetSchwerpunkt(void)
 	return -1;
 
 }
+
+*/
+
 // fixme, wird das Ding noch gebraucht ?
 void sFilter(int16_t* o, int16_t* n)
 {
@@ -223,7 +227,7 @@ void touchGetValue(int16_t* pValue) // read txtback the (changed) value Mutex?
 	OS_ALLOWSCHEDULING;
 	//OS_LEAVECRITICAL
 }
-
+/* 
 uint8_t touchGetSpeed(int16_t* speed, int32_t *Schwerpunkt)
 {
 
@@ -277,18 +281,20 @@ uint8_t touchGetSpeed(int16_t* speed, int32_t *Schwerpunkt)
 	}
 
 }
+*/
 
 eTouchstate_t eTouchstate = eTSIdle;
 uint8_t info = 0;
+
 
 int32_t Schwerpunkt;
 void ProcessTouch(void)
 {
 	eGestures_t eActualGesture, newGesture;
 	static eGestures_t s_ucOldGesture;
-	static int16_t s_sSpeedFiltered = 0;
-	uint8_t bMoved;
-	static int32_t OldSchwerpunkt;
+//	static int16_t s_sSpeedFiltered = 0;
+//	uint8_t bMoved;
+//	static int32_t OldSchwerpunkt;
 	int16_t calculator;
 	
 	// hier wird die aktuell gültige Geste ermittelt = eActualGesture
@@ -500,8 +506,8 @@ eGestures_t getGesture(void) // delayed by one cycle
 eGestures_t getGestureSkip(void) // delayed by one cycle
 {
 	uint8_t result , ret = 0;
-	static uint8_t oldresult, buttonReleased, gesture, gesturerecognized, moveup, movedown, movedownrecognized, moveuprecognized, count = 0;
-	uint8_t i, j, k, l;
+	static uint8_t oldresult, buttonReleased, gesture, gesturerecognized, moveup, movedown, movedownrecognized, moveuprecognized, movetime, count = 0;
+	uint8_t i, j, k;
 	
 	for(k = 0; k < TOUCHCOUNT ; k++)
 	{
@@ -516,110 +522,121 @@ eGestures_t getGestureSkip(void) // delayed by one cycle
 	}
 	
 	// ich habe ein Monster erschaffen:
-	// Das Ding entscheidet, ob es sich um eine Geste, einen move oder um einen einfachen Tastendruck
-	// Falls es eine Geste ist, wird diese abgespeichert. Erst beim loslassen der Taste(n) wird reagiert und 2mal das Ergebnis ausgegeben
+	// Das Ding entscheidet, ob es sich um eine Geste, einen Move oder um einen einfachen Tastendruck handelt
+	// Falls es eine Geste oder ein Move ist, wird diese(r) abgespeichert. Erst beim loslassen der Taste(n) wird reagiert und 2mal das Ergebnis ausgegeben
 	if (buttonReleased < 1)							// wenn alle Tasten ausgelassen wurden
 	{
-		if (result < oldresult && result == 0)		// wenn die letzte Taste losgelassen wurde wird entschieden ob es eine Geste, ein Move oder ein normaler Tastendruck war
+		if (result < oldresult && result == eGNothing)		// wenn die letzte Taste losgelassen wurde wird entschieden ob es eine Geste, ein Move oder ein normaler Tastendruck war
 		{
 			if (movedown == 3 || moveup == 3)		// wenn move vorliegt
 			{
 				if (movedown == 3) movedownrecognized = 1;
 				if (moveup == 3) moveuprecognized = 1;
-				ret = 0;							
-				gesturerecognized = 0;				// wenn Move erkannt wurde, Move sticht Geste
-				movedown = 0;						// alles wieder zurücksetzen
+				ret = eGNothing;							
+				gesturerecognized = 0;					// wenn Move erkannt wurde, Move sticht Geste
+				movedown = 0;							// alles wieder zurücksetzen
 				moveup = 0;
-				oldresult = result;					// sonst funktioniert es mit der permanenten Ausgabe nicht
+				oldresult = result;						// sonst funktioniert es mit der permanenten Ausgabe nicht, da old noch nicht = eGNothing ist
 				
 			}
 			else
 			{
-				ret = oldresult;					// einfachen Tastendruck zum 1. mal ausgeben
+				ret = oldresult;						// einfachen Tastendruck zum 1. mal ausgeben
 				buttonReleased = 1;						// Knopf wurde losgelassen, das merken wir uns
 			}
-			if (gesturerecognized == 1)				// wenn Geste erkannt wurde
+			if (gesturerecognized == 1)					// wenn Geste erkannt wurde
 			{
-				ret = gesture;						// Geste zum 1. mal ausgeben
+				ret = gesture;							// Geste zum 1. mal ausgeben
 				buttonReleased = 1;						// Knopf wurde losgelassen, das merken wir uns	 
 			}	
 		}
 		else
-		{											// wird immer abgearbeitet, wenn nicht gerade die letzte Taste losgelassen wird, hier erfolgt die Entscheidung, ob es sich um eine Geste handelt oder nicht.
-			ret = 0;								// nix zu melden
-			buttonReleased = 0;						// zurücksetzten
+		{												// wird immer abgearbeitet, wenn nicht gerade die letzte Taste losgelassen wird, hier erfolgt die Entscheidung, ob es sich um eine Geste handelt oder nicht.
+			ret = eGNothing;							// nix zu melden
+			buttonReleased = 0;							// zurücksetzten
 			//---------- Gestenerkennung									
-			if (result != 0 && result != 1			// Wenn Geste erkannt wurde
-					&& result != 2 && result != 4)	
+			if (result != eGNothing && result != eGPlus	// Wenn Geste erkannt wurde
+					&& result != eGMitte && result != eGMinus)	
 			{
-				gesture = result;					// Geste speichern
+				gesture = result;						// Geste speichern
 				gesturerecognized = 1;
 			}
 			//---------- Move down
-			if (result == 1 && oldresult == 0)			// könnte ein Move von oben nach unten werden
+			if (result == eGPlus && oldresult == eGNothing)	// könnte ein Move von oben nach unten werden
 			{
 				movedown = 1;
+				movetime = 0;
 			}
-			if (movedown == 1 && result == 2)			// jetzt schon bei der Mitte
+			if (movedown == 1 && result == eGMitte)		// jetzt schon bei der Mitte
 			{
 				movedown = 2;
 			}
-			if (movedown == 2 && result == 4)			// unten angekommem --> gültiger Move down
+			if (movedown == 2 && result == eGMinus)		// unten angekommem --> gültiger Move down
 			{
 				movedown = 3;
 			}
 			// ---------------------
 			//---------- Move up
-			if (result == 4 && oldresult == 0)			// könnte ein Move von unten noch oben werden
+			if (result == eGMinus && oldresult == eGNothing)	// könnte ein Move von unten noch oben werden
 			{
 				moveup = 1;
+				movetime = 0;
 			}
-			if (moveup == 1 && result == 2)				// jetzt schon bei der Mitte
+			if (moveup == 1 && result == eGMitte)		// jetzt schon bei der Mitte
 			{
 				moveup = 2;
 			}
-			if (moveup == 2 && result == 1)				// oben angekommem --> gültiger Move up
+			if (moveup == 2 && result == eGPlus)		// oben angekommem --> gültiger Move up
 			{
 				moveup = 3;
 			}
 			// ---------------------
 			
-			oldresult = result;						// aktuelle Tastenauswertung merken				
+			oldresult = result;							// aktuelle Tastenauswertung merken				
 		}
 	}
 	else
 	{
-		if (result == 0)							// wenn das Result immernoch NULL ist
+		if (result == eGNothing)						// wenn das Result immernoch NULL ist
 		{
-			if (gesturerecognized == 1)				// wenn Geste erkannt
+			if (gesturerecognized == 1)					// wenn Geste erkannt
 			{
-				ret = gesture;						// Geste zum 2. mal ausgeben 
-				gesturerecognized = 0;				// zurücksetzten
+				ret = gesture;							// Geste zum 2. mal ausgeben 
+				gesturerecognized = 0;					// zurücksetzten
 			}
 			else
 			{
-				ret = oldresult;					// einfachen Tastendruck zum 2. mal ausgeben
+				ret = oldresult;						// einfachen Tastendruck zum 2. mal ausgeben
 			}		
 		}
 		
-		buttonReleased = 0;							// zurücksetzten
-		oldresult = result;							// Ergebnis merken
+		buttonReleased = 0;								// zurücksetzten
+		oldresult = result;								// Ergebnis merken
 	}
 	
-	//----- Gibt Move aus, bis eine Taste gedrückt wird 
-	if ((movedownrecognized == 1 || moveuprecognized == 1) && ret == 0)
+	
+	// zur Ermittlung wie lange der Move gedauert hat
+	if (moveup > 0 || movedown > 0)
 	{
-		if (count > 29)
+		if (movetime < MOVEMAXTIME) movetime++;			// Zeit des moves messen --> langsammer move ändert dann die Werte auch langsammer
+	}
+
+	
+	//----- Gibt Move aus, bis eine Taste gedrückt wird 
+	if ((movedownrecognized == 1 || moveuprecognized == 1) && ret == eGNothing)
+	{
+		if (movetime < MOVEMINTIME) movetime = MOVEMINTIME;
+		if (count > movetime)						// je größer moovetime desto langsammer ändern sich dann die Werte
 		{
-			if (movedownrecognized == 1) { ret = 4; }
-			else { ret = 1; }						// Move wird auch immer 2 mal ausgeben, hoch = 1 , runter = 4
-			if (count >30) count = 0;			
+			if (movedownrecognized == 1) { ret = eGMinus; }
+			else { ret = eGPlus; }						// Move wird auch immer 2 mal ausgeben, hoch = 1 , runter = 4
+			if (count > movetime +1 ) count = 0;			
 		}
 		count++;							
 	}
 	else
 	{
-		if (movedownrecognized == 1 || moveuprecognized == 1) ret = 0;	// unterdrückt den ersten Tastendruck nach dem move und stoppt ihn
+		if (movedownrecognized == 1 || moveuprecognized == 1) ret = eGNothing;	// unterdrückt den ersten Tastendruck nach dem move und stoppt den move ihn
 		count = 0;
 		movedownrecognized = 0;
 		moveuprecognized = 0;
