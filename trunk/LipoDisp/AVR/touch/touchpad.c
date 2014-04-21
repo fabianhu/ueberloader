@@ -543,6 +543,8 @@ eGestures_t getGestureSkip(void) // delayed by one cycle
 			{
 				ret = oldresult;						// einfachen Tastendruck zum 1. mal ausgeben
 				buttonReleased = 1;						// Knopf wurde losgelassen, das merken wir uns
+				movedown = 0;
+				moveup = 0;
 			}
 			if (gesturerecognized == 1)					// wenn Geste erkannt wurde
 			{
@@ -636,7 +638,14 @@ eGestures_t getGestureSkip(void) // delayed by one cycle
 	}
 	else
 	{
-		if (movedownrecognized == 1 || moveuprecognized == 1) ret = eGNothing;	// unterdrückt den ersten Tastendruck nach dem move und stoppt den move ihn
+		if (movedownrecognized == 1 || moveuprecognized == 1) // unterdrückt den ersten Tastendruck nach dem move und stoppt Ihn
+		{ 
+			ret = eGNothing; 
+			buttonReleased = 0; 
+			oldresult = eGNothing;
+			movedown = 0; 
+			moveup =0;
+		}	
 		count = 0;
 		movedownrecognized = 0;
 		moveuprecognized = 0;
