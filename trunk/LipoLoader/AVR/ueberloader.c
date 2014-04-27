@@ -71,7 +71,7 @@ void TaskGovernor(void)
 	static int16_t sI_out_act, sI_out_act_flt; // mV / mA
 	static int16_t sZeroHiMeas;
 
-	if(sizeof(Command_t) % 2 == 1)
+	if(sizeof(Command_t) % 2 == 1) // Uli: fixme das scheint nicht zu funktionieren, weil unQ_max_mAs 32 bit war und deshalb nicht richtig gespeichert wurde
 	{
 		emstop( 4 ); // Command_t is not 16bit aligned. Not checkable at compile time.
 	}
@@ -85,7 +85,7 @@ void TaskGovernor(void)
 		g_tCommand.sCurrentSetpoint = 1000;
 		g_tCommand.ucUserCellCount = 6;
 		g_tCommand.usVoltageSetpoint_mV = 3850;
-		g_tCommand.unQ_max_mAs = 100000;
+		g_tCommand.unQ_max_mAh = 10000;
 		g_tCommand.usT_max_s = 10000;
 		g_tCommand.usMinBalanceVolt_mV = 3500;
 		g_tCommand.refreshrate = 10;
@@ -293,7 +293,7 @@ void ResetLastBatteryInfo(void)
 	OS_MutexRelease( OSMTXBattInfo );
 }
 
-#define CHARGEDELAY 10 // equals 1s
+#define CHARGEDELAY 5 // equals 0,5s
 void TaskState(void)
 {
 	uint8_t i, j, t, to;
@@ -401,6 +401,14 @@ void TaskState(void)
 						{
 							g_tBattery_Info.eState = eBattFull;
 						}
+						if (g_tBattery_Info.unCharge_mAs / 3600 >= g_tCommand.unQ_max_mAh)	//Maximale Kapazität erreicht
+						{
+							g_tBattery_Info.eState = eBattMaxCap;
+						}
+						if (g_tBattery_Info.unTimeCharging_s  >= g_tCommand.usT_max_s)	//Maximale Ladezeit erreicht
+						{
+							g_tBattery_Info.eState = eBattMaxTime;
+						}
 						if(GetCellcount() != g_tBattery_Info.ucNumberOfCells)
 						{
 							g_tBattery_Info.ucNumberOfCells = 0;
@@ -423,16 +431,34 @@ void TaskState(void)
 				//				eBattState = eBattFull;
 				//			break;
 			case eBattFull:
-				// vollständig angesteckt, Sollwert erreicht
+				// vollständig geladen, Sollwert erreicht
 				if(GetCellcount() != g_tBattery_Info.ucNumberOfCells)
 				{
 					g_tBattery_Info.ucNumberOfCells = 0;
 					g_tBattery_Info.eState = eBattUnknown;
 				}
 				break;
+				
+			case eBattMaxCap:
+				// maximale Kapazität geladen
+				if(GetCellcount() != g_tBattery_Info.ucNumberOfCells)
+				{
+					g_tBattery_Info.ucNumberOfCells = 0;
+					g_tBattery_Info.eState = eBattUnknown;
+				}
+				break;
+						
+			case eBattMaxTime:
+				// maximale Ladezeit erreicht
+				if(GetCellcount() != g_tBattery_Info.ucNumberOfCells)
+				{
+					g_tBattery_Info.ucNumberOfCells = 0;
+					g_tBattery_Info.eState = eBattUnknown;
+				}
+				break;	
 
 			case eBattUnknown:
-				OS_WaitTicks( OSALMStateWait, 1000 );
+				OS_WaitTicks( OSALMStateWait, 500 );
 				g_tBattery_Info.eState = eBattWaiting;
 				break;
 
@@ -440,7 +466,6 @@ void TaskState(void)
 				OS_WaitTicks( OSALMStateWait, 1000 );
 				if (mySuppVoltage > g_tCommand.SuppMin_mV + 1000)
 					g_tBattery_Info.eState = eBattWaiting;
-				
 				break;
 
 			case eBattError:

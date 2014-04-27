@@ -53,7 +53,7 @@ void UpdateCommandsFromParam(void)
 	g_tCommand.sCurrentSetpoint = myPar.parCurrent.sValue;
 	g_tCommand.usVoltageSetpoint_mV = myPar.parChVoltSET.sValue;	
 	g_tCommand.usMinBalanceVolt_mV = myPar.parBalActVoltSET.sValue;
-	g_tCommand.unQ_max_mAs = myPar.parMaxcap.sValue*3600;
+	g_tCommand.unQ_max_mAh = myPar.parMaxcap.sValue;
 	g_tCommand.usT_max_s = myPar.parMaxtime.sValue;
 	g_tCommand.refreshrate = myPar.parRefreshPeriod.sValue;
 	g_tCommand.ucUserCellCount = 0; // does not exist in menue fixme

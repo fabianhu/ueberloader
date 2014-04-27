@@ -12,9 +12,7 @@
 #include <avr/eeprom.h>
 #include <util/delay.h>
 
-// fixme voltage setpoint übernehmen bei umstellen von storage auf laden. Braucht 1x abstecken nochmal.
-// letzte fw lädt nicht ?, parameter werden vergessen.
-// Ladestromverstellung alt?
+// fixme 
 // Versionsnummer + anzeigen! + filename
 // Werte überprüfen von Command und Parametern beim Start (nicht nur CRC)
 
@@ -309,6 +307,12 @@ void TaskLED(void)
 	//			break;
 
 			case eBattFull:
+				LED_ON;
+				break;
+			case eBattMaxCap:
+				LED_ON;
+				break;
+			case eBattMaxTime:
 				LED_ON;
 				break;
 			case eBattError:

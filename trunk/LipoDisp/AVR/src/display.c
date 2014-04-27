@@ -86,7 +86,7 @@ void TaskDisplay(void)
 			myPar.parChVoltSET.sValue = g_tCommand.usVoltageSetpoint_mV;
 			// not existing myPar.parCellCount.sValue = g_tCommand.ucUserCellCount;
 
-			myPar.parMaxcap.sValue = g_tCommand.unQ_max_mAs / 3600; // mAs in mAh
+			myPar.parMaxcap.sValue = g_tCommand.unQ_max_mAh; // in mAh
 			myPar.parMaxtime.sValue = g_tCommand.usT_max_s;
 			myPar.parBalActVoltSET.sValue = g_tCommand.usMinBalanceVolt_mV;
 
@@ -116,11 +116,11 @@ void TaskDisplay(void)
 			// debug
 			//lcd_print( WHITE, BLACK, 1, 150, 200,"Particle: %d , %d   " ,(uint16_t)myP.position,(uint16_t)myP.velocity);
 		}
-		else if (g_tBattery_Info.eState == eBattSupplyUntervolt ) //fixme derzeit ist dieses feature deaktiviert
+		else if (g_tBattery_Info.eState == eBattSupplyUntervolt ) 
 		{
-			lcd_print(RED, BLACK, 3, 90, 60,"Supply"); // sch.... für mehrere Lader fixme									
-			lcd_print(RED, BLACK, 3, 20, 120,"undervoltage");																
-																											
+			lcd_print(RED, BLACK, 2, 20, 40,"Supply"); // sch.... für mehrere Lader fixme									
+			lcd_print(RED, BLACK, 2, 20, 80,"undervoltage");
+			lcd_print(WHITE, BLACK, 2, 20, 120,"Supply %02d.%01dV   ",g_tBattery_Info.sSupplyVolt_mV/1000,(g_tBattery_Info.sSupplyVolt_mV%1000)/100); //																								
 		}
 		
 		#if GRAPH_AT_LOCK == 1
@@ -149,7 +149,7 @@ void TaskDisplay(void)
 			if(mah < 999)
 				lcd_print(WHITE, BLACK, 2, 0, ypos,"%03d mAh ",mah);
 			else
-				lcd_print(WHITE, BLACK, 2, 0, ypos,"%01d.%02d Ah ",mah/1000,(mah%1000)/10);
+				lcd_print(WHITE, BLACK, 2, 0, ypos,"%01d.%02d Ah  ",mah/1000,(mah%1000)/10);      // zusätzliches Leerzeichen eingefügt, damit das h vom mAh überschrieben wird
 			lcd_print(WHITE, BLACK, 2, 160, ypos,"%d:%02d:%02d  ",cht/3600,(cht%3600)/60,cht%60);
 			ypos += 2*LINEDIFF;
 
@@ -204,6 +204,12 @@ void TaskDisplay(void)
 				break;
 				case eBattError:
 				strcpy(buf,"Bat.Err  ");
+				break;
+				case eBattMaxCap:
+				strcpy(buf,"Max Capacity charged  ");
+				break;
+				case eBattMaxTime:
+				strcpy(buf,"Max time charged  ");
 				break;
 				default:
 				strcpy(buf,"Waaargh!!!  ");
