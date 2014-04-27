@@ -153,7 +153,8 @@ void TaskDisplay(void)
 			lcd_print(WHITE, BLACK, 2, 160, ypos,"%d:%02d:%02d  ",cht/3600,(cht%3600)/60,cht%60);
 			ypos += 2*LINEDIFF;
 
-			DrawBox(ypos);
+			//DrawBox(ypos);  überflüssig
+			
 
 			#define CELLCOL1 15
 			#define CELLCOL2 60
@@ -180,6 +181,24 @@ void TaskDisplay(void)
 				ypos += LINEDIFF;
 			}
 
+			ypos -= 6*LINEDIFF;			// 6 Zeilen hoch schieben
+			lcd_print(WHITE, BLACK, 1, 160, ypos,"Temp");
+			lcd_print(WHITE, BLACK, 1, 220, ypos,"%02d C   ",g_tBattery_Info.ucDegC);
+			ypos += LINEDIFF;
+			lcd_print(WHITE, BLACK, 1, 160, ypos,"Supply"); //
+			lcd_print(WHITE, BLACK, 1, 220, ypos,"%02d.%01dV   ",g_tBattery_Info.sSupplyVolt_mV/1000,(g_tBattery_Info.sSupplyVolt_mV%1000)/100); //
+			ypos += LINEDIFF;
+			lcd_print(WHITE, BLACK, 1, 160, ypos,"Iset");
+			lcd_print(WHITE, BLACK, 1, 220, ypos,"%04d mA   ",g_tCommand.sCurrentSetpoint);
+			ypos += LINEDIFF;
+			lcd_print(WHITE, BLACK, 1, 160, ypos,"Uset");
+			lcd_print(WHITE, BLACK, 1, 220, ypos,"%04d mV   ",g_tBattery_Info.sVSetpoint);
+			ypos += LINEDIFF;
+			lcd_print(WHITE, BLACK, 1, 160, ypos,"PWM");
+			lcd_print(WHITE, BLACK, 1, 220, ypos," %04d   ",g_tBattery_Info.usPWM);
+			ypos += 2*LINEDIFF;
+						
+						
 			/*lcd_print(WHITE, BLACK, 1, 200, ypos,"ASYNC %d   ",g_tBattery_Info.usPWMStep);
 			ypos += LINEDIFF;
 			lcd_print(WHITE, BLACK, 1, 200, ypos,"ErrCnt %d   ",g_tBattery_Info.ErrCnt); //g_tBattery_Info.usConverterPower_W);
@@ -187,45 +206,51 @@ void TaskDisplay(void)
 			lcd_print(WHITE, BLACK, 1, 160, ypos,"SlaveErr %d    ",(g_tBattery_Info.LastErr));
 			ypos += LINEDIFF;*/
 
-			char buf[10];
+			char buf[30];
+			static uint8_t counter;
 			switch (g_tBattery_Info.eState)
 			{
 				case eBattCharging:
-				strcpy(buf,"Charge  ");
-				break;
+					strcpy(buf,"Battery is charging");
+					//if (counter < 3) strcpy(buf,"Battery is charging     ");								// fixme: was stimmt damit nicht?					
+					//if ((counter >= 3) && (counter < 6)) strcpy(buf,"Battery is charging.");
+					//if ((counter >= 6) && (counter < 9)) strcpy(buf,"Battery is charging..");
+					//if ((counter >= 9) && (counter < 12)) strcpy(buf,"Battery is charging...");
+					//if ((counter >= 12) && (counter < 15)) strcpy(buf,"Battery is charging....");
+					//if (counter >= 15) strcpy(buf,"Battery is charging.....");
+					//if (counter >= 17) counter = 0;
+				
+					break;
+				
 				case eBattFull:
-				strcpy(buf,"Full     ");
-				break;
+					strcpy(buf,"Battery full - job done"); 
+					//if (counter <= 1)  strcpy(buf,"Battery full - job done"); 
+					//else { strcpy(buf,"Battery full          "); counter = 0;	}
+					
+					break;
+				
 				case eBattWaiting:
-				strcpy(buf,"Wait     ");
-				break;
+					strcpy(buf,"Waiting     ");
+					break;
 				case eBattUnknown:
-				strcpy(buf,"????   ");
-				break;
+					strcpy(buf,"   ");
+					break;
 				case eBattError:
-				strcpy(buf,"Bat.Err  ");
-				break;
+					strcpy(buf,"Bat.Err  ");
+					break;
 				case eBattMaxCap:
-				strcpy(buf,"Max Capacity charged  ");
-				break;
+					strcpy(buf,"Max. capacity reached");
+					break;
 				case eBattMaxTime:
-				strcpy(buf,"Max time charged  ");
-				break;
+					strcpy(buf,"Max. time reached");
+					break;
 				default:
-				strcpy(buf,"Waaargh!!!  ");
-				break;
+					strcpy(buf,"Waaargh!!!  ");
+					break;
 			}
 			lcd_print(GREEN,BLACK,2,0,ypos,buf);
-			
-			lcd_print(WHITE, BLACK, 1, 120, ypos,"Setp %04d mA   ",g_tCommand.sCurrentSetpoint);
-			lcd_print(WHITE, BLACK, 1, 230, ypos,"Temp %02d C   ",g_tBattery_Info.ucDegC);
-			ypos += LINEDIFF;
-			lcd_print(WHITE, BLACK, 1, 120, ypos,"Setp %04d mV   ",g_tBattery_Info.sVSetpoint);
-			lcd_print(WHITE, BLACK, 1, 230, ypos,"Supp %02d.%01dV   ",g_tBattery_Info.sSupplyVolt_mV/1000,(g_tBattery_Info.sSupplyVolt_mV%1000)/100); // 
-			ypos += LINEDIFF;
+			counter++;
 
-			lcd_print(WHITE, BLACK, 1, 200, ypos,"PWM %04d   ",g_tBattery_Info.usPWM);
-			ypos += LINEDIFF;
 			
 			
 			
