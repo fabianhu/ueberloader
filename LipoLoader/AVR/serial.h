@@ -24,6 +24,8 @@ typedef enum //BatteryStatus
 	eBattFull,
 	eBattError,
 	eBattSupplyUntervolt,
+	eBattMaxCap,
+	eBattMaxTime,
 	eBattUnknown,
 	//eBattEmpty,
 }eBatteryStatus_t;
@@ -77,8 +79,7 @@ typedef struct Command_tag
 	uint8_t  ucUserCellCount; // 0 for auto
 	uint8_t  dummy; // "size of Command must be 16 bit aligned for CRC"
 	uint16_t usVoltageSetpoint_mV; // volt per cell
-
-	uint32_t unQ_max_mAs; // max Capacity
+	uint16_t unQ_max_mAh; // max Capacity
 	uint16_t usT_max_s; // max Time
 	uint16_t usMinBalanceVolt_mV; // voltage to start balancing
 
