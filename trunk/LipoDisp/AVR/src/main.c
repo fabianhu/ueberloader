@@ -17,7 +17,7 @@
 
 // *********  Task definitions
 OS_DeclareTask(TaskTouch,400);			// war zu klein und wurde von 300 auf 400 geändert
-OS_DeclareTask(TaskDisplay,1000);		// war zu klein und wurde von 700 auf 900 geändert
+OS_DeclareTask(TaskDisplay,700);		
 OS_DeclareTask(TaskCommand,400);
 
 //OS_DeclareQueue(DemoQ,10,4);

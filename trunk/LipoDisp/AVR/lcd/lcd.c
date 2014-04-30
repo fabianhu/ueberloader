@@ -541,14 +541,18 @@ void lcd_write_char(uint8_t letter, uint8_t font_red, uint8_t font_green, uint8_
 	uint8_t *ptr_letter, toggle_flag=0, last_pixel=BACK;
 	uint8_t font1_font2=0x00, font3_font1=0x00, font2_font3=0x00, font3_back1=0x00;
 	uint8_t back1_back2=0x00, back3_back1=0x00, back2_back3=0x00, back3_font1=0x00;
-	
 	space_width = 2; 	//distance between two letters
+	
+	 if(letter < 32 || letter> 127)
+	 {
+		 return;
+	 }
 
 	//set pointer and get letter size
 	ptr_letter = font[letter-32];			//font sign pointer
 	width = pgm_read_byte(ptr_letter++);	//width of the letter in pixel
 	y_offset = pgm_read_byte(ptr_letter++); //distance bewteen top of "letter-frame" and start of letter itself in pixel
-
+			
 	//Define a memory area where the MCU can access the lcd memory
 	//Access to other memory areas are denied
 	//set new pointer addr (width of the area)
@@ -567,6 +571,9 @@ void lcd_write_char(uint8_t letter, uint8_t font_red, uint8_t font_green, uint8_
 	lcd_write_data(LOW(i));
 	//start writing to lcd ram
 	lcd_write_cmd(MEM_WRITE);	
+	
+	
+	
 	
 	if(gucColorMode == BPP12)//12bpp mode
 		{
@@ -710,7 +717,7 @@ void lcd_write_char(uint8_t letter, uint8_t font_red, uint8_t font_green, uint8_
 	{
 		//fill pixel offset field
 		for(act_row=0;act_row<y_offset*size;act_row++)
-		{
+		{			
 			for(bit_nr=0;bit_nr<(width+space_width)*size;bit_nr++)
 			{
 				lcd_write_data(back_red);
@@ -806,15 +813,15 @@ void itoa10ra(int value, char* result)
 
 void lcd_print(uint8_t font_red, uint8_t font_green, uint8_t font_blue, uint8_t back_red, uint8_t back_green, uint8_t back_blue, uint8_t size, uint16_t x_pos, uint16_t y_pos,char *ptr_string,...)
 {
+	volatile char buf [30]={0};
     va_list specifier;                  //list of specifier ,...                
     va_start (specifier, ptr_string);   	//initialize specifier list       
-	char buf[30]={0};
+	
 	uint16_t new_x_pos, new_y_pos;
 
 	//get position
 	new_x_pos=x_pos;
 	new_y_pos=y_pos;
-	
 	char* s = buf;
 	tfp_format(&s,putcp,ptr_string,specifier);
 	putcp(&s,0);		

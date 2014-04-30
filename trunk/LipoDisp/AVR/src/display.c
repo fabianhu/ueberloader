@@ -23,7 +23,7 @@ extern Command_t g_tCommand; // command.c // attention!!!!!! not task safe!!!
 #define TOUCHTEST 0
 
 
-char buf[10];
+char buf[30];
 char sbuf[50];
 
 void DrawBox( uint16_t ypos ) 
@@ -61,8 +61,7 @@ void TaskDisplay(void)
 	while(1)
 	{
 		ypos = 0;
-
-#if TOUCHTEST == 1
+        #if TOUCHTEST == 1
 		OS_WaitAlarm(OSALMWaitDisp);
 		OS_SetAlarm(OSALMWaitDisp,100);
 		// the touch is tested here!
@@ -76,7 +75,6 @@ void TaskDisplay(void)
 #else
 		OS_WaitAlarm( OSALMWaitDisp );
 		OS_SetAlarm( OSALMWaitDisp, 300 ); // FIXME only for linewriter !!! ansonsten 500 !
-
 		if(g_GotNewComand) // was hat das hier verloren? -> umziehen! --> Nö, weil die daten im ISR empfangen werden, und ein Mutex im ISR nicht geht.
 		{
 			// gespeicherte Commands vom Slave in Parameter eintragen.
@@ -171,7 +169,6 @@ void TaskDisplay(void)
 					lcd_print(WHITE, BLACK, FONTSIZE, CELLCOL1,ypos,"%04d  ", g_tBattery_Info.Cells[i].sVoltage_mV);
 					uint16_t mahRest =  g_tBattery_Info.Cells[i].unDisCharge_mAs%3600;
 					lcd_print(WHITE, BLACK, FONTSIZE, CELLCOL2,ypos,"%03d.%02d  ", (uint16_t)(g_tBattery_Info.Cells[i].unDisCharge_mAs/3600), mahRest/36);
-					
 				}				
 				else
 				{
@@ -206,29 +203,23 @@ void TaskDisplay(void)
 			lcd_print(WHITE, BLACK, 1, 160, ypos,"SlaveErr %d    ",(g_tBattery_Info.LastErr));
 			ypos += LINEDIFF;*/
 
-			char buf[30];
+			
 			static uint8_t counter;
 			switch (g_tBattery_Info.eState)
 			{
 				case eBattCharging:
-					strcpy(buf,"Battery is charging");
-					//if (counter < 3) strcpy(buf,"Battery is charging     ");								// fixme: was stimmt damit nicht?					
-					//if ((counter >= 3) && (counter < 6)) strcpy(buf,"Battery is charging.");
-					//if ((counter >= 6) && (counter < 9)) strcpy(buf,"Battery is charging..");
-					//if ((counter >= 9) && (counter < 12)) strcpy(buf,"Battery is charging...");
-					//if ((counter >= 12) && (counter < 15)) strcpy(buf,"Battery is charging....");
-					//if (counter >= 15) strcpy(buf,"Battery is charging.....");
-					//if (counter >= 17) counter = 0;
-				
+					if (counter < 3) strcpy(buf,"Battery is charging     ");							// fime: beautyfy me						
+					if ((counter >= 3) && (counter < 6)) strcpy(buf,"Battery is charging.");
+					if ((counter >= 6) && (counter < 9)) strcpy(buf,"Battery is charging..");
+					if ((counter >= 9) && (counter < 12)) strcpy(buf,"Battery is charging...");
+					if ((counter >= 12) && (counter < 15)) strcpy(buf,"Battery is charging....");
+					if (counter >= 15) strcpy(buf,"Battery is charging.....");
+					if (counter >= 17) counter = 0;
 					break;
-				
 				case eBattFull:
-					strcpy(buf,"Battery full - job done"); 
-					//if (counter <= 1)  strcpy(buf,"Battery full - job done"); 
-					//else { strcpy(buf,"Battery full          "); counter = 0;	}
-					
+					if (counter <= 1)  strcpy(buf,"Battery full - job done"); 
+					else { strcpy(buf,"Battery full          "); counter = 0;	}
 					break;
-				
 				case eBattWaiting:
 					strcpy(buf,"Waiting     ");
 					break;
@@ -250,8 +241,7 @@ void TaskDisplay(void)
 			}
 			lcd_print(GREEN,BLACK,2,0,ypos,buf);
 			counter++;
-
-			
+		
 			
 			
 			
