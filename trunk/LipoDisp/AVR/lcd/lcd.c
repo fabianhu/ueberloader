@@ -813,7 +813,7 @@ void itoa10ra(int value, char* result)
 
 void lcd_print(uint8_t font_red, uint8_t font_green, uint8_t font_blue, uint8_t back_red, uint8_t back_green, uint8_t back_blue, uint8_t size, uint16_t x_pos, uint16_t y_pos,char *ptr_string,...)
 {
-	volatile char buf [30]={0};
+	char buf [30]={0};
     va_list specifier;                  //list of specifier ,...                
     va_start (specifier, ptr_string);   	//initialize specifier list       
 	
