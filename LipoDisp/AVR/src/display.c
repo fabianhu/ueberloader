@@ -23,8 +23,8 @@ extern Command_t g_tCommand; // command.c // attention!!!!!! not task safe!!!
 #define TOUCHTEST 0
 
 
-char buf[30];
-char sbuf[50];
+char g_buf[30];
+char g_buf2[50];
 
 void DrawBox( uint16_t ypos ) 
 {
@@ -208,38 +208,38 @@ void TaskDisplay(void)
 			switch (g_tBattery_Info.eState)
 			{
 				case eBattCharging:
-					if (counter < 3) strcpy(buf,"Battery is charging     ");							// fime: beautyfy me						
-					if ((counter >= 3) && (counter < 6)) strcpy(buf,"Battery is charging.");
-					if ((counter >= 6) && (counter < 9)) strcpy(buf,"Battery is charging..");
-					if ((counter >= 9) && (counter < 12)) strcpy(buf,"Battery is charging...");
-					if ((counter >= 12) && (counter < 15)) strcpy(buf,"Battery is charging....");
-					if (counter >= 15) strcpy(buf,"Battery is charging.....");
+					if (counter < 3) strcpy(g_buf,"Battery is charging     ");							// fime: beautyfy me						
+					if ((counter >= 3) && (counter < 6)) strcpy(g_buf,"Battery is charging.");
+					if ((counter >= 6) && (counter < 9)) strcpy(g_buf,"Battery is charging..");
+					if ((counter >= 9) && (counter < 12)) strcpy(g_buf,"Battery is charging...");
+					if ((counter >= 12) && (counter < 15)) strcpy(g_buf,"Battery is charging....");
+					if (counter >= 15) strcpy(g_buf,"Battery is charging.....");
 					if (counter >= 17) counter = 0;
 					break;
 				case eBattFull:
-					if (counter <= 1)  strcpy(buf,"Battery full - job done"); 
-					else { strcpy(buf,"Battery full          "); counter = 0;	}
+					if (counter <= 1)  strcpy(g_buf,"Battery full - job done"); 
+					else { strcpy(g_buf,"Battery full          "); counter = 0;	}
 					break;
 				case eBattWaiting:
-					strcpy(buf,"Waiting     ");
+					strcpy(g_buf,"Waiting     ");
 					break;
 				case eBattUnknown:
-					strcpy(buf,"   ");
+					strcpy(g_buf,"   ");
 					break;
 				case eBattError:
-					strcpy(buf,"Bat.Err  ");
+					strcpy(g_buf,"Bat.Err  ");
 					break;
 				case eBattMaxCap:
-					strcpy(buf,"Max. capacity reached");
+					strcpy(g_buf,"Max. capacity reached");
 					break;
 				case eBattMaxTime:
-					strcpy(buf,"Max. time reached");
+					strcpy(g_buf,"Max. time reached");
 					break;
 				default:
-					strcpy(buf,"Waaargh!!!  ");
+					strcpy(g_buf,"Waaargh!!!  ");
 					break;
 			}
-			lcd_print(GREEN,BLACK,2,0,ypos,buf);
+			lcd_print(GREEN,BLACK,2,0,ypos,g_buf);
 			counter++;
 		
 			
