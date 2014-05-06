@@ -297,6 +297,7 @@ void ResetLastBatteryInfo(void)
 void TaskState(void)
 {
 	uint8_t i, j, t, to;
+	static uint8_t BattFullDelayCounter;
 
 	OS_WaitTicks( OSALMStateWait, 500 );
 
@@ -393,13 +394,23 @@ void TaskState(void)
 				{
 					case eModeManual: // todo NOT YET IMPEMENTED
 					case eModeAuto:
-						if(myBattSumVoltage
-								>= g_tCommand.usVoltageSetpoint_mV
-										* g_tBattery_Info.ucNumberOfCells
-								&& myBattCurrent < usCommandCurrent / 10
-								&& Balancer_GetFinished())
+						if(myBattSumVoltage	>= g_tCommand.usVoltageSetpoint_mV	* g_tBattery_Info.ucNumberOfCells
+								&& (Balancer_GetFinished() || (g_tCommand.usMinBalanceVolt_mV > g_tCommand.usVoltageSetpoint_mV) )	// wenn der Balancer fertig oder inaktiv ist --> es kann abgeschalten werden
+								&& (myBattCurrent < usCommandCurrent / 20 || myBattCurrent < 30)	)			// schaltet bei Isoll / 20 ab
 						{
-							g_tBattery_Info.eState = eBattFull;
+							if (BattFullDelayCounter >= 10)										// Zeitverzögerung
+							{
+								g_tBattery_Info.eState = eBattFull;
+								BattFullDelayCounter = 0;
+							}
+							else 
+							{
+								BattFullDelayCounter++;
+							}
+						}
+						else 
+						{
+							BattFullDelayCounter = 0;
 						}
 						if (g_tBattery_Info.unCharge_mAs / 3600 >= g_tCommand.unQ_max_mAh)	//Maximale Kapazität erreicht
 						{

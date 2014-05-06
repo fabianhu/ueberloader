@@ -190,12 +190,12 @@ void TaskBalance(void)
 		{
 			if(g_tBattery_Info.eState == eBattCharging)
 			{
-				int32_t diff = (int32_t)myUSetpoint - (int32_t)maxCellVolt;
+				int32_t diff = (int32_t)myUSetpoint - (int32_t)maxCellVolt + 2;		 							// Stromregler lädt die Zellen 2mV höher als eigentlich eingestellt --> verbesserte Abschaltverhalten
 				I_Set_mA_Ramped = PID(diff , &U_Integrator, VOLTGOV_KP, VOLTGOV_KI, VOLTGOV_KD, 0, myISetpoint ); // todo adjust integrator
 				
-				if(maxCellVolt > myUSetpoint + 3) // 3 mV more than desired
+				if(maxCellVolt > myUSetpoint + 10) // (old:3mV) 10 mV more than desired --> Regler erschrickt und reduziert schnell
 				{
-					I_Set_mA_Ramped = I_Set_mA_Ramped - (I_Set_mA_Ramped/50); // reduce by 2%    fixme ?? 
+					I_Set_mA_Ramped = I_Set_mA_Ramped - (I_Set_mA_Ramped/100); // reduce by 1% (alt:2%)    fixme ?? 
 					PID(0 , &U_Integrator, 0, 0, 0, 0, I_Set_mA_Ramped);
 				}
 				else
@@ -285,8 +285,8 @@ void TaskBalance(void)
 
 
 uint8_t Balancer_GetFinished(void)
-{
-	return (ucBalancerFinished == 0)?1:0;
+{		
+	return (ucBalancerFinished == 0)?1:0;						// wenn Balancer fertig ist --> es kann abgeschalten werden
 }
 
 uint16_t BalancerGetBattVolt(void)
