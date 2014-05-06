@@ -468,11 +468,9 @@ void lcd_draw_bmp(char *ptr_bmp, uint8_t colour, uint16_t x_pos, uint16_t y_pos)
 		//plus_bmp minus_bmp ok_bmp cancel_bmp
 		uint16_t width, height, i;
 		uint8_t greyscale;
-
 		width = pgm_read_byte(ptr_bmp++);
 		height = pgm_read_byte(ptr_bmp++);
 		greyscale = pgm_read_byte(ptr_bmp++);
-
 		//set new pointer addr
 		lcd_write_cmd(COLUMN_ADR_SET);
 		lcd_write_data(HIGH(x_pos));
@@ -545,6 +543,7 @@ void lcd_write_char(uint8_t letter, uint8_t font_red, uint8_t font_green, uint8_
 	
 	 if(letter < 32 || letter> 127)
 	 {
+		 asm("nop");
 		 return;
 	 }
 
@@ -774,7 +773,6 @@ void itoa10(int value, char* result)
 	char* pt2 = result;
 	char tmp_char;
 	int tmp_value;
-
 	// div by 10
 	do {
 		tmp_value = value;
@@ -797,9 +795,7 @@ void itoa10ra(int value, char* result)
 	char* pt1 = result+5;
 	*(pt1+1) = '\0';
 	int tmp_value;
-
 	memset(result,' ',6);
-
 	// div by 10
 	do {
 		tmp_value = value;
@@ -808,27 +804,21 @@ void itoa10ra(int value, char* result)
 	} while ( value );
 	// negative?
 	if (tmp_value < 0) *pt1++ = '-';
-	
 }
 
 void lcd_print(uint8_t font_red, uint8_t font_green, uint8_t font_blue, uint8_t back_red, uint8_t back_green, uint8_t back_blue, uint8_t size, uint16_t x_pos, uint16_t y_pos,char *ptr_string,...)
 {
 	char buf [30]={0};
     va_list specifier;                  //list of specifier ,...                
-    va_start (specifier, ptr_string);   	//initialize specifier list       
-	
+    va_start (specifier, ptr_string);   	//initialize specifier list    
 	uint16_t new_x_pos, new_y_pos;
-
 	//get position
 	new_x_pos=x_pos;
 	new_y_pos=y_pos;
 	char* s = buf;
 	tfp_format(&s,putcp,ptr_string,specifier);
 	putcp(&s,0);		
-    
 	lcd_print_string(font_red, font_green, font_blue, back_red, back_green, back_blue, size, x_pos, y_pos, buf);
-        
-    
 	va_end(specifier); //close the specifier list     
 }
 
@@ -838,7 +828,6 @@ void lcd_print_string(uint8_t font_red, uint8_t font_green, uint8_t font_blue, u
 	char act_sign;                      //actual sign of the string
 	char pixel_width;
 	uint16_t new_x_pos, new_y_pos;
-
 	//get position
 	new_x_pos=x_pos;
 	new_y_pos=y_pos;
@@ -855,13 +844,10 @@ void lcd_print_string(uint8_t font_red, uint8_t font_green, uint8_t font_blue, u
 			new_x_pos=0;
 			new_y_pos+=FONTHEIGHT*size;
 		}
-		
 		//Write sign
 		lcd_write_char((uint8_t)act_sign, font_red, font_green, font_blue, back_red, back_green, back_blue, size, new_x_pos, new_y_pos);
 		//adjust position
-		new_x_pos+=size*(pixel_width+CHARSPACE);
-		
-		
+		new_x_pos+=size*(pixel_width+CHARSPACE);	
 	}
 }
 
@@ -878,9 +864,7 @@ char *flash2ram(char *ptr_string)
 		}
 	//terminate string
 	*ptr_returnstring='\0';
-	
 	return returnstring;
- 
 }
 
 
@@ -893,7 +877,6 @@ void lcd_init_scrollmode(void)
 	sa = 340;
 	//bottom fixed area
 	bfa = 0;
-
 	lcd_write_cmd(VERT_SCR);
 	lcd_write_data(HIGH(tfa));
 	lcd_write_data(LOW(tfa));
@@ -905,7 +888,6 @@ void lcd_init_scrollmode(void)
 
 void lcd_scrollmode(uint16_t saddr)
 {
-
 	lcd_write_cmd(VERT_SCR_START);
 	lcd_write_data(HIGH(saddr));
 	lcd_write_data(LOW(saddr));

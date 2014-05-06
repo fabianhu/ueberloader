@@ -24,7 +24,7 @@ extern Command_t g_tCommand; // command.c // attention!!!!!! not task safe!!!
 
 
 char g_buf[30];
-char g_buf2[50];
+char bufsource[30];
 
 void DrawBox( uint16_t ypos ) 
 {
@@ -208,17 +208,40 @@ void TaskDisplay(void)
 			switch (g_tBattery_Info.eState)
 			{
 				case eBattCharging:
-					if (counter < 3) strcpy(g_buf,"Battery is charging     ");							// fime: beautyfy me						
-					if ((counter >= 3) && (counter < 6)) strcpy(g_buf,"Battery is charging.");
-					if ((counter >= 6) && (counter < 9)) strcpy(g_buf,"Battery is charging..");
-					if ((counter >= 9) && (counter < 12)) strcpy(g_buf,"Battery is charging...");
-					if ((counter >= 12) && (counter < 15)) strcpy(g_buf,"Battery is charging....");
-					if (counter >= 15) strcpy(g_buf,"Battery is charging.....");
-					if (counter >= 17) counter = 0;
+					//-------------------------------
+					// Variante2 B-A-T-T-E-R-Y .....
+					if (counter > 24) 
+					{ 
+						counter = 0; 		
+						lcd_draw_filled_box(BLACK,0,ypos,319,(2*LINEDIFF)+4);	// schwarzer Balken löscht Display
+					}
+					strcpy(bufsource,"Battery is charging.....");				// Leerzeichen nicht extra drucken
+					if (counter == 7 || counter == 10) counter++;
+					for (int i = 0; i < counter; i++)
+					{
+						g_buf[i] = bufsource[i];
+					}
+					g_buf[counter] = 0;
+					//------------------------------					
+					// Variante 1 ...
+					//if ((counter >= 12) && (counter < 15)) strcpy(buf,"Battery is charging....");
+					//if (counter < 3) strcpy(buf,"Battery is charging     ");							// fime: beautyfy me						
+					//if ((counter >= 3) && (counter < 6)) strcpy(buf,"Battery is charging.");
+					//if ((counter >= 6) && (counter < 9)) strcpy(buf,"Battery is charging..");
+					//if ((counter >= 9) && (counter < 12)) strcpy(buf,"Battery is charging...");
+					//if ((counter >= 12) && (counter < 15)) strcpy(buf,"Battery is charging....");
+					//if (counter >= 15) strcpy(buf,"Battery is charging.....");
+					//if (counter >= 17) counter = 0;
 					break;
 				case eBattFull:
 					if (counter <= 1)  strcpy(g_buf,"Battery full - job done"); 
-					else { strcpy(g_buf,"Battery full          "); counter = 0;	}
+					else 
+					{ 
+						g_buf[0] = 0;
+						// lcd_draw_filled_box(BLACK,160,ypos,319,(2*LINEDIFF)+4);	// schwarzer Balken löscht "- job done"
+						lcd_draw_filled_box(BLACK,0,ypos,319,(2*LINEDIFF)+4);
+						counter = 0;	
+					}
 					break;
 				case eBattWaiting:
 					strcpy(g_buf,"Waiting     ");
