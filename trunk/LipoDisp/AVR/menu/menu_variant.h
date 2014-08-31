@@ -25,8 +25,8 @@ extern void menu_draw_groupposition(uint8_t itemnr, uint8_t groupitems);
 //********          Generated with Treebuilder.exe       *********
 
  #define	MENUESIZE	44	// number of menu itmes (array size)
- #define	MAX_ITEM_NAME_CHARLENGTH	19	// max name length
- #define	MENUGENUID	59198	// Generation UID
+ #define	MAX_ITEM_NAME_CHARLENGTH	24	// max name length
+ #define	MENUGENUID	55734	// Generation UID
 // Enum definitions
 typedef enum
 {
@@ -78,13 +78,11 @@ void ActionShowLast (void);	//
 #define MENUE_TEXT_VARDEF \
 char	txtREADY[] 	PROGMEM="Ready..."; \
 char	txtPRESETS[] 	PROGMEM="Presets"; \
-FIXME - Vorsicht - Hack - Einheiten der folgenden Elemente wurden nicht auto generiert - 
-char	txtCURRENTSETPOINT[] 	PROGMEM="Current Setpoint [mA]"; \
-char	txtCELLVOLTAGESET[] 	PROGMEM="Cell Voltage SET [mV]"; \
-char	txtBALACTIVVOLTAGE[] 	PROGMEM="Bal. Activ. Voltage [mV]"; \
-char	txtMAXCAPACITY[] 	PROGMEM="Max Capacity [mAh]"; \
-char	txtMAXTIME[] 	PROGMEM="Max Time [min]"; \
-
+char	txtCURRENTSETPOINTMA[] 	PROGMEM="Current Setpoint [mA]"; \
+char	txtCELLVOLTAGESETMV[] 	PROGMEM="Cell Voltage SET [mV]"; \
+char	txtBALACTIVVOLTAGEMV[] 	PROGMEM="Bal. Activ. Voltage [mV]"; \
+char	txtMAXCAPACITYMAH[] 	PROGMEM="Max Capacity [mAh]"; \
+char	txtMAXTIMEMIN[] 	PROGMEM="Max Time [min]"; \
 char	txtSETUP[] 	PROGMEM="Setup"; \
 char	txtSHOWLASTVALUES[] 	PROGMEM="Show Last Values"; \
 char	txtSTORAGE[] 	PROGMEM="Storage"; \
@@ -103,6 +101,7 @@ char	txtLITHIUMION[] 	PROGMEM="Lithium Ion"; \
 char	txtLIFEPO[] 	PROGMEM="LiFePo4"; \
 char	txtBACKTOMAIN[] 	PROGMEM="(back to Main)"; \
 char	txtLIPOVOLTAGE[] 	PROGMEM="LiPo Voltage"; \
+char	txtBALACTIVVOLTAGE[] 	PROGMEM="Bal. Activ. Voltage"; \
 char	txtLIIONVOLTAGE[] 	PROGMEM="LiIon Voltage"; \
 char	txtLIFEPOVOLT[] 	PROGMEM="LiFePo4 Volt."; \
 char	txtSTORAGEVOLTAGE[] 	PROGMEM="Storage Voltage"; \
@@ -140,11 +139,11 @@ myPar_t myPar = { \
 MenuItem_t m_items[MENUESIZE] = { \
 	/* 0*/	{txtREADY,	 0,	 0,	1,	0,	FLASH}, \
 	/* 1*/	{txtPRESETS,	 0,	 0,	9,	0,	FLASH}, \
-	/* 2*/	{txtCURRENTSETPOINT,	 0,	 &myPar.parCurrent,	0,	0,	FLASH}, \
-	/* 3*/	{txtCELLVOLTAGESET,	 0,	 &myPar.parChVoltSET,	0,	0,	FLASH}, \
-	/* 4*/	{txtBALACTIVVOLTAGE,	 0,	 &myPar.parBalActVoltSET,	0,	0,	FLASH}, \
-	/* 5*/	{txtMAXCAPACITY,	 0,	 &myPar.parMaxcap,	0,	0,	FLASH}, \
-	/* 6*/	{txtMAXTIME,	 0,	 &myPar.parMaxtime,	0,	0,	FLASH}, \
+	/* 2*/	{txtCURRENTSETPOINTMA,	 0,	 &myPar.parCurrent,	0,	0,	FLASH}, \
+	/* 3*/	{txtCELLVOLTAGESETMV,	 0,	 &myPar.parChVoltSET,	0,	0,	FLASH}, \
+	/* 4*/	{txtBALACTIVVOLTAGEMV,	 0,	 &myPar.parBalActVoltSET,	0,	0,	FLASH}, \
+	/* 5*/	{txtMAXCAPACITYMAH,	 0,	 &myPar.parMaxcap,	0,	0,	FLASH}, \
+	/* 6*/	{txtMAXTIMEMIN,	 0,	 &myPar.parMaxtime,	0,	0,	FLASH}, \
 	/* 7*/	{txtSETUP,	 0,	 0,	15,	0,	FLASH}, \
 	/* 8*/	{txtSHOWLASTVALUES,	 ActionShowLast,	 0,	0,	0,	FLASH}, \
 	/* 9*/	{txtSTORAGE,	 ActionChargeModeStorage,	 0,	0,	1,	FLASH}, \
@@ -186,4 +185,5 @@ MenuItem_t m_items[MENUESIZE] = { \
 #endif
 
 //******** END OF AUTO-GENERATED HEADER DO NOT EDIT!!! *********
+
 
