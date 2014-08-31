@@ -86,7 +86,7 @@ void TaskGovernor(void)
 		g_tCommand.ucUserCellCount = 6;
 		g_tCommand.usVoltageSetpoint_mV = 3850;
 		g_tCommand.unQ_max_mAh = 10000;
-		g_tCommand.usT_max_s = 10000;
+		g_tCommand.usT_max_min = 6000;
 		g_tCommand.usMinBalanceVolt_mV = 3500;
 		g_tCommand.refreshrate = 10;
 		g_tCommand.SuppMin_mV = 10000;
@@ -416,7 +416,7 @@ void TaskState(void)
 						{
 							g_tBattery_Info.eState = eBattMaxCap;
 						}
-						if (g_tBattery_Info.unTimeCharging_s  >= g_tCommand.usT_max_s)	//Maximale Ladezeit erreicht
+						if (g_tBattery_Info.unTimeCharging_s / 60  >= g_tCommand.usT_max_min)	//Maximale Ladezeit erreicht
 						{
 							g_tBattery_Info.eState = eBattMaxTime;
 						}

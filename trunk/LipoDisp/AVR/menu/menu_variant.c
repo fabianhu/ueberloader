@@ -54,7 +54,7 @@ void UpdateCommandsFromParam(void)
 	g_tCommand.usVoltageSetpoint_mV = myPar.parChVoltSET.sValue;	
 	g_tCommand.usMinBalanceVolt_mV = myPar.parBalActVoltSET.sValue;
 	g_tCommand.unQ_max_mAh = myPar.parMaxcap.sValue;
-	g_tCommand.usT_max_s = myPar.parMaxtime.sValue;
+	g_tCommand.usT_max_min = myPar.parMaxtime.sValue;
 	g_tCommand.refreshrate = myPar.parRefreshPeriod.sValue;
 	g_tCommand.ucUserCellCount = 0; // does not exist in menue fixme
 	g_tCommand.SuppMin_mV = myPar.parMinSupplyVolt.sValue;

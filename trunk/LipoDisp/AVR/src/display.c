@@ -85,7 +85,7 @@ void TaskDisplay(void)
 			// not existing myPar.parCellCount.sValue = g_tCommand.ucUserCellCount;
 
 			myPar.parMaxcap.sValue = g_tCommand.unQ_max_mAh; // in mAh
-			myPar.parMaxtime.sValue = g_tCommand.usT_max_s;
+			myPar.parMaxtime.sValue = g_tCommand.usT_max_min;
 			myPar.parBalActVoltSET.sValue = g_tCommand.usMinBalanceVolt_mV;
 
 			myPar.parRefreshPeriod.sValue = g_tCommand.refreshrate;

@@ -78,11 +78,13 @@ void ActionShowLast (void);	//
 #define MENUE_TEXT_VARDEF \
 char	txtREADY[] 	PROGMEM="Ready..."; \
 char	txtPRESETS[] 	PROGMEM="Presets"; \
-char	txtCURRENTSETPOINT[] 	PROGMEM="Current Setpoint"; \
-char	txtCELLVOLTAGESET[] 	PROGMEM="Cell Voltage SET"; \
-char	txtBALACTIVVOLTAGE[] 	PROGMEM="Bal. Activ. Voltage"; \
-char	txtMAXCAPACITY[] 	PROGMEM="Max Capacity"; \
-char	txtMAXTIME[] 	PROGMEM="Max Time"; \
+FIXME - Vorsicht - Hack - Einheiten der folgenden Elemente wurden nicht auto generiert - 
+char	txtCURRENTSETPOINT[] 	PROGMEM="Current Setpoint [mA]"; \
+char	txtCELLVOLTAGESET[] 	PROGMEM="Cell Voltage SET [mV]"; \
+char	txtBALACTIVVOLTAGE[] 	PROGMEM="Bal. Activ. Voltage [mV]"; \
+char	txtMAXCAPACITY[] 	PROGMEM="Max Capacity [mAh]"; \
+char	txtMAXTIME[] 	PROGMEM="Max Time [min]"; \
+
 char	txtSETUP[] 	PROGMEM="Setup"; \
 char	txtSHOWLASTVALUES[] 	PROGMEM="Show Last Values"; \
 char	txtSTORAGE[] 	PROGMEM="Storage"; \
