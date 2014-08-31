@@ -80,7 +80,7 @@ typedef struct Command_tag
 	uint8_t  dummy; // "size of Command must be 16 bit aligned for CRC"
 	uint16_t usVoltageSetpoint_mV; // volt per cell
 	uint16_t unQ_max_mAh; // max Capacity
-	uint16_t usT_max_s; // max Time
+	uint16_t usT_max_min; // max Time
 	uint16_t usMinBalanceVolt_mV; // voltage to start balancing
 
 	uint16_t refreshrate; // 10
