@@ -252,10 +252,10 @@ int16_t ADC_ScaleVolt_mV(int16_t in)
 int16_t ADC_ScaleLowAmp_mA(int16_t raw)
 {
 	return ((int32_t)raw-(int32_t)ADCZeroOffset) * (int32_t)g_tCalibration.sADCRef_mV / 2048L * 100L / 63L;
-	// ADC / 2048 * Uref  / ( 0.105 * 6 )
-	//                          |     |
-	//                          |     -> Amplification factor (OpAmp)
-	//                          -> Resistor
+	//				(ADC - offset)  / 2048 * Uref  / ( 0.105 * 6 )
+	//													 |     |
+	//														   |     -> Amplification factor (OpAmp)
+	//													  -> Resistor
 }
 
 
@@ -270,7 +270,7 @@ int16_t ADC_ScaleHighAmp_mA(int16_t raw, int16_t zero)
 		// 0mA : temp = 0
 		// 10000mA : temp = 933 mV diff
 		umeas_mV = temp * (int32_t)g_tCalibration.sADCRef_mV / 2048L;
-		return umeas_mV * 10000 / 933;
+		return umeas_mV * 10000 / 1410;  // old 933mV by simulation ; 1410 by test
 		
 	}
 	else

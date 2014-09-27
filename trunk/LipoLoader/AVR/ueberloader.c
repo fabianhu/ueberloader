@@ -135,8 +135,7 @@ void TaskGovernor(void)
 
 		sU_in_act = ADC_ScaleVolt_mV( ADC_GetISRValue(0) );
 		sU_out_act = ADC_ScaleVolt_mV( ADC_GetISRValue(1) ); // corrected below!
-		sFilterVar( &sU_out_act_flt, &sU_out_act, 16 );
-		sFilterVar( &sU_in_act_flt, &sU_in_act, 16 );
+
 
 		if(( ADCA.CH2.MUXCTRL & ( 0xf << 3 ) ) == ADC_CH_MUXPOS_PIN7_gc) // is high current config...
 		{
@@ -144,17 +143,21 @@ void TaskGovernor(void)
 			sI_out_act = ADC_ScaleHighAmp_mA( ADC_GetISRValue(2), sZeroHiMeas );
 			// voltage measurement correction
 			sU_out_act -= sI_out_act * 1 / 125; // High current resistor value (0.005R)(+3mR MosFet) * Current
+			
 		}
 		else
 		{
 			// low current
-			sI_out_act = ADC_ScaleLowAmp_mA( ADC_GetISRValue(2) );
+			sI_out_act = ADC_ScaleLowAmp_mA( ADC_GetISRValue(2) )/2;
 			// voltage measurement correction
-			sU_out_act -= sI_out_act * 2 / 19; // Low current resistor value (0.105R) * Current
+			sU_out_act -= sI_out_act * 6 / 19; // Low current resistor value (0.105R) * Current
 		}
-
+		
+		sFilterVar( &sU_out_act_flt, &sU_out_act, 16 );
+		sFilterVar( &sU_in_act_flt, &sU_in_act, 16 );
+		
 		if(sI_out_act > 2500)
-			ADC_ActivateHiCurrentMeas();
+			ADC_ActivateHiCurrentMeas();  
 		else
 			if(sI_out_act < 2000)
 				ADC_ActivateLoCurrentMeas();
