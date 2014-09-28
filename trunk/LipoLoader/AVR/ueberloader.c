@@ -136,9 +136,15 @@ void TaskGovernor(void)
 		sU_in_act = ADC_ScaleVolt_mV( ADC_GetISRValue(0) );
 		sU_out_act = ADC_ScaleVolt_mV( ADC_GetISRValue(1) ); // corrected below!
 
+						
 
+						
+		
 		if(( ADCA.CH2.MUXCTRL & ( 0xf << 3 ) ) == ADC_CH_MUXPOS_PIN7_gc) // is high current config...
 		{
+			if (g_tBattery_Info.eState == eBattWaiting)		// zero wert setzen, wenn kein strom fließt
+			sZeroHiMeas = ((sZeroHiMeas*5) + ADC_GetISRValue(2) +3)/6;
+			
 			// high current
 			sI_out_act = ADC_ScaleHighAmp_mA( ADC_GetISRValue(2), sZeroHiMeas );
 			// voltage measurement correction
@@ -156,11 +162,11 @@ void TaskGovernor(void)
 		sFilterVar( &sU_out_act_flt, &sU_out_act, 16 );
 		sFilterVar( &sU_in_act_flt, &sU_in_act, 16 );
 		
-		if(sI_out_act > 2500)
+//		if(sI_out_act > 2500)
 			ADC_ActivateHiCurrentMeas();  
-		else
-			if(sI_out_act < 2000)
-				ADC_ActivateLoCurrentMeas();
+	//	else
+		//	if(sI_out_act < 2000)
+			//	ADC_ActivateLoCurrentMeas();
 
 		sFilter( &sI_out_act_flt, &sI_out_act );
 
@@ -190,7 +196,7 @@ void TaskGovernor(void)
 		}
 
 		static uint8_t errcntOverVolt = 0;
-		if(sU_out_act > 4500 * g_tBattery_Info.ucNumberOfCells // FIXME war vorher auf 4250 aber mein Lader misst dermaßen falsch...
+		if(sU_out_act > 4500 * g_tBattery_Info.ucNumberOfCells // FIXME war vorher auf 4250 aber mein Lader misst dermaßen falsch... war ein SW BUG kann man vermut
 				&& g_tBattery_Info.ucNumberOfCells >0
 				&& g_tBattery_Info.eState == eBattCharging)
 			errcntOverVolt++;
@@ -330,12 +336,13 @@ void TaskState(void)
 
 		if (mySuppVoltage < g_tCommand.SuppMin_mV )
 			g_tBattery_Info.eState = eBattSupplyUntervolt;
-
+		
 
 		switch(g_tBattery_Info.eState)
 		{
 			case eBattWaiting:
 				// nicht vollständig angesteckt
+
 				switch(g_eChargerMode)
 				{
 					case eModeAuto:
