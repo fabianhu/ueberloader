@@ -6,31 +6,22 @@
 #include "../menu/menu_variant.h"
 #include <string.h>
 
-
 extern void menu_init(void);
 void linewriter(void);
-
-
 extern uint8_t getLastCommError(void);
-
-
 extern Battery_Info_t g_tBattery_Info; // serial_master.c
 extern uint8_t g_GotNewComand; // command.c
 extern Command_t g_tCommand; // command.c // attention!!!!!! not task safe!!!
 
-
 #define DISPLAYTEST 0
 #define TOUCHTEST 0
-
 
 char g_buf[30];
 char bufsource[30];
 
 void DrawBox( uint16_t ypos ) 
 {
-	#define BOXLEFT 160
-	
-	
+	#define BOXLEFT 160	
 	lcd_draw_line(255,0,0,	BOXLEFT,	ypos+4,				320,	ypos+4);
 	lcd_draw_line(255,0,0,	320,	ypos+4,				320,	ypos+7*16-4);
 	lcd_draw_line(255,0,0,	BOXLEFT,	ypos+7*16-4,	320,	ypos+7*16-4);
@@ -38,23 +29,18 @@ void DrawBox( uint16_t ypos )
 	
 	lcd_draw_line(255,0,0,	BOXLEFT,	ypos+4,				320,	ypos+7*16-4);
 	lcd_draw_line(255,0,0,	BOXLEFT,	ypos+7*16-4,		320,	ypos+4);
-	
 }
 
 void TaskDisplay(void)
 {
-
 	uint16_t ypos = 0;
 	uint8_t i;
 
-
-#define FONTSIZE 1
-#define LINEDIFF FONTSIZE*16
+	#define FONTSIZE 1
+	#define LINEDIFF FONTSIZE*16
 
 	lcd_init( BPP24, ORIENTATION_0);
-
 	menu_init();
-
 	lcd_clear();//lcd clear needed here because a new screen is shown
 	OS_SetAlarm( OSALMWaitDisp, 1000 );
 
@@ -65,11 +51,8 @@ void TaskDisplay(void)
 		OS_WaitAlarm(OSALMWaitDisp);
 		OS_SetAlarm(OSALMWaitDisp,100);
 		// the touch is tested here!
-
 		touchtest();
-
 		OS_GetTicks(&t2);
-
 		t2=t2-t1;
 		lcd_print(GREY, BLACK, FONTSIZE, 0, 220,"Time: %d ms     " ,(uint16_t)t2/100);
 #else
@@ -79,26 +62,18 @@ void TaskDisplay(void)
 		{
 			// gespeicherte Commands vom Slave in Parameter eintragen.
 			OS_MutexGet( OSMTXCommand );
-
 			myPar.parCurrent.sValue = g_tCommand.sCurrentSetpoint;
 			myPar.parChVoltSET.sValue = g_tCommand.usVoltageSetpoint_mV;
 			// not existing myPar.parCellCount.sValue = g_tCommand.ucUserCellCount;
-
 			myPar.parMaxcap.sValue = g_tCommand.unQ_max_mAh; // in mAh
 			myPar.parMaxtime.sValue = g_tCommand.usT_max_min;
 			myPar.parBalActVoltSET.sValue = g_tCommand.usMinBalanceVolt_mV;
-
 			myPar.parRefreshPeriod.sValue = g_tCommand.refreshrate;
-			
 			myPar.parMinSupplyVolt.sValue = g_tCommand.SuppMin_mV;
-
 			OS_MutexRelease( OSMTXCommand );
-
 			g_GotNewComand = 0; // reset it.
 		}
-		
 		static eBatteryStatus_t LastState;
-
 		if (g_tBattery_Info.eState != LastState)
 		{
 			lcd_clear();
@@ -106,11 +81,9 @@ void TaskDisplay(void)
 		}
 		LastState = g_tBattery_Info.eState;
 
-
 		if(g_tBattery_Info.eState == eBattWaiting )
 		{
 			menu_show();
-
 			// debug
 			//lcd_print( WHITE, BLACK, 1, 150, 200,"Particle: %d , %d   " ,(uint16_t)myP.position,(uint16_t)myP.velocity);
 		}
@@ -123,7 +96,6 @@ void TaskDisplay(void)
 		
 		#if GRAPH_AT_LOCK == 1
 		// touchtest();
-
 		else if (s_ucKeyLock == 1)
 		{
 			linewriter();
@@ -131,11 +103,9 @@ void TaskDisplay(void)
 		#endif
 		else
 		{
-			// show the overview page
-
+			// show the "charging" page
 			//the lcd_print function overwrites old text-> no lcd_clear needed!
-			//lcd_clear();
-			
+			//lcd_clear();		
 			lcd_print(RED, BLACK, 3, 290, ypos,"%d",1); // actual charger instance No.
 
 			lcd_print(YELLOW, BLACK, 2, 0, ypos,"%02d.%02d V  ",g_tBattery_Info.sActVoltage_mV/1000,(g_tBattery_Info.sActVoltage_mV%1000)/10);
@@ -152,8 +122,6 @@ void TaskDisplay(void)
 			ypos += 2*LINEDIFF;
 
 			//DrawBox(ypos);  überflüssig
-			
-
 			#define CELLCOL1 15
 			#define CELLCOL2 60
 			
@@ -222,16 +190,6 @@ void TaskDisplay(void)
 						g_buf[i] = bufsource[i];
 					}
 					g_buf[counter] = 0;
-					//------------------------------					
-					// Variante 1 ...
-					//if ((counter >= 12) && (counter < 15)) strcpy(buf,"Battery is charging....");
-					//if (counter < 3) strcpy(buf,"Battery is charging     ");							// fime: beautyfy me						
-					//if ((counter >= 3) && (counter < 6)) strcpy(buf,"Battery is charging.");
-					//if ((counter >= 6) && (counter < 9)) strcpy(buf,"Battery is charging..");
-					//if ((counter >= 9) && (counter < 12)) strcpy(buf,"Battery is charging...");
-					//if ((counter >= 12) && (counter < 15)) strcpy(buf,"Battery is charging....");
-					//if (counter >= 15) strcpy(buf,"Battery is charging.....");
-					//if (counter >= 17) counter = 0;
 					break;
 				case eBattFull:
 					if (counter <= 1)  strcpy(g_buf,"Battery full - job done"); 
@@ -264,39 +222,22 @@ void TaskDisplay(void)
 			}
 			lcd_print(GREEN,BLACK,2,0,ypos,g_buf);
 			counter++;
-		
-			
-			
-			
-			
-
 			/*OS_GetTicks(&t2);
-
 			t2=t2-t1;
 			lcd_print(GREY, BLACK, FONTSIZE, 0, 220,"Time: %d s     " ,(uint16_t)t2/1000);
-
 			lcd_print(WHITE, BLACK, FONTSIZE, 230, 220,"I set: %d",g_tCommand.sCurrentSetpoint);
-
 			lcd_print(WHITE, BLACK, FONTSIZE, 230, 200,"Batt. %d Cells ",g_tBattery_Info.ucNumberOfCells);*/
-
-
 		}
 	}
-
 #endif
-	
 }
 
 uint8_t scaletoscreen(int16_t val,int16_t max)
 {
 	int32_t ret;
-
 	ret = (int32_t)val*240L/(int32_t)max;
-
-
 	return limit(240-ret,0,240);
 }
-
 
 void linewriter(void)
 {
@@ -309,22 +250,16 @@ void linewriter(void)
 		//lcd_draw_line(YELLOW,0,30,320,30);
 		g =0;
 	}
-
-
 	lcd_draw_pixel( YELLOW,g,  scaletoscreen(g_tBattery_Info.sActVoltage_mV-18000,25200-18000)  );
 	lcd_draw_pixel( GREY  ,g,  scaletoscreen(g_tBattery_Info.sISetpoint,2000)  );
 	lcd_draw_pixel( WHITE ,g,  scaletoscreen(g_tBattery_Info.sActCurrent_mA,2000)  );
 	lcd_draw_pixel( RED   ,g,  scaletoscreen(g_tBattery_Info.usPWM,4500)  );
 //	lcd_draw_pixel( GREEN ,g,  scaletoscreen(g_tBattery_Info.sDiff+5000,10000)  );
 
-
 	lcd_print(YELLOW, BLACK, 1, 0, 16,"U: %d mV  " ,(uint16_t)g_tBattery_Info.sActVoltage_mV);
 	lcd_print(GREY  , BLACK, 1, 0, 80,"S: %d mA  " ,(uint16_t)g_tBattery_Info.sISetpoint);
 	lcd_print(WHITE , BLACK, 1, 0, 32,"I: %d mA  " ,(uint16_t)g_tBattery_Info.sActCurrent_mA);
 	lcd_print(RED   , BLACK, 1, 0, 48,"P: %d %   " ,(uint16_t)g_tBattery_Info.usPWM);
 //	lcd_print(GREEN , BLACK, 1, 0, 64,"D: %d Z   " ,(uint16_t)g_tBattery_Info.sDiff);
-
-
-
 }
 
