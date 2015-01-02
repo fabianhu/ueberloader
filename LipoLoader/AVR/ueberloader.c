@@ -196,7 +196,7 @@ void TaskGovernor(void)
 		}
 
 		static uint8_t errcntOverVolt = 0;
-		if(sU_out_act > 4500 * g_tBattery_Info.ucNumberOfCells // FIXME war vorher auf 4250 aber mein Lader misst dermaßen falsch... war ein SW BUG kann man vermut
+		if(sU_out_act > 4350 * g_tBattery_Info.ucNumberOfCells // FIXME war vorher auf 4250 aber mein Lader misst dermaßen falsch, wert auf 4350
 				&& g_tBattery_Info.ucNumberOfCells >0
 				&& g_tBattery_Info.eState == eBattCharging)
 			errcntOverVolt++;
@@ -453,13 +453,17 @@ void TaskState(void)
 				//			break;
 			case eBattFull:
 				// vollständig geladen, Sollwert erreicht
-				if(GetCellcount() != g_tBattery_Info.ucNumberOfCells)
+				if(GetCellcount() != g_tBattery_Info.ucNumberOfCells)		// wenn Akku abgesteckt wird
 				{
 					g_tBattery_Info.ucNumberOfCells = 0;
 					g_tBattery_Info.eState = eBattUnknown;
 				}
+				if(myBattSumVoltage	< (g_tCommand.usVoltageSetpoint_mV-5)	* g_tBattery_Info.ucNumberOfCells)	// Wenn die Einzelzellenspannungen 5mV unter der Sollspannung liegt, wird wieder weiter geladen 
+				{
+					g_tBattery_Info.eState = eBattCharging;
+				}
 				break;
-				
+								
 			case eBattMaxCap:
 				// maximale Kapazität geladen
 				if(GetCellcount() != g_tBattery_Info.ucNumberOfCells)
@@ -479,13 +483,13 @@ void TaskState(void)
 				break;	
 
 			case eBattUnknown:
-				OS_WaitTicks( OSALMStateWait, 500 );
+				OS_WaitTicks( OSALMStateWait, 100 );
 				g_tBattery_Info.eState = eBattWaiting;
 				break;
 
 			case eBattSupplyUntervolt:
 				OS_WaitTicks( OSALMStateWait, 1000 );
-				if (mySuppVoltage > g_tCommand.SuppMin_mV + 1000)
+				if (mySuppVoltage > g_tCommand.SuppMin_mV + 500)
 					g_tBattery_Info.eState = eBattWaiting;
 				break;
 

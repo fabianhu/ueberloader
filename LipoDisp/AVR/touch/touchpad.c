@@ -134,46 +134,6 @@ int16_t touchGetPad5(uint8_t pin)
 	}													// derzeit wird eine gedrückte Taste bei > 32% erkannt
 }
 
-// fixme, wird das Ding noch gebraucht ?
-/* 
-#define MOMENTMULTIPLIER 100ULL
-int32_t touchGetSchwerpunkt(void)
-{
-	int32_t sum;
-	int32_t Moment;
-	int32_t ret;
-	uint8_t i;
-
-	for(i = 0; i < TOUCHCOUNT ; i++)
-	{
-		g_aucTouchpads[i] = touchGetPad5( i );
-	}
-
-	Moment = 0;
-	sum = 0;
-	for(i = 0; i < TOUCHCOUNT ; i++)
-	{
-
-		Moment += ( i + 1 ) * MOMENTMULTIPLIER * g_aucTouchpads[i];
-		sum += g_aucTouchpads[i];
-	}
-	if(sum > ( SLIDEMINSIGNAL )) //fixme make self learning
-	{
-		ret = ( Moment / sum ) - MOMENTMULTIPLIER;
-
-		// fixme debug:
-		if(ret < 0)
-		{
-			//asm("break"); bin grad da drin hängen geblieben (ret =-74) habs rausgeschmissen (Uli)
-		}
-		return ret;
-	}
-	else
-	return -1;
-
-}
-
-*/
 
 // fixme, wird das Ding noch gebraucht ?
 void sFilter(int16_t* o, int16_t* n)
@@ -227,61 +187,6 @@ void touchGetValue(int16_t* pValue) // read txtback the (changed) value Mutex?
 	OS_ALLOWSCHEDULING;
 	//OS_LEAVECRITICAL
 }
-/* 
-uint8_t touchGetSpeed(int16_t* speed, int32_t *Schwerpunkt)
-{
-
-	// fixme mach rein TOUCHMINDIST
-
-	static int16_t opos = -1, fpos = -1;
-	int16_t pos;
-	int16_t speed_raw;
-
-	*Schwerpunkt = pos = touchGetSchwerpunkt();
-	if(pos != -1)
-	{
-		if(fpos == -1)
-		fpos = pos; // filter überschreiben, wenn gerade gültig geworden.
-		else
-		svFilter( &fpos, &pos, 8 ); // sonst filtern
-	}
-	else
-	{
-		// invalid (no touch)
-		fpos = -1;
-		opos = -1;
-		*speed = 0;
-		return 0; // no speed!
-	}
-
-	if(opos == -1) // gerade gültig geworden?
-	{
-
-		opos = fpos;
-		*speed = 0;
-		return 0; // no speed, neue Messung.
-	}
-	else
-	{
-		speed_raw = fpos - opos;
-		svFilter( speed, &speed_raw, 4 );
-
-		if(abs(*speed) > MAXSLIDESPEED || abs(*speed) < MINSLIDESPEED)
-		{
-			opos = -1;
-			fpos = -1;
-			*speed = 0;
-			return 0;
-		}
-		else
-		{
-			opos = fpos;
-			return 1;
-		}
-	}
-
-}
-*/
 
 eTouchstate_t eTouchstate = eTSIdle;
 uint8_t info = 0;
@@ -292,18 +197,15 @@ void ProcessTouch(void)
 {
 	eGestures_t eActualGesture, newGesture;
 	static eGestures_t s_ucOldGesture;
-//	static int16_t s_sSpeedFiltered = 0;
-//	uint8_t bMoved;
-//	static int32_t OldSchwerpunkt;
 	int16_t calculator;
+	static uint8_t gesturecount = 0;
 	
 	// hier wird die aktuell gültige Geste ermittelt = eActualGesture
 	eActualGesture = eGNothing;					// Ausgangslage, nix gedrückt, keine Aktion
-	//bMoved	= touchGetSpeed( &s_sSpeedFiltered, &Schwerpunkt/*, &TouchBitfield*/);	// fixme  beim integrieren den Schwerpunkt / speed  nur rechnen, wenn nur ein bzw. zwei benachbarte gedrückt.
 	newGesture = getGestureSkip();				// ermittelt welche Taste gedrückt ist
 	if (newGesture == s_ucOldGesture)			// wenn alt gleich neu	
 	{
-		eActualGesture = newGesture;			// Geste ausführen
+		eActualGesture = newGesture;			// aktuelle Geste merken
 	}
 	else
 	{
@@ -311,13 +213,12 @@ void ProcessTouch(void)
 	}
 	s_ucOldGesture = newGesture;				// aktuelle Geste merken
 												// weils so schön war und um das schneller zu machen gleich nochmal
-	//bMoved	= touchGetSpeed( &s_sSpeedFiltered, &Schwerpunkt/*, &TouchBitfield*/);	// fixme  beim integrieren den Schwerpunkt / speed  nur rechnen, wenn nur ein bzw. zwei benachbarte gedrückt.
 	newGesture = getGestureSkip();				// ermittelt welche Taste gedrückt ist
 	if (eActualGesture == eGNothing)			// wenn vorher noch keine Geste erkannt wurde
 	{
-		if (newGesture == s_ucOldGesture)	// wenn neue gleich alter Geste UND noch keine Geste erkannt wurde
+		if (newGesture == s_ucOldGesture)		// wenn neue gleich alter Geste UND noch keine Geste erkannt wurde
 		{
-			eActualGesture = newGesture;			// Geste ausführen
+			eActualGesture = newGesture;		// aktuelle Geste merken
 		}
 		else
 		{
@@ -326,8 +227,19 @@ void ProcessTouch(void)
 	}
 	s_ucOldGesture = newGesture;				// neue Geste merken
 
-//	static uint16_t TimeDiff = 0;
-//	TimeDiff++;
+
+if(eActualGesture != eGNothing && gesturecount == 0 )   // Tastenentprellung - unterdrückt mehrere Gesten hintereinender 
+{
+	gesturecount = 20;	
+}
+else
+{
+	if (gesturecount > 0)
+	{
+		gesturecount -= 1;
+		eActualGesture = eGNothing;
+	}
+}
 
 // welcome to Ulis dirtiest hack ever!
 // es geht immer noch dreckiger :) Grüße Uli
@@ -367,121 +279,49 @@ void ProcessTouch(void)
 	}
 // nearly end of dirty hack
 
-/*	
-	switch(eTouchstate)	// Wertet die gedrückten Tasten aus
-	{
-		case eTSIdle:
-			//s_sSpeedFiltered = 0;
-			myP.force = 0;
-			if(bMoved == 0 && eActualGesture == 0)
-			{		// not touched	
+
+		switch(eActualGesture)   //Je nach ermittelter Geste wird hier reagiert
+		{
+			case eGNothing:
 				break;
-			}
-			else
-			{
-				TimeDiff = 0;
-				OldSchwerpunkt = Schwerpunkt;
-				eTouchstate = eTSTouching;
-			}
-			// no break;
-		case eTSTouching:
-			if(bMoved == 1) // touched / moved
-			{	// adapt speed	
-				myP.force = -s_sSpeedFiltered;
-				info = 2;
-				myP.velocity = myP.velocity + myP.force; */
-				/*static uint8_t n;  // bremsen!!!
-				if (n++ == 10)
-				{
-				n = 0;
-				myP.velocity = (myP.velocity * myP.friction) / 100;
-				}*/ /*
-			}
-			else
-			{
-				if(myP.velocity == 0)
-				{
-					eTouchstate = eTSGesture;
-					info = 3;
-				}
+			case eGPlus:
+				if(myP.position + stepsize_used < myP.max)
+				myP.position += stepsize_used;
 				else
-				{			// do nothing and let particle move on	
-					info = 5;
-					if(eActualGesture != 0)
+				myP.position = myP.max;
+				break;
+			case eGMitte:
+				// menue bestätigung
+				menu_select();
+				break;
+			case eGMittePlus:			// Wert aufs maximum gesetzt
+				myP.position = myP.max;
+				break;
+			case eGMinus:
+				if(myP.position - stepsize_used > myP.min)
+				myP.position -= stepsize_used;
+				else
+				myP.position = myP.min;
+				break;
+			case eGSplit:				// Wert in die Mitte des Wertebereichs gesetzt
+					if (myP.stepsize == -1*myP.upscale)		// special Uli Hack, damit der Ladestrom auf 5A gesetzt wird
 					{
-						myP.velocity = 0;			// bremsen
-						info = 6;
+						myP.position = 5000 * myP.upscale;				// entspricht 5A
 					}
-				}
-			}
-			#if TOUCHDISABLESLIDE == 1
-			myP.velocity = 0;
-			#else
-			myP.position = limit(myP.position + myP.velocity , myP.min , myP.max);
-			#endif
-			break;
-
-		case eTSGesture:
-			info = 7; */
-			switch(eActualGesture)   //Je nach ermittelter Geste wird hier reagiert
-			{
-				case eGNothing:
-					break;
-				case eGPlus:
-					if(myP.position + stepsize_used < myP.max)
-					myP.position += stepsize_used;
 					else
-					myP.position = myP.max;
-					break;
-				case eGMitte:
-					// menue bestätigung
-					menu_select();
-					break;
-				case eGMittePlus:			// Wert aufs maximum gesetzt
-					myP.position = myP.max;
-					break;
-				case eGMinus:
-					if(myP.position - stepsize_used > myP.min)
-					myP.position -= stepsize_used;
-					else
+					{
+						calculator = ((myP.max - myP.min) / stepsize_used) / 2;	
+						myP.position = myP.min + (calculator * stepsize_used);	
+					}
+				break;
+				case eGMitteMinus:		// Wert aufs miinimum gesetzt
 					myP.position = myP.min;
-					break;
-				case eGSplit:				// Wert in die Mitte des Wertebereichs gesetzt
-						if (myP.stepsize == -1*myP.upscale)		// special Uli Hack, damit der Ladestrom auf 5A gesetzt wird
-						{
-							myP.position = 5000 * myP.upscale;				// entspricht 5A
-						}
-						else
-						{
-							calculator = ((myP.max - myP.min) / stepsize_used) / 2;	
-							myP.position = myP.min + (calculator * stepsize_used);	
-						}
-					break;
-					case eGMitteMinus:		// Wert aufs miinimum gesetzt
-						myP.position = myP.min;
-					break;
-				case eGFullHouse:
-					break;
-				default:
-					break;
-			}
-			//eTouchstate = eTSIdle;  // auf eTSBlocked zu gehen macht es nur langsam
-			//eTouchstate = eTSBlocked;
-			/*
-			TimeDiff = 0;
-			break;
-
-		case eTSBlocked:
-			if(bMoved == 0 && TimeDiff > 20 && eActualGesture == 0) // warte bis komplett losgelassen
-			{
-				eTouchstate = eTSIdle;
-			}
-			break;
-		default:
-			break;
-	}
-	g_debug = eTouchstate;
-	g_debug3 = eActualGesture;*/
+				break;
+			case eGFullHouse:
+				break;
+			default:
+				break;
+		}
 }
 
 
