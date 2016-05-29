@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<TreeView>
+  <node text="Ready..." imageindex="0" tagType="normal" tagID="0" tagInfo="" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="">
+    <node text="Presets" imageindex="0" tagType="normal" tagID="1" tagInfo="" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="">
+      <node text="Storage" imageindex="4" tagType="action" tagID="9" tagInfo="ActionChargeModeStorage1" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="" />
+      <node text="Charge LiPo" imageindex="4" tagType="action" tagID="10" tagInfo="ActionChargeModeLiPo1" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="" />
+      <node text="Storage high" imageindex="4" tagType="action" tagID="11" tagInfo="ActionChargeModeStorage2" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="" />
+      <node text="Charge LiFe" imageindex="4" tagType="action" tagID="12" tagInfo="ActionChargeModeLiFe" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="" />
+      <node text="Charge LiIo" imageindex="4" tagType="action" tagID="13" tagInfo="ActionChargeModeLiIo" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="" />
+      <node text="Charge LiPo low" imageindex="4" tagType="action" tagID="14" tagInfo="ActionChargeModeLiPo2" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="" />
+      <node text="(back)" imageindex="1" tagType="back" tagID="15" tagInfo="leavemenu" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="" />
+    </node>
+    <node text="Current Setpoint" imageindex="3" tagType="parameter" tagID="2" tagInfo="parCurrent" tagParUpper="10000" tagParLower="100" tagParStepSize="-1" tagParType="mA" tagParDesc="stepsize -1 for Ulis dirty hack" />
+    <node text="Cell Voltage SET" imageindex="3" tagType="parameter" tagID="3" tagInfo="parChVoltSET" tagParUpper="4250" tagParLower="3300" tagParStepSize="10" tagParType="mV" tagParDesc="" />
+    <node text="Bal. Activ. Voltage" imageindex="3" tagType="parameter" tagID="4" tagInfo="parBalActVoltSET" tagParUpper="4300" tagParLower="3200" tagParStepSize="100" tagParType="mV" tagParDesc="" />
+    <node text="Max Capacity" imageindex="3" tagType="parameter" tagID="5" tagInfo="parMaxcap" tagParUpper="30000" tagParLower="250" tagParStepSize="250" tagParType="mAh" tagParDesc="" />
+    <node text="Max Time" imageindex="3" tagType="parameter" tagID="6" tagInfo="parMaxtime" tagParUpper="9000" tagParLower="0" tagParStepSize="20" tagParType="min" tagParDesc="" />
+    <node text="Setup" imageindex="0" tagType="normal" tagID="7" tagInfo="bak" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="">
+      <node text="(back)" imageindex="1" tagType="back" tagID="16" tagInfo="bak" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="" />
+      <node text="Preset Setup" imageindex="0" tagType="normal" tagID="17" tagInfo="bak" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="">
+        <node text="(back)" imageindex="1" tagType="back" tagID="22" tagInfo="bak" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="" />
+        <node text="Lithium Polymer" imageindex="0" tagType="normal" tagID="23" tagInfo="bak" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="">
+          <node text="(back)" imageindex="1" tagType="back" tagID="30" tagInfo="bak" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="" />
+          <node text="LiPo Voltage" imageindex="3" tagType="parameter" tagID="31" tagInfo="parChVoltLiPo1" tagParUpper="4250" tagParLower="3300" tagParStepSize="10" tagParType="mV" tagParDesc="" />
+          <node text="Bal. Activ. Voltage" imageindex="3" tagType="parameter" tagID="32" tagInfo="parBalActVoltLiPo1" tagParUpper="4300" tagParLower="3200" tagParStepSize="100" tagParType="mV" tagParDesc="" />
+          <node text="back and save" imageindex="4" tagType="action" tagID="33" tagInfo="savePreset" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="" />
+        </node>
+        <node text="Lithium Polymer low" imageindex="0" tagType="normal" tagID="24" tagInfo="bak" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="">
+          <node text="(back)" imageindex="1" tagType="back" tagID="34" tagInfo="bak" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="" />
+          <node text="LiPo Voltage low" imageindex="3" tagType="parameter" tagID="35" tagInfo="parChVoltLiPo2" tagParUpper="4250" tagParLower="3300" tagParStepSize="10" tagParType="mV" tagParDesc="" />
+          <node text="Bal. Activ. Voltage" imageindex="3" tagType="parameter" tagID="36" tagInfo="parBalActVoltLiPo2" tagParUpper="4300" tagParLower="3200" tagParStepSize="100" tagParType="mV" tagParDesc="" />
+          <node text="back and save" imageindex="4" tagType="action" tagID="37" tagInfo="savePreset" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="" />
+        </node>
+        <node text="Lithium Ion" imageindex="0" tagType="normal" tagID="25" tagInfo="bak" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="">
+          <node text="(back)" imageindex="1" tagType="back" tagID="38" tagInfo="bak" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="" />
+          <node text="LiIon Voltage" imageindex="3" tagType="parameter" tagID="39" tagInfo="parVoltLiIo" tagParUpper="4250" tagParLower="3300" tagParStepSize="10" tagParType="mV" tagParDesc="" />
+          <node text="Bal. Activ. Voltage" imageindex="3" tagType="parameter" tagID="40" tagInfo="parBalActVoltLiIo" tagParUpper="4300" tagParLower="3200" tagParStepSize="100" tagParType="mV" tagParDesc="" />
+          <node text="back and save" imageindex="4" tagType="action" tagID="41" tagInfo="savePreset" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="" />
+        </node>
+        <node text="LiFePo4" imageindex="0" tagType="normal" tagID="26" tagInfo="bak" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="">
+          <node text="(back)" imageindex="1" tagType="back" tagID="42" tagInfo="bak" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="" />
+          <node text="LiFePo4 Volt." imageindex="3" tagType="parameter" tagID="43" tagInfo="parVoltLiFe" tagParUpper="4250" tagParLower="3300" tagParStepSize="10" tagParType="mV" tagParDesc="" />
+          <node text="Bal. Activ. Voltage" imageindex="3" tagType="parameter" tagID="44" tagInfo="parBalActVoltLiFe" tagParUpper="4300" tagParLower="3200" tagParStepSize="100" tagParType="mV" tagParDesc="" />
+          <node text="back and save" imageindex="4" tagType="action" tagID="45" tagInfo="savePreset" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="" />
+        </node>
+        <node text="Storage" imageindex="0" tagType="normal" tagID="27" tagInfo="bak" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="">
+          <node text="(back)" imageindex="1" tagType="back" tagID="46" tagInfo="bak" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="" />
+          <node text="Storage Voltage" imageindex="3" tagType="parameter" tagID="47" tagInfo="parChtVoltStorage1" tagParUpper="4250" tagParLower="3300" tagParStepSize="10" tagParType="mV" tagParDesc="" />
+          <node text="Bal. Activ. Voltage" imageindex="3" tagType="parameter" tagID="48" tagInfo="parBalActVoltStor1" tagParUpper="4300" tagParLower="3200" tagParStepSize="100" tagParType="mV" tagParDesc="" />
+          <node text="back and save" imageindex="4" tagType="action" tagID="49" tagInfo="savePreset" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="" />
+        </node>
+        <node text="Storage high" imageindex="0" tagType="normal" tagID="28" tagInfo="bak" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="">
+          <node text="(back)" imageindex="1" tagType="back" tagID="50" tagInfo="bak" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="" />
+          <node text="Storage Voltage high" imageindex="3" tagType="parameter" tagID="51" tagInfo="parChtVoltStorage2" tagParUpper="4250" tagParLower="3300" tagParStepSize="10" tagParType="mV" tagParDesc="" />
+          <node text="Bal. Activ. Voltage" imageindex="3" tagType="parameter" tagID="52" tagInfo="parBalActVoltStor2" tagParUpper="4300" tagParLower="3200" tagParStepSize="100" tagParType="mV" tagParDesc="" />
+          <node text="back and save" imageindex="4" tagType="action" tagID="53" tagInfo="savePreset" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="" />
+        </node>
+        <node text="(back to Main)" imageindex="2" tagType="main" tagID="29" tagInfo="bak" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="" />
+      </node>
+      <node text="Pwm" imageindex="0" tagType="normal" tagID="18" tagInfo="" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="">
+        <node text="(back)" imageindex="1" tagType="back" tagID="54" tagInfo="" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="" />
+        <node text="Refresh-period" imageindex="3" tagType="parameter" tagID="55" tagInfo="parRefreshPeriod" tagParUpper="10000" tagParLower="1" tagParStepSize="10" tagParType="ms" tagParDesc="" />
+      </node>
+      <node text="Min Supply" imageindex="3" tagType="parameter" tagID="19" tagInfo="parMinSupplyVolt" tagParUpper="20000" tagParLower="8000" tagParStepSize="500" tagParType="mV" tagParDesc="" />
+      <node text="Calibration H" imageindex="4" tagType="action" tagID="20" tagInfo="actCalH" tagParUpper="6" tagParLower="0" tagParStepSize="1" tagParType="Cells" tagParDesc="" />
+      <node text="Calibration L" imageindex="4" tagType="action" tagID="21" tagInfo="actCalL" tagParUpper="6" tagParLower="0" tagParStepSize="1" tagParType="Cells" tagParDesc="" />
+    </node>
+    <node text="Show Last Values" imageindex="4" tagType="action" tagID="8" tagInfo="ActionShowLast" tagParUpper="0" tagParLower="0" tagParStepSize="0" tagParType="" tagParDesc="" />
+  </node>
+</TreeView>
