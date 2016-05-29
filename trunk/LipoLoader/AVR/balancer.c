@@ -181,7 +181,7 @@ void TaskBalance(void)
 		static int32_t U_Integrator = 0;
 		int16_t I_Set_mA_Ramped;
 		#define VOLTGOV_KP 1 // /32
-		#define VOLTGOV_KI 8000 // /255 /128
+		#define VOLTGOV_KI 10000   // alt und gut bewährt, etwas langsam: 8000 war gut  // bei 16000 geht der Strom vor dem Abschalten stark rauf und runter  --> zu viel
 		#define VOLTGOV_KD 0 // inactive in PID()!
 		#define BALANCEMINCHARGECURRENT 2300/BALANCEROHMS/2 // 100 for 22R
 		
@@ -190,25 +190,27 @@ void TaskBalance(void)
 		{
 			if(g_tBattery_Info.eState == eBattCharging)
 			{
-				int32_t diff = (int32_t)myUSetpoint - (int32_t)maxCellVolt + 2;		 							// Stromregler lädt die Zellen 2mV höher als eigentlich eingestellt --> verbesserte Abschaltverhalten
-				I_Set_mA_Ramped = PID(diff , &U_Integrator, VOLTGOV_KP, VOLTGOV_KI, VOLTGOV_KD, 0, myISetpoint ); // todo adjust integrator
-				
-				if(maxCellVolt > myUSetpoint + 10) // (old:3mV) 10 mV more than desired --> Regler erschrickt und reduziert schnell
+				int32_t diff = (int32_t)myUSetpoint - (int32_t)maxCellVolt + 2;			 // Stromregler lädt die 2mV höher als eigentlich eingestellt --> verbessertes Abschaltverhalten	
+				if(maxCellVolt > myUSetpoint + 10)										// 10 mV more than desired --> Regler erschrickt und reduziert schnell
 				{
-					I_Set_mA_Ramped = I_Set_mA_Ramped - (I_Set_mA_Ramped/100); // reduce by 1% (alt:2%)    fixme ?? 
+					if(maxCellVolt > myUSetpoint + 20)									// 20 mV more than desired --> Regler erschrickt und reduziert schnell
+					{
+					I_Set_mA_Ramped = I_Set_mA_Ramped - (I_Set_mA_Ramped/10);			// reduce by 10%
+					}
+					else
+					{
+						I_Set_mA_Ramped = I_Set_mA_Ramped - (I_Set_mA_Ramped/100);		// reduce by 1%	
+					}
 					PID(0 , &U_Integrator, 0, 0, 0, 0, I_Set_mA_Ramped);
 				}
 				else
 				{
-								
+					I_Set_mA_Ramped = PID(diff , &U_Integrator, VOLTGOV_KP, VOLTGOV_KI, VOLTGOV_KD, 0, myISetpoint ); // todo adjust integrator			
 				}
-
-
 				if(I_Set_mA_Ramped <= 0)
 				{
 					I_Set_mA_Ramped = 0; // switch off on zero.
 				}
-
 			}
 			else
 			{
@@ -218,15 +220,14 @@ void TaskBalance(void)
 			OS_DISABLEALLINTERRUPTS;
 			CurrentSetpointfromBal = I_Set_mA_Ramped;
 			OS_ENABLEALLINTERRUPTS;
-		
 
-			if(minCellVolt > usBalanceRelease_mV && g_tBattery_Info.eState == eBattCharging )
+			if(maxCellVolt > usBalanceRelease_mV && g_tBattery_Info.eState == eBattCharging )		// wenn die Zelle mit der höchsten Spannung, mehr Spannung hat als die balActVolt
 			{
 
 				// Balancer logic
 				for(i = 0; i < 6; i++)// process all cells
 				{
-					if(sBalanceCells[i] > minCellVolt + 2 ) // 2mV for hysteresis
+					if(sBalanceCells[i] > minCellVolt + 2 ) // 2mV for hysteresis   // schwere Geburt		//Wenn die Zelle mehr Spannung hat als die mit der niedrigsten Spannung --> balancieren
 					{
 						// switch on Balancer for this cell
 						PORTC.OUTSET = ( 1 << ( 2 + i ) );
@@ -248,7 +249,6 @@ void TaskBalance(void)
 				}
 				if(ucBalanceBits == 0)
 					if(ucBalancerFinished > 0) ucBalancerFinished--;
-			
 			}		
 		}
 		EveryNCycles++;

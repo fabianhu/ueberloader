@@ -35,7 +35,9 @@ void TaskDisplay(void)
 {
 	uint16_t ypos = 0;
 	uint8_t i;
-
+	uint8_t clear_mAh = 0;
+	uint16_t cht = 0;
+	uint16_t mah = 0;
 	#define FONTSIZE 1
 	#define LINEDIFF FONTSIZE*16
 
@@ -89,6 +91,7 @@ void TaskDisplay(void)
 		}
 		else if (g_tBattery_Info.eState == eBattSupplyUntervolt ) 
 		{
+			lcd_print(WHITE, BLACK, 2, 0, 10,"%03d mAh ",mah);	//damit man sieht wieviel reingegangen ist
 			lcd_print(RED, BLACK, 2, 20, 40,"Supply"); // sch.... für mehrere Lader fixme									
 			lcd_print(RED, BLACK, 2, 20, 80,"undervoltage");
 			lcd_print(WHITE, BLACK, 2, 20, 120,"Supply %02d.%01dV   ",g_tBattery_Info.sSupplyVolt_mV/1000,(g_tBattery_Info.sSupplyVolt_mV%1000)/100); //																								
@@ -106,19 +109,30 @@ void TaskDisplay(void)
 			// show the "charging" page
 			//the lcd_print function overwrites old text-> no lcd_clear needed!
 			//lcd_clear();		
-			lcd_print(RED, BLACK, 3, 290, ypos,"%d",1); // actual charger instance No.
+			//lcd_print(RED, BLACK, 3, 290, ypos,"%d",1); // actual charger instance No.
 
 			lcd_print(YELLOW, BLACK, 2, 0, ypos,"%02d.%02d V  ",g_tBattery_Info.sActVoltage_mV/1000,(g_tBattery_Info.sActVoltage_mV%1000)/10);
 			lcd_print(YELLOW, BLACK, 2, 160, ypos,"%d.%02d A  ",g_tBattery_Info.sActCurrent_mA/1000,(g_tBattery_Info.sActCurrent_mA%1000)/10);
 			ypos += 2*LINEDIFF;
 			
-			uint16_t cht = g_tBattery_Info.unTimeCharging_s;
-			uint16_t mah = g_tBattery_Info.unCharge_mAs/3600;
+			mah = g_tBattery_Info.unCharge_mAs/3600;			// Anzeige mAh
 			if(mah < 999)
+			{
 				lcd_print(WHITE, BLACK, 2, 0, ypos,"%03d mAh ",mah);
+				clear_mAh = 1;									// wenn die Anzeige auf später von mAh auf Ah umschaltet wird mit Hilfe dieserVariable die Zeile einmal gelöscht (da Ah kürzer ist wie mAh)
+			}
 			else
-				lcd_print(WHITE, BLACK, 2, 0, ypos,"%01d.%02d Ah  ",mah/1000,(mah%1000)/10);      // zusätzliches Leerzeichen eingefügt, damit das h vom mAh überschrieben wird
-			lcd_print(WHITE, BLACK, 2, 160, ypos,"%d:%02d:%02d  ",cht/3600,(cht%3600)/60,cht%60);
+			{
+				if (clear_mAh ==1) 
+				{ 
+					clear_mAh = 0;
+					lcd_draw_filled_box(BLACK,0,ypos,159,(2*LINEDIFF)+4);			// löscht einmalig die Zeile, wenn die Anzeige von mAh auf Ah umschaltet
+				}
+				lcd_print(WHITE, BLACK, 2, 0, ypos,"%01d.%02d Ah",mah/1000,(mah%1000)/10);      // print Ah
+				
+			}
+			cht = g_tBattery_Info.unTimeCharging_s;									// Ladezeitanzeige
+			lcd_print(WHITE, BLACK, 2, 160, ypos,"%d:%02d:%02d  ",cht/3600,(cht%3600)/60,cht%60);	
 			ypos += 2*LINEDIFF;
 
 			//DrawBox(ypos);  überflüssig

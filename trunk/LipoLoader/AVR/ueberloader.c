@@ -87,7 +87,7 @@ void TaskGovernor(void)
 		g_tCommand.usVoltageSetpoint_mV = 3850;
 		g_tCommand.unQ_max_mAh = 10000;
 		g_tCommand.usT_max_min = 6000;
-		g_tCommand.usMinBalanceVolt_mV = 3500;
+		g_tCommand.usMinBalanceVolt_mV = 3000;
 		g_tCommand.refreshrate = 10;
 		g_tCommand.SuppMin_mV = 10000;
 	}
@@ -305,7 +305,7 @@ void ResetLastBatteryInfo(void)
 #define CHARGEDELAY 5 // equals 0,5s
 void TaskState(void)
 {
-	uint8_t i, j, t, to;
+	uint8_t i, j, t, to, offsetRestart;
 	static uint8_t BattFullDelayCounter;
 
 	OS_WaitTicks( OSALMStateWait, 500 );
@@ -322,9 +322,11 @@ void TaskState(void)
 		int16_t mySuppVoltage = g_tBattery_Info.sSupplyVolt_mV;
 
 		uint16_t myBattSumVoltage=0;
+		uint16_t myBattMaxCellVoltage=0;
 		for(i=0;i<g_tBattery_Info.ucNumberOfCells;i++)
 		{
-			myBattSumVoltage+= g_tBattery_Info.Cells[i].sVoltage_mV;
+			myBattSumVoltage+= g_tBattery_Info.Cells[i].sVoltage_mV;									// Ermittlung der Akku-Gesamtspannung
+			myBattMaxCellVoltage = max(g_tBattery_Info.Cells[i].sVoltage_mV,myBattMaxCellVoltage);		// Ermittlung der höchsten Zellspannung
 		}
 		OS_MutexRelease( OSMTXBattInfo );
 
@@ -404,24 +406,37 @@ void TaskState(void)
 				{
 					case eModeManual: // todo NOT YET IMPEMENTED
 					case eModeAuto:
-						if(myBattSumVoltage	>= g_tCommand.usVoltageSetpoint_mV	* g_tBattery_Info.ucNumberOfCells
-								&& (Balancer_GetFinished() || (g_tCommand.usMinBalanceVolt_mV > g_tCommand.usVoltageSetpoint_mV) )	// wenn der Balancer fertig oder inaktiv ist --> es kann abgeschalten werden
-								&& (myBattCurrent < usCommandCurrent / 20 || myBattCurrent < 30)	)			// schaltet bei Isoll / 20 ab
-						{
-							if (BattFullDelayCounter >= 10)										// Zeitverzögerung
-							{
-								g_tBattery_Info.eState = eBattFull;
-								BattFullDelayCounter = 0;
-							}
-							else 
+						if (g_tCommand.usMinBalanceVolt_mV < g_tCommand.usVoltageSetpoint_mV)
+						{	// wenn balanced geladen wird
+							if(myBattSumVoltage	>= ((g_tCommand.usVoltageSetpoint_mV - 1)	* g_tBattery_Info.ucNumberOfCells)		// Wenn Abschaltspannung erreicht
+								&& Balancer_GetFinished()																			// wenn der Balancer fertig ist --> es kann abgeschalten werden
+								&& (myBattCurrent < usCommandCurrent / 20 || myBattCurrent < 30))									// wenn Iist < Isoll / 20
 							{
 								BattFullDelayCounter++;
 							}
+							else
+							{
+								BattFullDelayCounter = 0;						
+							}
 						}
-						else 
+						else
+						{	// wenn unbalanced geladen wird
+							if(myBattMaxCellVoltage	>= (g_tCommand.usVoltageSetpoint_mV - 1)					// Wenn die Zelle mit der höchsten Spannung die Abschaltspannung erreicht
+							&& (myBattCurrent < usCommandCurrent / 20 || myBattCurrent < 30))					// wenn Iist < Isoll / 20
+							{
+								BattFullDelayCounter++;
+							}
+							else
+							{
+								BattFullDelayCounter = 0;
+							}
+						}
+						if (BattFullDelayCounter >= 10)										// Zeitverzögerung
 						{
+							g_tBattery_Info.eState = eBattFull;								// Akku voll
 							BattFullDelayCounter = 0;
 						}
+
 						if (g_tBattery_Info.unCharge_mAs / 3600 >= g_tCommand.unQ_max_mAh)	//Maximale Kapazität erreicht
 						{
 							g_tBattery_Info.eState = eBattMaxCap;
@@ -458,7 +473,8 @@ void TaskState(void)
 					g_tBattery_Info.ucNumberOfCells = 0;
 					g_tBattery_Info.eState = eBattUnknown;
 				}
-				if(myBattSumVoltage	< (g_tCommand.usVoltageSetpoint_mV-5)	* g_tBattery_Info.ucNumberOfCells)	// Wenn die Einzelzellenspannungen 5mV unter der Sollspannung liegt, wird wieder weiter geladen 
+				if(g_tCommand.usMinBalanceVolt_mV < g_tCommand.usVoltageSetpoint_mV) {offsetRestart = 4;} else { offsetRestart = 15; }  // Wenn unbalanced geladen wird, schaltet der Lader nicht so schnell wieder auf laden
+				if(myBattSumVoltage	< (g_tCommand.usVoltageSetpoint_mV - offsetRestart)	* g_tBattery_Info.ucNumberOfCells)				// Wenn die Einzelzellenspannungen um die Spannung "offsetRestart" unter der Sollspannung liegt, wird wieder weiter geladen 
 				{
 					g_tBattery_Info.eState = eBattCharging;
 				}

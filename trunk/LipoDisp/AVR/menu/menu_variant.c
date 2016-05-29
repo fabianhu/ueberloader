@@ -65,14 +65,22 @@ void UpdateCommandsFromParam(void)
 
 // ****** Action functions *********
 
-void ActionChargeModeLiPo(void)
+void ActionChargeModeLiPo1(void)
 {
-	myPar.parChVoltSET.sValue = myPar.parChVoltLiPo.sValue;
-	myPar.parBalActVoltSET.sValue = myPar.parBalActVoltLiPo.sValue;
+	myPar.parChVoltSET.sValue = myPar.parChVoltLiPo1.sValue;
+	myPar.parBalActVoltSET.sValue = myPar.parBalActVoltLiPo1.sValue;
+
+	menuUp();
+	UpdateCommandsFromParam();	
+}
+
+void ActionChargeModeLiPo2(void)
+{
+	myPar.parChVoltSET.sValue = myPar.parChVoltLiPo2.sValue;
+	myPar.parBalActVoltSET.sValue = myPar.parBalActVoltLiPo2.sValue;
 
 	menuUp();
 	UpdateCommandsFromParam();
-		
 }
 
 void ActionChargeModeLiIo(void)
@@ -93,19 +101,22 @@ void ActionChargeModeLiFe(void)
 	UpdateCommandsFromParam();
 }
 
-void ActionChargeModeStorage(void)
+void ActionChargeModeStorage1(void)
 {
-	myPar.parChVoltSET.sValue = myPar.parChtVoltStorage.sValue;
-	myPar.parBalActVoltSET.sValue = myPar.parBalActVoltStor.sValue;
+	myPar.parChVoltSET.sValue = myPar.parChtVoltStorage1.sValue;
+	myPar.parBalActVoltSET.sValue = myPar.parBalActVoltStor1.sValue;
 
 	menuUp();
 	UpdateCommandsFromParam();
 }
 
-void ActionChargeModeDischarge(void)
+void ActionChargeModeStorage2(void)
 {
-	// fixme notimplemented
+	myPar.parChVoltSET.sValue = myPar.parChtVoltStorage2.sValue;
+	myPar.parBalActVoltSET.sValue = myPar.parBalActVoltStor2.sValue;
+
 	menuUp();
+	UpdateCommandsFromParam();
 }
 
 void ActionShowLast (void)
@@ -113,10 +124,15 @@ void ActionShowLast (void)
 	// fixme todo	
 }
 
+void savePreset (void)
+{
+	savePersistent();
+	menuUp();
+}
+
 void actCalH(void)
 {
 	g_Tansfer_Action = eActCalHigh;
-
 }
 
 void actCalL(void)
@@ -135,19 +151,12 @@ void menuUp(void)
 	callback_menu_HandOverValueToUI(SubMenuGroupSize-(MyMenue.gucSelectedItem-StartIndex), SubMenuGroupSize, 1, 1);
 }
 
-void menuUpnSave(void)
-{
-	savePersistent();
-	menuUp();
-}
-
-
 void savePersistent(void)
 {	
-	int16_t buf[8];
+	int16_t buf[12];
 	
-	buf[0] = myPar.parChVoltLiPo.sValue	;
-	buf[1] = myPar.parBalActVoltLiPo.sValue	;
+	buf[0] = myPar.parChVoltLiPo1.sValue;
+	buf[1] = myPar.parBalActVoltLiPo1.sValue;
 
 	buf[2] = myPar.parVoltLiIo.sValue;
 	buf[3] = myPar.parBalActVoltLiIo.sValue;
@@ -155,8 +164,14 @@ void savePersistent(void)
 	buf[4] = myPar.parVoltLiFe.sValue;
 	buf[5] = myPar.parBalActVoltLiFe.sValue;
 
-	buf[6] = myPar.parChtVoltStorage.sValue;
-	buf[7] = myPar.parBalActVoltStor.sValue;
+	buf[6] = myPar.parChtVoltStorage1.sValue;
+	buf[7] = myPar.parBalActVoltStor1.sValue;
+	
+	buf[8] = myPar.parChVoltLiPo2.sValue;
+	buf[9] = myPar.parBalActVoltLiPo2.sValue;
+		
+	buf[10] = myPar.parChtVoltStorage2.sValue;
+	buf[11] = myPar.parBalActVoltStor2.sValue;
 	
 	eeprom_WriteBlockWCRC((uint8_t*)&buf, EEPROM_PAR_START, sizeof(buf));
 	
@@ -164,7 +179,7 @@ void savePersistent(void)
 
 void loadPersistent(void)
 {
-	int16_t buf[8];
+	int16_t buf[12];
 	
 	if(eeprom_ReadBlockWCRC( (uint8_t*)&buf,
 	(void*)( EEPROM_PAR_START ), sizeof(buf) ))
@@ -173,8 +188,8 @@ void loadPersistent(void)
 	}
 	else
 	{
-		myPar.parChVoltLiPo.sValue = buf[0];
-		myPar.parBalActVoltLiPo.sValue = buf[1];
+		myPar.parChVoltLiPo1.sValue = buf[0];
+		myPar.parBalActVoltLiPo1.sValue = buf[1];
 
 		myPar.parVoltLiIo.sValue = buf[2];
 		myPar.parBalActVoltLiIo.sValue = buf[3];
@@ -182,8 +197,14 @@ void loadPersistent(void)
 		myPar.parVoltLiFe.sValue = buf[4];
 		myPar.parBalActVoltLiFe.sValue = buf[5];
 
-		myPar.parChtVoltStorage.sValue = buf[6];
-		myPar.parBalActVoltStor.sValue = buf[7];
+		myPar.parChtVoltStorage1.sValue = buf[6];
+		myPar.parBalActVoltStor1.sValue = buf[7];
+		
+		myPar.parChVoltLiPo2.sValue = buf[8];
+		myPar.parBalActVoltLiPo2.sValue = buf[9];
+		
+		myPar.parChtVoltStorage2.sValue = buf[10];
+		myPar.parBalActVoltStor2.sValue = buf[11];		
 	}	
 	
 }
